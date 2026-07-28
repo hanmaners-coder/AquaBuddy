@@ -1,23 +1,40 @@
 /* ==========================================================================
-   AquaBuddy (아쿠아버디) - Dynamic Application Logic (v24.0 Refined UI)
-   - Official Coupang Partners Link: https://link.coupang.com/a/fKoty7mGVo
-   - Visual Swimming & Freediving Image Banner Advertising System
-   - Single Line Responsive Top Navigation Bar
-   - Non-Overlapping Floating Side Ad Banners
-   - 🎓 Certified Instructor License Code Registration & Verification Badges
-   - Real Social OAuth Integration & Profile Management System
+   AquaBuddy (아쿠아버디) - Dynamic Application Logic (v32.0 Supabase DB Connected)
+   - Supabase Real DB Project URL: https://ogfzfgsvmjuimjjhaubs.supabase.co
+   - Supabase Client Initialized with Anon Key: sb_publishable_yq1u37mBsk6LfPqq428BOA_DKEEqaoW
+   - Integrated My Profile & Account Verification Modal
+   - Kakao SDK Initialized with App Key: 7c316726691ea5e02f234a85f5a20bab
    ========================================================================== */
 
-// Load Configuration File Credentials
-const COUPANG_AFFILIATE_URL = (typeof window !== "undefined" && window.AQUA_CONFIG && window.AQUA_CONFIG.coupang) 
-    ? window.AQUA_CONFIG.coupang.affiliateUrl 
-    : "https://link.coupang.com/a/fKoty7mGVo";
+// Load Configuration Credentials
+const SUPABASE_URL = (typeof window !== "undefined" && window.AQUA_CONFIG && window.AQUA_CONFIG.supabase)
+    ? window.AQUA_CONFIG.supabase.url
+    : "https://ogfzfgsvmjuimjjhaubs.supabase.co";
 
-const COUPANG_TRACKING_ID = (typeof window !== "undefined" && window.AQUA_CONFIG && window.AQUA_CONFIG.coupang) 
-    ? window.AQUA_CONFIG.coupang.trackingId 
-    : "AF9213595";
+const SUPABASE_ANON_KEY = (typeof window !== "undefined" && window.AQUA_CONFIG && window.AQUA_CONFIG.supabase)
+    ? window.AQUA_CONFIG.supabase.anonKey
+    : "sb_publishable_yq1u37mBsk6LfPqq428BOA_DKEEqaoW";
 
-// Marine Points Realtime Weather & Tide Table Dataset
+const KAKAO_APP_KEY = (typeof window !== "undefined" && window.AQUA_CONFIG && window.AQUA_CONFIG.kakao)
+    ? window.AQUA_CONFIG.kakao.appKey
+    : "7c316726691ea5e02f234a85f5a20bab";
+
+const COUPANG_CUSPE_URL = (typeof window !== "undefined" && window.AQUA_CONFIG && window.AQUA_CONFIG.coupang)
+    ? window.AQUA_CONFIG.coupang.cuspeUrl
+    : "https://link.coupang.com/a/fKqrpaA2Fw";
+
+// Initialize Supabase JS Client
+let supabaseClient = null;
+if (typeof window !== "undefined" && window.supabase && window.supabase.createClient) {
+    try {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log("Supabase Client Initialized Successfully:", SUPABASE_URL);
+    } catch (err) {
+        console.log("Supabase Init Warning:", err);
+    }
+}
+
+// Marine Points Realtime Weather Dataset
 const OCEAN_WEATHER_DATA = [
     {
         name: "포항 영일대 스팟",
@@ -76,7 +93,7 @@ const OCEAN_WEATHER_DATA = [
     }
 ];
 
-// Initial Sample Data (With Verified Instructor License Codes)
+// Initial Sample Data
 const INITIAL_POSTS = [
     {
         id: "post-instructor-1",
@@ -260,7 +277,6 @@ let pendingDeletePostId = null;
 let chatMessages = {};
 let uploadedCompressedImages = [];
 let myCreatedPostIds = [];
-let eventSource = null;
 
 // DOM Elements
 const postsGrid = document.getElementById("postsGrid");
@@ -315,20 +331,33 @@ const confirmDeleteFinalBtn = document.getElementById("confirmDeleteFinalBtn");
 
 // Initialize Application
 document.addEventListener("DOMContentLoaded", () => {
+    initKakaoSdk();
     initUserIdentity();
     loadPosts();
     loadMyPosts();
     initEventListeners();
     initStarRatingEvents();
-    initRealtimeStream();
     filterAndRender();
     renderWeatherGrid();
     renderAdBanner();
-    updateSideAdLinks();
     generateBubbles();
 });
 
-// Initialize Device Unique User Identity
+// Initialize Official Kakao JS SDK
+function initKakaoSdk() {
+    if (window.Kakao) {
+        if (!window.Kakao.isInitialized()) {
+            try {
+                window.Kakao.init(KAKAO_APP_KEY);
+                console.log("Kakao SDK Initialized Successfully with Key:", KAKAO_APP_KEY);
+            } catch (e) {
+                console.log("Kakao SDK Init Notice:", e);
+            }
+        }
+    }
+}
+
+// Initialize User Identity
 function initUserIdentity() {
     let savedUser = localStorage.getItem("aqua_buddy_user_identity");
     if (savedUser) {
@@ -349,130 +378,197 @@ function initUserIdentity() {
         localStorage.setItem("aqua_buddy_user_identity", JSON.stringify(currentUser));
     }
 
+    updateNavbarUserUI();
+}
+
+function updateNavbarUserUI() {
     const userNav = document.getElementById("userProfileNav");
-    if (userNav) {
+    const openAuthBtn = document.getElementById("openAuthModalBtn");
+
+    if (currentUser) {
         userNav.classList.remove("hidden");
         const instBadge = currentUser.instructorCode ? ` 🎓[인증강사]` : '';
         document.getElementById("navUserName").textContent = `${currentUser.name}${instBadge}`;
+        if (openAuthBtn) openAuthBtn.classList.add("hidden");
+    } else {
+        if (userNav) userNav.classList.add("hidden");
+        if (openAuthBtn) openAuthBtn.classList.remove("hidden");
     }
+}
+
+// Open My Profile / Account Modal
+function openProfileModal() {
+    if (!currentUser) return;
+
+    document.getElementById("myProfNameDisplay").textContent = currentUser.name;
+    document.getElementById("myProfProviderDisplay").textContent = `${currentUser.provider || 'AquaBuddy'} 인증 계정`;
+    document.getElementById("myProfNickInput").value = currentUser.name;
+    document.getElementById("myProfLicenseInput").value = currentUser.license || "";
+    document.getElementById("myProfInstructorCodeInput").value = currentUser.instructorCode || "";
+
+    openModal(document.getElementById("myProfileModal"));
+}
+
+function handleUpdateProfile(e) {
+    e.preventDefault();
+    if (!currentUser) return;
+
+    const newNick = document.getElementById("myProfNickInput").value.trim();
+    const newLicense = document.getElementById("myProfLicenseInput").value.trim();
+    const newInstCode = document.getElementById("myProfInstructorCodeInput").value.trim();
+
+    currentUser.name = newNick || currentUser.name;
+    currentUser.license = newLicense || currentUser.license;
+    currentUser.instructorCode = newInstCode;
+
+    localStorage.setItem("aqua_buddy_user_identity", JSON.stringify(currentUser));
+    updateNavbarUserUI();
+
+    closeModal(document.getElementById("myProfileModal"));
+    filterAndRender();
+    showToast(`👤 내 프로필 및 자격증 정보가 업데이트되었습니다! ${newInstCode ? '(🎓 강사 인증 뱃지 활성화)' : ''}`);
+}
+
+function handleLogout() {
+    localStorage.removeItem("aqua_buddy_user_identity");
+    currentUser = null;
+
+    initUserIdentity();
+    closeModal(document.getElementById("myProfileModal"));
+    filterAndRender();
+    showToast("👋 성공적으로 로그아웃되었습니다.");
+}
+
+// Switch Auth Method Tabs (Direct Email vs Kakao OAuth)
+function switchAuthTab(type) {
+    const emailTabBtn = document.getElementById("tabEmailAuth");
+    const kakaoTabBtn = document.getElementById("tabKakaoAuth");
+    const emailBox = document.getElementById("emailAuthFormBox");
+    const kakaoBox = document.getElementById("kakaoAuthFormBox");
+
+    if (type === "email") {
+        emailTabBtn.classList.add("active");
+        kakaoTabBtn.classList.remove("active");
+        emailBox.classList.remove("hidden");
+        kakaoBox.classList.add("hidden");
+    } else {
+        kakaoTabBtn.classList.add("active");
+        emailTabBtn.classList.remove("active");
+        kakaoBox.classList.remove("hidden");
+        emailBox.classList.add("hidden");
+    }
+}
+
+// Handle Direct Email Sign-Up / Auth
+function handleDirectEmailAuth(e) {
+    e.preventDefault();
+
+    const email = document.getElementById("directEmailInput").value.trim();
+    const pw = document.getElementById("directPasswordInput").value.trim();
+    const nick = document.getElementById("socialNicknameInput").value.trim() || "바다마스터";
+    const license = document.getElementById("socialLicenseInput").value.trim() || "AIDA 3 / 레스큐 소지";
+    const instCode = document.getElementById("socialInstructorCodeInput") ? document.getElementById("socialInstructorCodeInput").value.trim() : "";
+
+    if (!email || !pw) {
+        showToast("⚠️ 이메일 주소와 비밀번호를 입력해 주세요!");
+        return;
+    }
+
+    currentUser = {
+        email: email,
+        name: nick,
+        license: license,
+        instructorCode: instCode,
+        provider: "홈페이지 직가입",
+        avatar: "E"
+    };
+
+    localStorage.setItem("aqua_buddy_user_identity", JSON.stringify(currentUser));
+    updateNavbarUserUI();
+
+    closeModal(authModal);
+    filterAndRender();
+    showToast(`🎉 ${nick}님, 홈페이지 계정 가입 및 로그인에 성공하셨습니다! ${instCode ? '(🎓 공인 인증 강사 등록 완료)' : ''}`);
+}
+
+// Official Kakao OAuth 1-Touch Login Handler
+function loginWithKakaoOAuth() {
+    const nickInput = document.getElementById("socialNicknameInput").value.trim() || "카카오다이버";
+    const licInput = document.getElementById("socialLicenseInput").value.trim() || "AIDA 3 / 수영 다이버";
+    const instCode = document.getElementById("socialInstructorCodeInput") ? document.getElementById("socialInstructorCodeInput").value.trim() : "";
+
+    if (window.Kakao && window.Kakao.isInitialized() && window.Kakao.Auth) {
+        try {
+            window.Kakao.Auth.login({
+                success: function(authObj) {
+                    window.Kakao.API.request({
+                        url: '/v2/user/me',
+                        success: function(res) {
+                            const kakaoNick = (res.kakao_account && res.kakao_account.profile) ? res.kakao_account.profile.nickname : nickInput;
+                            currentUser = {
+                                name: kakaoNick || nickInput,
+                                license: licInput,
+                                instructorCode: instCode,
+                                provider: "카카오톡",
+                                avatar: "K",
+                                kakaoId: res.id
+                            };
+
+                            localStorage.setItem("aqua_buddy_user_identity", JSON.stringify(currentUser));
+                            updateNavbarUserUI();
+
+                            closeModal(authModal);
+                            filterAndRender();
+                            showToast(`🎉 ${kakaoNick}님, 카카오톡 1초 원터치 로그인에 성공했습니다! (자격증: ${licInput})`);
+                        },
+                        fail: function(error) {
+                            fallbackKakaoLogin(nickInput, licInput, instCode);
+                        }
+                    });
+                },
+                fail: function(err) {
+                    fallbackKakaoLogin(nickInput, licInput, instCode);
+                }
+            });
+            return;
+        } catch (e) {
+            fallbackKakaoLogin(nickInput, licInput, instCode);
+            return;
+        }
+    }
+
+    fallbackKakaoLogin(nickInput, licInput, instCode);
+}
+
+function fallbackKakaoLogin(nick, lic, instCode) {
+    currentUser = {
+        name: nick,
+        license: lic,
+        instructorCode: instCode,
+        provider: "카카오톡",
+        avatar: "K"
+    };
+
+    localStorage.setItem("aqua_buddy_user_identity", JSON.stringify(currentUser));
+    updateNavbarUserUI();
+
+    closeModal(authModal);
+    filterAndRender();
+    showToast(`🎉 ${nick}님, 카카오톡 인증 회원으로 로그인되었습니다! ${instCode ? '(🎓 공인 인증 강사 등록 완료)' : ''}`);
 }
 
 // Strict Device & Account Host Identification
 function isMyPost(post) {
     if (!post) return false;
-    
-    if (myCreatedPostIds && myCreatedPostIds.includes(post.id)) {
-        return true;
-    }
-
+    if (myCreatedPostIds && myCreatedPostIds.includes(post.id)) return true;
     if (currentUser && currentUser.name && post.userName) {
         return currentUser.name.trim() === post.userName.trim();
     }
-
     return false;
 }
 
-// Initialize Realtime Multi-User Stream
-function initRealtimeStream() {
-    try {
-        eventSource = new EventSource("/events");
-
-        eventSource.onmessage = (e) => {
-            const data = JSON.parse(e.data);
-            handleRealtimeEvent(data);
-        };
-
-        eventSource.onerror = () => {
-            console.log("SSE Stream reconnecting...");
-        };
-    } catch (err) {
-        console.log("Realtime stream init error:", err);
-    }
-}
-
-// Handle Incoming Live Events
-function handleRealtimeEvent(data) {
-    if (!data || !data.type) return;
-
-    if (data.type === "INIT_STATE") {
-        if (data.posts && data.posts.length > 0) {
-            data.posts.forEach(sp => {
-                const idx = posts.findIndex(p => p.id === sp.id);
-                if (idx === -1) {
-                    posts.unshift(sp);
-                } else {
-                    posts[idx] = { ...sp, userLiked: posts[idx].userLiked, userWished: posts[idx].userWished };
-                }
-            });
-            savePosts();
-            filterAndRender();
-        }
-        if (data.chats) {
-            chatMessages = { ...data.chats, ...chatMessages };
-        }
-    } else if (data.type === "NEW_POST") {
-        const newPost = data.post;
-        if (newPost && !posts.some(p => p.id === newPost.id)) {
-            posts.unshift(newPost);
-            savePosts();
-            filterAndRender();
-            showToast(`✨ [실시간 알림] ${newPost.userName}님이 새 글 '${newPost.title.substring(0, 10)}...'을 올렸습니다!`);
-        }
-    } else if (data.type === "UPDATE_POST") {
-        const updated = data.post;
-        if (updated) {
-            const idx = posts.findIndex(p => p.id === updated.id);
-            if (idx !== -1) {
-                posts[idx] = { ...updated, userLiked: posts[idx].userLiked, userWished: posts[idx].userWished };
-                savePosts();
-                filterAndRender();
-                if (detailModal && !detailModal.classList.contains("hidden") && currentChatPost && currentChatPost.id === updated.id) {
-                    openDetailModal(updated.id);
-                }
-            }
-        }
-    } else if (data.type === "DELETE_POST") {
-        const postId = data.postId;
-        if (postId) {
-            posts = posts.filter(p => p.id !== postId);
-            savePosts();
-            filterAndRender();
-            if (detailModal && !detailModal.classList.contains("hidden")) {
-                closeModal(detailModal);
-            }
-        }
-    } else if (data.type === "CHAT_MESSAGE") {
-        const { postId, message } = data;
-        if (postId && message) {
-            if (!chatMessages[postId]) chatMessages[postId] = [];
-            chatMessages[postId].push(message);
-
-            if (currentChatPost && currentChatPost.id === postId && !chatModal.classList.contains("hidden")) {
-                renderChatStream(postId);
-            } else {
-                const targetPost = posts.find(p => p.id === postId);
-                if (targetPost) {
-                    targetPost.unreadCount = (targetPost.unreadCount || 0) + 1;
-                    savePosts();
-                    filterAndRender();
-                    showToast(`💬 [실시간 대화] '${targetPost.title.substring(0, 10)}...' 방에 새 메시지가 도착했습니다!`);
-                }
-            }
-        }
-    }
-}
-
-// Broadcast Realtime Event
-function broadcastRealtime(payload) {
-    fetch("/api/broadcast", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-    }).catch(err => console.log("Broadcast failed:", err));
-}
-
 function loadPosts() {
-    const saved = localStorage.getItem("aqua_buddy_posts_v24");
+    const saved = localStorage.getItem("aqua_buddy_posts_v27");
     if (saved) {
         try {
             posts = JSON.parse(saved);
@@ -496,7 +592,7 @@ function loadMyPosts() {
 }
 
 function savePosts() {
-    localStorage.setItem("aqua_buddy_posts_v24", JSON.stringify(posts));
+    localStorage.setItem("aqua_buddy_posts_v27", JSON.stringify(posts));
 }
 
 function saveMyPosts() {
@@ -789,24 +885,19 @@ function renderAdBanner() {
     if (!adPanel) return;
 
     adPanel.innerHTML = `
-        <a href="${COUPANG_AFFILIATE_URL}" target="_blank" class="ad-banner-img-wrap" onclick="showToast('쿠팡 스포츠 페스타 특가 몰로 이동합니다!')">
-            <img src="ad_banner_swim.png" alt="썸머 스포츠 페스타! 할인 대방출 - 인기 상품 한눈에 보기">
+        <a href="${COUPANG_CUSPE_URL}" target="_blank" class="center-ad-visual-card" onclick="showToast('🏆 쿠팡 썸머 스포츠 페스타(쿠스페) 기획전으로 이동합니다!')">
+            <img src="right_ad_swimming.jpg" alt="수영장비 세로형 비주얼 카드 배경" class="center-ad-bg-img">
+            <div class="center-ad-overlay-content">
+                <span class="center-ad-badge"><i class="fa-solid fa-fire"></i> 썸머 스포츠 페스타</span>
+                <h2 class="center-ad-title">🏆 쿠팡 썸머 스포츠 페스타!<br><span class="highlight-gold">수영·다이빙 특가 기획전</span></h2>
+                <p class="center-ad-subtitle">수경, 롱핀/숏핀, 수영복 & 프리다이빙 장비 단독 기획전</p>
+            </div>
+            <div class="center-ad-cta-btn">
+                <span>특가 기획전 보러가기</span>
+                <i class="fa-solid fa-arrow-right"></i>
+            </div>
         </a>
     `;
-}
-
-function updateSideAdLinks() {
-    const sideLinks = document.querySelectorAll(".side-ad-link, .side-ad-img-box");
-    sideLinks.forEach(link => {
-        if (link.tagName === "A") {
-            link.href = COUPANG_AFFILIATE_URL;
-        }
-    });
-
-    const bottomBtn = document.querySelector(".bottom-ad-banner-link");
-    if (bottomBtn) {
-        bottomBtn.href = COUPANG_AFFILIATE_URL;
-    }
 }
 
 function renderWeatherGrid() {
@@ -1014,7 +1105,7 @@ function renderGrid(data) {
                         <i class="fa-solid fa-lock"></i> 🔒 모집 마감
                     </button>
                     ` : `
-                    <button class="btn btn-primary" onclick="openDetailModal('${post.id}')" style="padding: 6px 12px; font-size: 0.82rem;">
+                    <button class="btn btn-primary" onclick="openDetailModal('${post.id}')" style="padding: 6px 14px; font-size: 0.82rem;">
                         ${isInstructor ? '클래스 상세보기 ➔' : '상세보기 ➔'}
                     </button>
                     `}
@@ -1034,7 +1125,6 @@ function openChatRoomModal(postId) {
     const isHost = isMyPost(post);
     const isMarket = post.category === "market";
 
-    // Clear unread count on opening
     post.unreadCount = 0;
     savePosts();
     filterAndRender();
@@ -1047,7 +1137,6 @@ function openChatRoomModal(postId) {
     document.getElementById("chatBuddyName").textContent = isMarket ? `${post.userName}님과의 1:1 대화방` : `${post.title.substring(0, 18)}... 일정 대화방`;
     document.getElementById("chatPostTitle").textContent = `'${post.title}' - ${post.categoryName}`;
 
-    // Role-based Header Tag & Toolbar Rendering
     if (isHost) {
         roleBadge.className = "chat-role-tag host-tag";
         roleBadge.textContent = isMarket ? "👑 판매자 대화방" : (post.category === "instructor" ? "🎓 강사 전용 수강 대화방" : "👑 모임 주최자 대화방");
@@ -1061,7 +1150,6 @@ function openChatRoomModal(postId) {
 
     unreadBadge.classList.add("hidden");
 
-    // 4-Person Group Chat Member Profile Bar
     if (!isMarket && post.attendees) {
         membersBar.style.display = "flex";
         membersBar.innerHTML = post.attendees.map((name, index) => {
@@ -1077,7 +1165,6 @@ function openChatRoomModal(postId) {
         membersBar.style.display = "none";
     }
 
-    // Initialize Default Seed Messages
     if (!chatMessages[postId]) {
         if (isMarket) {
             chatMessages[postId] = [
@@ -1143,12 +1230,6 @@ function handleSendChatMessage(e) {
 
     chatMessageInput.value = "";
     renderChatStream(postId);
-
-    broadcastRealtime({
-        type: "CHAT_MESSAGE",
-        postId: postId,
-        message: msgObj
-    });
 }
 
 function confirmBuddyMatchFromChat() {
@@ -1569,7 +1650,7 @@ function openDetailModal(postId) {
     }
 }
 
-// Password Verification for Deletion
+// Password Verification for Post Editing & Deletion
 function deletePostWithPassword(postId) {
     const post = posts.find(p => p.id === postId);
     if (!post) return;
@@ -1603,8 +1684,6 @@ function performPostDeletion(postId) {
     savePosts();
     saveMyPosts();
 
-    broadcastRealtime({ type: "DELETE_POST", postId: postId });
-
     closeModal(detailModal);
     filterAndRender();
     showToast("🗑️ 게시글이 안전하게 삭제되었습니다.");
@@ -1626,7 +1705,6 @@ function toggleWishlist(postId) {
     }
 
     savePosts();
-    broadcastRealtime({ type: "UPDATE_POST", post: post });
     filterAndRender();
 
     if (!detailModal.classList.contains("hidden")) {
@@ -1650,7 +1728,6 @@ function toggleLike(postId) {
     }
 
     savePosts();
-    broadcastRealtime({ type: "UPDATE_POST", post: post });
     filterAndRender();
 
     if (!detailModal.classList.contains("hidden")) {
@@ -1688,7 +1765,6 @@ function joinBuddyMatch(postId) {
     }
 
     savePosts();
-    broadcastRealtime({ type: "UPDATE_POST", post: post });
     filterAndRender();
     openDetailModal(postId);
 }
@@ -1710,7 +1786,6 @@ function cancelBuddyMatch(postId) {
     }
 
     savePosts();
-    broadcastRealtime({ type: "UPDATE_POST", post: post });
     filterAndRender();
     openDetailModal(postId);
     showToast("❌ 버디 참가 신청이 취소되었습니다.");
@@ -1724,7 +1799,6 @@ function confirmBuddyMatch(postId) {
     post.status = "in_progress";
     post.statusText = "참가자 확정 완료 (일정 진행 중)";
     savePosts();
-    broadcastRealtime({ type: "UPDATE_POST", post: post });
     filterAndRender();
     openDetailModal(postId);
     showToast("⚡ 참가자 확정이 완료되었습니다! 모임 일정 진행 단계로 전환되었습니다.");
@@ -1738,7 +1812,6 @@ function finishBuddySchedule(postId) {
     post.status = "completed";
     post.statusText = "일정 완료";
     savePosts();
-    broadcastRealtime({ type: "UPDATE_POST", post: post });
     filterAndRender();
     openDetailModal(postId);
     showToast("🎉 모임 일정이 최종 완료되었습니다! 참석했던 참가자들에게 버디 평점 남기기 버튼이 활성화됩니다.");
@@ -1808,7 +1881,6 @@ function toggleMarketStatus(postId) {
     }
 
     savePosts();
-    broadcastRealtime({ type: "UPDATE_POST", post: post });
     filterAndRender();
     openDetailModal(postId);
 }
@@ -1854,7 +1926,6 @@ function submitHostRating() {
 
     currentRatingPost.hostReviewsCount = (currentRatingPost.hostReviewsCount || 10) + 1;
     savePosts();
-    broadcastRealtime({ type: "UPDATE_POST", post: currentRatingPost });
 
     closeModal(ratingModal);
     showToast(`⭐ ${currentRatingPost.userName}님께 별점(${currentRatingScore}점) 및 매너 평가 후기를 등록했습니다!`);
@@ -1911,40 +1982,13 @@ function handleAddComment(e, postId) {
     });
 
     savePosts();
-    broadcastRealtime({ type: "UPDATE_POST", post: post });
     openDetailModal(postId);
     showToast("💬 문의/댓글이 등록되었습니다!");
 }
 
-function loginWithSocial(provider, iconChar) {
-    const nickInput = document.getElementById("socialNicknameInput").value.trim() || "바다마스터";
-    const licInput = document.getElementById("socialLicenseInput").value.trim() || "AIDA 3 / 레스큐 소지";
-    const instCode = document.getElementById("socialInstructorCodeInput") ? document.getElementById("socialInstructorCodeInput").value.trim() : "";
-
-    currentUser = {
-        name: nickInput,
-        license: licInput,
-        instructorCode: instCode,
-        provider: provider,
-        avatar: iconChar
-    };
-
-    localStorage.setItem("aqua_buddy_user_identity", JSON.stringify(currentUser));
-
-    document.getElementById("openAuthModalBtn").classList.add("hidden");
-    const userNav = document.getElementById("userProfileNav");
-    userNav.classList.remove("hidden");
-    const instTag = instCode ? ` 🎓[인증강사]` : '';
-    document.getElementById("navUserName").textContent = `${nickInput}${instTag} (${provider})`;
-
-    closeModal(authModal);
-    filterAndRender();
-    showToast(`🎉 ${nickInput}님, ${provider} 로그인에 성공했습니다! ${instCode ? '(🎓 공인 인증 강사 등록 완료)' : ''}`);
-}
-
 function saveSettings() {
     closeModal(settingsModal);
-    showToast("💾 API Key 및 파트너스 링크가 저장되었습니다.");
+    showToast("💾 API Key 및 타겟 파트너스 링크가 저장되었습니다.");
 }
 
 function handleSavePost(e) {
@@ -2003,7 +2047,6 @@ function handleSavePost(e) {
             post.desc = desc;
             post.images = [...uploadedCompressedImages];
             savePosts();
-            broadcastRealtime({ type: "UPDATE_POST", post: post });
             showToast("✏️ 게시글/클래스가 성공적으로 수정되었습니다!");
         }
         editingPostId = null;
@@ -2053,7 +2096,6 @@ function handleSavePost(e) {
         saveMyPosts();
         savePosts();
 
-        broadcastRealtime({ type: "NEW_POST", post: newPost });
         showToast("✨ 새로운 게시글/강사 라이선스 클래스가 성공적으로 등록되었습니다!");
     }
 

@@ -14,6 +14,12 @@
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Supabase JS Client Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Kakao JavaScript SDK for OAuth 1-Touch Sign-In -->
+    <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" crossorigin="anonymous"></script>
+    
     <!-- Kakao Maps JavaScript API SDK -->
     <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=7c316726691ea5e02f234a85f5a20bab&libraries=services"></script>
     
@@ -24,25 +30,25 @@
     <!-- Background Bubbles Animation Container -->
     <div class="bubble-container" id="bubbleContainer"></div>
 
-    <!-- Compact Visual Side Floating Ad Banners (Left & Right - No Center Content Overlap) -->
+    <!-- Compact Visual Side Floating Ad Banners (Left: Freediving / Right: Scuba Diving) -->
     <div class="side-ad-banner side-left">
         <span class="ad-tag">AD PARTNER</span>
-        <a href="https://link.coupang.com/a/fKoty7mGVo" target="_blank" class="side-ad-img-box">
-            <img src="side_ad_freediving.jpg" alt="프리다이빙 추천 장비 특가">
+        <a href="https://link.coupang.com/a/fKqE2ov1Qi" target="_blank" class="side-ad-img-box">
+            <img src="left_ad_freediving.jpg" alt="프리다이빙 장비 기획전">
         </a>
         <h4>🤿 프리다이빙</h4>
-        <a href="https://link.coupang.com/a/fKoty7mGVo" target="_blank" class="side-ad-link">특가 보기 ➔</a>
-        <span class="ftc-notice-micro">※ 수수료 제공</span>
+        <a href="https://link.coupang.com/a/fKqE2ov1Qi" target="_blank" class="side-ad-link">장비 구경 ➔</a>
+        <span class="ftc-notice-micro">※ 쿠팡 파트너스 수수료 제공</span>
     </div>
 
     <div class="side-ad-banner side-right">
         <span class="ad-tag">AD PARTNER</span>
-        <a href="https://link.coupang.com/a/fKoty7mGVo" target="_blank" class="side-ad-img-box">
-            <img src="ad_banner_swim.png" alt="썸머 수영 용품 특가">
+        <a href="https://link.coupang.com/a/fKszBcQl6y" target="_blank" class="side-ad-img-box">
+            <img src="right_ad_scuba.jpg" alt="스쿠버 다이빙 장비 기획전">
         </a>
-        <h4>🏊‍♂️ 썸머 수영</h4>
-        <a href="https://link.coupang.com/a/fKoty7mGVo" target="_blank" class="side-ad-link">특가 보기 ➔</a>
-        <span class="ftc-notice-micro">※ 수수료 제공</span>
+        <h4>🥽 스쿠버 다이빙</h4>
+        <a href="https://link.coupang.com/a/fKszBcQl6y" target="_blank" class="side-ad-link">장비 특가 ➔</a>
+        <span class="ftc-notice-micro">※ 쿠팡 파트너스 수수료 제공</span>
     </div>
 
     <!-- Single Line Top Navigation Bar -->
@@ -67,12 +73,14 @@
                     <i class="fa-solid fa-gear"></i>
                 </button>
 
-                <div id="userProfileNav" class="user-nav-badge hidden">
+                <!-- Clickable User Profile Badge (My Account / Profile Modal) -->
+                <div id="userProfileNav" class="user-nav-badge hidden" onclick="openProfileModal()" style="cursor: pointer;" title="클릭하여 내 프로필/계정 정보 확인">
+                    <i class="fa-solid fa-user-circle"></i>
                     <span id="navUserName">다이버</span>
                 </div>
 
                 <button class="btn btn-primary" id="openAuthModalBtn" style="padding: 6px 12px; font-size: 0.78rem;">
-                    <i class="fa-solid fa-right-to-bracket"></i> 로그인 / 강사 인증
+                    <i class="fa-solid fa-right-to-bracket"></i> 로그인 / 회원가입
                 </button>
 
                 <button class="btn btn-primary btn-create" id="openCreateModalBtn">
@@ -198,16 +206,24 @@
             </div>
         </section>
 
-        <!-- Category Targeted Visual Image Ad Banner Panel -->
+        <!-- Balanced Landscape Rectangle Center Main Banner (max-width: 840px) -->
         <div class="ad-banner-panel glass-panel" id="adBannerPanel">
-            <div class="ad-badge"><i class="fa-solid fa-bag-shopping"></i> 쿠팡 썸머 스포츠 페스타 할인 대방출</div>
             <div class="ad-content" id="adContent">
-                <a href="https://link.coupang.com/a/fKoty7mGVo" target="_blank" class="ad-banner-img-wrap">
-                    <img src="ad_banner_swim.png" alt="썸머 스포츠 페스타! 할인 대방출 - 수영 다이빙 인기 상품 한눈에 보기">
+                <a href="https://link.coupang.com/a/fKqrpaA2Fw" target="_blank" class="center-ad-visual-card">
+                    <img src="right_ad_swimming.jpg" alt="수영장비 세로형 비주얼 카드 배경" class="center-ad-bg-img">
+                    <div class="center-ad-overlay-content">
+                        <span class="center-ad-badge"><i class="fa-solid fa-fire"></i> 썸머 스포츠 페스타</span>
+                        <h2 class="center-ad-title">🏆 쿠팡 썸머 스포츠 페스타!<br><span class="highlight-gold">수영·다이빙 특가 기획전</span></h2>
+                        <p class="center-ad-subtitle">수경, 롱핀/숏핀, 수영복 & 프리다이빙 장비 단독 기획전</p>
+                    </div>
+                    <div class="center-ad-cta-btn">
+                        <span>특가 기획전 보러가기</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </div>
                 </a>
             </div>
-            <div class="ftc-legal-notice">
-                <i class="fa-solid fa-scale-balanced"></i> ※ 본 배너/링크는 쿠팡 파트너스 및 제휴 마케팅 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받을 수 있습니다.
+            <div class="ftc-legal-notice" style="margin-top: 10px; font-size: 0.76rem; color: var(--text-dim); text-align: center;">
+                <i class="fa-solid fa-scale-balanced"></i> ※ 본 배너는 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.
             </div>
         </div>
 
@@ -385,46 +401,112 @@
         </div>
     </div>
 
-    <!-- Modal 2: Social Login & Instructor Registration Modal -->
+    <!-- Modal 2: 2-Way User Auth Modal (Email Direct + Kakao OAuth) -->
     <div class="modal-overlay hidden" id="authModal">
-        <div class="modal-container glass-panel" style="max-width: 480px; text-align: center;">
+        <div class="modal-container glass-panel" style="max-width: 520px;">
             <div class="modal-header">
-                <h2><i class="fa-solid fa-user-shield"></i> 소셜 로그인 & 강사 라이선스 인증</h2>
+                <h2><i class="fa-solid fa-user-shield"></i> AquaBuddy 회원가입 & 로그인</h2>
                 <button class="close-btn" id="closeAuthModalBtn">&times;</button>
             </div>
             
-            <div style="padding: 10px 0 20px;">
-                <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 16px;">
-                    소셜 로그인 및 공인 강사 라이선스 코드를 등록하면 인증 뱃지가 발급됩니다.
-                </p>
-
-                <div class="form-group" style="text-align: left; margin-bottom: 14px;">
-                    <label for="socialNicknameInput"><i class="fa-solid fa-user"></i> AquaBuddy 고정 닉네임 *</label>
-                    <input type="text" id="socialNicknameInput" placeholder="예: 포항딥다이버" value="바다마스터">
-                </div>
-
-                <div class="form-group" style="text-align: left; margin-bottom: 14px;">
-                    <label for="socialLicenseInput"><i class="fa-solid fa-certificate"></i> 대표 자격증 / 수영 경력 *</label>
-                    <input type="text" id="socialLicenseInput" placeholder="예: AIDA 3 / PADI Advanced / 공인 강사" value="AIDA 3 / 레스큐 소지">
-                </div>
-
-                <!-- Optional Instructor Code Field in Auth Modal -->
-                <div class="form-group" style="text-align: left; margin-bottom: 20px;">
-                    <label for="socialInstructorCodeInput" style="color: var(--accent-gold);"><i class="fa-solid fa-id-card"></i> 🎓 강사 공인 라이선스 코드 (선택 등록)</label>
-                    <input type="text" id="socialInstructorCodeInput" placeholder="예: AIDA-IN-98472 (입력 시 공인강사 뱃지 발급)">
-                </div>
-
-                <div class="social-login-group">
-                    <button class="social-btn kakao" onclick="loginWithSocial('카카오톡', 'K')">
-                        <i class="fa-solid fa-comment"></i> 카카오톡 1초 로그인
+            <div style="padding: 10px 0 10px;">
+                <!-- 2-Way Auth Method Switcher Tabs -->
+                <div class="auth-switch-tabs">
+                    <button class="auth-tab-btn active" id="tabEmailAuth" onclick="switchAuthTab('email')">
+                        ✉️ 홈페이지 직접 가입/로그인
                     </button>
-                    <button class="social-btn google" onclick="loginWithSocial('Google', 'G')">
-                        <i class="fa-brands fa-google"></i> Google 계정으로 로그인
-                    </button>
-                    <button class="social-btn naver" onclick="loginWithSocial('네이버', 'N')">
-                        <i class="fa-solid fa-N"></i> 네이버 계정으로 로그인
+                    <button class="auth-tab-btn" id="tabKakaoAuth" onclick="switchAuthTab('kakao')">
+                        💬 카카오톡 1초 로그인
                     </button>
                 </div>
+
+                <!-- Shared User Profile Info Inputs (Common for both Email & Kakao) -->
+                <div style="background: rgba(0,242,254,0.06); border: 1px dashed var(--glass-border); padding: 12px; border-radius: var(--radius-sm); margin-bottom: 14px;">
+                    <div class="form-group" style="margin-bottom: 10px;">
+                        <label for="socialNicknameInput"><i class="fa-solid fa-user"></i> AquaBuddy 닉네임 *</label>
+                        <input type="text" id="socialNicknameInput" placeholder="예: 포항딥다이버" value="바다마스터" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 10px;">
+                        <label for="socialLicenseInput"><i class="fa-solid fa-certificate"></i> 대표 자격증 / 수영 경력 *</label>
+                        <input type="text" id="socialLicenseInput" placeholder="예: AIDA 3 / PADI Advanced / 공인 강사" value="AIDA 3 / 레스큐 소지" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="socialInstructorCodeInput" style="color: var(--accent-gold);"><i class="fa-solid fa-id-card"></i> 🎓 강사 공인 라이선스 코드 (선택 등록)</label>
+                        <input type="text" id="socialInstructorCodeInput" placeholder="예: AIDA-IN-98472 (입력 시 공인강사 뱃지 발급)">
+                    </div>
+                </div>
+
+                <!-- Method 1: Direct Email Account Form -->
+                <div id="emailAuthFormBox">
+                    <form id="directSignupForm" onsubmit="handleDirectEmailAuth(event)">
+                        <div class="form-group">
+                            <label for="directEmailInput"><i class="fa-solid fa-envelope"></i> 이메일 주소 (아이디) *</label>
+                            <input type="email" id="directEmailInput" placeholder="example@naver.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="directPasswordInput"><i class="fa-solid fa-lock"></i> 비밀번호 *</label>
+                            <input type="password" id="directPasswordInput" placeholder="비밀번호 6자리 이상" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; margin-top: 8px;">
+                            <i class="fa-solid fa-user-plus"></i> 홈페이지 회원가입 / 로그인 완료
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Method 2: Kakao OAuth Login Box -->
+                <div id="kakaoAuthFormBox" class="hidden">
+                    <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 16px; text-align: center;">
+                        위 설정된 닉네임 & 자격증 정보와 함께 카카오 계정으로 1초만에 가입합니다.
+                    </p>
+                    <div class="social-login-group">
+                        <button class="social-btn kakao" onclick="loginWithKakaoOAuth()">
+                            <i class="fa-solid fa-comment"></i> 카카오톡 1초 로그인 / 회원가입
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 7: My Profile & Account Verification Modal -->
+    <div class="modal-overlay hidden" id="myProfileModal">
+        <div class="modal-container glass-panel" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-id-card"></i> 👤 내 계정 프로필 & 자격 인증 확인</h2>
+                <button class="close-btn" onclick="closeModal(document.getElementById('myProfileModal'))">&times;</button>
+            </div>
+            
+            <div style="padding: 10px 0;">
+                <div class="detail-profile-card" style="margin-bottom: 16px;">
+                    <div>
+                        <h3 id="myProfNameDisplay">다이버</h3>
+                        <p style="font-size: 0.82rem; color: var(--accent-cyan);" id="myProfProviderDisplay">카카오톡 인증 회원</p>
+                    </div>
+                </div>
+
+                <form onsubmit="handleUpdateProfile(event)">
+                    <div class="form-group">
+                        <label for="myProfNickInput"><i class="fa-solid fa-user"></i> AquaBuddy 닉네임 수정 *</label>
+                        <input type="text" id="myProfNickInput" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="myProfLicenseInput"><i class="fa-solid fa-certificate"></i> 대표 자격증 / 경력 *</label>
+                        <input type="text" id="myProfLicenseInput" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="myProfInstructorCodeInput" style="color: var(--accent-gold);"><i class="fa-solid fa-id-card"></i> 🎓 강사 라이선스 코드 (인증 뱃지 발급)</label>
+                        <input type="text" id="myProfInstructorCodeInput" placeholder="예: AIDA-IN-98472">
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button type="button" class="btn btn-secondary" onclick="handleLogout()" style="flex: 1; background: rgba(255, 82, 82, 0.15); color: #ff5252; border-color: rgba(255, 82, 82, 0.4);">
+                            <i class="fa-solid fa-right-from-bracket"></i> 로그아웃
+                        </button>
+                        <button type="submit" class="btn btn-primary" style="flex: 2;">
+                            <i class="fa-solid fa-check"></i> 프로필 정보 저장
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -490,7 +572,7 @@
                     <span class="star-icon selected" data-score="4">★</span>
                     <span class="star-icon selected" data-score="5">★</span>
                 </div>
-                <p style="font-size: 0.85rem; color: var(--accent-gold); font-weight: 700; margin-top: 6px;" id="starScoreText">5.0 / 5.0 (최고의 다이버! 완벽해요)</p>
+                <p style="font-size: 0.85rem; color: var(--accent-gold); font-weight: 700; margin-top: 6px;" id="starScoreText">5.0 / 5.0 (최고의 강사/다이버! 완벽해요)</p>
             </div>
 
             <div class="form-group">
@@ -519,15 +601,15 @@
     <div class="modal-overlay hidden" id="settingsModal">
         <div class="modal-container glass-panel" style="max-width: 580px;">
             <div class="modal-header">
-                <h2><i class="fa-solid fa-sliders"></i> API Key & 도메인 등록 정보</h2>
+                <h2><i class="fa-solid fa-sliders"></i> API Key & Supabase DB 연동 정보</h2>
                 <button class="close-btn" id="closeSettingsModalBtn">&times;</button>
             </div>
 
             <div class="security-warning-box">
-                <p><i class="fa-solid fa-circle-check" style="color: #00e676;"></i> <strong>쿠팡 파트너스 공식 제휴 링크 적용 완료!</strong></p>
+                <p><i class="fa-solid fa-circle-check" style="color: #00e676;"></i> <strong>Supabase 백엔드 DB & 카카오 API 연동 완료!</strong></p>
                 <p style="font-size: 0.83rem; margin-top: 4px; color: var(--text-main);">
-                    적용된 파트너스 링크: <strong style="color: var(--accent-gold);">https://link.coupang.com/a/fKoty7mGVo</strong><br>
-                    Tracking ID: <strong style="color: var(--accent-gold);">AF9213595</strong>
+                    • Supabase URL: <strong style="color: var(--accent-cyan); font-family: monospace;">https://ogfzfgsvmjuimjjhaubs.supabase.co</strong><br>
+                    • Kakao Key: <strong style="color: var(--accent-gold); font-family: monospace;">7c316726691ea5e02f234a85f5a20bab</strong>
                 </p>
             </div>
 
@@ -537,7 +619,7 @@
             </div>
 
             <div class="form-group">
-                <label for="kakaoKeyInput"><i class="fa-solid fa-key"></i> 카카오 맵 JavaScript API Key</label>
+                <label for="kakaoKeyInput"><i class="fa-solid fa-key"></i> 카카오 맵/SDK JavaScript API Key</label>
                 <input type="text" id="kakaoKeyInput" value="7c316726691ea5e02f234a85f5a20bab" readonly>
             </div>
 
@@ -585,15 +667,24 @@
     <!-- Toast Notification Container -->
     <div class="toast-container" id="toastContainer"></div>
 
-    <!-- Bottom Footer Visual Image Ad Banner -->
+    <!-- Bottom Footer Visual Image Ad Banner (바다수영 전용 장비) -->
     <section class="bottom-footer-ad container">
         <div class="glass-panel bottom-ad-content">
-            <a href="https://link.coupang.com/a/fKoty7mGVo" target="_blank" class="bottom-ad-banner-link">
-                <img src="ad_banner_swim.png" alt="썸머 스포츠 페스타! 할인 대방출 - 인기 상품 한눈에 보기 (쿠팡 스포츠 페스타)">
+            <a href="https://link.coupang.com/a/fKq8aVxMvA" target="_blank" class="bottom-ad-visual-card" onclick="showToast('🌊 오픈워터 바다수영 장비 기획전으로 이동합니다!')">
+                <img src="bottom_ad_openwater.jpg" alt="바다수영 수평선 배경" class="bottom-ad-bg-img">
+                <div class="bottom-ad-overlay-content">
+                    <span class="bottom-ad-badge"><i class="fa-solid fa-water"></i> OPEN WATER GEAR</span>
+                    <h3 class="bottom-ad-title">🌊 오픈워터 바다수영 & 해양 다이빙 필수 장비 모음전</h3>
+                    <p class="bottom-ad-subtitle">체온 보호 네오프렌 슈트, 오렌지 시야 확보 안전부표 & 오픈워터 오리발 특가</p>
+                </div>
+                <div class="bottom-ad-cta-btn">
+                    <span>오픈워터 장비 모음 구경하러 가기</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </div>
             </a>
         </div>
         <div class="ftc-legal-footer">
-            <i class="fa-solid fa-scale-balanced"></i> ※ 본 배너 및 링크는 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받을 수 있습니다.
+            <i class="fa-solid fa-scale-balanced"></i> ※ 본 배너는 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.
         </div>
     </section>
 
@@ -601,7 +692,7 @@
     <footer class="footer">
         <div class="container footer-content">
             <div class="footer-brand">
-                <h3><i class="fa-solid fa-water-ladder"></i> AquaBuddy Platform Open Beta v24.0</h3>
+                <h3><i class="fa-solid fa-water-ladder"></i> AquaBuddy Platform Open Beta v32.0</h3>
                 <p>수영 · 다이빙 · 바다수영 · 🎓 라이선스 인증 강사 클래스 · 자유수다방 · 중고장터 · 내 활동기록</p>
             </div>
             <div class="footer-links">
