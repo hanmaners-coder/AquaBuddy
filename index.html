@@ -24,26 +24,28 @@
     <!-- Background Bubbles Animation Container -->
     <div class="bubble-container" id="bubbleContainer"></div>
 
-    <!-- Enlarged Side Floating Ad Banners (Left & Right) -->
+    <!-- Compact Visual Side Floating Ad Banners (Left & Right - No Center Content Overlap) -->
     <div class="side-ad-banner side-left">
         <span class="ad-tag">AD PARTNER</span>
-        <i class="fa-solid fa-person-swimming side-ad-icon"></i>
-        <h4>🤿 추천 다이빙 장비</h4>
-        <p>카본 롱핀 & 저용량 마스크 & 시야확보 스노클 특가</p>
-        <a href="https://link.coupang.com" target="_blank" class="side-ad-link">쿠팡 파트너스 보기 ➔</a>
-        <span class="ftc-notice-micro">※ 수수료를 제공받을 수 있습니다.</span>
+        <a href="https://link.coupang.com/a/fKoty7mGVo" target="_blank" class="side-ad-img-box">
+            <img src="side_ad_freediving.jpg" alt="프리다이빙 추천 장비 특가">
+        </a>
+        <h4>🤿 프리다이빙</h4>
+        <a href="https://link.coupang.com/a/fKoty7mGVo" target="_blank" class="side-ad-link">특가 보기 ➔</a>
+        <span class="ftc-notice-micro">※ 수수료 제공</span>
     </div>
 
     <div class="side-ad-banner side-right">
         <span class="ad-tag">AD PARTNER</span>
-        <i class="fa-solid fa-water-ladder side-ad-icon"></i>
-        <h4>🌊 바다수영 전용 장비</h4>
-        <p>오픈워터 고시인성 오렌지 안전부표 & 체온 수트</p>
-        <a href="https://link.coupang.com" target="_blank" class="side-ad-link">쿠팡 파트너스 보기 ➔</a>
-        <span class="ftc-notice-micro">※ 수수료를 제공받을 수 있습니다.</span>
+        <a href="https://link.coupang.com/a/fKoty7mGVo" target="_blank" class="side-ad-img-box">
+            <img src="ad_banner_swim.png" alt="썸머 수영 용품 특가">
+        </a>
+        <h4>🏊‍♂️ 썸머 수영</h4>
+        <a href="https://link.coupang.com/a/fKoty7mGVo" target="_blank" class="side-ad-link">특가 보기 ➔</a>
+        <span class="ftc-notice-micro">※ 수수료 제공</span>
     </div>
 
-    <!-- Navigation Bar -->
+    <!-- Single Line Top Navigation Bar -->
     <header class="navbar">
         <div class="nav-container">
             <a href="#" class="logo">
@@ -69,8 +71,8 @@
                     <span id="navUserName">다이버</span>
                 </div>
 
-                <button class="btn btn-primary" id="openAuthModalBtn">
-                    <i class="fa-solid fa-right-to-bracket"></i> 소셜 로그인 / 강사 인증
+                <button class="btn btn-primary" id="openAuthModalBtn" style="padding: 6px 12px; font-size: 0.78rem;">
+                    <i class="fa-solid fa-right-to-bracket"></i> 로그인 / 강사 인증
                 </button>
 
                 <button class="btn btn-primary btn-create" id="openCreateModalBtn">
@@ -196,11 +198,13 @@
             </div>
         </section>
 
-        <!-- Category Targeted Affiliate Ad Banner -->
+        <!-- Category Targeted Visual Image Ad Banner Panel -->
         <div class="ad-banner-panel glass-panel" id="adBannerPanel">
-            <div class="ad-badge"><i class="fa-solid fa-bag-shopping"></i> 카테고리 맞춤 파트너스 추천</div>
+            <div class="ad-badge"><i class="fa-solid fa-bag-shopping"></i> 쿠팡 썸머 스포츠 페스타 할인 대방출</div>
             <div class="ad-content" id="adContent">
-                <!-- Dynamically populated -->
+                <a href="https://link.coupang.com/a/fKoty7mGVo" target="_blank" class="ad-banner-img-wrap">
+                    <img src="ad_banner_swim.png" alt="썸머 스포츠 페스타! 할인 대방출 - 수영 다이빙 인기 상품 한눈에 보기">
+                </a>
             </div>
             <div class="ftc-legal-notice">
                 <i class="fa-solid fa-scale-balanced"></i> ※ 본 배너/링크는 쿠팡 파트너스 및 제휴 마케팅 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받을 수 있습니다.
@@ -520,10 +524,10 @@
             </div>
 
             <div class="security-warning-box">
-                <p><i class="fa-solid fa-circle-check" style="color: #00e676;"></i> <strong>쿠팡 파트너스 API Tracking ID 적용 완료!</strong></p>
+                <p><i class="fa-solid fa-circle-check" style="color: #00e676;"></i> <strong>쿠팡 파트너스 공식 제휴 링크 적용 완료!</strong></p>
                 <p style="font-size: 0.83rem; margin-top: 4px; color: var(--text-main);">
-                    현재 적용된 Tracking ID: <strong style="color: var(--accent-gold);">AF9213595</strong><br>
-                    카카오 맵 JavaScript Key: <strong style="color: var(--accent-cyan);">7c316726691ea5e02f234a85f5a20bab</strong>
+                    적용된 파트너스 링크: <strong style="color: var(--accent-gold);">https://link.coupang.com/a/fKoty7mGVo</strong><br>
+                    Tracking ID: <strong style="color: var(--accent-gold);">AF9213595</strong>
                 </p>
             </div>
 
@@ -535,11 +539,6 @@
             <div class="form-group">
                 <label for="kakaoKeyInput"><i class="fa-solid fa-key"></i> 카카오 맵 JavaScript API Key</label>
                 <input type="text" id="kakaoKeyInput" value="7c316726691ea5e02f234a85f5a20bab" readonly>
-            </div>
-
-            <div class="form-group">
-                <label for="naverClientIdInput"><i class="fa-solid fa-key"></i> 네이버 개발자센터 Client ID (선택)</label>
-                <input type="text" id="naverClientIdInput" placeholder="네이버 Client ID">
             </div>
 
             <div class="modal-footer">
@@ -586,18 +585,15 @@
     <!-- Toast Notification Container -->
     <div class="toast-container" id="toastContainer"></div>
 
-    <!-- Bottom Footer Ad Banner -->
+    <!-- Bottom Footer Visual Image Ad Banner -->
     <section class="bottom-footer-ad container">
         <div class="glass-panel bottom-ad-content">
-            <div class="bottom-ad-info">
-                <span class="ad-tag">AD Partner</span>
-                <h4>🤿 AquaBuddy X 파트너스 추천 수중 다이빙 용품</h4>
-                <p>프리다이빙 롱핀, 다이빙 컴퓨터, 오리발 수경 최저가 기획전</p>
-            </div>
-            <a href="https://link.coupang.com" target="_blank" class="btn btn-primary">쿠팡 파트너스 보러가기 ➔</a>
+            <a href="https://link.coupang.com/a/fKoty7mGVo" target="_blank" class="bottom-ad-banner-link">
+                <img src="ad_banner_swim.png" alt="썸머 스포츠 페스타! 할인 대방출 - 인기 상품 한눈에 보기 (쿠팡 스포츠 페스타)">
+            </a>
         </div>
         <div class="ftc-legal-footer">
-            <i class="fa-solid fa-scale-balanced"></i> ※ 본 서비스의 광고 배너 및 링크는 쿠팡 파트너스 및 제휴 마케팅 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받을 수 있습니다.
+            <i class="fa-solid fa-scale-balanced"></i> ※ 본 배너 및 링크는 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받을 수 있습니다.
         </div>
     </section>
 
@@ -605,7 +601,7 @@
     <footer class="footer">
         <div class="container footer-content">
             <div class="footer-brand">
-                <h3><i class="fa-solid fa-water-ladder"></i> AquaBuddy Platform MVP v23.0</h3>
+                <h3><i class="fa-solid fa-water-ladder"></i> AquaBuddy Platform Open Beta v24.0</h3>
                 <p>수영 · 다이빙 · 바다수영 · 🎓 라이선스 인증 강사 클래스 · 자유수다방 · 중고장터 · 내 활동기록</p>
             </div>
             <div class="footer-links">

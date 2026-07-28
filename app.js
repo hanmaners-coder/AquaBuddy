@@ -1,23 +1,21 @@
 /* ==========================================================================
-   AquaBuddy (아쿠아버디) - Dynamic Application Logic (v23.0 Instructor Verification)
+   AquaBuddy (아쿠아버디) - Dynamic Application Logic (v24.0 Refined UI)
+   - Official Coupang Partners Link: https://link.coupang.com/a/fKoty7mGVo
+   - Visual Swimming & Freediving Image Banner Advertising System
+   - Single Line Responsive Top Navigation Bar
+   - Non-Overlapping Floating Side Ad Banners
    - 🎓 Certified Instructor License Code Registration & Verification Badges
-   - Real Social OAuth 2.0 Integration & Profile Management System
-   - Strict Device & Account Host Identification
-   - Real Coupang Partners API (Tracking ID: AF9213595) Dynamic Affiliate Link Generator
-   - My Activity Log Hub (📋 내 활동기록 6대 서브 분류 시스템)
-   - Modern Glassmorphism Chat Interface & 4-Person Member Profile Bar
+   - Real Social OAuth Integration & Profile Management System
    ========================================================================== */
 
 // Load Configuration File Credentials
+const COUPANG_AFFILIATE_URL = (typeof window !== "undefined" && window.AQUA_CONFIG && window.AQUA_CONFIG.coupang) 
+    ? window.AQUA_CONFIG.coupang.affiliateUrl 
+    : "https://link.coupang.com/a/fKoty7mGVo";
+
 const COUPANG_TRACKING_ID = (typeof window !== "undefined" && window.AQUA_CONFIG && window.AQUA_CONFIG.coupang) 
     ? window.AQUA_CONFIG.coupang.trackingId 
     : "AF9213595";
-
-// Helper function to build Coupang Partners tracking URL
-function getCoupangAffiliateUrl(keyword = "다이빙 용품") {
-    const encoded = encodeURIComponent(keyword);
-    return `https://www.coupang.com/np/search?q=${encoded}&lptag=${COUPANG_TRACKING_ID}`;
-}
 
 // Marine Points Realtime Weather & Tide Table Dataset
 const OCEAN_WEATHER_DATA = [
@@ -77,73 +75,6 @@ const OCEAN_WEATHER_DATA = [
         status: "입수 양호"
     }
 ];
-
-// Targeted Affiliate Ads Database
-const AFFILIATE_ADS_DATA = {
-    freediving: {
-        title: "🤿 AIDA / SSI 프리다이버 파트너스 추천 장비",
-        desc: "카본 롱핀 & 저용량 마스크 & 시야확보 스노클 특별 할인",
-        keyword: "프리다이빙 카본 롱핀 마스크",
-        linkText: "쿠팡 파트너스 최저가 보기 ➔",
-        icon: "fa-person-swimming"
-    },
-    instructor: {
-        title: "🎓 공인 강사 교재 & 잠수 전용 교육 장비 특가",
-        desc: "AIDA/PADI 공식 가이드 북 & 랜야드 세이프티 & 부표 장비",
-        keyword: "프리다이빙 부표 랜야드 교육장비",
-        linkText: "강사 파트너스 특가 보기 ➔",
-        icon: "fa-graduation-cap"
-    },
-    scuba: {
-        title: "🥽 PADI / SSI 스쿠버다이빙 파트너스 추천 장비",
-        desc: "가민 데센트 MK2S 다이빙 컴퓨터 & 5mm 네오프렌 웻슈트",
-        keyword: "스쿠버다이빙 다이빙컴퓨터 슈트",
-        linkText: "쿠팡 파트너스 특가 보기 ➔",
-        icon: "fa-mask-snorkel"
-    },
-    swimming: {
-        title: "🏊‍♂️ 실내 수영 브랜드 파트너스 추천",
-        desc: "미러 미즈노 수경 & 브랜드 수영복 & 숏핀 오리발 세트",
-        keyword: "실내수영 미러수경 숏핀",
-        linkText: "쿠팡 파트너스 혜택가 보기 ➔",
-        icon: "fa-water"
-    },
-    openwater: {
-        title: "🌊 바다수영 전용 안전용품 파트너스 추천",
-        desc: "오픈워터 고시인성 오렌지 부표 & 오픈워터 전용 네오프렌 체온 수트",
-        keyword: "오픈워터 바다수영 안전부표",
-        linkText: "오픈워터 파트너스 몰 이동 ➔",
-        icon: "fa-life-ring"
-    },
-    community: {
-        title: "💬 AquaBuddy 수중 촬영 파트너스 기획전",
-        desc: "고프로 히어로12 4K 수중 하우징 & 핸드 그립 라이트",
-        keyword: "고프로 수중 하우징 액션캠",
-        linkText: "쿠팡 파트너스 기획전 보기 ➔",
-        icon: "fa-camera"
-    },
-    market: {
-        title: "🏷️ 안전 다이빙 방수 백팩 & 장비 백 세트",
-        desc: "메시 다이빙 핀 가방 & 100% 방수 드라이 백 30L",
-        keyword: "다이빙 방수 드라이백 메쉬 가방",
-        linkText: "파트너스 특가 보기 ➔",
-        icon: "fa-bag-shopping"
-    },
-    activity_log: {
-        title: "📋 AquaBuddy 내 활동 통합 기록 센터",
-        desc: "내가 쓴 글, 대화했던 방, 참가 신청글, 좋아요/공감한 글, 댓글 단 글, 찜한 상품 한눈에 보기",
-        keyword: "다이빙 용품",
-        linkText: "나의 모임/거래 일정 관리 ➔",
-        icon: "fa-clipboard-list"
-    },
-    all: {
-        title: "🛍️ AquaBuddy X 제휴 마케팅 인기 다이빙 용품",
-        desc: "전국 수영장 및 다이빙풀 입장권 할인 & 필수 수중 안전장비 모음",
-        keyword: "다이빙 용품 오리발",
-        linkText: "제휴 파트너스 구경하기 ➔",
-        icon: "fa-cart-shopping"
-    }
-};
 
 // Initial Sample Data (With Verified Instructor License Codes)
 const INITIAL_POSTS = [
@@ -426,16 +357,14 @@ function initUserIdentity() {
     }
 }
 
-// Strict Device & Account Host/Seller Identification
+// Strict Device & Account Host Identification
 function isMyPost(post) {
     if (!post) return false;
     
-    // Check 1: Post ID explicitly belongs to this browser's created posts list
     if (myCreatedPostIds && myCreatedPostIds.includes(post.id)) {
         return true;
     }
 
-    // Check 2: Current logged-in nickname matches post author name exactly
     if (currentUser && currentUser.name && post.userName) {
         return currentUser.name.trim() === post.userName.trim();
     }
@@ -543,7 +472,7 @@ function broadcastRealtime(payload) {
 }
 
 function loadPosts() {
-    const saved = localStorage.getItem("aqua_buddy_posts_v23");
+    const saved = localStorage.getItem("aqua_buddy_posts_v24");
     if (saved) {
         try {
             posts = JSON.parse(saved);
@@ -567,7 +496,7 @@ function loadMyPosts() {
 }
 
 function savePosts() {
-    localStorage.setItem("aqua_buddy_posts_v23", JSON.stringify(posts));
+    localStorage.setItem("aqua_buddy_posts_v24", JSON.stringify(posts));
 }
 
 function saveMyPosts() {
@@ -857,33 +786,26 @@ function filterByCategory(catName) {
 
 function renderAdBanner() {
     const adPanel = document.getElementById("adContent");
-    const adData = AFFILIATE_ADS_DATA[activeCategory] || AFFILIATE_ADS_DATA.all;
-    const trackingUrl = getCoupangAffiliateUrl(adData.keyword);
+    if (!adPanel) return;
 
     adPanel.innerHTML = `
-        <div class="ad-item-card">
-            <i class="fa-solid ${adData.icon} ad-item-icon"></i>
-            <div class="ad-item-info">
-                <h4>${escapeHtml(adData.title)} <span style="font-size:0.75rem; color:var(--accent-gold); font-weight:700;">(Tracking ID: ${COUPANG_TRACKING_ID})</span></h4>
-                <p>${escapeHtml(adData.desc)}</p>
-            </div>
-        </div>
-        <a href="${trackingUrl}" target="_blank" class="btn btn-secondary" onclick="showToast('쿠팡 파트너스 추천 상품 몰로 이동합니다 (Tracking ID: ${COUPANG_TRACKING_ID})')">
-            ${adData.linkText}
+        <a href="${COUPANG_AFFILIATE_URL}" target="_blank" class="ad-banner-img-wrap" onclick="showToast('쿠팡 스포츠 페스타 특가 몰로 이동합니다!')">
+            <img src="ad_banner_swim.png" alt="썸머 스포츠 페스타! 할인 대방출 - 인기 상품 한눈에 보기">
         </a>
     `;
 }
 
 function updateSideAdLinks() {
-    const sideLinks = document.querySelectorAll(".side-ad-link");
-    if (sideLinks && sideLinks.length > 0) {
-        sideLinks[0].href = getCoupangAffiliateUrl("프리다이빙 롱핀 마스크");
-        if (sideLinks[1]) sideLinks[1].href = getCoupangAffiliateUrl("오픈워터 안전부표 체온수트");
-    }
+    const sideLinks = document.querySelectorAll(".side-ad-link, .side-ad-img-box");
+    sideLinks.forEach(link => {
+        if (link.tagName === "A") {
+            link.href = COUPANG_AFFILIATE_URL;
+        }
+    });
 
-    const bottomBtn = document.querySelector(".bottom-ad-content .btn");
+    const bottomBtn = document.querySelector(".bottom-ad-banner-link");
     if (bottomBtn) {
-        bottomBtn.href = getCoupangAffiliateUrl("수중 다이빙 수영 장비");
+        bottomBtn.href = COUPANG_AFFILIATE_URL;
     }
 }
 
@@ -991,7 +913,7 @@ function filterAndRender() {
     renderGrid(filtered);
 }
 
-// Render Cards to Grid (With Verified Instructor License Badges)
+// Render Cards to Grid
 function renderGrid(data) {
     activeCountText.textContent = `총 ${data.length}개의 게시글 / 모집글 / 강사 클래스`;
 
@@ -1222,7 +1144,6 @@ function handleSendChatMessage(e) {
     chatMessageInput.value = "";
     renderChatStream(postId);
 
-    // Realtime Multi-User Broadcast to All Connected Devices
     broadcastRealtime({
         type: "CHAT_MESSAGE",
         postId: postId,
@@ -1242,7 +1163,7 @@ function finishScheduleFromChat() {
     showToast("⚡ 대화방에서 강습 완료 처리가 되었습니다!");
 }
 
-// Role-Based Detail Modal View (With Instructor Verified License Code Card)
+// Role-Based Detail Modal View
 function openDetailModal(postId) {
     const post = posts.find(p => p.id === postId);
     if (!post) return;
@@ -1252,7 +1173,6 @@ function openDetailModal(postId) {
     const isCommunity = post.category === "community";
     const currentUserName = currentUser ? currentUser.name : "다이버";
     
-    // Strict Device & Account Host Identification
     const isHost = isMyPost(post);
     const isAttendee = post.attendees && post.attendees.includes(currentUserName);
 
@@ -1390,7 +1310,6 @@ function openDetailModal(postId) {
                 </div>
             </div>
 
-            <!-- Top Action Bar -->
             <div class="like-action-bar" style="justify-content: flex-end; gap: 8px;">
                 <button class="wishlist-btn ${post.userWished ? 'active' : ''}" onclick="toggleWishlist('${post.id}')">
                     <i class="fa-solid fa-heart"></i> ❤️ 찜하기 ${post.wishlistCount || 0}
@@ -1509,11 +1428,9 @@ function openDetailModal(postId) {
             </div>
         `;
     } else {
-        // Sports Buddy Request Detail View (Strict Host vs Attendee Views)
         let actionButtonsHtml = '';
 
         if (isHost) {
-            // Host View Actions
             if (post.status === 'recruiting') {
                 actionButtonsHtml = `
                     <button class="btn btn-secondary" onclick="confirmBuddyMatch('${post.id}')" style="background: rgba(0, 242, 254, 0.15); color: var(--accent-cyan); border-color: rgba(0, 242, 254, 0.4);">
@@ -1532,7 +1449,6 @@ function openDetailModal(postId) {
                 `;
             }
         } else {
-            // Attendee View Actions
             if (post.status === 'recruiting') {
                 if (isAttendee) {
                     actionButtonsHtml = `
@@ -2028,7 +1944,7 @@ function loginWithSocial(provider, iconChar) {
 
 function saveSettings() {
     closeModal(settingsModal);
-    showToast("💾 API Key 및 설정이 저장되었습니다.");
+    showToast("💾 API Key 및 파트너스 링크가 저장되었습니다.");
 }
 
 function handleSavePost(e) {
