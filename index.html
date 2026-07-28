@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AquaBuddy (아쿠아버디) - 함께라서 안전한 프리미엄 수중 버디 매칭 & 강사 클래스</title>
+    <meta name="description" content="실내 수영, 바다 수영, 프리다이빙, 스쿠버다이빙 안전 버디 매칭, 강사 클래스 체험/자격증 코스, 자유수다방, 중고장터, 내 활동기록, 전국 해양 물때표">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Kakao Maps JavaScript API SDK -->
+    <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=7c316726691ea5e02f234a85f5a20bab&libraries=services"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Background Bubbles Animation Container -->
+    <div class="bubble-container" id="bubbleContainer"></div>
+
+    <!-- Enlarged Side Floating Ad Banners (Left & Right) -->
+    <div class="side-ad-banner side-left">
+        <span class="ad-tag">AD PARTNER</span>
+        <i class="fa-solid fa-person-swimming side-ad-icon"></i>
+        <h4>🤿 추천 다이빙 장비</h4>
+        <p>카본 롱핀 & 저용량 마스크 & 시야확보 스노클 특가</p>
+        <a href="https://link.coupang.com" target="_blank" class="side-ad-link">쿠팡 파트너스 보기 ➔</a>
+        <span class="ftc-notice-micro">※ 수수료를 제공받을 수 있습니다.</span>
+    </div>
+
+    <div class="side-ad-banner side-right">
+        <span class="ad-tag">AD PARTNER</span>
+        <i class="fa-solid fa-water-ladder side-ad-icon"></i>
+        <h4>🌊 바다수영 전용 장비</h4>
+        <p>오픈워터 고시인성 오렌지 안전부표 & 체온 수트</p>
+        <a href="https://link.coupang.com" target="_blank" class="side-ad-link">쿠팡 파트너스 보기 ➔</a>
+        <span class="ftc-notice-micro">※ 수수료를 제공받을 수 있습니다.</span>
+    </div>
+
+    <!-- Navigation Bar -->
+    <header class="navbar">
+        <div class="nav-container">
+            <a href="#" class="logo">
+                <i class="fa-solid fa-water-ladder logo-icon"></i>
+                <span class="logo-text">Aqua<span class="logo-accent">Buddy</span></span>
+            </a>
+            
+            <nav class="nav-links">
+                <a href="#feed" class="active" onclick="filterByCategory('all')"><i class="fa-solid fa-compass"></i> 버디 탐색</a>
+                <a href="#feed" onclick="filterByCategory('instructor')"><i class="fa-solid fa-graduation-cap"></i> 🎓 강사 클래스</a>
+                <a href="#feed" onclick="filterByCategory('community')"><i class="fa-solid fa-comments"></i> 자유수다방</a>
+                <a href="#feed" onclick="filterByCategory('market')"><i class="fa-solid fa-tags"></i> 중고장터</a>
+                <a href="#feed" onclick="filterByCategory('activity_log')"><i class="fa-solid fa-clipboard-list"></i> 📋 내 활동기록</a>
+                <a href="#weather-section"><i class="fa-solid fa-water"></i> 전국 해양 물때표</a>
+            </nav>
+
+            <div class="nav-actions">
+                <button class="btn btn-secondary btn-icon" id="openSettingsBtn" title="API Key & 도메인 설정">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
+
+                <div id="userProfileNav" class="user-nav-badge hidden">
+                    <span id="navUserName">다이버</span>
+                </div>
+
+                <button class="btn btn-primary" id="openAuthModalBtn">
+                    <i class="fa-solid fa-right-to-bracket"></i> 소셜 로그인 / 강사 인증
+                </button>
+
+                <button class="btn btn-primary btn-create" id="openCreateModalBtn">
+                    <i class="fa-solid fa-plus"></i> <span id="createBtnText">버디 모집하기</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-backdrop" style="background-image: url('hero.jpg');"></div>
+        <div class="hero-overlay"></div>
+        <div class="hero-content container">
+            <span class="hero-badge"><i class="fa-solid fa-shield-halved"></i> 함께라서 안전한 수중 액티비티</span>
+            <h1 class="hero-title">안전한 버디 & 검증된 강사와 함께하는<br><span class="highlight">AquaBuddy</span> 프리미엄 플랫폼</h1>
+            <p class="hero-subtitle">
+                실내 수영부터 딥다이빙, 바다수영 버디 탐색과 AIDA/PADI 공인 강사의 라이선스 검증 원데이 체험 및 자격증 코스까지!
+            </p>
+            
+            <div class="hero-stats">
+                <div class="stat-card">
+                    <div class="stat-number">👥 실시간 버디 매칭</div>
+                    <div class="stat-label">안전 수칙 & 매너 검증 버디</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">🎓 라이선스 인증 강사</div>
+                    <div class="stat-label">공인 자격증 번호 인증 클래스</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">🌊 실시간 해양 물때표</div>
+                    <div class="stat-label">전국 바다 수온 · 파고 · 풍속 레포트</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content Container -->
+    <main class="main-container container">
+        <!-- Search & Filter Panel -->
+        <section class="filter-section glass-panel" id="feed">
+            <div class="filter-header">
+                <h2><i class="fa-solid fa-sliders"></i> 탐색 & 필터링</h2>
+                <span class="active-count" id="activeCountText">불러오는 중...</span>
+            </div>
+
+            <!-- Category Tabs -->
+            <div class="category-tabs">
+                <button class="tab-btn active" data-category="all">
+                    <i class="fa-solid fa-globe"></i> 전체 보기
+                </button>
+                <button class="tab-btn instructor-tab" data-category="instructor">
+                    <i class="fa-solid fa-graduation-cap"></i> 🎓 강사 클래스 (체험/자격증)
+                </button>
+                <button class="tab-btn" data-category="swimming">
+                    <i class="fa-solid fa-person-swimming"></i> 실내 수영
+                </button>
+                <button class="tab-btn highlight-tab" data-category="openwater">
+                    <i class="fa-solid fa-water"></i> 바다 수영
+                </button>
+                <button class="tab-btn" data-category="freediving">
+                    <i class="fa-solid fa-person-swimming"></i> 프리다이빙
+                </button>
+                <button class="tab-btn" data-category="scuba">
+                    <i class="fa-solid fa-mask-snorkel"></i> 스쿠버다이빙
+                </button>
+                <button class="tab-btn community-tab" data-category="community">
+                    <i class="fa-solid fa-comments"></i> 💬 자유수다방
+                </button>
+                <button class="tab-btn market-tab" data-category="market">
+                    <i class="fa-solid fa-tags"></i> 🏷️ 중고장터
+                </button>
+                <button class="tab-btn activity-tab" data-category="activity_log">
+                    <i class="fa-solid fa-clipboard-list"></i> 📋 내 활동기록
+                </button>
+            </div>
+
+            <!-- Sub Filter Bar for My Activity Log -->
+            <div class="activity-sub-tabs hidden" id="activitySubFilterBar">
+                <button class="sub-tab-btn active" data-sub="my_posts" onclick="filterActivitySub('my_posts')">✏️ 내가 작성한 글</button>
+                <button class="sub-tab-btn" data-sub="chat_rooms" onclick="filterActivitySub('chat_rooms')">💬 대화했던 방</button>
+                <button class="sub-tab-btn" data-sub="joined" onclick="filterActivitySub('joined')">🙋‍♂️ 참가 신청한 글</button>
+                <button class="sub-tab-btn" data-sub="liked" onclick="filterActivitySub('liked')">❤️ 좋아요/공감한 글</button>
+                <button class="sub-tab-btn" data-sub="commented" onclick="filterActivitySub('commented')">💬 댓글 작성한 글</button>
+                <button class="sub-tab-btn" data-sub="wished" onclick="filterActivitySub('wished')">🏷️ 찜한 중고 상품</button>
+            </div>
+
+            <!-- Filter Grid -->
+            <div class="filter-grid-clean">
+                <div class="filter-item search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="searchInput" placeholder="검색어 (예: 포항, 영일대, K26, 강사, 라이선스, 체험강습, AIDA2, 롱핀)...">
+                </div>
+
+                <div class="filter-item">
+                    <i class="fa-solid fa-map"></i>
+                    <select id="regionSelect">
+                        <option value="all">전국 지역 전체</option>
+                        <option value="seoul">서울 / 경기 / 인천</option>
+                        <option value="gangwon">강원도 / 동해 권역</option>
+                        <option value="yeongnam">포항 / 경상 / 부산 권역</option>
+                        <option value="jeju">제주도 권역</option>
+                        <option value="honam">광주 / 전라 / 충청 권역</option>
+                    </select>
+                </div>
+
+                <div class="filter-item">
+                    <i class="fa-solid fa-arrow-down-wide-short"></i>
+                    <select id="sortSelect">
+                        <option value="newest">🕒 최신 등록순</option>
+                        <option value="oldest">⏳ 오래된순</option>
+                        <option value="max_capacity">👥 인원 많은순</option>
+                        <option value="min_capacity">👤 인원 적은순</option>
+                        <option value="closing_soon">⚡ 마감 임박순</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="filter-action-row">
+                <button class="btn btn-secondary reset-btn-clean" id="resetFiltersBtn">
+                    <i class="fa-solid fa-rotate-right"></i> 필터 초기화
+                </button>
+            </div>
+        </section>
+
+        <!-- Category Targeted Affiliate Ad Banner -->
+        <div class="ad-banner-panel glass-panel" id="adBannerPanel">
+            <div class="ad-badge"><i class="fa-solid fa-bag-shopping"></i> 카테고리 맞춤 파트너스 추천</div>
+            <div class="ad-content" id="adContent">
+                <!-- Dynamically populated -->
+            </div>
+            <div class="ftc-legal-notice">
+                <i class="fa-solid fa-scale-balanced"></i> ※ 본 배너/링크는 쿠팡 파트너스 및 제휴 마케팅 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받을 수 있습니다.
+            </div>
+        </div>
+
+        <!-- Feed Posts Grid -->
+        <section class="posts-section">
+            <div class="posts-grid" id="postsGrid">
+                <!-- Dynamic cards rendered by JS -->
+            </div>
+
+            <div class="empty-state hidden" id="emptyState">
+                <i class="fa-solid fa-compass-drafting empty-icon"></i>
+                <h3>조회 조건에 해당하는 게시글이 없습니다.</h3>
+                <p>필터를 변경하거나 내가 직접 새 버디 모집글, 강사 클래스 또는 중고 장비를 등록해 보세요!</p>
+                <button class="btn btn-primary" onclick="document.getElementById('openCreateModalBtn').click()">
+                    <i class="fa-solid fa-plus"></i> 새 글 작성하기
+                </button>
+            </div>
+        </section>
+
+        <!-- Ocean Weather Widget Section -->
+        <section class="weather-section" id="weather-section">
+            <div class="section-title">
+                <h2><i class="fa-solid fa-water"></i> 전국 주요 해양 포인트 실시간 기상 & 물때표 (Tide Table)</h2>
+                <p>동해·남해·제주 바다 다이빙 및 바다수영 전 필수 체크! 수온, 파고, 풍속 및 만조/간조 시각</p>
+            </div>
+
+            <div class="weather-grid" id="weatherGrid">
+                <!-- Dynamically rendered -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal 1: Contextual Create & Edit Post Modal -->
+    <div class="modal-overlay hidden" id="createModal">
+        <div class="modal-container glass-panel">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-pen-to-square"></i> <span id="modalFormTitle">새 글 작성</span></h2>
+                <button class="close-btn" id="closeCreateModalBtn">&times;</button>
+            </div>
+            <form id="createPostForm">
+                <div class="form-group" id="postCategoryGroup">
+                    <label for="postCategory">작성 카테고리 *</label>
+                    <select id="postCategory" required>
+                        <!-- Options dynamically updated -->
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="postTitle" id="labelTitle">글 제목 *</label>
+                    <input type="text" id="postTitle" placeholder="제목을 입력해 주세요!" required>
+                </div>
+
+                <!-- Instructor Class Specific Form Fields (With License Code Input) -->
+                <div id="instructorFormFields" style="display: none;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="instructorOrg"><i class="fa-solid fa-certificate"></i> 강사 자격 발급 단체 *</label>
+                            <select id="instructorOrg">
+                                <option value="AIDA" selected>AIDA (국제 프리다이빙 협회)</option>
+                                <option value="PADI">PADI (국제 스쿠버다이빙)</option>
+                                <option value="SSI">SSI (Scuba Schools International)</option>
+                                <option value="KUA">KUA (대한수중핀수영협회)</option>
+                                <option value="체육지도자">생활체육 지도자 (수영)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="instructorLicenseCode"><i class="fa-solid fa-id-card"></i> 🎓 강사 라이선스 코드 번호 *</label>
+                            <input type="text" id="instructorLicenseCode" placeholder="예: AIDA-IN-98472 / PADI-MSDT-38102" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="classType"><i class="fa-solid fa-graduation-cap"></i> 강습 코스 유형 *</label>
+                            <select id="classType">
+                                <option value="🤿 1일 원데이 체험 강습">🤿 1일 원데이 체험 강습 (입문)</option>
+                                <option value="📜 자격증 코스 정규반">📜 자격증 라이선스 코스 (AIDA/PADI)</option>
+                                <option value="⚡ 1:1 교정 클리닉">⚡ 1:1 이퀄라이징/핀킥 원포인트 교정</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="classRatio"><i class="fa-solid fa-users"></i> 강습 인원 비율 *</label>
+                            <select id="classRatio">
+                                <option value="1:1 개인밀착 강습">1:1 개인 밀착 레슨</option>
+                                <option value="1:2 소수정예 강습" selected>1:2 소수 정예 강습</option>
+                                <option value="1:3 소수그룹 강습">1:3 소수 그룹 강습</option>
+                                <option value="1:4 단체 강습">1:4 소규모 단체 강습</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="classFee">수강료 (원, 1인 기준 숫자만 입력) *</label>
+                            <input type="number" id="classFee" placeholder="예: 60000 (6만원)" onkeydown="return event.keyCode !== 69 && event.keyCode !== 189" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                        </div>
+                        <div class="form-group">
+                            <label for="classInclusion">포함 / 미포함 사항 *</label>
+                            <input type="text" id="classInclusion" placeholder="예: 풀장 입장료 포함, 장비 렌탈비 별도">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Market Price & Deal Method Row -->
+                <div class="form-row" id="marketPriceRow" style="display: none;">
+                    <div class="form-group">
+                        <label for="postPrice">중고 거래 가격 (원, 숫자만 입력) *</label>
+                        <input type="number" id="postPrice" placeholder="예: 240000" onkeydown="return event.keyCode !== 69 && event.keyCode !== 189" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                    </div>
+                    <div class="form-group" id="dealMethodGroup">
+                        <label for="postDealMethod"><i class="fa-solid fa-handshake"></i> 거래 방법 *</label>
+                        <select id="postDealMethod">
+                            <option value="직거래" selected>🤝 직거래 (만나서 거래)</option>
+                            <option value="택배거래">📦 택배 거래 (우체국/택배)</option>
+                            <option value="직거래/택배 둘 다 가능">🤝📦 직거래 / 택배 둘 다 가능</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Capacity Row for Buddy Requests -->
+                <div class="form-group" id="capacityGroup">
+                    <label for="postCapacity"><i class="fa-solid fa-users"></i> 모집 인원 현황 (작성자 포함 총 2명 ~ 4명) *</label>
+                    <select id="postCapacity">
+                        <option value="2">작성자 포함 총 2명 (추가 1명 모집)</option>
+                        <option value="3">작성자 포함 총 3명 (추가 2명 모집)</option>
+                        <option value="4" selected>작성자 포함 총 4명 (추가 3명 모집 - 최대인원)</option>
+                    </select>
+                </div>
+
+                <!-- 4-Image File Upload -->
+                <div class="form-group" id="imageUploadGroup">
+                    <label id="imageUploadLabel"><i class="fa-solid fa-images"></i> 📸 사진 등록 (최대 4장, 클릭 시 대형 미리보기)</label>
+                    <input type="file" id="postImagesInput" accept="image/*" multiple style="padding: 8px;">
+                    <div class="image-preview-grid" id="imagePreviewGrid"></div>
+                    <small style="color: var(--text-muted); font-size: 0.78rem;">* 업로드되는 사진은 브라우저에서 80KB 이하로 자동 압축 저장됩니다.</small>
+                </div>
+
+                <div class="form-row" id="locationDateGroup">
+                    <select id="postLocation" style="display: none;">
+                        <option value="K26" selected>K26/해양포인트</option>
+                    </select>
+                    <div class="form-group" id="postDateGroup" style="grid-column: span 2;">
+                        <label for="postDate" id="labelDate">진행 일정 *</label>
+                        <input type="datetime-local" id="postDate">
+                    </div>
+                </div>
+
+                <div class="form-group" id="mapAddressGroup">
+                    <label for="postMapAddress" id="mapAddressLabel"><i class="fa-solid fa-map-location-dot"></i> 지도 핀 주소 또는 핀 장소명 *</label>
+                    <input type="text" id="postMapAddress" placeholder="예: 용인 딥스테이션 / 가평 K26 잠수풀 / 포항 영일대 해수욕장">
+                </div>
+
+                <!-- Password Protection Field for Editing -->
+                <div class="form-group" id="passwordGroup">
+                    <label for="postPassword"><i class="fa-solid fa-key"></i> 🔑 게시글 비밀번호 (숫자 4자리, 본인 수정/삭제용) *</label>
+                    <input type="password" id="postPassword" maxlength="4" pattern="[0-9]{4}" placeholder="비밀번호 4자리 (예: 1234)" required>
+                </div>
+
+                <!-- User Info Group (Hidden in Form) -->
+                <div class="form-row" id="userInfoGroup" style="display: none;">
+                    <input type="text" id="userName">
+                    <input type="text" id="userLicense">
+                </div>
+
+                <div class="form-group">
+                    <label for="postDesc" id="descLabel">상세 내용 및 커리큘럼 *</label>
+                    <textarea id="postDesc" rows="4" placeholder="상세 내용 및 커리큘럼을 작성해 주세요!" required></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancelCreateBtn">취소</button>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> <span id="submitBtnText">등록하기</span></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 2: Social Login & Instructor Registration Modal -->
+    <div class="modal-overlay hidden" id="authModal">
+        <div class="modal-container glass-panel" style="max-width: 480px; text-align: center;">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-user-shield"></i> 소셜 로그인 & 강사 라이선스 인증</h2>
+                <button class="close-btn" id="closeAuthModalBtn">&times;</button>
+            </div>
+            
+            <div style="padding: 10px 0 20px;">
+                <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 16px;">
+                    소셜 로그인 및 공인 강사 라이선스 코드를 등록하면 인증 뱃지가 발급됩니다.
+                </p>
+
+                <div class="form-group" style="text-align: left; margin-bottom: 14px;">
+                    <label for="socialNicknameInput"><i class="fa-solid fa-user"></i> AquaBuddy 고정 닉네임 *</label>
+                    <input type="text" id="socialNicknameInput" placeholder="예: 포항딥다이버" value="바다마스터">
+                </div>
+
+                <div class="form-group" style="text-align: left; margin-bottom: 14px;">
+                    <label for="socialLicenseInput"><i class="fa-solid fa-certificate"></i> 대표 자격증 / 수영 경력 *</label>
+                    <input type="text" id="socialLicenseInput" placeholder="예: AIDA 3 / PADI Advanced / 공인 강사" value="AIDA 3 / 레스큐 소지">
+                </div>
+
+                <!-- Optional Instructor Code Field in Auth Modal -->
+                <div class="form-group" style="text-align: left; margin-bottom: 20px;">
+                    <label for="socialInstructorCodeInput" style="color: var(--accent-gold);"><i class="fa-solid fa-id-card"></i> 🎓 강사 공인 라이선스 코드 (선택 등록)</label>
+                    <input type="text" id="socialInstructorCodeInput" placeholder="예: AIDA-IN-98472 (입력 시 공인강사 뱃지 발급)">
+                </div>
+
+                <div class="social-login-group">
+                    <button class="social-btn kakao" onclick="loginWithSocial('카카오톡', 'K')">
+                        <i class="fa-solid fa-comment"></i> 카카오톡 1초 로그인
+                    </button>
+                    <button class="social-btn google" onclick="loginWithSocial('Google', 'G')">
+                        <i class="fa-brands fa-google"></i> Google 계정으로 로그인
+                    </button>
+                    <button class="social-btn naver" onclick="loginWithSocial('네이버', 'N')">
+                        <i class="fa-solid fa-N"></i> 네이버 계정으로 로그인
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 3: Upgraded Modern Glassmorphism Chat Room Modal -->
+    <div class="modal-overlay hidden" id="chatModal">
+        <div class="modal-container glass-panel modal-lg chat-modal-container">
+            <div class="chat-header">
+                <div class="chat-user-badge">
+                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                        <h3 id="chatBuddyName" style="font-size: 1.15rem; font-weight: 800;">버디 대화방</h3>
+                        <span id="chatRoleBadge" class="chat-role-tag host-tag">👑 모임 주최자 대화방</span>
+                        <span id="chatUnreadBadge" class="unread-badge hidden">🔴 새 메시지 0</span>
+                    </div>
+                    <span class="chat-status-indicator" id="chatPostTitle" style="display: block; margin-top: 4px; font-size: 0.82rem; color: var(--text-muted);">
+                        상대방 다이버와 실시간 대화 중
+                    </span>
+                </div>
+                <button class="close-btn" id="closeChatModalBtn">&times;</button>
+            </div>
+
+            <!-- 4-Person Group Chat Member Profile Bar -->
+            <div class="chat-members-bar" id="chatMembersBar"></div>
+
+            <!-- Host Quick Actions Toolbar Inside Chat -->
+            <div class="chat-quick-toolbar" id="chatHostQuickToolbar" style="display: none;">
+                <span style="font-size: 0.78rem; color: var(--accent-gold); font-weight: 700;">👑 주최자 대화방 관리:</span>
+                <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                    <button type="button" class="btn btn-secondary" onclick="confirmBuddyMatchFromChat()" style="padding: 4px 10px; font-size: 0.75rem; background: rgba(0,242,254,0.15); color: var(--accent-cyan);">
+                        ⚡ 참가자 확정
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="finishScheduleFromChat()" style="padding: 4px 10px; font-size: 0.75rem;">
+                        ⚡ 일정 완료
+                    </button>
+                </div>
+            </div>
+
+            <!-- Chat Stream -->
+            <div class="chat-messages" id="chatMessagesStream"></div>
+
+            <!-- Chat Input Form -->
+            <form class="chat-input-area" id="chatForm">
+                <input type="text" id="chatMessageInput" placeholder="채팅 메시지를 입력하세요... (엔터 전송)" required autocomplete="off">
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> 전송</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 4: Host Trust Rating Modal -->
+    <div class="modal-overlay hidden" id="ratingModal">
+        <div class="modal-container glass-panel" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-star" style="color: var(--accent-gold);"></i> <span id="ratingModalHeaderTitle">버디 평점 & 매너 평가</span></h2>
+                <button class="close-btn" id="closeRatingModalBtn">&times;</button>
+            </div>
+
+            <div style="text-align: center; margin-bottom: 20px;">
+                <p style="font-size: 0.9rem; color: var(--text-muted);" id="ratingHostTarget">상대방 다이버의 활동 매너를 평가해 주세요.</p>
+                <div class="star-rating-select" id="starRatingSelect">
+                    <span class="star-icon selected" data-score="1">★</span>
+                    <span class="star-icon selected" data-score="2">★</span>
+                    <span class="star-icon selected" data-score="3">★</span>
+                    <span class="star-icon selected" data-score="4">★</span>
+                    <span class="star-icon selected" data-score="5">★</span>
+                </div>
+                <p style="font-size: 0.85rem; color: var(--accent-gold); font-weight: 700; margin-top: 6px;" id="starScoreText">5.0 / 5.0 (최고의 다이버! 완벽해요)</p>
+            </div>
+
+            <div class="form-group">
+                <label><i class="fa-solid fa-tags"></i> 매너 태그 선택 (다중 선택)</label>
+                <div class="manner-tags-grid">
+                    <label class="tag-checkbox"><input type="checkbox" value="매너가 좋아요 👍" checked> 매너가 좋아요 👍</label>
+                    <label class="tag-checkbox"><input type="checkbox" value="안전수칙 준수 🛡️" checked> 안전수칙 준수 🛡️</label>
+                    <label class="tag-checkbox"><input type="checkbox" value="약속시간 엄수 ⏰" checked> 약속시간 엄수 ⏰</label>
+                    <label class="tag-checkbox warning"><input type="checkbox" value="비매너/주의 ⚠️"> 비매너/주의 ⚠️</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="ratingReviewInput"><i class="fa-solid fa-comment-pen"></i> 한 줄 후기</label>
+                <input type="text" id="ratingReviewInput" placeholder="예: 매너가 매우 좋으시고 약속도 잘 지켜주셨습니다!">
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="cancelRatingBtn">취소</button>
+                <button type="button" class="btn btn-primary" onclick="submitHostRating()"><i class="fa-solid fa-check"></i> 평점 등록 완료</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 5: API Key Settings Modal -->
+    <div class="modal-overlay hidden" id="settingsModal">
+        <div class="modal-container glass-panel" style="max-width: 580px;">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-sliders"></i> API Key & 도메인 등록 정보</h2>
+                <button class="close-btn" id="closeSettingsModalBtn">&times;</button>
+            </div>
+
+            <div class="security-warning-box">
+                <p><i class="fa-solid fa-circle-check" style="color: #00e676;"></i> <strong>쿠팡 파트너스 API Tracking ID 적용 완료!</strong></p>
+                <p style="font-size: 0.83rem; margin-top: 4px; color: var(--text-main);">
+                    현재 적용된 Tracking ID: <strong style="color: var(--accent-gold);">AF9213595</strong><br>
+                    카카오 맵 JavaScript Key: <strong style="color: var(--accent-cyan);">7c316726691ea5e02f234a85f5a20bab</strong>
+                </p>
+            </div>
+
+            <div class="form-group">
+                <label for="coupangTrackingIdInput"><i class="fa-solid fa-key"></i> 쿠팡 파트너스 Tracking ID</label>
+                <input type="text" id="coupangTrackingIdInput" value="AF9213595" readonly>
+            </div>
+
+            <div class="form-group">
+                <label for="kakaoKeyInput"><i class="fa-solid fa-key"></i> 카카오 맵 JavaScript API Key</label>
+                <input type="text" id="kakaoKeyInput" value="7c316726691ea5e02f234a85f5a20bab" readonly>
+            </div>
+
+            <div class="form-group">
+                <label for="naverClientIdInput"><i class="fa-solid fa-key"></i> 네이버 개발자센터 Client ID (선택)</label>
+                <input type="text" id="naverClientIdInput" placeholder="네이버 Client ID">
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="saveSettings()">설정 저장하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 6: Post Detail View -->
+    <div class="modal-overlay hidden" id="detailModal">
+        <div class="modal-container glass-panel modal-lg">
+            <div class="modal-header">
+                <h2><span id="detailModalTitle">게시글 상세</span></h2>
+                <button class="close-btn" id="closeDetailModalBtn">&times;</button>
+            </div>
+            
+            <div class="modal-body" id="detailModalBody"></div>
+        </div>
+    </div>
+
+    <!-- Image Lightbox Modal -->
+    <div class="modal-overlay hidden" id="imageLightboxModal" style="z-index: 3000;">
+        <div class="lightbox-content">
+            <button class="close-btn lightbox-close" onclick="closeModal(document.getElementById('imageLightboxModal'))">&times;</button>
+            <img id="lightboxImage" src="" alt="대형 이미지 미리보기">
+        </div>
+    </div>
+
+    <!-- Double Confirmation Delete Modal -->
+    <div class="modal-overlay hidden" id="deleteConfirmModal" style="z-index: 3500;">
+        <div class="modal-container glass-panel" style="max-width: 440px; text-align: center;">
+            <div style="padding: 10px 0;">
+                <i class="fa-solid fa-triangle-exclamation" style="font-size: 3rem; color: #ff5252; margin-bottom: 14px;"></i>
+                <h3 style="font-size: 1.2rem; margin-bottom: 8px;">게시글을 지우시겠습니까?</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">삭제된 게시글은 복구할 수 없습니다.</p>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button class="btn btn-secondary" onclick="closeModal(document.getElementById('deleteConfirmModal'))">No (아니오, 취소)</button>
+                    <button class="btn btn-primary" id="confirmDeleteFinalBtn" style="background: linear-gradient(135deg, #ff5252, #ff1744); color: #fff;">Yes (예, 삭제합니다)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Bottom Footer Ad Banner -->
+    <section class="bottom-footer-ad container">
+        <div class="glass-panel bottom-ad-content">
+            <div class="bottom-ad-info">
+                <span class="ad-tag">AD Partner</span>
+                <h4>🤿 AquaBuddy X 파트너스 추천 수중 다이빙 용품</h4>
+                <p>프리다이빙 롱핀, 다이빙 컴퓨터, 오리발 수경 최저가 기획전</p>
+            </div>
+            <a href="https://link.coupang.com" target="_blank" class="btn btn-primary">쿠팡 파트너스 보러가기 ➔</a>
+        </div>
+        <div class="ftc-legal-footer">
+            <i class="fa-solid fa-scale-balanced"></i> ※ 본 서비스의 광고 배너 및 링크는 쿠팡 파트너스 및 제휴 마케팅 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받을 수 있습니다.
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container footer-content">
+            <div class="footer-brand">
+                <h3><i class="fa-solid fa-water-ladder"></i> AquaBuddy Platform MVP v23.0</h3>
+                <p>수영 · 다이빙 · 바다수영 · 🎓 라이선스 인증 강사 클래스 · 자유수다방 · 중고장터 · 내 활동기록</p>
+            </div>
+            <div class="footer-links">
+                <p>&copy; 2026 AquaBuddy Platform. All rights reserved. Always Swim & Dive With A Buddy!</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- App Configuration & Main Logic Script -->
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
