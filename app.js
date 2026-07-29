@@ -987,12 +987,15 @@ function switchMainView(viewName) {
         if (tideSec) tideSec.classList.add("hidden");
         if (cctvSec) cctvSec.classList.add("hidden");
 
-        if (activeCategory === "instructor" && navInstructor) navInstructor.classList.add("active");
-        else if (activeCategory === "community" && navCommunity) navCommunity.classList.add("active");
-        else if (activeCategory === "market" && navMarket) navMarket.classList.add("active");
-        else if (activeCategory === "activity_log" && navActivity) navActivity.classList.add("active");
-        else if (navFeed) navFeed.classList.add("active");
+        if (activeCategory === "all" || activeCategory === "home") {
+            activeCategory = "freediving";
+        }
+        tabBtns.forEach(b => {
+            if (b.dataset.category === activeCategory) b.classList.add("active");
+            else b.classList.remove("active");
+        });
 
+        updateTopNavbarActive(activeCategory);
         filterAndRender();
     } else if (viewName === "tide") {
         if (feedSec) feedSec.classList.add("hidden");
@@ -1028,7 +1031,6 @@ document.addEventListener("DOMContentLoaded", () => {
     loadMyPosts();
     loadInquiries();
     initEventListeners();
-    initStarRatingEvents();
     switchMainView('home');
     renderWeatherGrid(activeTideRegion);
     renderOceanWebcams(activeCctvRegion);
@@ -1676,16 +1678,16 @@ function initEventListeners() {
         });
     }
 
-    openAuthModalBtn.addEventListener("click", () => openModal(authModal));
-    closeAuthModalBtn.addEventListener("click", () => closeModal(authModal));
+    if (openAuthModalBtn) openAuthModalBtn.addEventListener("click", () => openModal(authModal));
+    if (closeAuthModalBtn) closeAuthModalBtn.addEventListener("click", () => closeModal(authModal));
 
-    closeChatModalBtn.addEventListener("click", () => closeModal(chatModal));
-    chatForm.addEventListener("submit", handleSendChatMessage);
+    if (closeChatModalBtn) closeChatModalBtn.addEventListener("click", () => closeModal(chatModal));
+    if (chatForm) chatForm.addEventListener("submit", handleSendChatMessage);
 
-    closeRatingModalBtn.addEventListener("click", () => closeModal(ratingModal));
-    cancelRatingBtn.addEventListener("click", () => closeModal(ratingModal));
+    if (closeRatingModalBtn) closeRatingModalBtn.addEventListener("click", () => closeModal(ratingModal));
+    if (cancelRatingBtn) cancelRatingBtn.addEventListener("click", () => closeModal(ratingModal));
 
-    closeDetailModalBtn.addEventListener("click", () => closeModal(detailModal));
+    if (closeDetailModalBtn) closeDetailModalBtn.addEventListener("click", () => closeModal(detailModal));
 
     if (confirmDeleteFinalBtn) {
         confirmDeleteFinalBtn.addEventListener("click", () => {
@@ -2143,6 +2145,12 @@ function filterByCategory(catName) {
         if (tideSec) tideSec.classList.add("hidden");
         if (cctvSec) cctvSec.classList.add("hidden");
     }
+
+    tabBtns.forEach(b => {
+        if (b.dataset.category === catName) b.classList.add("active");
+        else b.classList.remove("active");
+    });
+
     updateTopNavbarActive(catName);
     updateCreateButtonText(catName);
     renderAdBanner();
@@ -2265,9 +2273,9 @@ function renderDashboardBlocks() {
                     <i class="fa-solid fa-fire" style="color: #ff5252;"></i>
                     <span>🔥 실시간 인기 버디 모집</span>
                 </div>
-                <a href="javascript:void(0)" class="block-more-btn" onclick="filterByCategory('freediving')">
+                <button type="button" class="block-more-btn" onclick="filterByCategory('freediving')">
                     버디탐색 바로가기 ➔
-                </a>
+                </button>
             </div>
             <div class="compact-post-table">
                 ${buddyPosts.map(p => renderCompactPostRow(p)).join("")}
@@ -2281,9 +2289,9 @@ function renderDashboardBlocks() {
                     <i class="fa-solid fa-graduation-cap" style="color: var(--accent-gold);"></i>
                     <span>🎓 검증된 인기 강사 클래스 (체험/자격증)</span>
                 </div>
-                <a href="javascript:void(0)" class="block-more-btn" onclick="filterByCategory('instructor')">
+                <button type="button" class="block-more-btn" onclick="filterByCategory('instructor')">
                     강사클래스 바로가기 ➔
-                </a>
+                </button>
             </div>
             <div class="compact-post-table">
                 ${instPosts.map(p => renderCompactPostRow(p)).join("")}
@@ -2297,9 +2305,9 @@ function renderDashboardBlocks() {
                     <i class="fa-solid fa-comments" style="color: var(--accent-cyan);"></i>
                     <span>💬 실시간 자유수다방 핫이슈</span>
                 </div>
-                <a href="javascript:void(0)" class="block-more-btn" onclick="filterByCategory('community')">
+                <button type="button" class="block-more-btn" onclick="filterByCategory('community')">
                     자유수다방 바로가기 ➔
-                </a>
+                </button>
             </div>
             <div class="compact-post-table">
                 ${commPosts.map(p => renderCompactPostRow(p)).join("")}
@@ -2313,9 +2321,9 @@ function renderDashboardBlocks() {
                     <i class="fa-solid fa-tags" style="color: #00e676;"></i>
                     <span>🏷️ 최근 등록된 중고장터 꿀매물</span>
                 </div>
-                <a href="javascript:void(0)" class="block-more-btn" onclick="filterByCategory('market')">
+                <button type="button" class="block-more-btn" onclick="filterByCategory('market')">
                     중고장터 바로가기 ➔
-                </a>
+                </button>
             </div>
             <div class="compact-post-table">
                 ${marketPosts.map(p => renderCompactPostRow(p)).join("")}
