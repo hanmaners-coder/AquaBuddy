@@ -70,7 +70,7 @@
     <header class="navbar">
         <div class="nav-container-top container">
             <!-- Brand Logo -->
-            <a href="javascript:void(0)" class="logo" onclick="switchMainView('home');">
+            <a href="#" class="logo" onclick="switchMainView('home'); return false;">
                 <i class="fa-solid fa-water-ladder logo-icon"></i>
                 <span class="logo-text">Aqua<span class="logo-accent">Buddy</span></span>
             </a>
@@ -102,28 +102,28 @@
         <!-- Tier 2: Enhanced High-Contrast Category Links -->
         <div class="nav-sub-menu container">
             <nav class="nav-links-grid">
-                <a href="javascript:void(0)" class="nav-item active" id="navLinkHome" onclick="switchMainView('home');">
+                <a href="#" class="nav-item active" id="navLinkHome" onclick="switchMainView('home'); return false;">
                     <i class="fa-solid fa-house"></i> 홈
                 </a>
-                <a href="javascript:void(0)" class="nav-item" id="navLinkFeed" onclick="switchMainView('feed'); filterByCategory('freediving');">
+                <a href="#" class="nav-item" id="navLinkFeed" onclick="switchMainView('feed'); filterByCategory('freediving'); return false;">
                     <i class="fa-solid fa-compass"></i> 버디 탐색
                 </a>
-                <a href="javascript:void(0)" class="nav-item nav-item-gold" id="navLinkInstructor" onclick="switchMainView('feed'); filterByCategory('instructor');">
+                <a href="#" class="nav-item nav-item-gold" id="navLinkInstructor" onclick="switchMainView('feed'); filterByCategory('instructor'); return false;">
                     <i class="fa-solid fa-graduation-cap"></i> 강사 클래스
                 </a>
-                <a href="javascript:void(0)" class="nav-item" id="navLinkCommunity" onclick="switchMainView('feed'); filterByCategory('community');">
+                <a href="#" class="nav-item" id="navLinkCommunity" onclick="switchMainView('feed'); filterByCategory('community'); return false;">
                     <i class="fa-solid fa-comments"></i> 자유수다방
                 </a>
-                <a href="javascript:void(0)" class="nav-item" id="navLinkMarket" onclick="switchMainView('feed'); filterByCategory('market');">
+                <a href="#" class="nav-item" id="navLinkMarket" onclick="switchMainView('feed'); filterByCategory('market'); return false;">
                     <i class="fa-solid fa-tags"></i> 중고장터
                 </a>
-                <a href="javascript:void(0)" class="nav-item" id="navLinkActivity" onclick="switchMainView('feed'); filterByCategory('activity_log');">
+                <a href="#" class="nav-item" id="navLinkActivity" onclick="switchMainView('feed'); filterByCategory('activity_log'); return false;">
                     <i class="fa-solid fa-clipboard-list"></i> 내 활동기록
                 </a>
-                <a href="javascript:void(0)" class="nav-item" id="navLinkTide" onclick="switchMainView('tide');">
+                <a href="#" class="nav-item" id="navLinkTide" onclick="switchMainView('tide'); return false;">
                     <i class="fa-solid fa-water"></i> 전국 실시간 물때표
                 </a>
-                <a href="javascript:void(0)" class="nav-item" id="navLinkCctv" onclick="switchMainView('cctv');">
+                <a href="#" class="nav-item" id="navLinkCctv" onclick="switchMainView('cctv'); return false;">
                     <i class="fa-solid fa-video"></i> 전국 해양 CCTV
                 </a>
             </nav>
@@ -1173,11 +1173,11 @@
                 
                 <div style="display: flex; gap: 14px; align-items: center;">
                     <!-- Single Consolidated Customer Center Button -->
-                    <a href="javascript:void(0)" onclick="openInquiryModal('general')" style="color: var(--accent-gold); text-decoration: none; font-weight: 800; background: rgba(255, 183, 3, 0.12); padding: 4px 12px; border-radius: 14px; border: 1px dashed var(--accent-gold); font-size: 0.8rem;">
+                    <a href="#" onclick="openInquiryModal('general'); return false;" style="color: var(--accent-gold); text-decoration: none; font-weight: 800; background: rgba(255, 183, 3, 0.12); padding: 4px 12px; border-radius: 14px; border: 1px dashed var(--accent-gold); font-size: 0.8rem;">
                         💌 통합 고객센터 / 제휴·건의 문의 ➔
                     </a>
 
-                    <a href="javascript:void(0)" onclick="openAdminSecurityCheck()" style="color: var(--text-dim); text-decoration: none; opacity: 0.6; font-size: 0.75rem;">
+                    <a href="#" onclick="openAdminSecurityCheck(); return false;" style="color: var(--text-dim); text-decoration: none; opacity: 0.6; font-size: 0.75rem;">
                         <i class="fa-solid fa-lock"></i> Webmaster Access
                     </a>
                 </div>
