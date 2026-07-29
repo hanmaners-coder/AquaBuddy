@@ -316,6 +316,9 @@ body {
     white-space: nowrap;
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.08);
+    cursor: pointer;
+    font-family: inherit;
+    outline: none;
     transition: all 0.2s ease;
 }
 

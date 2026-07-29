@@ -70,15 +70,15 @@
     <header class="navbar">
         <div class="nav-container-top container">
             <!-- Brand Logo -->
-            <a href="#" class="logo" onclick="switchMainView('home'); return false;">
+            <button type="button" class="logo" onclick="switchMainView('home')" style="background: none; border: none; cursor: pointer; padding: 0;">
                 <i class="fa-solid fa-water-ladder logo-icon"></i>
                 <span class="logo-text">Aqua<span class="logo-accent">Buddy</span></span>
-            </a>
+            </button>
 
             <!-- Right Quick Actions (Guaranteed Mobile Fit for '+ 버디모집하기') -->
             <div class="nav-actions">
                 <!-- Dedicated Instructor Certification Button -->
-                <button class="btn btn-secondary nav-inst-btn" onclick="openInstructorAuthModal()" title="강사이신가요? 1초 강사 인증 신청">
+                <button type="button" class="btn btn-secondary nav-inst-btn" onclick="openInstructorAuthModal()" title="강사이신가요? 1초 강사 인증 신청">
                     <i class="fa-solid fa-graduation-cap"></i> 강사인증
                 </button>
 
@@ -88,12 +88,12 @@
                     <span id="navUserName">다이버</span>
                 </div>
 
-                <button class="btn btn-primary nav-login-btn" id="openAuthModalBtn">
+                <button type="button" class="btn btn-primary nav-login-btn" id="openAuthModalBtn">
                     <i class="fa-solid fa-right-to-bracket"></i> 로그인 / 회원가입
                 </button>
 
                 <!-- Restored Eye-Catching Vibrant Create Button (Always Visible!) -->
-                <button class="btn btn-vibrant-action" id="openCreateModalBtn">
+                <button type="button" class="btn btn-vibrant-action" id="openCreateModalBtn">
                     <i class="fa-solid fa-plus-circle"></i> <span id="createBtnText">버디 모집하기</span>
                 </button>
             </div>
@@ -102,30 +102,30 @@
         <!-- Tier 2: Enhanced High-Contrast Category Links -->
         <div class="nav-sub-menu container">
             <nav class="nav-links-grid">
-                <a href="#" class="nav-item active" id="navLinkHome" onclick="switchMainView('home'); return false;">
+                <button type="button" class="nav-item active" id="navLinkHome" onclick="switchMainView('home')">
                     <i class="fa-solid fa-house"></i> 홈
-                </a>
-                <a href="#" class="nav-item" id="navLinkFeed" onclick="switchMainView('feed'); filterByCategory('freediving'); return false;">
+                </button>
+                <button type="button" class="nav-item" id="navLinkFeed" onclick="switchMainView('feed'); filterByCategory('freediving');">
                     <i class="fa-solid fa-compass"></i> 버디 탐색
-                </a>
-                <a href="#" class="nav-item nav-item-gold" id="navLinkInstructor" onclick="switchMainView('feed'); filterByCategory('instructor'); return false;">
+                </button>
+                <button type="button" class="nav-item nav-item-gold" id="navLinkInstructor" onclick="switchMainView('feed'); filterByCategory('instructor');">
                     <i class="fa-solid fa-graduation-cap"></i> 강사 클래스
-                </a>
-                <a href="#" class="nav-item" id="navLinkCommunity" onclick="switchMainView('feed'); filterByCategory('community'); return false;">
+                </button>
+                <button type="button" class="nav-item" id="navLinkCommunity" onclick="switchMainView('feed'); filterByCategory('community');">
                     <i class="fa-solid fa-comments"></i> 자유수다방
-                </a>
-                <a href="#" class="nav-item" id="navLinkMarket" onclick="switchMainView('feed'); filterByCategory('market'); return false;">
+                </button>
+                <button type="button" class="nav-item" id="navLinkMarket" onclick="switchMainView('feed'); filterByCategory('market');">
                     <i class="fa-solid fa-tags"></i> 중고장터
-                </a>
-                <a href="#" class="nav-item" id="navLinkActivity" onclick="switchMainView('feed'); filterByCategory('activity_log'); return false;">
+                </button>
+                <button type="button" class="nav-item" id="navLinkActivity" onclick="switchMainView('feed'); filterByCategory('activity_log');">
                     <i class="fa-solid fa-clipboard-list"></i> 내 활동기록
-                </a>
-                <a href="#" class="nav-item" id="navLinkTide" onclick="switchMainView('tide'); return false;">
+                </button>
+                <button type="button" class="nav-item" id="navLinkTide" onclick="switchMainView('tide')">
                     <i class="fa-solid fa-water"></i> 전국 실시간 물때표
-                </a>
-                <a href="#" class="nav-item" id="navLinkCctv" onclick="switchMainView('cctv'); return false;">
+                </button>
+                <button type="button" class="nav-item" id="navLinkCctv" onclick="switchMainView('cctv')">
                     <i class="fa-solid fa-video"></i> 전국 해양 CCTV
-                </a>
+                </button>
             </nav>
         </div>
     </header>
