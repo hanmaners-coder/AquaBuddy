@@ -1677,3 +1677,68 @@ body.category-view-active .hero-section {
     gap: 16px;
     width: 100%;
 }
+
+/* Redesigned Sleek Premium Auth Modal Tabs & Kakao Button */
+.auth-switch-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 16px;
+    background: rgba(0, 0, 0, 0.45);
+    padding: 4px;
+    border-radius: 12px;
+    border: 1px solid var(--glass-border);
+}
+
+.auth-tab-btn {
+    flex: 1;
+    padding: 10px 14px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    font-weight: 700;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.auth-tab-btn:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.auth-tab-btn.active {
+    background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+    color: #000;
+    font-weight: 800;
+    box-shadow: 0 4px 12px rgba(0, 242, 254, 0.25);
+}
+
+.social-login-group {
+    width: 100%;
+    margin-top: 10px;
+}
+
+.social-btn.kakao {
+    width: 100%;
+    padding: 13px 18px;
+    background: #FEE500;
+    color: #191919;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(254, 229, 0, 0.3);
+    transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.social-btn.kakao:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.05);
+}
