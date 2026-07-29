@@ -1167,20 +1167,11 @@ function initUserIdentity() {
     if (savedUser) {
         try {
             currentUser = JSON.parse(savedUser);
-        } catch(e) {}
-    }
-
-    if (!currentUser) {
-        const randomId = Math.floor(1000 + Math.random() * 9000);
-        currentUser = {
-            name: `다이버_${randomId}`,
-            license: "프리다이버 / 수영 다이버",
-            instructorCode: "",
-            certImage: "",
-            provider: "손님",
-            avatar: "D"
-        };
-        localStorage.setItem("aqua_buddy_user_identity", JSON.stringify(currentUser));
+        } catch(e) {
+            currentUser = null;
+        }
+    } else {
+        currentUser = null;
     }
 
     updateNavbarUserUI();
@@ -1190,10 +1181,11 @@ function updateNavbarUserUI() {
     const userNav = document.getElementById("userProfileNav");
     const openAuthBtn = document.getElementById("openAuthModalBtn");
 
-    if (currentUser) {
-        userNav.classList.remove("hidden");
+    if (currentUser && currentUser.name) {
+        if (userNav) userNav.classList.remove("hidden");
         const instBadge = currentUser.instructorCode ? ` [인증강사]` : '';
-        document.getElementById("navUserName").textContent = `${currentUser.name}${instBadge}`;
+        const navName = document.getElementById("navUserName");
+        if (navName) navName.textContent = `${currentUser.name}${instBadge}`;
         if (openAuthBtn) openAuthBtn.classList.add("hidden");
     } else {
         if (userNav) userNav.classList.add("hidden");
@@ -1208,6 +1200,11 @@ function isVerifiedInstructor() {
 }
 
 function openInstructorAuthModal() {
+    if (!currentUser) {
+        showToast("🔑 로그인 / 회원가입 후 강사 인증을 이용하실 수 있습니다!");
+        openModal(authModal);
+        return;
+    }
     openModal(document.getElementById("instructorAuthModal"));
 }
 
@@ -1358,8 +1355,8 @@ function handleUpdateProfile(e) {
 function handleLogout() {
     localStorage.removeItem("aqua_buddy_user_identity");
     currentUser = null;
+    updateNavbarUserUI();
 
-    initUserIdentity();
     closeModal(document.getElementById("myProfileModal"));
     filterAndRender();
     showToast("👋 성공적으로 로그아웃되었습니다.");
@@ -1418,64 +1415,64 @@ function loginWithKakaoOAuth() {
     const nickInput = document.getElementById("socialNicknameInput").value.trim() || "카카오다이버";
     const licInput = document.getElementById("socialLicenseInput").value.trim() || "AIDA 3 / 수영 다이버";
 
-    if (window.Kakao && window.Kakao.isInitialized() && window.Kakao.Auth) {
-        try {
-            window.Kakao.Auth.login({
-                success: function(authObj) {
-                    window.Kakao.API.request({
-                        url: '/v2/user/me',
-                        success: function(res) {
-                            const kakaoNick = (res.kakao_account && res.kakao_account.profile) ? res.kakao_account.profile.nickname : nickInput;
-                            currentUser = {
-                                name: kakaoNick || nickInput,
-                                license: licInput,
-                                instructorCode: "",
-                                provider: "카카오톡",
-                                avatar: "K",
-                                kakaoId: res.id
-                            };
+    initKakaoSdk();
 
-                            localStorage.setItem("aqua_buddy_user_identity", JSON.stringify(currentUser));
-                            updateNavbarUserUI();
+    if (window.Kakao) {
+        if (!window.Kakao.isInitialized()) {
+            try {
+                window.Kakao.init(KAKAO_APP_KEY);
+            } catch (e) {
+                console.log("Kakao SDK Re-init notice:", e);
+            }
+        }
 
-                            closeModal(authModal);
-                            filterAndRender();
-                            showToast(`🎉 ${kakaoNick}님, 카카오톡 1초 로그인에 성공했습니다!`);
-                        },
-                        fail: function(error) {
-                            fallbackKakaoLogin(nickInput, licInput);
-                        }
-                    });
-                },
-                fail: function(err) {
-                    fallbackKakaoLogin(nickInput, licInput);
-                }
-            });
-            return;
-        } catch (e) {
-            fallbackKakaoLogin(nickInput, licInput);
-            return;
+        if (window.Kakao.Auth) {
+            try {
+                window.Kakao.Auth.login({
+                    prompt: 'login',
+                    success: function(authObj) {
+                        window.Kakao.API.request({
+                            url: '/v2/user/me',
+                            success: function(res) {
+                                const kakaoNick = (res.kakao_account && res.kakao_account.profile && res.kakao_account.profile.nickname) 
+                                    ? res.kakao_account.profile.nickname 
+                                    : nickInput;
+
+                                currentUser = {
+                                    name: kakaoNick,
+                                    license: licInput,
+                                    instructorCode: "",
+                                    provider: "카카오톡 정식인증",
+                                    avatar: "K",
+                                    kakaoId: res.id
+                                };
+
+                                localStorage.setItem("aqua_buddy_user_identity", JSON.stringify(currentUser));
+                                updateNavbarUserUI();
+
+                                closeModal(authModal);
+                                filterAndRender();
+                                showToast(`🎉 ${kakaoNick}님, 카카오톡 공식 인증 로그인에 성공했습니다!`);
+                            },
+                            fail: function(error) {
+                                showToast("⚠️ 카카오 회원정보 연동 안내: 카카오 디벨로퍼스 동의 항목 설정을 확인해 주세요.");
+                            }
+                        });
+                    },
+                    fail: function(err) {
+                        const detailErr = (err && (err.error_description || err.error)) ? `: ${err.error_description || err.error}` : '';
+                        showToast(`⚠️ 카카오 로그인 안내: 카카오 디벨로퍼스(developers.kakao.com) 웹 도메인(https://aqua-buddy-nu.vercel.app) 등록을 완료해 주세요!${detailErr}`);
+                    }
+                });
+                return;
+            } catch (e) {
+                showToast("⚠️ 카카오 로그인 안내: 카카오 디벨로퍼스(developers.kakao.com) 웹 도메인(https://aqua-buddy-nu.vercel.app) 설정을 진행해 주세요!");
+                return;
+            }
         }
     }
 
-    fallbackKakaoLogin(nickInput, licInput);
-}
-
-function fallbackKakaoLogin(nick, lic) {
-    currentUser = {
-        name: nick,
-        license: lic,
-        instructorCode: "",
-        provider: "카카오톡",
-        avatar: "K"
-    };
-
-    localStorage.setItem("aqua_buddy_user_identity", JSON.stringify(currentUser));
-    updateNavbarUserUI();
-
-    closeModal(authModal);
-    filterAndRender();
-    showToast(`🎉 ${nick}님, 카카오톡 인증 회원으로 로그인되었습니다!`);
+    showToast("⚠️ 카카오 디벨로퍼스(developers.kakao.com) 웹 플랫폼 도메인 등록 후 카카오 로그인이 정식 작동합니다.");
 }
 
 function isMyPost(post) {
@@ -1583,6 +1580,11 @@ function initEventListeners() {
     });
 
     openCreateModalBtn.addEventListener("click", () => {
+        if (!currentUser) {
+            showToast("🔑 회원가입 / 로그인 후 글을 작성하실 수 있습니다!");
+            openModal(authModal);
+            return;
+        }
         if (activeCategory === "instructor") {
             if (!isVerifiedInstructor()) {
                 showToast("🎓 강사 클래스 등록은 인증된 강사만 가능합니다! 먼저 [강사인증] 버튼을 눌러 자격증을 신청해 주세요.");
