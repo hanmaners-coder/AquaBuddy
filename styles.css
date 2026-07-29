@@ -1,8 +1,9 @@
 /* ==========================================================================
-   AquaBuddy (아쿠아버디) - Dynamic Application Styling (v41.0 Mobile Responsive Fix)
-   - 100% Mobile Viewport Center Alignment & Zero Right-Side Blank Space Bug Fix
-   - Restored Eye-Catching Vibrant [+ 버디 모집하기] Action Button
-   - Modern Glassmorphism Comment Input Form in Detail Modal
+   AquaBuddy (아쿠아버디) - Dynamic Application Styling (v42.0 Security & Mobile Typography)
+   - 100% Mobile Viewport Korean Word-Break (`word-break: keep-all`)
+   - Mobile Header Button Horizontal Lock (Zero Vertical Text Rotation/Squishing)
+   - Mobile Ad Banners Vertical Column Layout (Zero Character Breaking Bug Fix)
+   - Redesigned Glassmorphism Comment Form & Protected Admin Security UI
    ========================================================================== */
 
 :root {
@@ -44,6 +45,8 @@ body {
     line-height: 1.6;
     position: relative;
     min-height: 100vh;
+    word-break: keep-all;
+    overflow-wrap: break-word;
 }
 
 .container {
@@ -90,7 +93,7 @@ body {
     100% { transform: translateY(-110vh) scale(1.2); opacity: 0; }
 }
 
-/* Side Banners (Desktops only) */
+/* Side Banners (Desktops & Laptops) */
 .side-ad-banner {
     position: fixed;
     top: 130px;
@@ -102,12 +105,13 @@ body {
     padding: 12px;
     text-align: center;
     z-index: 100;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 .side-left { left: 16px; }
 .side-right { right: 16px; }
 
-@media (max-width: 1540px) {
+@media (max-width: 1200px) {
     .side-ad-banner { display: none !important; }
 }
 
@@ -139,6 +143,34 @@ body {
     font-weight: 700;
 }
 
+.side-ad-inquiry-box {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--glass-border);
+}
+
+.ad-inquiry-btn {
+    display: block;
+    width: 100%;
+    padding: 6px 4px;
+    background: linear-gradient(135deg, rgba(255, 183, 3, 0.2), rgba(255, 143, 0, 0.2));
+    border: 1px dashed var(--accent-gold);
+    border-radius: var(--radius-sm);
+    color: var(--accent-gold);
+    font-size: 0.73rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.ad-inquiry-btn:hover {
+    background: linear-gradient(135deg, #ffb703, #ff8f00);
+    color: #000;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 183, 3, 0.3);
+}
+
 .ftc-notice-micro {
     display: block;
     font-size: 0.65rem;
@@ -163,25 +195,28 @@ body {
     align-items: center;
     justify-content: space-between;
     width: 100%;
+    gap: 8px;
 }
 
 .logo {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     text-decoration: none;
+    flex-shrink: 0;
 }
 
 .logo-icon {
-    font-size: 1.8rem;
+    font-size: 1.6rem;
     color: var(--accent-cyan);
 }
 
 .logo-text {
     font-family: 'Outfit', sans-serif;
-    font-size: 1.6rem;
+    font-size: 1.45rem;
     font-weight: 800;
     color: #fff;
+    white-space: nowrap;
 }
 
 .logo-accent {
@@ -191,35 +226,49 @@ body {
 .nav-actions {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
+    flex-wrap: nowrap;
 }
 
 .user-nav-badge {
     background: rgba(0, 242, 254, 0.1);
     border: 1px solid var(--accent-cyan);
-    padding: 6px 12px;
+    padding: 6px 10px;
     border-radius: 20px;
-    font-size: 0.83rem;
+    font-size: 0.78rem;
     color: var(--accent-cyan);
     font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
 }
 
-/* Restored Eye-Catching Vibrant Create Action Button */
+/* Restored Eye-Catching Vibrant Create Action Button (Horizontal Lock) */
 .btn-vibrant-action {
     background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)) !important;
     color: #000 !important;
     font-weight: 900 !important;
-    font-size: 0.88rem !important;
-    padding: 8px 18px !important;
+    font-size: 0.82rem !important;
+    padding: 8px 14px !important;
     border-radius: 20px !important;
     box-shadow: 0 4px 14px rgba(0, 242, 254, 0.4) !important;
     border: 1px solid var(--accent-cyan) !important;
+    white-space: nowrap !important;
+    writing-mode: horizontal-tb !important;
+    flex-shrink: 0 !important;
     transition: transform 0.2s ease, box-shadow 0.2s ease !important;
 }
 
 .btn-vibrant-action:hover {
     transform: translateY(-2px) scale(1.03) !important;
     box-shadow: 0 6px 20px rgba(0, 242, 254, 0.6) !important;
+}
+
+@media (max-width: 480px) {
+    .logo-text { font-size: 1.2rem; }
+    .btn-vibrant-action { font-size: 0.76rem !important; padding: 6px 10px !important; }
+    .user-nav-badge { max-width: 90px; font-size: 0.72rem; padding: 4px 8px; }
 }
 
 /* Nav Category Links Grid */
@@ -288,7 +337,7 @@ body {
 /* Hero Section */
 .hero-section {
     position: relative;
-    padding: 50px 0 40px;
+    padding: 40px 0 35px;
     overflow: hidden;
     width: 100%;
 }
@@ -331,14 +380,15 @@ body {
 }
 
 .hero-title {
-    font-size: 2.1rem;
+    font-size: 2.0rem;
     font-weight: 900;
-    line-height: 1.3;
+    line-height: 1.35;
     margin-bottom: 12px;
+    word-break: keep-all;
 }
 
 @media (max-width: 768px) {
-    .hero-title { font-size: 1.55rem; }
+    .hero-title { font-size: 1.4rem; line-height: 1.4; }
     .nav-actions .nav-inst-btn { display: none; }
 }
 
@@ -355,10 +405,11 @@ body {
 }
 
 .hero-subtitle {
-    font-size: 0.95rem;
+    font-size: 0.92rem;
     color: var(--text-muted);
     max-width: 680px;
-    margin-bottom: 26px;
+    margin-bottom: 24px;
+    word-break: keep-all;
 }
 
 .hero-stats {
@@ -372,6 +423,7 @@ body {
     border: 1px solid var(--glass-border);
     padding: 12px 16px;
     border-radius: var(--radius-sm);
+    flex: 1 1 200px;
 }
 
 .stat-number {
@@ -427,14 +479,16 @@ body {
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 8px 16px;
+    padding: 8px 14px;
     border-radius: 20px;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
     color: var(--text-muted);
-    font-size: 0.85rem;
+    font-size: 0.83rem;
     font-weight: 700;
     cursor: pointer;
+    white-space: nowrap;
+    word-break: keep-all;
     transition: all 0.2s ease;
 }
 
@@ -483,6 +537,7 @@ body {
     border-radius: 14px;
     font-size: 0.8rem;
     cursor: pointer;
+    white-space: nowrap;
 }
 
 .sub-tab-btn.active {
@@ -540,7 +595,7 @@ body {
     font-size: 0.8rem;
 }
 
-/* Center Visual Ad Banner Card */
+/* Mobile Optimized Ad Banner Card System (Zero Character Breaking Fix) */
 .ad-banner-panel {
     margin-bottom: 24px;
     padding: 16px;
@@ -580,6 +635,7 @@ body {
 .center-ad-overlay-content {
     position: relative;
     z-index: 2;
+    word-break: keep-all;
 }
 
 .center-ad-badge {
@@ -596,13 +652,15 @@ body {
 .center-ad-title {
     font-size: 1.35rem;
     font-weight: 900;
-    line-height: 1.3;
+    line-height: 1.35;
+    word-break: keep-all;
 }
 
 .center-ad-subtitle {
     font-size: 0.85rem;
     color: rgba(255, 255, 255, 0.85);
     margin-top: 4px;
+    word-break: keep-all;
 }
 
 .center-ad-cta-btn {
@@ -618,6 +676,27 @@ body {
     align-items: center;
     gap: 8px;
     white-space: nowrap;
+    flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+    .center-ad-visual-card {
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+        padding: 18px 16px;
+    }
+    .center-ad-title {
+        font-size: 1.15rem;
+        line-height: 1.4;
+    }
+    .center-ad-cta-btn {
+        margin-top: 14px;
+        width: 100%;
+        justify-content: center;
+        font-size: 0.82rem;
+        padding: 9px 14px;
+    }
 }
 
 /* Post Cards Grid */
@@ -700,10 +779,11 @@ body {
 .status-completed { background: rgba(110, 118, 129, 0.2); color: var(--text-dim); }
 
 .post-title {
-    font-size: 1.1rem;
+    font-size: 1.08rem;
     font-weight: 800;
     line-height: 1.4;
     margin-bottom: 10px;
+    word-break: keep-all;
 }
 
 .class-price-tag, .market-price-tag {
@@ -714,6 +794,7 @@ body {
     background: rgba(255, 183, 3, 0.08);
     padding: 6px 10px;
     border-radius: 6px;
+    word-break: keep-all;
 }
 
 .user-info {
@@ -748,6 +829,7 @@ body {
     font-size: 0.82rem;
     color: var(--text-muted);
     margin-bottom: 16px;
+    word-break: keep-all;
 }
 
 .info-item {
@@ -846,6 +928,7 @@ body {
 
 .section-title {
     margin-bottom: 18px;
+    word-break: keep-all;
 }
 
 .section-title h2 {
@@ -1027,6 +1110,7 @@ body {
     overflow-y: auto;
     padding: 24px;
     position: relative;
+    word-break: keep-all;
 }
 
 .modal-lg { max-width: 800px; }
@@ -1043,6 +1127,7 @@ body {
 .modal-header h2 {
     font-size: 1.2rem;
     font-weight: 800;
+    word-break: keep-all;
 }
 
 .close-btn {
@@ -1167,6 +1252,7 @@ body {
     padding: 10px 14px;
     border-radius: 14px;
     font-size: 0.88rem;
+    word-break: keep-all;
 }
 
 .chat-bubble.user {
@@ -1306,6 +1392,19 @@ body {
     width: 100%;
 }
 
+@media (max-width: 768px) {
+    .bottom-ad-visual-card {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 16px;
+    }
+    .bottom-ad-cta-btn {
+        margin-top: 12px;
+        width: 100%;
+        justify-content: center;
+    }
+}
+
 .bottom-ad-bg-img {
     position: absolute;
     top: 0;
@@ -1320,6 +1419,7 @@ body {
 .bottom-ad-overlay-content {
     position: relative;
     z-index: 2;
+    word-break: keep-all;
 }
 
 .bottom-ad-badge {
@@ -1335,11 +1435,13 @@ body {
     font-size: 1.1rem;
     font-weight: 800;
     margin-top: 4px;
+    word-break: keep-all;
 }
 
 .bottom-ad-subtitle {
     font-size: 0.78rem;
     color: rgba(255, 255, 255, 0.8);
+    word-break: keep-all;
 }
 
 .bottom-ad-cta-btn {
@@ -1354,6 +1456,7 @@ body {
     display: flex;
     align-items: center;
     gap: 6px;
+    white-space: nowrap;
 }
 
 .ftc-legal-footer {

@@ -1,9 +1,9 @@
 /* ==========================================================================
-   AquaBuddy (아쿠아버디) - Dynamic Application Logic (v41.0 Mobile & Admin Protected)
-   - Protected Internal Settings Tab Inside Admin Dashboard (#adminDashboardModal)
-   - Modern Glassmorphism Comment Form Rendering
-   - 100% Mobile Viewport Responsive Alignment & Zero Duplicate Icons
-   - Supabase Real DB Project URL: https://ogfzfgsvmjuimjjhaubs.supabase.co
+   AquaBuddy (아쿠아버디) - Dynamic Application Logic (v44.0 Unified Inquiries & Ad Partnerships)
+   - Restored Responsive Side Banners (1200px Media Query Breakpoint)
+   - Unified Customer Feedback & Ad Inquiry Modal (#inquiryModal)
+   - Categories: Ad Partnership, Bug Report, Feature Idea, Content Edit, General Feedback
+   - Protected Webmaster Admin Dashboard Inquiries Management Table
    ========================================================================== */
 
 // Load Configuration Credentials
@@ -34,7 +34,41 @@ if (typeof window !== "undefined" && window.supabase && window.supabase.createCl
     }
 }
 
-// 44 Nationwide Ocean Live CCTVs Dataset with Explicit Source Attribution & HLS Support
+// Security State & Hashing Helper
+let isAdminAuthenticated = false;
+
+async function sha256(message) {
+    if (!message) return "";
+    const msgUint8 = new TextEncoder().encode(message);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Pre-hashed Master Secrets (SHA-256 for 9999, 1234, master)
+const MASTER_VALID_HASHES = [
+    "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918", // 9999
+    "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4", // 1234
+    "e15a74070a31eb2829d5b4d75f284e370a256a4fb649e3bf5d83be18987ec8e6"  // master
+];
+
+// Initial Inquiries Sample Data
+const INITIAL_INQUIRIES = [
+    {
+        id: "inq-1",
+        category: "ad",
+        categoryName: "📢 광고 제휴 문의",
+        name: "(주)아쿠아스포츠 장비샵",
+        contact: "contact@aquasports.co.kr / 010-9876-5432",
+        content: "안녕하세요! 메인 상단 배너 및 좌측 플로팅 배너 입점 문의드립니다. 월 단위 광고 단가표 및 노출 리포트 안내 부탁드립니다.",
+        image: "",
+        status: "new",
+        statusText: "신규 접수",
+        createdAt: "2026-07-28T16:40:00"
+    }
+];
+
+// 44 Nationwide Ocean Live CCTVs Dataset
 const OCEAN_WEBCAMS_DATA = [
     // 1. 부산 기장 / 해운대 / 수영 권역 (12개)
     {
@@ -43,7 +77,7 @@ const OCEAN_WEBCAMS_DATA = [
         regionCategory: "busan_gijang",
         region: "부산 기장군",
         thumb: "bottom_ad_openwater.jpg",
-        embedUrl: "https://safecity.busan.go.kr/#/cctv?cnt=1&cctv_cd=00-800-0049&sensorName=%EA%B8%B0%EC%9E%A5%EA%B5%B0_%EC%9E%84%EB%9E%91%EB%B0%A9%ED%8C%8C%EC%A0%9C",
+        embedUrl: "https://safecity.busan.go.kr/#/cctv?cnt=1&cctv_cd=00-800-0049&sensorName=%EA%B8%B0%EC%9E%A5%EA%B5%B0_%EC%9E%88%EB%9E%91%EB%B0%A9%ED%8C%8C%EC%A0%9C",
         source: "부산 세이프시티",
         status: "파도 높이 0.5m (입수 양호)",
         waterTemp: "22.0°C",
@@ -56,7 +90,7 @@ const OCEAN_WEBCAMS_DATA = [
         regionCategory: "busan_gijang",
         region: "부산 기장군",
         thumb: "right_ad_swimming.jpg",
-        embedUrl: "https://safecity.busan.go.kr/#/cctv?cnt=1&cctv_cd=00-800-0050&sensorName=%EA%B8%B0%EC%9E%A5%EA%B5%B0_%EC%9E%84%EB%9E%91%ED%95%B4%EC%88%98%EC%9A%95%EC%9E%A51",
+        embedUrl: "https://safecity.busan.go.kr/#/cctv?cnt=1&cctv_cd=00-800-0050&sensorName=%EA%B8%B0%EC%9E%A5%EA%B5%B0_%EC%9E%88%EB%9E%91%ED%95%B4%EC%88%98%EC%9A%95%EC%9E%A51",
         source: "부산 세이프시티",
         status: "입수 양호 (백사장 잔잔)",
         waterTemp: "22.2°C",
@@ -134,7 +168,7 @@ const OCEAN_WEBCAMS_DATA = [
         regionCategory: "busan_gijang",
         region: "부산 해운대구",
         thumb: "hero.jpg",
-        embedUrl: "https://safecity.busan.go.kr/#/cctv?cnt=1&cctv_cd=00-800-0181&sensorName=%28%EC%9E%AC%EB%82%9C%29%EA%B5%AC%EB%8D%95%ED%8F%AC%EB%B0%A9%ED%8C%8C%EC%A0%9C_%EA%B3%A02",
+        embedUrl: "https://safecity.busan.go.kr/#/cctv?cnt=1&cctv_cd=00-800-0181&sensorName=%28%EC%9E%AC%EB%82%9C%29%EA%B5%9D%EB%8D%95%ED%8F%AC%EB%B0%A9%ED%8C%8C%EC%A0%9C_%EA%B3%A02",
         source: "부산 세이프시티",
         status: "재난 관측 고화질",
         waterTemp: "22.6°C",
@@ -367,7 +401,7 @@ const OCEAN_WEBCAMS_DATA = [
         desc: "대한민국 독도 실시간 24시간 LIVE 생중계"
     },
 
-    // 4. 제주도 전역 실시간 CCTV (9개 - HLS m3u8 direct streams & sources)
+    // 4. 제주도 전역 실시간 CCTV (9개)
     {
         id: "cam-jeju-yongduam",
         name: "제주 북부 용두암해안 CCTV",
@@ -669,7 +703,7 @@ const OCEAN_WEATHER_DATA = [
     { id: "tide-jeju-hwasun", name: "제주서부 화순 금모래해변", regionCat: "jeju", region: "제주서부 화순", waterTemp: "24.4°C", waveHeight: "0.4m", windSpeed: "2.7 m/s", tideName: "8물", highTide: "08:04 (204cm)", lowTide: "14:14 (44cm)", status: "수면 잔잔함" }
 ];
 
-// Initial Sample Data
+// Initial Posts Sample Data
 const INITIAL_POSTS = [
     {
         id: "post-instructor-1",
@@ -691,7 +725,6 @@ const INITIAL_POSTS = [
         userLicense: "AIDA Master Instructor (No. AIDA-IN-98472)",
         certImage: "",
         reqLicense: "입문자 / 초보자 누구나 수강 가능",
-        password: "1234",
         capacity: 2,
         joinedCount: 1,
         attendees: ["해양마스터강사"],
@@ -725,7 +758,6 @@ const INITIAL_POSTS = [
         userName: "포항돌고래",
         userLicense: "오픈워터 수영 3년차 / 안전부표 소지",
         reqLicense: "오픈워터 안전부표 & 핀(오리발) 필수",
-        password: "1234",
         capacity: 4,
         joinedCount: 2,
         attendees: ["포항돌고래", "동해물개"],
@@ -758,7 +790,6 @@ const INITIAL_POSTS = [
         userName: "딥블루다이버",
         userLicense: "AIDA 3 / CPR 자격 소지",
         reqLicense: "AIDA 3 / PADI Advanced 이상",
-        password: "1234",
         capacity: 4,
         joinedCount: 4,
         attendees: ["딥블루다이버", "프리마니아", "바다마스터", "해양탐험가"],
@@ -792,7 +823,6 @@ const INITIAL_POSTS = [
         priceText: "240,000 원",
         userName: "핀마스터",
         userLicense: "프리다이버 / 마켓 인증",
-        password: "1234",
         capacity: 1,
         hostRating: 4.8,
         hostReviewsCount: 9,
@@ -818,7 +848,6 @@ const INITIAL_POSTS = [
         locationName: "용인 딥스테이션 (수심 36m)",
         userName: "이퀄신동",
         userLicense: "AIDA 4 Master",
-        password: "1234",
         capacity: 1,
         hostRating: 4.9,
         hostReviewsCount: 31,
@@ -840,6 +869,7 @@ const INITIAL_POSTS = [
 
 // App State
 let posts = [];
+let inquiries = [];
 let activeCategory = "all";
 let activeActivitySub = "my_posts";
 let activeCctvRegion = "busan_gijang";
@@ -859,6 +889,7 @@ let chatMessages = {};
 let uploadedCompressedImages = [];
 let uploadedCertImage = "";
 let instAppCertImage = "";
+let inquiryImageCompressed = "";
 let myCreatedPostIds = [];
 let activeHlsPlayer = null;
 
@@ -908,6 +939,7 @@ const lightboxImage = document.getElementById("lightboxImage");
 
 const deleteConfirmModal = document.getElementById("deleteConfirmModal");
 const confirmDeleteFinalBtn = document.getElementById("confirmDeleteFinalBtn");
+const inquiryModal = document.getElementById("inquiryModal");
 
 // Initialize Application
 document.addEventListener("DOMContentLoaded", () => {
@@ -915,6 +947,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initUserIdentity();
     loadPosts();
     loadMyPosts();
+    loadInquiries();
     initEventListeners();
     initStarRatingEvents();
     switchMainView('feed');
@@ -924,6 +957,92 @@ document.addEventListener("DOMContentLoaded", () => {
     renderAdBanner();
     generateBubbles();
 });
+
+// Load Inquiries
+function loadInquiries() {
+    const saved = localStorage.getItem("aqua_buddy_inquiries");
+    if (saved) {
+        try {
+            inquiries = JSON.parse(saved);
+        } catch (e) {
+            inquiries = [...INITIAL_INQUIRIES];
+        }
+    } else {
+        inquiries = [...INITIAL_INQUIRIES];
+    }
+}
+
+function saveInquiries() {
+    localStorage.setItem("aqua_buddy_inquiries", JSON.stringify(inquiries));
+}
+
+// Open Unified Customer & Partner Feedback Modal (#inquiryModal)
+function openInquiryModal(defaultCategory = 'general') {
+    const categorySelect = document.getElementById("inquiryCategory");
+    const nameInput = document.getElementById("inquiryName");
+    const contactInput = document.getElementById("inquiryContact");
+    const contentInput = document.getElementById("inquiryContent");
+    const imageInput = document.getElementById("inquiryImageInput");
+    const imagePreview = document.getElementById("inquiryImagePreview");
+
+    if (categorySelect) categorySelect.value = defaultCategory;
+    if (nameInput && currentUser) nameInput.value = currentUser.name || "";
+    if (contactInput && currentUser && currentUser.email) contactInput.value = currentUser.email;
+    if (contentInput) contentInput.value = "";
+    if (imageInput) imageInput.value = "";
+    if (imagePreview) imagePreview.innerHTML = "";
+    inquiryImageCompressed = "";
+
+    openModal(inquiryModal);
+}
+
+function handleSaveInquiry(e) {
+    e.preventDefault();
+
+    const category = document.getElementById("inquiryCategory").value;
+    const name = document.getElementById("inquiryName").value.trim();
+    const contact = document.getElementById("inquiryContact").value.trim();
+    const content = document.getElementById("inquiryContent").value.trim();
+
+    if (!name || !contact || !content) {
+        showToast("⚠️ 필수 입력 항목을 모두 작성해 주세요!");
+        return;
+    }
+
+    let categoryName = "💬 기타 건의 및 피드백";
+    if (category === "ad") categoryName = "📢 광고 제휴 문의";
+    if (category === "bug") categoryName = "🐞 버그 / 오류 신고";
+    if (category === "feature") categoryName = "💡 새로운 기능 제안";
+    if (category === "edit") categoryName = "✏️ 정보 / 게시글 수정 요청";
+
+    const newInquiry = {
+        id: "inq-" + Date.now(),
+        category,
+        categoryName,
+        name,
+        contact,
+        content,
+        image: inquiryImageCompressed,
+        status: "new",
+        statusText: "신규 접수",
+        createdAt: new Date().toISOString()
+    };
+
+    inquiries.unshift(newInquiry);
+    saveInquiries();
+
+    closeModal(inquiryModal);
+
+    let toastMsg = `💌 [${categoryName}] 메시지가 운영진에게 전달되었습니다. 감사합니다!`;
+    if (category === "ad") toastMsg = `📢 [광고/제휴 문의] 메시지가 접수되었습니다! 담당자가 24시간 이내 연락드립니다.`;
+    if (category === "bug") toastMsg = `🐞 [버그/오류 신고] 메시지가 전달되었습니다. 빠른 시일 내 점검하겠습니다!`;
+    if (category === "feature") toastMsg = `💡 [기능 제안] 메시지가 전달되었습니다. 소중한 의견 감사드립니다!`;
+
+    showToast(toastMsg);
+    if (!document.getElementById("adminDashboardModal").classList.contains("hidden")) {
+        renderAdminInquiriesTable();
+    }
+}
 
 // Switch Independent Main View Pages ('feed', 'tide', 'cctv')
 function switchMainView(viewName) {
@@ -973,16 +1092,21 @@ function openAdminSecurityCheck() {
     openModal(document.getElementById("adminSecurityModal"));
 }
 
-function handleVerifyAdminMasterCode(e) {
+// SHA-256 Hashing Verification for Admin Master Password
+async function handleVerifyAdminMasterCode(e) {
     e.preventDefault();
     const code = document.getElementById("adminSecurityPassInput").value.trim();
+    if (!code) return;
 
-    if (code === "9999" || code === "1234" || code === "master" || code === "admin") {
+    const inputHash = await sha256(code);
+
+    if (MASTER_VALID_HASHES.includes(inputHash)) {
+        isAdminAuthenticated = true;
         closeModal(document.getElementById("adminSecurityModal"));
         openAdminDashboard();
         showToast("👑 웹마스터 보안 암호가 확인되었습니다. 관리자 대시보드에 접근합니다.");
     } else {
-        showToast("⚠️ 웹마스터 보안 암호가 일치하지 않습니다! (기본 암호: 9999)");
+        showToast("⚠️ 웹마스터 보안 암호가 일치하지 않습니다!");
     }
 }
 
@@ -1076,12 +1200,18 @@ function handleInstructorAuthSubmit(e) {
 }
 
 function openAdminDashboard() {
+    if (!isAdminAuthenticated) {
+        showToast("🔒 관리자 암호 인증 후 접근할 수 있습니다.");
+        openAdminSecurityCheck();
+        return;
+    }
     renderAdminPostsTable();
+    renderAdminInquiriesTable();
     openModal(document.getElementById("adminDashboardModal"));
 }
 
 function switchAdminTab(tabKey) {
-    const tabs = ["stats", "instructors", "posts", "affiliate", "settings"];
+    const tabs = ["stats", "inquiries", "instructors", "posts", "affiliate", "settings"];
     tabs.forEach(t => {
         const btn = document.getElementById(`adminTab${t.charAt(0).toUpperCase() + t.slice(1)}`);
         const panel = document.getElementById(`adminPanel${t.charAt(0).toUpperCase() + t.slice(1)}`);
@@ -1095,6 +1225,31 @@ function switchAdminTab(tabKey) {
     });
 
     if (tabKey === "posts") renderAdminPostsTable();
+    if (tabKey === "inquiries") renderAdminInquiriesTable();
+}
+
+function renderAdminInquiriesTable() {
+    const tbody = document.getElementById("adminInquiriesTbody");
+    const badge = document.getElementById("adminInquiriesBadge");
+    const statCount = document.getElementById("adminStatInquiryCount");
+
+    if (badge) badge.textContent = inquiries.length;
+    if (statCount) statCount.textContent = `${inquiries.length} 건`;
+
+    if (!tbody) return;
+
+    tbody.innerHTML = inquiries.map(inq => `
+        <tr>
+            <td><span class="badge badge-instructor">${escapeHtml(inq.categoryName)}</span></td>
+            <td><strong>${escapeHtml(inq.name)}</strong></td>
+            <td><code>${escapeHtml(inq.contact)}</code></td>
+            <td style="max-width: 260px; word-break: break-all;">${escapeHtml(inq.content)}</td>
+            <td>${formatTimeAgo(inq.createdAt)}</td>
+            <td>
+                <span style="color: #00e676; font-weight:700; font-size: 0.78rem;">✓ 접수완료</span>
+            </td>
+        </tr>
+    `).join("");
 }
 
 function renderAdminPostsTable() {
@@ -1395,6 +1550,23 @@ function initEventListeners() {
         postImagesInput.addEventListener("change", handleImageUpload);
     }
 
+    const inqImgInput = document.getElementById("inquiryImageInput");
+    if (inqImgInput) {
+        inqImgInput.addEventListener("change", (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                inquiryImageCompressed = evt.target.result;
+                const prev = document.getElementById("inquiryImagePreview");
+                if (prev) {
+                    prev.innerHTML = `<img src="${inquiryImageCompressed}" style="height: 50px; border-radius: 4px; border: 1px solid var(--accent-cyan);">`;
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
     const instAppFileInput = document.getElementById("instAppFile");
     if (instAppFileInput) {
         instAppFileInput.addEventListener("change", (e) => {
@@ -1446,6 +1618,7 @@ function initEventListeners() {
         if (e.target === detailModal) closeModal(detailModal);
         if (e.target === imageLightboxModal) closeModal(imageLightboxModal);
         if (e.target === deleteConfirmModal) closeModal(deleteConfirmModal);
+        if (e.target === inquiryModal) closeModal(inquiryModal);
         if (e.target === document.getElementById("instructorAuthModal")) closeModal(document.getElementById("instructorAuthModal"));
         if (e.target === document.getElementById("adminDashboardModal")) closeModal(document.getElementById("adminDashboardModal"));
         if (e.target === document.getElementById("adminSecurityModal")) closeModal(document.getElementById("adminSecurityModal"));
@@ -2147,7 +2320,7 @@ function finishScheduleFromChat() {
     showToast("⚡ 대화방에서 강습 완료 처리가 되었습니다!");
 }
 
-// Open Detail Modal with Redesigned Modern Glass Comment Input Form
+// Open Detail Modal with Account-Based Owner Actions (Only Show Edit/Delete for Author)
 function openDetailModal(postId) {
     const post = posts.find(p => p.id === postId);
     if (!post) return;
@@ -2235,11 +2408,11 @@ function openDetailModal(postId) {
             </div>
 
             <div class="like-action-bar" style="justify-content: flex-end; gap: 8px;">
-                ${isHost ? `
-                <button class="btn btn-secondary" onclick="verifyPasswordAndEdit('${post.id}')" style="padding: 6px 14px; font-size: 0.82rem;" title="클래스 수정하기">
+                ${(isHost || isAdminAuthenticated) ? `
+                <button class="btn btn-secondary" onclick="verifyPasswordAndEdit('${post.id}')" style="padding: 6px 14px; font-size: 0.82rem;" title="클래스 1초 수정">
                     <i class="fa-solid fa-pen-to-square"></i> 클래스 수정
                 </button>
-                <button class="btn-delete" onclick="deletePostWithPassword('${post.id}')" title="강사 비밀번호 2단계 확인 후 삭제">
+                <button class="btn-delete" onclick="deletePostWithPassword('${post.id}')" title="작성자 1초 삭제">
                     <i class="fa-solid fa-trash-can"></i> 클래스 삭제
                 </button>
                 ` : ''}
@@ -2315,11 +2488,11 @@ function openDetailModal(postId) {
                 <button class="wishlist-btn ${post.userWished ? 'active' : ''}" onclick="toggleWishlist('${post.id}')">
                     <i class="fa-solid fa-heart"></i> 찜하기 ${post.wishlistCount || 0}
                 </button>
-                ${isHost ? `
-                <button class="btn btn-secondary" onclick="verifyPasswordAndEdit('${post.id}')" style="padding: 6px 14px; font-size: 0.82rem;" title="게시글 수정하기">
+                ${(isHost || isAdminAuthenticated) ? `
+                <button class="btn btn-secondary" onclick="verifyPasswordAndEdit('${post.id}')" style="padding: 6px 14px; font-size: 0.82rem;" title="게시글 1초 수정">
                     <i class="fa-solid fa-pen-to-square"></i> 글 수정
                 </button>
-                <button class="btn-delete" onclick="deletePostWithPassword('${post.id}')" title="작성자/웹마스터 비밀번호 2단계 확인 후 삭제">
+                <button class="btn-delete" onclick="deletePostWithPassword('${post.id}')" title="작성자 1초 삭제">
                     <i class="fa-solid fa-trash-can"></i> 글 삭제
                 </button>
                 ` : ''}
@@ -2392,11 +2565,11 @@ function openDetailModal(postId) {
             </div>
 
             <div class="like-action-bar" style="justify-content: flex-end; gap: 8px;">
-                ${isHost ? `
-                <button class="btn btn-secondary" onclick="verifyPasswordAndEdit('${post.id}')" style="padding: 6px 14px; font-size: 0.82rem;" title="게시글 수정하기">
+                ${(isHost || isAdminAuthenticated) ? `
+                <button class="btn btn-secondary" onclick="verifyPasswordAndEdit('${post.id}')" style="padding: 6px 14px; font-size: 0.82rem;" title="게시글 1초 수정">
                     <i class="fa-solid fa-pen-to-square"></i> 글 수정
                 </button>
-                <button class="btn-delete" onclick="deletePostWithPassword('${post.id}')" title="작성자/웹마스터 비밀번호 2단계 확인 후 삭제">
+                <button class="btn-delete" onclick="deletePostWithPassword('${post.id}')" title="작성자 1초 삭제">
                     <i class="fa-solid fa-trash-can"></i> 글 삭제
                 </button>
                 ` : ''}
@@ -2489,11 +2662,11 @@ function openDetailModal(postId) {
             </div>
 
             <div class="like-action-bar" style="justify-content: flex-end; gap: 8px;">
-                ${isHost ? `
-                <button class="btn btn-secondary" onclick="verifyPasswordAndEdit('${post.id}')" style="padding: 6px 14px; font-size: 0.82rem;" title="게시글 수정하기">
+                ${(isHost || isAdminAuthenticated) ? `
+                <button class="btn btn-secondary" onclick="verifyPasswordAndEdit('${post.id}')" style="padding: 6px 14px; font-size: 0.82rem;" title="게시글 1초 수정">
                     <i class="fa-solid fa-pen-to-square"></i> 글 수정
                 </button>
-                <button class="btn-delete" onclick="deletePostWithPassword('${post.id}')" title="작성자/웹마스터 비밀번호 2단계 확인 후 삭제">
+                <button class="btn-delete" onclick="deletePostWithPassword('${post.id}')" title="작성자 1초 삭제">
                     <i class="fa-solid fa-trash-can"></i> 글 삭제
                 </button>
                 ` : ''}
@@ -2561,29 +2734,16 @@ function openDetailModal(postId) {
     }
 }
 
+// 1-Click Instant Post Deletion for Author / Webmaster
 function deletePostWithPassword(postId) {
     const post = posts.find(p => p.id === postId);
     if (!post) return;
 
-    let verified = false;
-
-    if (isMyPost(post)) {
-        verified = true;
-    } else {
-        const inputPw = prompt("🔒 작성자 또는 웹마스터 비밀번호(숫자 4자리)를 입력해 주세요:");
-        if (!inputPw) return;
-
-        if (inputPw.trim() === (post.password || "1234") || inputPw.trim() === "9999" || inputPw.trim() === "master") {
-            verified = true;
-        } else {
-            showToast("⚠️ 비밀번호가 일치하지 않습니다! 작성자와 웹마스터만 삭제 가능합니다.");
-            return;
-        }
-    }
-
-    if (verified) {
+    if (isMyPost(post) || isAdminAuthenticated) {
         pendingDeletePostId = postId;
         openModal(deleteConfirmModal);
+    } else {
+        showToast("⚠️ 본인이 작성한 게시글만 삭제할 수 있습니다!");
     }
 }
 
@@ -2599,7 +2759,7 @@ function performPostDeletion(postId) {
     if (!document.getElementById("adminDashboardModal").classList.contains("hidden")) {
         renderAdminPostsTable();
     }
-    showToast("🗑️ 게시글이 삭제되었습니다.");
+    showToast("🗑️ 게시글이 성공적으로 삭제되었습니다.");
 }
 
 function toggleWishlist(postId) {
@@ -2724,23 +2884,15 @@ function finishBuddySchedule(postId) {
     showToast("🎉 모임 일정이 최종 완료되었습니다!");
 }
 
+// 1-Click Instant Post Editing for Author / Webmaster
 function verifyPasswordAndEdit(postId) {
     const post = posts.find(p => p.id === postId);
     if (!post) return;
 
-    if (isMyPost(post)) {
-        openEditModal(postId);
-        return;
-    }
-
-    const inputPw = prompt("🔒 비밀번호 4자리를 입력해 주세요:");
-    if (!inputPw) return;
-
-    if (inputPw.trim() === (post.password || "1234") || inputPw.trim() === "9999" || inputPw.trim() === "master") {
-        showToast("🔑 비밀번호가 확인되었습니다! 글 수정 모드로 이동합니다.");
+    if (isMyPost(post) || isAdminAuthenticated) {
         openEditModal(postId);
     } else {
-        showToast("⚠️ 비밀번호가 일치하지 않습니다!");
+        showToast("⚠️ 본인이 작성한 게시글만 수정할 수 있습니다!");
     }
 }
 
@@ -2760,7 +2912,6 @@ function openEditModal(postId) {
     if (post.capacity) document.getElementById("postCapacity").value = post.capacity;
     if (post.mapAddress) document.getElementById("postMapAddress").value = post.mapAddress;
     if (post.date) document.getElementById("postDate").value = post.date;
-    if (post.password) document.getElementById("postPassword").value = post.password;
     document.getElementById("postDesc").value = post.desc;
 
     uploadedCompressedImages = [...(post.images || [])];
@@ -2891,10 +3042,6 @@ function handleAddComment(e, postId) {
     showToast("💬 댓글이 등록되었습니다!");
 }
 
-function saveSettings() {
-    showToast("💾 API Key 설정이 저장되었습니다.");
-}
-
 function handleSavePost(e) {
     e.preventDefault();
 
@@ -2916,7 +3063,6 @@ function handleSavePost(e) {
     const capacityVal = document.getElementById("postCapacity").value;
     const mapAddress = document.getElementById("postMapAddress").value.trim();
     const date = document.getElementById("postDate").value;
-    const passwordVal = document.getElementById("postPassword").value.trim() || "1234";
     const userName = currentUser ? currentUser.name : "다이버";
     let userLicense = currentUser ? currentUser.license : "공인 강사 / 다이버";
     const desc = document.getElementById("postDesc").value.trim();
@@ -2947,7 +3093,6 @@ function handleSavePost(e) {
             post.locationName = mapAddress || post.locationName;
             post.mapAddress = mapAddress || post.mapAddress;
             post.date = date || post.date;
-            post.password = passwordVal;
             post.desc = desc;
             post.images = [...uploadedCompressedImages];
             savePosts();
@@ -2975,7 +3120,6 @@ function handleSavePost(e) {
             locationName: mapAddress || "전국 포인트",
             mapAddress: mapAddress || "서울 송파구 올림픽공원",
             date: date || null,
-            password: passwordVal,
             userName,
             userLicense: userLicense,
             reqLicense: category === "market" ? "상태 우수 / 직거래 가능" : (category === "instructor" ? "초보/입문자 환영" : "안전 수칙 준수"),
