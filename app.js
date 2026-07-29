@@ -7,6 +7,12 @@
    ========================================================================== */
 
 // Load Configuration Credentials
+window.addEventListener('error', function(e) {
+    if (e.message && !e.message.includes("ResizeObserver")) {
+        alert("🚨 시스템 에러 감지!\n\n내용: " + e.message + "\n위치: app.js " + e.lineno + "번째 줄\n\n이 화면을 캡처해서 개발자에게 보내주세요!");
+    }
+});
+
 const SUPABASE_URL = (typeof window !== "undefined" && window.AQUA_CONFIG && window.AQUA_CONFIG.supabase)
     ? window.AQUA_CONFIG.supabase.url
     : "https://ogfzfgsvmjuimjjhaubs.supabase.co";
@@ -1994,6 +2000,7 @@ function renderWeatherGrid(regionKey = "all") {
 }
 
 function updateCreateButtonText(cat) {
+    if (!createBtnText || !openCreateModalBtn) return;
     if (cat === "community") {
         createBtnText.textContent = "수다글 작성하기";
         openCreateModalBtn.style.opacity = "1";
