@@ -989,6 +989,17 @@
                     </div>
                 </div>
 
+                <div id="myProfReviewsContainer" style="background: rgba(0, 242, 254, 0.06); border: 1px border var(--glass-border); padding: 12px; border-radius: 10px; margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-size: 0.88rem; font-weight: 800; color: var(--accent-gold);"><i class="fa-solid fa-star"></i> 내 매너 평점: <strong id="myProfAvgScore">5.0 / 5.0</strong></span>
+                        <span style="font-size: 0.78rem; color: var(--text-muted);" id="myProfMeetingCount">모임 12회 완료</span>
+                    </div>
+                    <h4 style="font-size: 0.82rem; color: var(--text-main); margin-bottom: 6px;"><i class="fa-solid fa-comments"></i> 최근 받은 한줄평 (최신 3개)</h4>
+                    <div id="myProfReviewsList" style="display: flex; flex-direction: column; gap: 6px;">
+                        <div style="font-size: 0.78rem; color: var(--text-muted); text-align: center; padding: 6px;">아직 작성된 한줄평이 없습니다. 첫 버디 모임을 함께해보세요!</div>
+                    </div>
+                </div>
+
                 <form onsubmit="handleUpdateProfile(event)">
                     <div class="form-group">
                         <label for="myProfNickInput"><i class="fa-solid fa-user"></i> AquaBuddy 닉네임 수정 *</label>
@@ -1060,30 +1071,23 @@
     <div class="modal-overlay hidden" id="ratingModal">
         <div class="modal-container glass-panel" style="max-width: 500px;">
             <div class="modal-header">
-                <h2><i class="fa-solid fa-star" style="color: var(--accent-gold);"></i> <span id="ratingModalHeaderTitle">버디 평점 & 매너 평가</span></h2>
+                <h2><i class="fa-solid fa-star" style="color: var(--accent-gold);"></i> <span id="ratingModalHeaderTitle">버디 평점 & 한줄평 작성</span></h2>
                 <button class="close-btn" id="closeRatingModalBtn">&times;</button>
             </div>
 
             <div style="text-align: center; margin-bottom: 20px;">
                 <p style="font-size: 0.9rem; color: var(--text-muted);" id="ratingHostTarget">상대방 다이버의 활동 매너를 평가해 주세요.</p>
-                <div class="star-rating-select" id="starRatingSelect">
-                    <span class="star-icon selected" data-score="1">★</span>
-                    <span class="star-icon selected" data-score="2">★</span>
-                    <span class="star-icon selected" data-score="3">★</span>
-                    <span class="star-icon selected" data-score="4">★</span>
-                    <span class="star-icon selected" data-score="5">★</span>
+                <div class="star-rating-select" id="starRatingSelect" style="display: flex; justify-content: center; gap: 10px; margin-top: 10px;">
+                    <button type="button" class="btn btn-secondary star-btn" data-score="3" onclick="setRatingScore(3)" style="padding: 6px 12px; font-size: 0.85rem; color: var(--text-main);">★ 3.0 (무난해요)</button>
+                    <button type="button" class="btn btn-secondary star-btn" data-score="4" onclick="setRatingScore(4)" style="padding: 6px 12px; font-size: 0.85rem; color: var(--text-main);">★ 4.0 (좋아요)</button>
+                    <button type="button" class="btn btn-primary star-btn active" data-score="5" onclick="setRatingScore(5)" style="padding: 6px 12px; font-size: 0.85rem; font-weight: 800;">★ 5.0 (최고의 버디!)</button>
                 </div>
-                <p style="font-size: 0.85rem; color: var(--accent-gold); font-weight: 700; margin-top: 6px;" id="starScoreText">5.0 / 5.0 (최고의 강사/다이버! 완벽해요)</p>
+                <p style="font-size: 0.85rem; color: var(--accent-gold); font-weight: 700; margin-top: 10px;" id="starScoreText">5.0 / 5.0 (최고의 버디! 완벽해요)</p>
             </div>
 
             <div class="form-group">
-                <label><i class="fa-solid fa-tags"></i> 매너 태그 선택 (다중 선택)</label>
-                <div class="manner-tags-grid">
-                    <label class="tag-checkbox"><input type="checkbox" value="매너가 좋아요" checked> 매너가 좋아요</label>
-                    <label class="tag-checkbox"><input type="checkbox" value="안전수칙 준수" checked> 안전수칙 준수</label>
-                    <label class="tag-checkbox"><input type="checkbox" value="약속시간 엄수" checked> 약속시간 엄수</label>
-                    <label class="tag-checkbox warning"><input type="checkbox" value="비매너/주의"> 비매너/주의</label>
-                </div>
+                <label for="ratingReviewInput"><i class="fa-solid fa-comment-pen"></i> 한 줄 후기 작성 *</label>
+                <input type="text" id="ratingReviewInput" placeholder="예: 약속시간 칼같으시고 핀킥 연습도 친절히 도와주셨어요!" required style="background: rgba(0,0,0,0.5); border: 1px solid var(--accent-cyan); color: #fff; padding: 10px 14px; border-radius: 8px;">
             </div>
 
             <div class="form-group">

@@ -1332,6 +1332,31 @@ function openProfileModal() {
     document.getElementById("myProfNickInput").value = currentUser.name;
     document.getElementById("myProfLicenseInput").value = currentUser.license || "";
 
+    let myReviews = (currentUser.reviews || []);
+    if (myReviews.length === 0) {
+        myReviews = [
+            { author: "포항다이버", score: 5.0, comment: "안전하게 수심 연습 같이해주셔서 너무 감사했습니다!", date: "2026-07-28" },
+            { author: "동해물개", score: 5.0, comment: "약속 시간 엄수하시고 핀킥 교정 꿀팁도 주셨어요!", date: "2026-07-25" },
+            { author: "가평물개", score: 4.8, comment: "K26 버디 모임 최고였습니다. 매너 좋으세요!", date: "2026-07-20" }
+        ];
+    }
+    const avgScore = (myReviews.reduce((sum, r) => sum + r.score, 0) / myReviews.length).toFixed(1);
+    document.getElementById("myProfAvgScore").textContent = `★ ${avgScore} / 5.0`;
+    document.getElementById("myProfMeetingCount").textContent = `모임 ${currentUser.completedCount || 12}회 완료`;
+
+    const reviewsListEl = document.getElementById("myProfReviewsList");
+    if (reviewsListEl) {
+        reviewsListEl.innerHTML = myReviews.slice(-3).reverse().map(r => `
+            <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.06); padding: 8px 12px; border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.78rem; margin-bottom: 2px;">
+                    <span style="color: var(--accent-cyan); font-weight: 700;">👤 ${escapeHtml(r.author)}</span>
+                    <span style="color: var(--accent-gold); font-weight: 800;">★ ${r.score}</span>
+                </div>
+                <p style="font-size: 0.82rem; color: var(--text-main); line-height: 1.3;">"${escapeHtml(r.comment)}"</p>
+            </div>
+        `).join("");
+    }
+
     openModal(document.getElementById("myProfileModal"));
 }
 
@@ -2801,19 +2826,25 @@ function openDetailModal(postId) {
         if (isHost) {
             if (post.status === 'recruiting') {
                 actionButtonsHtml = `
-                    <button class="btn btn-secondary" onclick="confirmBuddyMatch('${post.id}')" style="background: rgba(0, 242, 254, 0.15); color: var(--accent-cyan); border-color: rgba(0, 242, 254, 0.4);">
-                        <i class="fa-solid fa-bolt"></i> 참가자 확정 완료 (일정 진행 중)
+                    <button class="btn btn-secondary" onclick="confirmBuddyMatch('${post.id}')" style="background: rgba(0, 242, 254, 0.15); color: var(--accent-cyan); border-color: rgba(0, 242, 254, 0.4); font-weight: 800;">
+                        <i class="fa-solid fa-bolt"></i> 참가자 확정 (일정 진행)
                     </button>
                 `;
             } else if (post.status === 'in_progress') {
                 actionButtonsHtml = `
-                    <button class="btn btn-primary" onclick="finishBuddySchedule('${post.id}')">
-                        <i class="fa-solid fa-circle-check"></i> 일정 완료 (모임 종료)
+                    <button class="btn btn-primary" onclick="finishBuddySchedule('${post.id}')" style="font-weight: 800;">
+                        <i class="fa-solid fa-circle-check"></i> 모임 완료 처리
+                    </button>
+                    <button class="btn btn-secondary" onclick="reopenBuddySchedule('${post.id}')" style="background: rgba(255, 183, 3, 0.15); color: var(--accent-gold); border-color: rgba(255, 183, 3, 0.4);">
+                        <i class="fa-solid fa-rotate-left"></i> 모집 중으로 다시 변경
                     </button>
                 `;
             } else {
                 actionButtonsHtml = `
                     <span style="font-size: 0.85rem; color: #00e676; font-weight: 700; align-self: center;">🎉 모임 일정이 완료되었습니다!</span>
+                    <button class="btn btn-secondary" onclick="reopenBuddySchedule('${post.id}')" style="background: rgba(255, 183, 3, 0.15); color: var(--accent-gold); border-color: rgba(255, 183, 3, 0.4);">
+                        <i class="fa-solid fa-rotate-left"></i> 모집 중으로 다시 변경
+                    </button>
                 `;
             }
         } else {
@@ -2832,14 +2863,24 @@ function openDetailModal(postId) {
                     `;
                 }
             } else if (post.status === 'in_progress') {
-                actionButtonsHtml = `
-                    <span style="font-size: 0.85rem; color: var(--accent-cyan); font-weight: 700; align-self: center;">⚡ 참가자가 확정되어 일정이 진행 중입니다.</span>
-                `;
+                if (isAttendee) {
+                    actionButtonsHtml = `
+                        <span style="font-size: 0.85rem; color: var(--accent-cyan); font-weight: 700; align-self: center;">⚡ 모임 일정 진행 중</span>
+                        <button class="btn btn-secondary" onclick="cancelBuddyMatch('${post.id}')" style="background: rgba(255, 82, 82, 0.15); color: #ff5252; border-color: rgba(255, 82, 82, 0.4);">
+                            <i class="fa-solid fa-xmark"></i> 참가 취소
+                        </button>
+                    `;
+                } else {
+                    actionButtonsHtml = `
+                        <span style="font-size: 0.85rem; color: var(--accent-cyan); font-weight: 700; align-self: center;">⚡ 참가자가 확정되어 일정이 진행 중입니다.</span>
+                    `;
+                }
             } else if (post.status === 'completed') {
                 if (isAttendee) {
                     actionButtonsHtml = `
-                        <button class="btn btn-secondary" onclick="openHostRatingModal('${post.id}')" style="color: var(--accent-gold); border-color: var(--accent-gold);">
-                            <i class="fa-solid fa-star"></i> 주최자 버디 평점 남기기
+                        <span style="font-size: 0.85rem; color: #00e676; font-weight: 700; align-self: center;">🎉 모임 완료됨</span>
+                        <button class="btn btn-secondary" onclick="openHostRatingModal('${post.id}')" style="color: var(--accent-gold); border-color: var(--accent-gold); font-weight: 800;">
+                            <i class="fa-solid fa-star"></i> 주최자 별점 & 한줄평 남기기
                         </button>
                     `;
                 } else {
@@ -3141,27 +3182,38 @@ function toggleMarketStatus(postId) {
     openDetailModal(postId);
 }
 
-function initStarRatingEvents() {
-    const stars = document.querySelectorAll("#starRatingSelect .star-icon");
+function reopenBuddySchedule(postId) {
+    const post = posts.find(p => p.id === postId);
+    if (!post) return;
+
+    post.status = "recruiting";
+    post.statusText = "모집 중";
+    savePosts();
+    filterAndRender();
+    openDetailModal(postId);
+    showToast("🔄 게시물 상태가 다시 '모집 중'으로 변경되었습니다!");
+}
+
+let currentRatingScore = 5;
+
+function setRatingScore(score) {
+    currentRatingScore = score;
     const scoreText = document.getElementById("starScoreText");
-
-    stars.forEach(star => {
-        star.addEventListener("click", () => {
-            const score = parseInt(star.dataset.score);
-            currentRatingScore = score;
-            
-            stars.forEach((s, idx) => {
-                if (idx < score) s.classList.add("selected");
-                else s.classList.remove("selected");
-            });
-
-            if (score === 5) scoreText.textContent = "5.0 / 5.0 (최고의 강사/다이버! 완벽해요)";
-            else if (score === 4) scoreText.textContent = "4.0 / 5.0 (좋은 강의예요)";
-            else if (score === 3) scoreText.textContent = "3.0 / 5.0 (무난했어요)";
-            else if (score === 2) scoreText.textContent = "2.0 / 5.0 (아쉬웠어요)";
-            else scoreText.textContent = "1.0 / 5.0 (비매너/주의 필요)";
-        });
+    const btns = document.querySelectorAll("#starRatingSelect .star-btn");
+    
+    btns.forEach(btn => {
+        if (parseInt(btn.dataset.score) === score) {
+            btn.classList.add("btn-primary", "active");
+            btn.classList.remove("btn-secondary");
+        } else {
+            btn.classList.add("btn-secondary");
+            btn.classList.remove("btn-primary", "active");
+        }
     });
+
+    if (score === 5) scoreText.textContent = "5.0 / 5.0 (최고의 버디! 완벽해요)";
+    else if (score === 4) scoreText.textContent = "4.0 / 5.0 (좋은 매너의 다이버예요)";
+    else scoreText.textContent = "3.0 / 5.0 (무난한 활동이었어요)";
 }
 
 function openHostRatingModal(postId) {
@@ -3170,9 +3222,9 @@ function openHostRatingModal(postId) {
 
     currentRatingPost = post;
     const headerTitle = document.getElementById("ratingModalHeaderTitle");
-    if (headerTitle) headerTitle.textContent = post.category === "instructor" ? "강사 수강 평점 & 후기 작성" : (post.category === "market" ? "중고거래 상호 평점 & 거래 후기" : "주최자 버디 평점 & 매너 평가");
+    if (headerTitle) headerTitle.textContent = post.category === "instructor" ? "강사 수강 평점 & 후기 작성" : (post.category === "market" ? "중고거래 상호 평점 & 거래 후기" : "주최자 버디 별점 & 한줄평 작성");
 
-    document.getElementById("ratingHostTarget").textContent = `'${post.userName}'님과의 강습/활동 매너를 평가해 주세요.`;
+    document.getElementById("ratingHostTarget").textContent = `'${post.userName}'님과의 활동 매너를 3.0 ~ 5.0점 별점과 한줄평으로 평가해 주세요.`;
     closeModal(detailModal);
     openModal(ratingModal);
 }
@@ -3180,11 +3232,34 @@ function openHostRatingModal(postId) {
 function submitHostRating() {
     if (!currentRatingPost) return;
 
-    currentRatingPost.hostReviewsCount = (currentRatingPost.hostReviewsCount || 10) + 1;
-    savePosts();
+    const reviewInput = document.getElementById("ratingReviewInput");
+    const commentText = reviewInput ? reviewInput.value.trim() : "";
 
+    if (!commentText) {
+        showToast("⚠️ 한줄 후기를 작성해 주세요!");
+        return;
+    }
+
+    const hostName = currentRatingPost.userName;
+    const reviewerName = currentUser ? currentUser.name : "익명다이버";
+
+    if (!currentRatingPost.hostReviews) currentRatingPost.hostReviews = [];
+    currentRatingPost.hostReviews.push({
+        author: reviewerName,
+        score: currentRatingScore,
+        comment: commentText,
+        date: new Date().toLocaleDateString()
+    });
+
+    currentRatingPost.hostReviewsCount = currentRatingPost.hostReviews.length;
+    const sum = currentRatingPost.hostReviews.reduce((acc, r) => acc + r.score, 0);
+    currentRatingPost.hostRating = (sum / currentRatingPost.hostReviews.length).toFixed(1);
+
+    savePosts();
     closeModal(ratingModal);
-    showToast(`⭐ ${currentRatingPost.userName}님께 별점(${currentRatingScore}점) 및 매너 평가 후기를 등록했습니다!`);
+    showToast(`⭐ ${hostName}님께 별점(${currentRatingScore}점) 및 한줄평 후기를 등록했습니다!`);
+    if (reviewInput) reviewInput.value = "";
+    filterAndRender();
 }
 
 const FAMOUS_SPOT_COORDS = {
