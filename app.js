@@ -1,34 +1,5 @@
 /* ==========================================================================
-   AquaBuddy (아쿠아버디) - Dynamic Application Logic (v44.0 Unified Inquiries & Ad Partnerships)
-   - Restored Responsive Side Banners (1200px Media Query Breakpoint)
-   - Unified Customer Feedback & Ad Inquiry Modal (#inquiryModal)
-   - Categories: Ad Partnership, Bug Report, Feature Idea, Content Edit, General Feedback
-   - Protected Webmaster Admin Dashboard Inquiries Management Table
-   ========================================================================== */
-
-// Load Configuration Credentials
-const SUPABASE_URL = (typeof window !== "undefined" && window.AQUA_CONFIG && window.AQUA_CONFIG.supabase)
-    ? window.AQUA_CONFIG.supabase.url
-    : "https://ogfzfgsvmjuimjjhaubs.supabase.co";
-
-const SUPABASE_ANON_KEY = (typeof window !== "undefined" && window.AQUA_CONFIG && window.AQUA_CONFIG.supabase)
-    ? window.AQUA_CONFIG.supabase.anonKey
-    : "sb_publishable_yq1u37mBsk6LfPqq428BOA_DKEEqaoW";
-
-const KAKAO_APP_KEY = (typeof window !== "undefined" && window.AQUA_CONFIG && window.AQUA_CONFIG.kakao)
-    ? window.AQUA_CONFIG.kakao.appKey
-    : "7c316726691ea5e02f234a85f5a20bab";
-
-const COUPANG_CUSPE_URL = (typeof window !== "undefined" && window.AQUA_CONFIG && window.AQUA_CONFIG.coupang)
-    ? window.AQUA_CONFIG.coupang.cuspeUrl
-    : "https://link.coupang.com/a/fKqrpaA2Fw";
-
-// Initialize Supabase JS Client
-let supabaseClient = null;
-if (typeof window !== "undefined" && window.supabase && window.supabase.createClient) {
-    try {
-        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        console.log("Supabase Client Initialized Successfully:", SUPABASE_URL);
+   
     } catch (err) {
         console.log("Supabase Init Warning:", err);
     }
