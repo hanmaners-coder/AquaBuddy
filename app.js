@@ -2544,11 +2544,6 @@ function finishScheduleFromChat() {
 
 // Open Detail Modal with Account-Based Owner Actions (Only Show Edit/Delete for Author)
 function openDetailModal(postId) {
-    if (!currentUser) {
-        showToast("🔑 회원가입 / 로그인 후 글 내용과 상세 정보를 확인하실 수 있습니다!");
-        openModal(authModal);
-        return;
-    }
     const post = posts.find(p => p.id === postId);
     if (!post) return;
 
