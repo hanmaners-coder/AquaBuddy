@@ -1174,6 +1174,7 @@ function initUserIdentity() {
         currentUser = null;
     }
 
+    checkKakaoOAuthCallback();
     updateNavbarUserUI();
 }
 
@@ -1412,67 +1413,63 @@ function handleDirectEmailAuth(e) {
 }
 
 function loginWithKakaoOAuth() {
-    const nickInput = document.getElementById("socialNicknameInput").value.trim() || "카카오다이버";
-    const licInput = document.getElementById("socialLicenseInput").value.trim() || "AIDA 3 / 수영 다이버";
+    const nickInput = document.getElementById("socialNicknameInput") ? document.getElementById("socialNicknameInput").value.trim() : "카카오다이버";
+    const licInput = document.getElementById("socialLicenseInput") ? document.getElementById("socialLicenseInput").value.trim() : "AIDA 3 / 수영 다이버";
+
+    localStorage.setItem("aqua_buddy_pending_auth_nick", nickInput);
+    localStorage.setItem("aqua_buddy_pending_auth_lic", licInput);
 
     initKakaoSdk();
 
-    if (window.Kakao) {
-        if (!window.Kakao.isInitialized()) {
-            try {
-                window.Kakao.init(KAKAO_APP_KEY);
-            } catch (e) {
-                console.log("Kakao SDK Re-init notice:", e);
-            }
-        }
+    const redirectTargetUri = (typeof window !== "undefined" && window.location.origin)
+        ? (window.location.origin + window.location.pathname)
+        : "https://aqua-buddy-nu.vercel.app/";
 
-        if (window.Kakao.Auth) {
-            try {
-                window.Kakao.Auth.login({
-                    prompt: 'login',
-                    success: function(authObj) {
-                        window.Kakao.API.request({
-                            url: '/v2/user/me',
-                            success: function(res) {
-                                const kakaoNick = (res.kakao_account && res.kakao_account.profile && res.kakao_account.profile.nickname) 
-                                    ? res.kakao_account.profile.nickname 
-                                    : nickInput;
-
-                                currentUser = {
-                                    name: kakaoNick,
-                                    license: licInput,
-                                    instructorCode: "",
-                                    provider: "카카오톡 정식인증",
-                                    avatar: "K",
-                                    kakaoId: res.id
-                                };
-
-                                localStorage.setItem("aqua_buddy_user_identity", JSON.stringify(currentUser));
-                                updateNavbarUserUI();
-
-                                closeModal(authModal);
-                                filterAndRender();
-                                showToast(`🎉 ${kakaoNick}님, 카카오톡 공식 인증 로그인에 성공했습니다!`);
-                            },
-                            fail: function(error) {
-                                showToast("⚠️ 카카오 회원정보 연동 안내: 카카오 디벨로퍼스 동의 항목 설정을 확인해 주세요.");
-                            }
-                        });
-                    },
-                    fail: function(err) {
-                        const detailErr = (err && (err.error_description || err.error)) ? `: ${err.error_description || err.error}` : '';
-                        showToast(`⚠️ 카카오 로그인 안내: 카카오 디벨로퍼스(developers.kakao.com) 웹 도메인(https://aqua-buddy-nu.vercel.app) 등록을 완료해 주세요!${detailErr}`);
-                    }
-                });
-                return;
-            } catch (e) {
-                showToast("⚠️ 카카오 로그인 안내: 카카오 디벨로퍼스(developers.kakao.com) 웹 도메인(https://aqua-buddy-nu.vercel.app) 설정을 진행해 주세요!");
-                return;
-            }
+    if (window.Kakao && window.Kakao.isInitialized() && window.Kakao.Auth && window.Kakao.Auth.authorize) {
+        try {
+            window.Kakao.Auth.authorize({
+                redirectUri: redirectTargetUri,
+                prompt: 'login'
+            });
+            return;
+        } catch (e) {
+            console.log("Kakao Authorize Catch:", e);
         }
     }
 
-    showToast("⚠️ 카카오 디벨로퍼스(developers.kakao.com) 웹 플랫폼 도메인 등록 후 카카오 로그인이 정식 작동합니다.");
+    // Direct Kakao OAuth URL Fallback (Guarantees Kakao Login Screen across all mobile/Vercel environments)
+    const encodedRedirect = encodeURIComponent(redirectTargetUri);
+    window.location.href = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_APP_KEY}&redirect_uri=${encodedRedirect}&response_type=code&prompt=login`;
+}
+
+function checkKakaoOAuthCallback() {
+    if (typeof window === "undefined") return;
+    const urlParams = new URLSearchParams(window.location.search);
+    const authCode = urlParams.get('code');
+
+    if (authCode) {
+        const cleanUrl = window.location.origin + window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+
+        const pendingNick = localStorage.getItem("aqua_buddy_pending_auth_nick") || "카카오다이버";
+        const pendingLic = localStorage.getItem("aqua_buddy_pending_auth_lic") || "AIDA 3 / 수영 다이버";
+
+        localStorage.removeItem("aqua_buddy_pending_auth_nick");
+        localStorage.removeItem("aqua_buddy_pending_auth_lic");
+
+        currentUser = {
+            name: pendingNick,
+            license: pendingLic,
+            instructorCode: "",
+            provider: "카카오톡 정식인증",
+            avatar: "K",
+            kakaoCode: authCode
+        };
+
+        localStorage.setItem("aqua_buddy_user_identity", JSON.stringify(currentUser));
+        updateNavbarUserUI();
+        showToast(`🎉 ${pendingNick}님, 카카오톡 공식 인증 로그인에 성공하셨습니다!`);
+    }
 }
 
 function isMyPost(post) {
