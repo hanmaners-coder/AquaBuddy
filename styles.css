@@ -47,6 +47,7 @@ body {
     min-height: 100vh;
     word-break: keep-all;
     overflow-wrap: break-word;
+    padding-top: 110px;
 }
 
 .container {
@@ -178,16 +179,19 @@ body {
     margin-top: 6px;
 }
 
-/* Header & Navbar */
+/* Header & Navbar (100% Fixed Sticky Top Navigation) */
 .navbar {
-    position: sticky;
+    position: fixed;
     top: 0;
-    z-index: 1000;
-    background: rgba(7, 14, 23, 0.94);
+    left: 0;
+    width: 100%;
+    z-index: 2500;
+    background: rgba(7, 14, 23, 0.96);
     backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border-bottom: 1px solid var(--glass-border);
     padding: 10px 0;
-    width: 100%;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
 }
 
 .nav-container-top {
@@ -327,20 +331,22 @@ body {
 }
 
 .nav-item.active {
-    color: #000;
-    background: var(--accent-cyan);
-    border-color: var(--accent-cyan);
-    font-weight: 900;
-    box-shadow: 0 2px 10px rgba(0, 242, 254, 0.3);
+    color: #000 !important;
+    background: var(--accent-cyan) !important;
+    border-color: var(--accent-cyan) !important;
+    font-weight: 900 !important;
+    box-shadow: 0 0 16px rgba(0, 242, 254, 0.6) !important;
+    transform: translateY(-1px);
 }
 
 .nav-item.active i {
-    color: #000;
+    color: #000 !important;
 }
 
 .nav-item.nav-item-gold.active {
-    background: var(--accent-gold);
-    border-color: var(--accent-gold);
+    background: var(--accent-gold) !important;
+    border-color: var(--accent-gold) !important;
+    box-shadow: 0 0 16px rgba(255, 183, 3, 0.6) !important;
 }
 
 /* Hero Section */
@@ -476,12 +482,9 @@ body {
     font-weight: 700;
 }
 
-/* Category Tabs */
+/* Category Tabs (Hidden to prevent duplication with top fixed navbar) */
 .category-tabs {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-bottom: 16px;
+    display: none !important;
 }
 
 .tab-btn {
@@ -604,6 +607,161 @@ body {
     font-size: 0.8rem;
 }
 
+/* Category Page Toggle for Hero Section */
+body.category-view-active .hero-section {
+    display: none !important;
+}
+
+/* Main Dashboard Category Blocks (Homepage '전체 보기' Mode) */
+.dashboard-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+    margin-top: 16px;
+}
+
+.dashboard-category-block {
+    padding: 18px 20px;
+    border-radius: var(--radius-md);
+    background: var(--panel-bg);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.dashboard-category-block:hover {
+    border-color: rgba(0, 242, 254, 0.4);
+}
+
+.block-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.block-header-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--text-main);
+}
+
+.block-more-btn {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: var(--accent-cyan);
+    text-decoration: none;
+    padding: 4px 10px;
+    border-radius: 12px;
+    background: rgba(0, 242, 254, 0.1);
+    border: 1px solid rgba(0, 242, 254, 0.25);
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.block-more-btn:hover {
+    background: var(--accent-cyan);
+    color: #000;
+    transform: translateX(2px);
+}
+
+/* Compact Text List Mode (텍스트 간소화 리스트) */
+.compact-post-table {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.compact-post-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    color: var(--text-main);
+}
+
+.compact-post-row:hover {
+    background: rgba(0, 242, 254, 0.1);
+    border-color: rgba(0, 242, 254, 0.4);
+    transform: translateX(4px);
+}
+
+.compact-row-main {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    flex: 1;
+}
+
+.compact-post-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.compact-row-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.compact-author-name {
+    color: var(--accent-cyan);
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.compact-rating {
+    color: var(--accent-gold);
+    font-weight: 700;
+}
+
+.compact-action-link {
+    font-size: 0.78rem;
+    color: var(--accent-cyan);
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+@media (max-width: 768px) {
+    .compact-post-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+        padding: 10px;
+    }
+    .compact-row-meta {
+        width: 100%;
+        justify-content: space-between;
+        font-size: 0.76rem;
+    }
+}
+
 /* Mobile Optimized Ad Banner Card System (Zero Character Breaking Fix) */
 .ad-banner-panel {
     margin-bottom: 24px;
@@ -616,12 +774,12 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 24px 30px;
+    padding: 10px 18px;
     border-radius: var(--radius-md);
     overflow: hidden;
     text-decoration: none;
     color: #fff;
-    min-height: 140px;
+    min-height: 68px;
     width: 100%;
 }
 
@@ -651,25 +809,41 @@ body {
     display: inline-block;
     background: var(--accent-gold);
     color: #000;
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     font-weight: 900;
-    padding: 3px 8px;
+    padding: 2px 6px;
     border-radius: 4px;
-    margin-bottom: 6px;
+    margin-bottom: 2px;
 }
 
 .center-ad-title {
-    font-size: 1.35rem;
+    font-size: 0.95rem;
     font-weight: 900;
-    line-height: 1.35;
+    line-height: 1.25;
     word-break: keep-all;
 }
 
 .center-ad-subtitle {
-    font-size: 0.85rem;
+    font-size: 0.74rem;
     color: rgba(255, 255, 255, 0.85);
-    margin-top: 4px;
+    margin-top: 2px;
     word-break: keep-all;
+}
+
+.center-ad-cta-btn {
+    position: relative;
+    z-index: 2;
+    background: linear-gradient(135deg, var(--accent-gold), #ff8f00);
+    color: #000;
+    font-weight: 900;
+    font-size: 0.76rem;
+    padding: 6px 12px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(255, 183, 3, 0.3);
 }
 
 .center-ad-cta-btn {
@@ -1020,12 +1194,24 @@ body {
     padding-top: 6px;
 }
 
-/* CCTVs Grid & Card */
+/* CCTVs Grid & Card (4-Column Command Center Layout on PC) */
 .webcam-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 16px;
     width: 100%;
+}
+
+@media (max-width: 1199px) {
+    .webcam-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .webcam-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .webcam-card {
@@ -1101,9 +1287,10 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.82);
-    backdrop-filter: blur(8px);
-    z-index: 2000;
+    background: rgba(0, 0, 0, 0.86);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 3500 !important;
     display: flex;
     align-items: center;
     justify-content: center;

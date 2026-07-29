@@ -872,10 +872,11 @@ let posts = [];
 let inquiries = [];
 let activeCategory = "all";
 let activeActivitySub = "my_posts";
-let activeCctvRegion = "busan_gijang";
-let activeTideRegion = "busan";
+let activeCctvRegion = "all";
+let activeTideRegion = "all";
 let tideSearchKeyword = "";
-let currentMainView = "feed";
+let cctvSearchKeyword = "";
+let currentMainView = "home";
 let searchKeyword = "";
 let selectedRegion = "all";
 let selectedSort = "newest";
@@ -941,8 +942,86 @@ const deleteConfirmModal = document.getElementById("deleteConfirmModal");
 const confirmDeleteFinalBtn = document.getElementById("confirmDeleteFinalBtn");
 const inquiryModal = document.getElementById("inquiryModal");
 
+function forceScrollToTop() {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+}
+
+// Switch Main View (Home vs Feed/Category vs Tide vs CCTV)
+function switchMainView(viewName) {
+    currentMainView = viewName;
+    const feedSec = document.getElementById("mainFeedViewSection");
+    const tideSec = document.getElementById("tideViewSection");
+    const cctvSec = document.getElementById("cctvViewSection");
+
+    const navHome = document.getElementById("navLinkHome");
+    const navFeed = document.getElementById("navLinkFeed");
+    const navInstructor = document.getElementById("navLinkInstructor");
+    const navCommunity = document.getElementById("navLinkCommunity");
+    const navMarket = document.getElementById("navLinkMarket");
+    const navActivity = document.getElementById("navLinkActivity");
+    const navTide = document.getElementById("navLinkTide");
+    const navCctv = document.getElementById("navLinkCctv");
+
+    [navHome, navFeed, navInstructor, navCommunity, navMarket, navActivity, navTide, navCctv].forEach(link => {
+        if (link) link.classList.remove("active");
+    });
+
+    if (viewName === "home") {
+        document.body.classList.remove("category-view-active");
+        if (feedSec) feedSec.classList.remove("hidden");
+        if (tideSec) tideSec.classList.add("hidden");
+        if (cctvSec) cctvSec.classList.add("hidden");
+        if (navHome) navHome.classList.add("active");
+        
+        activeCategory = "all";
+        tabBtns.forEach(b => {
+            if (b.dataset.category === "all" || b.dataset.category === "home") b.classList.add("active");
+            else b.classList.remove("active");
+        });
+        updateCreateButtonText("all");
+        filterAndRender();
+    } else if (viewName === "feed") {
+        if (feedSec) feedSec.classList.remove("hidden");
+        if (tideSec) tideSec.classList.add("hidden");
+        if (cctvSec) cctvSec.classList.add("hidden");
+
+        if (activeCategory === "instructor" && navInstructor) navInstructor.classList.add("active");
+        else if (activeCategory === "community" && navCommunity) navCommunity.classList.add("active");
+        else if (activeCategory === "market" && navMarket) navMarket.classList.add("active");
+        else if (activeCategory === "activity_log" && navActivity) navActivity.classList.add("active");
+        else if (navFeed) navFeed.classList.add("active");
+
+        filterAndRender();
+    } else if (viewName === "tide") {
+        if (feedSec) feedSec.classList.add("hidden");
+        if (tideSec) tideSec.classList.remove("hidden");
+        if (cctvSec) cctvSec.classList.add("hidden");
+        if (navTide) navTide.classList.add("active");
+        document.body.classList.add("category-view-active");
+        renderWeatherGrid(activeTideRegion);
+    } else if (viewName === "cctv") {
+        if (feedSec) feedSec.classList.add("hidden");
+        if (tideSec) tideSec.classList.add("hidden");
+        if (cctvSec) cctvSec.classList.remove("hidden");
+        if (navCctv) navCctv.classList.add("active");
+        document.body.classList.add("category-view-active");
+        renderOceanWebcams(activeCctvRegion);
+    }
+
+    // Multi-stage Force Scroll-to-Top (Guarantees Photo 1 View across all devices!)
+    forceScrollToTop();
+    setTimeout(forceScrollToTop, 10);
+    setTimeout(forceScrollToTop, 50);
+    setTimeout(forceScrollToTop, 150);
+}
+
 // Initialize Application
 document.addEventListener("DOMContentLoaded", () => {
+    if ('scrollRestoration' in history) {
+        history.scrollRestoration = 'manual';
+    }
     initKakaoSdk();
     initUserIdentity();
     loadPosts();
@@ -950,8 +1029,7 @@ document.addEventListener("DOMContentLoaded", () => {
     loadInquiries();
     initEventListeners();
     initStarRatingEvents();
-    switchMainView('feed');
-    filterAndRender();
+    switchMainView('home');
     renderWeatherGrid(activeTideRegion);
     renderOceanWebcams(activeCctvRegion);
     renderAdBanner();
@@ -1041,47 +1119,6 @@ function handleSaveInquiry(e) {
     showToast(toastMsg);
     if (!document.getElementById("adminDashboardModal").classList.contains("hidden")) {
         renderAdminInquiriesTable();
-    }
-}
-
-// Switch Independent Main View Pages ('feed', 'tide', 'cctv')
-function switchMainView(viewName) {
-    currentMainView = viewName;
-
-    const feedSec = document.getElementById("mainFeedViewSection");
-    const tideSec = document.getElementById("tideViewSection");
-    const cctvSec = document.getElementById("cctvViewSection");
-
-    const navFeed = document.getElementById("navLinkFeed");
-    const navInst = document.getElementById("navLinkInstructor");
-    const navComm = document.getElementById("navLinkCommunity");
-    const navMark = document.getElementById("navLinkMarket");
-    const navAct = document.getElementById("navLinkActivity");
-    const navTide = document.getElementById("navLinkTide");
-    const navCctv = document.getElementById("navLinkCctv");
-
-    const navItems = [navFeed, navInst, navComm, navMark, navAct, navTide, navCctv];
-    navItems.forEach(item => { if (item) item.classList.remove("active"); });
-
-    if (viewName === "tide") {
-        feedSec.classList.add("hidden");
-        tideSec.classList.remove("hidden");
-        cctvSec.classList.add("hidden");
-        if (navTide) navTide.classList.add("active");
-        renderWeatherGrid(activeTideRegion);
-        window.scrollTo({ top: 350, behavior: 'smooth' });
-    } else if (viewName === "cctv") {
-        feedSec.classList.add("hidden");
-        tideSec.classList.add("hidden");
-        cctvSec.classList.remove("hidden");
-        if (navCctv) navCctv.classList.add("active");
-        renderOceanWebcams(activeCctvRegion);
-        window.scrollTo({ top: 350, behavior: 'smooth' });
-    } else {
-        feedSec.classList.remove("hidden");
-        tideSec.classList.add("hidden");
-        cctvSec.classList.add("hidden");
-        if (navFeed) navFeed.classList.add("active");
     }
 }
 
@@ -1483,6 +1520,22 @@ function saveMyPosts() {
 }
 
 function initEventListeners() {
+    const navHomeBtn = document.getElementById("navLinkHome");
+    if (navHomeBtn) {
+        navHomeBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            switchMainView("home");
+        });
+    }
+
+    const logoBtn = document.querySelector(".logo");
+    if (logoBtn) {
+        logoBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            switchMainView("home");
+        });
+    }
+
     tabBtns.forEach(btn => {
         btn.addEventListener("click", () => {
             tabBtns.forEach(b => b.classList.remove("active"));
@@ -1719,11 +1772,35 @@ function openLightbox(src) {
     openModal(imageLightboxModal);
 }
 
-function renderOceanWebcams(regionCategoryKey = "busan_gijang") {
+function handleCctvSearch(keyword) {
+    cctvSearchKeyword = keyword.trim().toLowerCase();
+    renderOceanWebcams(activeCctvRegion);
+}
+
+function renderOceanWebcams(regionCategoryKey = "all") {
     const grid = document.getElementById("webcamGrid");
     if (!grid) return;
 
-    const filteredCctvs = OCEAN_WEBCAMS_DATA.filter(cam => cam.regionCategory === regionCategoryKey);
+    let filteredCctvs = (regionCategoryKey === "all")
+        ? [...OCEAN_WEBCAMS_DATA]
+        : OCEAN_WEBCAMS_DATA.filter(cam => cam.regionCategory === regionCategoryKey);
+
+    if (cctvSearchKeyword) {
+        filteredCctvs = OCEAN_WEBCAMS_DATA.filter(cam => 
+            `${cam.name} ${cam.region} ${cam.desc || ''} ${cam.source || ''}`.toLowerCase().includes(cctvSearchKeyword)
+        );
+    }
+
+    if (filteredCctvs.length === 0) {
+        grid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 30px; color: var(--text-muted);">
+                <i class="fa-solid fa-video-slash" style="font-size: 2.5rem; margin-bottom: 10px; color: #ff5252;"></i>
+                <h3>'${escapeHtml(cctvSearchKeyword)}' 검색어에 해당하는 해양 CCTV 스팟을 찾을 수 없습니다.</h3>
+                <p>스팟명(예: 해운대, 임랑, 서귀포, 독도)으로 다시 검색해 보세요.</p>
+            </div>
+        `;
+        return;
+    }
 
     grid.innerHTML = filteredCctvs.map(cam => `
         <div class="webcam-card" onclick="openWebcamModal('${cam.id}')">
@@ -1821,11 +1898,13 @@ function closeWebcamModal() {
     closeModal(document.getElementById("oceanWebcamModal"));
 }
 
-function renderWeatherGrid(regionKey = "busan") {
+function renderWeatherGrid(regionKey = "all") {
     const grid = document.getElementById("weatherGrid");
     if (!grid) return;
 
-    let filteredSpots = OCEAN_WEATHER_DATA.filter(spot => spot.regionCat === regionKey);
+    let filteredSpots = (regionKey === "all")
+        ? [...OCEAN_WEATHER_DATA]
+        : OCEAN_WEATHER_DATA.filter(spot => spot.regionCat === regionKey);
 
     if (tideSearchKeyword) {
         filteredSpots = OCEAN_WEATHER_DATA.filter(spot => 
@@ -1984,13 +2063,51 @@ function preselectModalCategory(cat, isEditing = false) {
     }
 }
 
-function filterByCategory(catName) {
-    activeCategory = catName;
-    tabBtns.forEach(b => {
-        if (b.dataset.category === catName) b.classList.add("active");
-        else b.classList.remove("active");
+function updateTopNavbarActive(catName) {
+    const navHome = document.getElementById("navLinkHome");
+    const navFeed = document.getElementById("navLinkFeed");
+    const navInstructor = document.getElementById("navLinkInstructor");
+    const navCommunity = document.getElementById("navLinkCommunity");
+    const navMarket = document.getElementById("navLinkMarket");
+    const navActivity = document.getElementById("navLinkActivity");
+    const navTide = document.getElementById("navLinkTide");
+    const navCctv = document.getElementById("navLinkCctv");
+
+    [navHome, navFeed, navInstructor, navCommunity, navMarket, navActivity, navTide, navCctv].forEach(link => {
+        if (link) link.classList.remove("active");
     });
 
+    if (catName === "home" || catName === "all") {
+        if (navHome) navHome.classList.add("active");
+    } else if (catName === "instructor") {
+        if (navInstructor) navInstructor.classList.add("active");
+    } else if (catName === "community") {
+        if (navCommunity) navCommunity.classList.add("active");
+    } else if (catName === "market") {
+        if (navMarket) navMarket.classList.add("active");
+    } else if (catName === "activity_log") {
+        if (navActivity) navActivity.classList.add("active");
+    } else if (catName === "tide") {
+        if (navTide) navTide.classList.add("active");
+    } else if (catName === "cctv") {
+        if (navCctv) navCctv.classList.add("active");
+    } else {
+        if (navFeed) navFeed.classList.add("active");
+    }
+}
+
+function filterByCategory(catName) {
+    activeCategory = catName;
+    if (catName !== "all" && catName !== "home") {
+        currentMainView = "feed";
+        const feedSec = document.getElementById("mainFeedViewSection");
+        const tideSec = document.getElementById("tideViewSection");
+        const cctvSec = document.getElementById("cctvViewSection");
+        if (feedSec) feedSec.classList.remove("hidden");
+        if (tideSec) tideSec.classList.add("hidden");
+        if (cctvSec) cctvSec.classList.add("hidden");
+    }
+    updateTopNavbarActive(catName);
     updateCreateButtonText(catName);
     renderAdBanner();
     filterAndRender();
@@ -2018,6 +2135,9 @@ function renderAdBanner() {
 
 function filterAndRender() {
     const currentUserName = currentUser ? currentUser.name : "다이버";
+    const dashboardSec = document.getElementById("dashboardBlocksSection");
+    const postsSec = document.querySelector(".posts-section");
+    const filterSec = document.getElementById("feed");
 
     if (activeCategory === "activity_log") {
         activitySubFilterBar.classList.remove("hidden");
@@ -2025,25 +2145,39 @@ function filterAndRender() {
         activitySubFilterBar.classList.add("hidden");
     }
 
+    if (activeCategory === "all" || activeCategory === "home") {
+        document.body.classList.remove("category-view-active");
+        if (dashboardSec) dashboardSec.style.display = "flex";
+        if (filterSec) filterSec.style.display = "none";
+        if (postsSec) postsSec.style.display = "none";
+        renderDashboardBlocks();
+        activeCountText.textContent = `AquaBuddy 통합 대시보드 - 주요 카테고리 핫이슈`;
+        return;
+    }
+
+    // Category Page Mode (Hide Hero, Show Filter & Category Posts)
+    document.body.classList.add("category-view-active");
+    if (dashboardSec) dashboardSec.style.display = "none";
+    if (filterSec) filterSec.style.display = "block";
+    if (postsSec) postsSec.style.display = "block";
+
     let filtered = posts.filter(post => {
         if (activeCategory === "activity_log") {
-            if (activeActivitySub === "my_posts") {
-                return isMyPost(post);
-            } else if (activeActivitySub === "chat_rooms") {
-                return chatMessages[post.id] && chatMessages[post.id].length > 0;
-            } else if (activeActivitySub === "joined") {
-                return post.attendees && post.attendees.includes(currentUserName);
-            } else if (activeActivitySub === "liked") {
-                return post.userLiked === true;
-            } else if (activeActivitySub === "commented") {
-                return post.comments && post.comments.some(c => c.author === currentUserName || isMyPost(post));
-            } else if (activeActivitySub === "wished") {
-                return post.userWished === true;
-            }
+            if (activeActivitySub === "my_posts") return isMyPost(post);
+            if (activeActivitySub === "chat_rooms") return chatMessages[post.id] && chatMessages[post.id].length > 0;
+            if (activeActivitySub === "joined") return post.attendees && post.attendees.includes(currentUserName);
+            if (activeActivitySub === "liked") return post.userLiked === true;
+            if (activeActivitySub === "commented") return post.comments && post.comments.some(c => c.author === currentUserName || isMyPost(post));
+            if (activeActivitySub === "wished") return post.userWished === true;
             return isMyPost(post);
         }
 
-        if (activeCategory !== "all" && post.category !== activeCategory) {
+        // Category-Scoped Search Filtering
+        if (activeCategory === "freediving" || activeCategory === "buddy") {
+            if (!["freediving", "scuba", "swimming", "openwater"].includes(post.category)) {
+                return false;
+            }
+        } else if (activeCategory !== "all" && post.category !== activeCategory) {
             return false;
         }
 
@@ -2062,15 +2196,11 @@ function filterAndRender() {
     });
 
     filtered.sort((a, b) => {
-        if (selectedSort === "newest") {
-            return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
-        } else if (selectedSort === "oldest") {
-            return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
-        } else if (selectedSort === "max_capacity") {
-            return (b.capacity || 1) - (a.capacity || 1);
-        } else if (selectedSort === "min_capacity") {
-            return (a.capacity || 1) - (b.capacity || 1);
-        } else if (selectedSort === "closing_soon") {
+        if (selectedSort === "newest") return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+        if (selectedSort === "oldest") return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
+        if (selectedSort === "max_capacity") return (b.capacity || 1) - (a.capacity || 1);
+        if (selectedSort === "min_capacity") return (a.capacity || 1) - (b.capacity || 1);
+        if (selectedSort === "closing_soon") {
             if (a.status === "recruiting" && b.status !== "recruiting") return -1;
             if (a.status !== "recruiting" && b.status === "recruiting") return 1;
             return new Date(a.date || 0) - new Date(b.date || 0);
@@ -2081,7 +2211,105 @@ function filterAndRender() {
     renderGrid(filtered);
 }
 
-// Render Feed Posts Grid
+// Render Dashboard Category Blocks for 'all' mode
+function renderDashboardBlocks() {
+    const container = document.getElementById("dashboardBlocksSection");
+    if (!container) return;
+
+    const buddyPosts = posts.filter(p => ["freediving", "scuba", "swimming", "openwater"].includes(p.category)).slice(0, 4);
+    const instPosts = posts.filter(p => p.category === "instructor").slice(0, 4);
+    const commPosts = posts.filter(p => p.category === "community").slice(0, 4);
+    const marketPosts = posts.filter(p => p.category === "market").slice(0, 4);
+
+    container.innerHTML = `
+        <!-- Block 1: 🔥 실시간 인기 버디 모집 -->
+        <div class="dashboard-category-block">
+            <div class="block-header">
+                <div class="block-header-title">
+                    <i class="fa-solid fa-fire" style="color: #ff5252;"></i>
+                    <span>🔥 실시간 인기 버디 모집</span>
+                </div>
+                <a href="javascript:void(0)" class="block-more-btn" onclick="filterByCategory('freediving')">
+                    버디탐색 바로가기 ➔
+                </a>
+            </div>
+            <div class="compact-post-table">
+                ${buddyPosts.map(p => renderCompactPostRow(p)).join("")}
+            </div>
+        </div>
+
+        <!-- Block 2: 🎓 검증된 인기 강사 클래스 -->
+        <div class="dashboard-category-block">
+            <div class="block-header">
+                <div class="block-header-title">
+                    <i class="fa-solid fa-graduation-cap" style="color: var(--accent-gold);"></i>
+                    <span>🎓 검증된 인기 강사 클래스 (체험/자격증)</span>
+                </div>
+                <a href="javascript:void(0)" class="block-more-btn" onclick="filterByCategory('instructor')">
+                    강사클래스 바로가기 ➔
+                </a>
+            </div>
+            <div class="compact-post-table">
+                ${instPosts.map(p => renderCompactPostRow(p)).join("")}
+            </div>
+        </div>
+
+        <!-- Block 3: 💬 자유수다방 핫이슈 -->
+        <div class="dashboard-category-block">
+            <div class="block-header">
+                <div class="block-header-title">
+                    <i class="fa-solid fa-comments" style="color: var(--accent-cyan);"></i>
+                    <span>💬 실시간 자유수다방 핫이슈</span>
+                </div>
+                <a href="javascript:void(0)" class="block-more-btn" onclick="filterByCategory('community')">
+                    자유수다방 바로가기 ➔
+                </a>
+            </div>
+            <div class="compact-post-table">
+                ${commPosts.map(p => renderCompactPostRow(p)).join("")}
+            </div>
+        </div>
+
+        <!-- Block 4: 🏷️ 최근 등록된 중고장터 꿀매물 -->
+        <div class="dashboard-category-block">
+            <div class="block-header">
+                <div class="block-header-title">
+                    <i class="fa-solid fa-tags" style="color: #00e676;"></i>
+                    <span>🏷️ 최근 등록된 중고장터 꿀매물</span>
+                </div>
+                <a href="javascript:void(0)" class="block-more-btn" onclick="filterByCategory('market')">
+                    중고장터 바로가기 ➔
+                </a>
+            </div>
+            <div class="compact-post-table">
+                ${marketPosts.map(p => renderCompactPostRow(p)).join("")}
+            </div>
+        </div>
+    `;
+}
+
+function renderCompactPostRow(post) {
+    const isInst = post.category === "instructor";
+    const isMarket = post.category === "market";
+    const priceText = isInst ? (post.classFee ? post.classFee.toLocaleString() + '원' : '수강료 문의') : (isMarket ? (post.price ? post.price.toLocaleString() + '원' : '가격협의') : '');
+    
+    return `
+        <div class="compact-post-row" onclick="openDetailModal('${post.id}')">
+            <div class="compact-row-main">
+                <span class="badge badge-${post.category}">${post.categoryName}</span>
+                <span class="compact-post-title">${escapeHtml(post.title)}</span>
+            </div>
+            <div class="compact-row-meta">
+                <span class="compact-author-name"><i class="fa-solid fa-user-circle"></i> ${escapeHtml(post.userName)}</span>
+                <span class="compact-rating">★ ${post.hostRating || 5.0}</span>
+                ${priceText ? `<span style="color: var(--accent-gold); font-weight: 700;">${priceText}</span>` : ''}
+                <span class="compact-action-link">상세 ➔</span>
+            </div>
+        </div>
+    `;
+}
+
+// Render Feed Posts in Compact Simplified List View Mode
 function renderGrid(data) {
     activeCountText.textContent = `총 ${data.length}개의 게시글 / 모집글 / 강사 클래스`;
 
@@ -2092,105 +2320,8 @@ function renderGrid(data) {
     }
 
     emptyState.classList.add("hidden");
-    postsGrid.innerHTML = data.map(post => {
-        const isInstructor = post.category === "instructor";
-        const isMarket = post.category === "market";
-        const isCommunity = post.category === "community";
-        const hasImages = post.images && post.images.length > 0;
-        const mine = isMyPost(post);
-        const isFull = (post.joinedCount && post.capacity && post.joinedCount >= post.capacity) || post.status === "in_progress" || post.status === "completed";
-        const unreadCount = post.unreadCount || 0;
-
-        return `
-        <div class="post-card">
-            <div>
-                <div class="post-header">
-                    <div class="badge-group">
-                        <span class="badge badge-${post.category}">${post.categoryName || '스포츠'}</span>
-                        ${isInstructor ? `<span class="instructor-badge" title="라이선스 검증 완료: ${post.instructorLicenseCode || '공인 강사'}"><i class="fa-solid fa-graduation-cap"></i> 검증 완료 강사</span>` : ''}
-                        ${(!isCommunity && !isMarket) ? `<span class="status-badge status-${post.status}">${post.statusText}</span>` : ''}
-                    </div>
-                    ${isMarket ? `
-                    <button class="wishlist-btn ${post.userWished ? 'active' : ''}" onclick="toggleWishlist('${post.id}')">
-                        <i class="fa-solid fa-heart"></i> ${post.wishlistCount || 0}
-                    </button>
-                    ` : ''}
-                </div>
-
-                <h3 class="post-title">${escapeHtml(post.title)}</h3>
-
-                ${hasImages ? `
-                <div style="width: 100%; height: 160px; border-radius: var(--radius-sm); overflow: hidden; margin-bottom: 12px; border: 1px solid var(--glass-border);">
-                    <img src="${post.images[0]}" alt="게시글 대표 사진" class="zoomable-img" onclick="openLightbox('${post.images[0]}')" style="width: 100%; height: 100%; object-fit: cover;">
-                </div>
-                ` : ''}
-
-                ${isInstructor ? `
-                <div class="class-price-tag">
-                    <i class="fa-solid fa-ticket"></i> 수강료: ${post.classFee ? post.classFee.toLocaleString() + '원' : '수강료 문의'}
-                    <span style="font-size: 0.76rem; font-weight: 600; color: var(--text-muted); margin-left: 6px;">(${escapeHtml(post.classRatio || '1:2 소수정예')})</span>
-                </div>
-                ` : ''}
-
-                ${isMarket ? `
-                <div class="market-price-tag">
-                    <i class="fa-solid fa-won-sign"></i> ${post.price ? post.price.toLocaleString() + '원' : '가격 협의'}
-                    <span style="font-size: 0.78rem; font-weight: 500; color: var(--text-muted); margin-left: 8px;">(${escapeHtml(post.dealMethod || '직거래/택배 둘 다 가능')})</span>
-                </div>
-                ` : ''}
-
-                <div class="user-info">
-                    <div class="user-details">
-                        <h4><i class="fa-solid fa-user-circle" style="color: var(--accent-cyan);"></i> ${escapeHtml(post.userName)} ${mine ? '<span style="color: var(--accent-gold); font-size: 0.75rem;">(내가 쓴 글)</span>' : ''} <span class="host-rating-badge"><i class="fa-solid fa-star"></i> ${post.hostRating || 5.0} (${post.hostReviewsCount || 10})</span></h4>
-                        <span class="user-license"><i class="fa-solid fa-certificate"></i> ${escapeHtml(post.userLicense)}</span>
-                    </div>
-                </div>
-
-                <div class="post-info-list">
-                    ${!isCommunity ? `
-                    <div class="info-item">
-                        <i class="fa-solid fa-location-dot"></i>
-                        <span>${escapeHtml(post.mapAddress || post.locationName)}</span>
-                    </div>
-                    ` : ''}
-                    ${post.date && !isMarket && !isCommunity ? `
-                    <div class="info-item">
-                        <i class="fa-regular fa-calendar-check"></i>
-                        <span>진행 일정: <strong>${formatDate(post.date)}</strong></span>
-                    </div>
-                    ` : ''}
-                    ${isInstructor && post.classInclusion ? `
-                    <div class="info-item" style="color: var(--accent-gold);">
-                        <i class="fa-solid fa-circle-info"></i>
-                        <span>${escapeHtml(post.classInclusion)}</span>
-                    </div>
-                    ` : ''}
-                </div>
-            </div>
-
-            <div class="post-footer">
-                <span class="post-time">${formatTimeAgo(post.createdAt)}</span>
-                <div style="display: flex; gap: 6px; align-items: center;">
-                    ${!isCommunity ? `
-                    <button class="btn btn-secondary" onclick="openChatRoomModal('${post.id}')" style="padding: 6px 12px; font-size: 0.82rem; position: relative;" title="앱 내 대화하기">
-                        <i class="fa-solid fa-comments"></i> 대화하기
-                        ${unreadCount > 0 ? `<span class="unread-badge" style="position: absolute; top: -6px; right: -6px; padding: 2px 6px; font-size: 0.7rem;">${unreadCount}</span>` : ''}
-                    </button>
-                    ` : ''}
-                    ${(!isCommunity && !isMarket && isFull && !mine) ? `
-                    <button class="btn btn-secondary btn-disabled" disabled style="padding: 6px 14px; font-size: 0.82rem;" title="모집이 완료되어 상세보기가 차단되었습니다.">
-                        <i class="fa-solid fa-lock"></i> 모집 마감
-                    </button>
-                    ` : `
-                    <button class="btn btn-primary" onclick="openDetailModal('${post.id}')" style="padding: 6px 14px; font-size: 0.82rem;">
-                        ${isInstructor ? '클래스 상세보기 ➔' : '상세보기 ➔'}
-                    </button>
-                    `}
-                </div>
-            </div>
-        </div>
-        `;
-    }).join("");
+    postsGrid.className = "compact-post-table";
+    postsGrid.innerHTML = data.map(post => renderCompactPostRow(post)).join("");
 }
 
 function openChatRoomModal(postId) {

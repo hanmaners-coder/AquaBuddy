@@ -70,7 +70,7 @@
     <header class="navbar">
         <div class="nav-container-top container">
             <!-- Brand Logo -->
-            <a href="#" class="logo" onclick="switchMainView('feed'); filterByCategory('all');">
+            <a href="javascript:void(0)" class="logo" onclick="switchMainView('home');">
                 <i class="fa-solid fa-water-ladder logo-icon"></i>
                 <span class="logo-text">Aqua<span class="logo-accent">Buddy</span></span>
             </a>
@@ -102,7 +102,10 @@
         <!-- Tier 2: Enhanced High-Contrast Category Links -->
         <div class="nav-sub-menu container">
             <nav class="nav-links-grid">
-                <a href="javascript:void(0)" class="nav-item active" id="navLinkFeed" onclick="switchMainView('feed'); filterByCategory('all');">
+                <a href="javascript:void(0)" class="nav-item active" id="navLinkHome" onclick="switchMainView('home');">
+                    <i class="fa-solid fa-house"></i> 홈
+                </a>
+                <a href="javascript:void(0)" class="nav-item" id="navLinkFeed" onclick="switchMainView('feed'); filterByCategory('freediving');">
                     <i class="fa-solid fa-compass"></i> 버디 탐색
                 </a>
                 <a href="javascript:void(0)" class="nav-item nav-item-gold" id="navLinkInstructor" onclick="switchMainView('feed'); filterByCategory('instructor');">
@@ -169,8 +172,8 @@
 
                 <!-- High-Contrast Category Tabs -->
                 <div class="category-tabs">
-                    <button class="tab-btn active" data-category="all">
-                        <i class="fa-solid fa-globe"></i> 전체 보기
+                    <button class="tab-btn active" data-category="all" onclick="switchMainView('home');">
+                        <i class="fa-solid fa-house"></i> 전체 보기 (홈)
                     </button>
                     <button class="tab-btn instructor-tab" data-category="instructor">
                         <i class="fa-solid fa-graduation-cap"></i> 강사 클래스 (체험/자격증)
@@ -270,6 +273,9 @@
                 </div>
             </div>
 
+            <!-- Homepage Main Dashboard Category Blocks Container -->
+            <div id="dashboardBlocksSection" class="dashboard-container"></div>
+
             <!-- Feed Posts Grid -->
             <section class="posts-section">
                 <div class="posts-grid" id="postsGrid">
@@ -290,6 +296,23 @@
 
         <!-- VIEW 2: Dedicated Water Tide Table View Section (#tideViewSection) -->
         <div id="tideViewSection" class="hidden">
+            <!-- Center Top Ad Banner for Tide View -->
+            <div class="ad-banner-panel glass-panel" style="margin-bottom: 20px;">
+                <div class="ad-content">
+                    <a href="https://link.coupang.com/a/fKq8aVxMvA" target="_blank" class="center-ad-visual-card">
+                        <img src="bottom_ad_openwater.jpg" alt="바다수영 수평선 배경" class="center-ad-bg-img">
+                        <div class="center-ad-overlay-content">
+                            <span class="center-ad-badge"><i class="fa-solid fa-water"></i> OPEN WATER GEAR</span>
+                            <h2 class="center-ad-title">🌊 입수 전 필수! 바다수영 & 해양 장비 특가 기획전</h2>
+                            <p class="center-ad-subtitle">체온 보호 슈트, 시야 확보 안전부표 & 오픈워터 다이빙 핀 세트</p>
+                        </div>
+                        <div class="center-ad-cta-btn">
+                            <span>바다 장비 기획전 구경 ➔</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
             <section class="weather-section">
                 <div class="section-title">
                     <h2><i class="fa-solid fa-water" style="color: var(--accent-cyan);"></i> 전국 46개 핵심 입수 포인트 실시간 물때표 (Tide Table)</h2>
@@ -298,7 +321,8 @@
 
                 <!-- Region Filter Tabs for Tide Table -->
                 <div class="tide-region-tabs-bar" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;">
-                    <button class="sub-tab-btn active" data-tideregion="busan" onclick="filterTideRegion('busan')">부산 권역 (12개)</button>
+                    <button class="sub-tab-btn active" data-tideregion="all" onclick="filterTideRegion('all')">🌐 전국 전체 (46개 포인트)</button>
+                    <button class="sub-tab-btn" data-tideregion="busan" onclick="filterTideRegion('busan')">부산 권역 (12개)</button>
                     <button class="sub-tab-btn" data-tideregion="ulsan" onclick="filterTideRegion('ulsan')">울산 권역 (7개)</button>
                     <button class="sub-tab-btn" data-tideregion="geoje" onclick="filterTideRegion('geoje')">거제/경남 권역 (4개)</button>
                     <button class="sub-tab-btn" data-tideregion="donghae" onclick="filterTideRegion('donghae')">포항/동해/강원 (12개)</button>
@@ -321,6 +345,23 @@
 
         <!-- VIEW 3: Dedicated Ocean Live CCTV View Section (#cctvViewSection) -->
         <div id="cctvViewSection" class="hidden">
+            <!-- Center Top Ad Banner for CCTV View -->
+            <div class="ad-banner-panel glass-panel" style="margin-bottom: 20px;">
+                <div class="ad-content">
+                    <a href="https://link.coupang.com/a/fKszBcQl6y" target="_blank" class="center-ad-visual-card">
+                        <img src="right_ad_scuba.jpg" alt="스쿠버다이빙 장비 배경" class="center-ad-bg-img">
+                        <div class="center-ad-overlay-content">
+                            <span class="center-ad-badge"><i class="fa-solid fa-video"></i> LIVE STREAM PARTNER</span>
+                            <h2 class="center-ad-title">📹 실시간 바다 파도 확인하고 다이빙 장비 특가 세일!</h2>
+                            <p class="center-ad-subtitle">다이빙 컴퓨터, 마스크, 슈트 & 수중 카메라 하우징 특별전</p>
+                        </div>
+                        <div class="center-ad-cta-btn">
+                            <span>다이빙 특가 기획전 보러가기 ➔</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
             <section class="weather-section">
                 <div class="section-title">
                     <h2><i class="fa-solid fa-video" style="color: #ff5252;"></i> 전국 44개 해양 실시간 라이브 CCTV (출처 명시)</h2>
@@ -329,7 +370,10 @@
 
                 <!-- Regional Sub Tabs for CCTVs -->
                 <div class="cctv-region-tabs-bar" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
-                    <button class="sub-tab-btn active" data-cctvregion="busan_gijang" onclick="filterCctvRegion('busan_gijang')">
+                    <button class="sub-tab-btn active" data-cctvregion="all" onclick="filterCctvRegion('all')">
+                        🌐 전국 전체 (44개 CCTV)
+                    </button>
+                    <button class="sub-tab-btn" data-cctvregion="busan_gijang" onclick="filterCctvRegion('busan_gijang')">
                         부산 기장 / 해운대 / 수영 (12개)
                     </button>
                     <button class="sub-tab-btn" data-cctvregion="busan_south" onclick="filterCctvRegion('busan_south')">
@@ -349,7 +393,13 @@
                     </button>
                 </div>
 
-                <!-- Dynamically rendered CCTV Cards -->
+                <!-- Spot Quick Search Box for CCTVs -->
+                <div class="filter-item search-box" style="margin-bottom: 20px; max-width: 500px;">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="cctvSearchInput" placeholder="해양 CCTV 관측 스팟 검색 (예: 해운대, 임랑, 서귀포, 독도, 오륙도)..." oninput="handleCctvSearch(this.value)">
+                </div>
+
+                <!-- Dynamically rendered CCTV Cards (4-Column Command Center View on PC) -->
                 <div class="webcam-grid" id="webcamGrid">
                 </div>
             </section>
@@ -442,17 +492,19 @@
         </div>
     </div>
 
-    <!-- Modal 10: Realtime Ocean Live Webcam Stream Player Modal -->
-    <div class="modal-overlay hidden" id="oceanWebcamModal">
-        <div class="modal-container glass-panel modal-lg" style="max-width: 880px;">
-            <div class="modal-header">
-                <h2><i class="fa-solid fa-video" style="color: #ff5252;"></i> <span id="webcamModalTitle">바다 실시간 라이브 CCTV</span> <span class="badge-live">🔴 24H LIVE</span></h2>
-                <button class="close-btn" onclick="closeWebcamModal()">&times;</button>
+    <!-- Modal 10: Realtime Ocean Live Webcam Stream Player Modal (Slim Compact Height) -->
+    <div class="modal-overlay hidden" id="oceanWebcamModal" style="z-index: 3800;">
+        <div class="modal-container glass-panel modal-lg" style="max-width: 860px; margin-top: 10px; padding: 14px 18px;">
+            <div class="modal-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; padding-bottom: 6px;">
+                <h2 style="font-size: 1.05rem;"><i class="fa-solid fa-video" style="color: #ff5252;"></i> <span id="webcamModalTitle">바다 실시간 라이브 CCTV</span> <span class="badge-live" style="font-size: 0.65rem; padding: 2px 6px;">🔴 24H LIVE</span></h2>
+                <button class="close-btn" onclick="closeWebcamModal()" style="background: rgba(255, 82, 82, 0.2); color: #ff5252; border: 1px solid #ff5252; padding: 3px 10px; border-radius: 14px; font-size: 0.78rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                    <i class="fa-solid fa-xmark"></i> ✕ 닫기 (EXIT)
+                </button>
             </div>
 
-            <div style="padding: 10px 0;">
-                <!-- Webcam Video Stream Box -->
-                <div class="webcam-player-container" style="position: relative; width: 100%; height: 450px; background: #000; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--accent-cyan);">
+            <div style="padding: 0;">
+                <!-- Webcam Video Stream Box (Screen size kept large!) -->
+                <div class="webcam-player-container" style="position: relative; width: 100%; height: 420px; background: #000; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--accent-cyan);">
                     <iframe id="webcamLiveIframe" src="" style="width: 100%; height: 100%; border: none; display: none;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                     
                     <video id="webcamHlsVideo" style="width: 100%; height: 100%; object-fit: contain; display: none;" controls autoplay muted playsinline></video>
@@ -464,11 +516,17 @@
                 </div>
 
                 <!-- Explicit Source Legal Attribution Box -->
-                <div class="cctv-source-legal-box" style="margin-top: 10px; background: rgba(255, 183, 3, 0.08); padding: 8px 14px; border-radius: 6px; border: 1px dashed var(--accent-gold); font-size: 0.8rem; color: var(--accent-gold); text-align: center;">
+                <div class="cctv-source-legal-box" style="margin-top: 6px; background: rgba(255, 183, 3, 0.08); padding: 4px 10px; border-radius: 6px; border: 1px dashed var(--accent-gold); font-size: 0.76rem; color: var(--accent-gold); text-align: center;">
                     <i class="fa-solid fa-scale-balanced"></i> 영상 출처: <strong id="camSourceText">공공기관 CCTV</strong> (공공데이터 이용지침 준수)
                 </div>
 
-                <div class="webcam-metrics-bar" id="webcamMetricsBar" style="margin-top: 12px; background: rgba(0,0,0,0.3); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--glass-border); display: flex; justify-content: space-around; flex-wrap: wrap; gap: 10px;">
+                <div class="webcam-metrics-bar" id="webcamMetricsBar" style="margin-top: 6px; background: rgba(0,0,0,0.3); padding: 8px 12px; font-size: 0.78rem; border-radius: var(--radius-sm); border: 1px solid var(--glass-border); display: flex; justify-content: space-around; flex-wrap: wrap; gap: 6px;">
+                </div>
+
+                <div class="modal-footer" style="margin-top: 8px; text-align: right;">
+                    <button type="button" class="btn btn-secondary" onclick="closeWebcamModal()" style="background: rgba(255, 82, 82, 0.2); color: #ff5252; border-color: rgba(255, 82, 82, 0.5); font-weight: 800; padding: 4px 12px; font-size: 0.78rem;">
+                        <i class="fa-solid fa-xmark"></i> CCTV 관제창 닫기 (EXIT)
+                    </button>
                 </div>
             </div>
         </div>
