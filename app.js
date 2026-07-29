@@ -3177,38 +3177,89 @@ function submitHostRating() {
     showToast(`⭐ ${currentRatingPost.userName}님께 별점(${currentRatingScore}점) 및 매너 평가 후기를 등록했습니다!`);
 }
 
+const FAMOUS_SPOT_COORDS = {
+    "딥스테이션": { lat: 37.2750, lng: 127.2340, title: "용인 딥스테이션 잠수풀 (수심 36m)" },
+    "k26": { lat: 37.7126, lng: 127.5255, title: "가평 K26 잠수풀" },
+    "영일대": { lat: 36.0558, lng: 129.3780, title: "포항 영일대 해수욕장" },
+    "송도": { lat: 37.3828, lng: 126.6540, title: "인천 송도 잠수풀" },
+    "올림픽공원": { lat: 37.5148, lng: 127.1265, title: "서울 올림픽수영장" },
+    "성산일출봉": { lat: 33.4586, lng: 126.9423, title: "제주 성산일출봉 스팟" },
+    "광안리": { lat: 35.1532, lng: 129.1189, title: "부산 광안리 해수욕장" },
+    "해운대": { lat: 35.1587, lng: 129.1604, title: "부산 해운대 해수욕장" }
+};
+
 function initKakaoLiveMap(addressQuery) {
     const mapContainer = document.getElementById("kakaoLiveMap");
     if (!mapContainer) return;
+    if (!addressQuery) addressQuery = "용인 딥스테이션";
+
+    const queryLower = addressQuery.toLowerCase();
+    let matchedSpot = null;
+
+    for (const key in FAMOUS_SPOT_COORDS) {
+        if (queryLower.includes(key)) {
+            matchedSpot = FAMOUS_SPOT_COORDS[key];
+            break;
+        }
+    }
 
     if (window.kakao && window.kakao.maps) {
-        try {
-            const geocoder = new kakao.maps.services.Geocoder();
-            geocoder.addressSearch(addressQuery, function(result, status) {
-                let coords;
-                if (status === kakao.maps.services.Status.OK) {
-                    coords = new kakao.maps.LatLng(result[0].y, result[0].x);
-                } else {
-                    coords = new kakao.maps.LatLng(37.5148, 127.1265);
-                }
+        window.kakao.maps.load(function() {
+            try {
+                let coords = matchedSpot 
+                    ? new kakao.maps.LatLng(matchedSpot.lat, matchedSpot.lng)
+                    : new kakao.maps.LatLng(37.2750, 127.2340);
 
                 const mapOptions = { center: coords, level: 4 };
                 const map = new kakao.maps.Map(mapContainer, mapOptions);
 
-                const marker = new kakao.maps.Marker({
-                    map: map,
-                    position: coords
-                });
+                setTimeout(() => {
+                    map.relayout();
+                    map.setCenter(coords);
+                }, 120);
 
-                const infowindow = new kakao.maps.InfoWindow({
-                    content: `<div style="width:150px;text-align:center;padding:6px 0;color:#000;font-weight:bold;font-size:12px;">${addressQuery.substring(0, 15)}</div>`
-                });
-                infowindow.open(map, marker);
-            });
-        } catch (e) {
-            mapContainer.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text-muted);">카카오 지도 API 로드 완료 (` + addressQuery + `)</div>`;
-        }
+                if (kakao.maps.services && kakao.maps.services.Geocoder && !matchedSpot) {
+                    const geocoder = new kakao.maps.services.Geocoder();
+                    geocoder.addressSearch(addressQuery, function(result, status) {
+                        if (status === kakao.maps.services.Status.OK && result[0]) {
+                            coords = new kakao.maps.LatLng(result[0].y, result[0].x);
+                            map.setCenter(coords);
+                        }
+                        createMapMarker(map, coords, addressQuery);
+                    });
+                } else {
+                    createMapMarker(map, coords, matchedSpot ? matchedSpot.title : addressQuery);
+                }
+            } catch (e) {
+                console.log("Kakao Map Load Notice:", e);
+                renderFallbackMapUI(mapContainer, addressQuery, matchedSpot);
+            }
+        });
+    } else {
+        renderFallbackMapUI(mapContainer, addressQuery, matchedSpot);
     }
+}
+
+function createMapMarker(map, coords, titleText) {
+    const marker = new kakao.maps.Marker({
+        map: map,
+        position: coords
+    });
+
+    const infowindow = new kakao.maps.InfoWindow({
+        content: `<div style="width:160px;text-align:center;padding:6px 0;color:#000;font-weight:bold;font-size:12px;word-break:keep-all;">📍 ${escapeHtml(titleText.substring(0, 18))}</div>`
+    });
+    infowindow.open(map, marker);
+}
+
+function renderFallbackMapUI(container, query, spotInfo) {
+    const lat = spotInfo ? spotInfo.lat : 37.2750;
+    const lng = spotInfo ? spotInfo.lng : 127.2340;
+    const osmUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lng-0.015}%2C${lat-0.015}%2C${lng+0.015}%2C${lat+0.015}&layer=mapnik&marker=${lat}%2C${lng}`;
+
+    container.innerHTML = `
+        <iframe src="${osmUrl}" style="width:100%; height:100%; border:none; border-radius:8px;"></iframe>
+    `;
 }
 
 function handleAddComment(e, postId) {
