@@ -2,14 +2,14 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AquaBuddy (아쿠아버디) - 함께라서 안전한 프리미엄 수중 버디 매칭 & 강사 클래스</title>
     <meta name="description" content="실내 수영, 바다 수영, 프리다이빙, 스쿠버다이빙 안전 버디 매칭, 강사 클래스 체험/자격증 코스, 자유수다방, 중고장터, 내 활동기록, 전국 46개 입수 포인트 실시간 물때표 및 44개 해양 CCTV 라이브">
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
     
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -33,13 +33,13 @@
     <!-- Background Bubbles Animation Container -->
     <div class="bubble-container" id="bubbleContainer"></div>
 
-    <!-- Compact Visual Side Floating Ad Banners (Left: Freediving / Right: Scuba Diving) -->
+    <!-- Side Banners (Left: Freediving / Right: Scuba Diving) -->
     <div class="side-ad-banner side-left">
         <span class="ad-tag">AD PARTNER</span>
         <a href="https://link.coupang.com/a/fKqE2ov1Qi" target="_blank" class="side-ad-img-box">
             <img src="left_ad_freediving.jpg" alt="프리다이빙 장비 기획전">
         </a>
-        <h4>🤿 프리다이빙</h4>
+        <h4>프리다이빙</h4>
         <a href="https://link.coupang.com/a/fKqE2ov1Qi" target="_blank" class="side-ad-link">장비 구경 ➔</a>
         <span class="ftc-notice-micro">※ 쿠팡 파트너스 수수료 제공</span>
     </div>
@@ -49,12 +49,12 @@
         <a href="https://link.coupang.com/a/fKszBcQl6y" target="_blank" class="side-ad-img-box">
             <img src="right_ad_scuba.jpg" alt="스쿠버 다이빙 장비 기획전">
         </a>
-        <h4>🥽 스쿠버 다이빙</h4>
+        <h4>스쿠버 다이빙</h4>
         <a href="https://link.coupang.com/a/fKszBcQl6y" target="_blank" class="side-ad-link">장비 특가 ➔</a>
         <span class="ftc-notice-micro">※ 쿠팡 파트너스 수수료 제공</span>
     </div>
 
-    <!-- Streamlined 2-Tier Header Navigation Bar with Independent View Links -->
+    <!-- Vibrant Header Navigation Bar -->
     <header class="navbar">
         <div class="nav-container-top container">
             <!-- Brand Logo -->
@@ -65,45 +65,36 @@
 
             <!-- Right Quick Actions -->
             <div class="nav-actions">
-                <!-- Dedicated Admin Dashboard Button -->
-                <button class="btn btn-secondary" onclick="openAdminDashboard()" style="padding: 6px 10px; font-size: 0.78rem; border-color: var(--accent-gold); color: var(--accent-gold);" title="👑 웹마스터 전용 관리자 대시보드">
-                    <i class="fa-solid fa-crown"></i> 👑 관리자
-                </button>
-
                 <!-- Dedicated Instructor Certification Application Button -->
-                <button class="btn btn-secondary" onclick="openInstructorAuthModal()" style="padding: 6px 10px; font-size: 0.78rem; color: var(--accent-cyan); border-color: var(--accent-cyan);" title="🎓 강사이신가요? 1초 강사 인증 신청">
-                    <i class="fa-solid fa-graduation-cap"></i> 🎓 강사인증
+                <button class="btn btn-secondary nav-inst-btn" onclick="openInstructorAuthModal()" title="강사이신가요? 1초 강사 인증 신청">
+                    <i class="fa-solid fa-graduation-cap"></i> 강사인증
                 </button>
 
-                <button class="btn btn-secondary btn-icon" id="openSettingsBtn" title="API Key & 도메인 설정">
-                    <i class="fa-solid fa-gear"></i>
-                </button>
-
-                <!-- Clickable User Profile Badge (My Account / Profile Modal) -->
+                <!-- Clickable User Profile Badge -->
                 <div id="userProfileNav" class="user-nav-badge hidden" onclick="openProfileModal()" style="cursor: pointer;" title="클릭하여 내 프로필/계정 정보 확인">
                     <i class="fa-solid fa-user-circle"></i>
                     <span id="navUserName">다이버</span>
                 </div>
 
-                <button class="btn btn-primary" id="openAuthModalBtn" style="padding: 6px 12px; font-size: 0.78rem;">
+                <button class="btn btn-primary nav-login-btn" id="openAuthModalBtn">
                     <i class="fa-solid fa-right-to-bracket"></i> 로그인 / 회원가입
                 </button>
 
-                <!-- Dynamic Create Button -->
-                <button class="btn btn-primary btn-create" id="openCreateModalBtn">
-                    <i class="fa-solid fa-plus"></i> <span id="createBtnText">버디 모집하기</span>
+                <!-- Restored Eye-Catching Vibrant Create Button -->
+                <button class="btn btn-vibrant-action" id="openCreateModalBtn">
+                    <i class="fa-solid fa-plus-circle"></i> <span id="createBtnText">버디 모집하기</span>
                 </button>
             </div>
         </div>
 
-        <!-- Tier 2: All Category Navigation Links (Independent Page Views) -->
+        <!-- Tier 2: Enhanced High-Contrast Category Links -->
         <div class="nav-sub-menu container">
             <nav class="nav-links-grid">
                 <a href="javascript:void(0)" class="nav-item active" id="navLinkFeed" onclick="switchMainView('feed'); filterByCategory('all');">
                     <i class="fa-solid fa-compass"></i> 버디 탐색
                 </a>
-                <a href="javascript:void(0)" class="nav-item" id="navLinkInstructor" onclick="switchMainView('feed'); filterByCategory('instructor');">
-                    <i class="fa-solid fa-graduation-cap"></i> 🎓 강사 클래스
+                <a href="javascript:void(0)" class="nav-item nav-item-gold" id="navLinkInstructor" onclick="switchMainView('feed'); filterByCategory('instructor');">
+                    <i class="fa-solid fa-graduation-cap"></i> 강사 클래스
                 </a>
                 <a href="javascript:void(0)" class="nav-item" id="navLinkCommunity" onclick="switchMainView('feed'); filterByCategory('community');">
                     <i class="fa-solid fa-comments"></i> 자유수다방
@@ -112,13 +103,13 @@
                     <i class="fa-solid fa-tags"></i> 중고장터
                 </a>
                 <a href="javascript:void(0)" class="nav-item" id="navLinkActivity" onclick="switchMainView('feed'); filterByCategory('activity_log');">
-                    <i class="fa-solid fa-clipboard-list"></i> 📋 내 활동기록
+                    <i class="fa-solid fa-clipboard-list"></i> 내 활동기록
                 </a>
-                <a href="javascript:void(0)" class="nav-item highlight-weather" id="navLinkTide" onclick="switchMainView('tide');">
-                    <i class="fa-solid fa-water"></i> 🌊 전국 실시간 물때표 (46개 스팟)
+                <a href="javascript:void(0)" class="nav-item" id="navLinkTide" onclick="switchMainView('tide');">
+                    <i class="fa-solid fa-water"></i> 전국 실시간 물때표
                 </a>
-                <a href="javascript:void(0)" class="nav-item highlight-cctv" id="navLinkCctv" onclick="switchMainView('cctv');">
-                    <i class="fa-solid fa-video"></i> 🎥 전국 해양 CCTV (44개)
+                <a href="javascript:void(0)" class="nav-item" id="navLinkCctv" onclick="switchMainView('cctv');">
+                    <i class="fa-solid fa-video"></i> 전국 해양 CCTV
                 </a>
             </nav>
         </div>
@@ -137,15 +128,15 @@
             
             <div class="hero-stats">
                 <div class="stat-card">
-                    <div class="stat-number">👥 실시간 버디 매칭</div>
+                    <div class="stat-number">실시간 버디 매칭</div>
                     <div class="stat-label">안전 수칙 & 매너 검증 버디</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number">🎓 라이선스 인증 강사</div>
+                    <div class="stat-number">라이선스 인증 강사</div>
                     <div class="stat-label">공인 자격증 사본 검증 완료 클래스</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number">🌊 46개 입수 스팟 물때표</div>
+                    <div class="stat-number">46개 입수 스팟 물때표</div>
                     <div class="stat-label">부산 · 울산 · 거제 · 동해 · 독도 · 제주 실시간 수온/만간조</div>
                 </div>
             </div>
@@ -164,13 +155,13 @@
                     <span class="active-count" id="activeCountText">불러오는 중...</span>
                 </div>
 
-                <!-- Category Tabs -->
+                <!-- High-Contrast Category Tabs -->
                 <div class="category-tabs">
                     <button class="tab-btn active" data-category="all">
                         <i class="fa-solid fa-globe"></i> 전체 보기
                     </button>
                     <button class="tab-btn instructor-tab" data-category="instructor">
-                        <i class="fa-solid fa-graduation-cap"></i> 🎓 강사 클래스 (체험/자격증)
+                        <i class="fa-solid fa-graduation-cap"></i> 강사 클래스 (체험/자격증)
                     </button>
                     <button class="tab-btn" data-category="swimming">
                         <i class="fa-solid fa-person-swimming"></i> 실내 수영
@@ -185,24 +176,24 @@
                         <i class="fa-solid fa-mask-snorkel"></i> 스쿠버다이빙
                     </button>
                     <button class="tab-btn community-tab" data-category="community">
-                        <i class="fa-solid fa-comments"></i> 💬 자유수다방
+                        <i class="fa-solid fa-comments"></i> 자유수다방
                     </button>
                     <button class="tab-btn market-tab" data-category="market">
-                        <i class="fa-solid fa-tags"></i> 🏷️ 중고장터
+                        <i class="fa-solid fa-tags"></i> 중고장터
                     </button>
                     <button class="tab-btn activity-tab" data-category="activity_log">
-                        <i class="fa-solid fa-clipboard-list"></i> 📋 내 활동기록
+                        <i class="fa-solid fa-clipboard-list"></i> 내 활동기록
                     </button>
                 </div>
 
                 <!-- Sub Filter Bar for My Activity Log -->
                 <div class="activity-sub-tabs hidden" id="activitySubFilterBar">
-                    <button class="sub-tab-btn active" data-sub="my_posts" onclick="filterActivitySub('my_posts')">✏️ 내가 작성한 글</button>
-                    <button class="sub-tab-btn" data-sub="chat_rooms" onclick="filterActivitySub('chat_rooms')">💬 대화했던 방</button>
-                    <button class="sub-tab-btn" data-sub="joined" onclick="filterActivitySub('joined')">🙋‍♂️ 참가 신청한 글</button>
-                    <button class="sub-tab-btn" data-sub="liked" onclick="filterActivitySub('liked')">❤️ 좋아요/공감한 글</button>
-                    <button class="sub-tab-btn" data-sub="commented" onclick="filterActivitySub('commented')">💬 댓글 작성한 글</button>
-                    <button class="sub-tab-btn" data-sub="wished" onclick="filterActivitySub('wished')">🏷️ 찜한 중고 상품</button>
+                    <button class="sub-tab-btn active" data-sub="my_posts" onclick="filterActivitySub('my_posts')"><i class="fa-solid fa-pen"></i> 내가 작성한 글</button>
+                    <button class="sub-tab-btn" data-sub="chat_rooms" onclick="filterActivitySub('chat_rooms')"><i class="fa-solid fa-comments"></i> 대화했던 방</button>
+                    <button class="sub-tab-btn" data-sub="joined" onclick="filterActivitySub('joined')"><i class="fa-solid fa-user-check"></i> 참가 신청한 글</button>
+                    <button class="sub-tab-btn" data-sub="liked" onclick="filterActivitySub('liked')"><i class="fa-solid fa-heart"></i> 좋아요/공감한 글</button>
+                    <button class="sub-tab-btn" data-sub="commented" onclick="filterActivitySub('commented')"><i class="fa-solid fa-comment-dots"></i> 댓글 작성한 글</button>
+                    <button class="sub-tab-btn" data-sub="wished" onclick="filterActivitySub('wished')"><i class="fa-solid fa-bookmark"></i> 찜한 중고 상품</button>
                 </div>
 
                 <!-- Filter Grid -->
@@ -286,18 +277,18 @@
         <div id="tideViewSection" class="hidden">
             <section class="weather-section">
                 <div class="section-title">
-                    <h2><i class="fa-solid fa-water" style="color: var(--accent-cyan);"></i> 🌊 전국 46개 핵심 입수 포인트 실시간 물때표 (Tide Table)</h2>
+                    <h2><i class="fa-solid fa-water" style="color: var(--accent-cyan);"></i> 전국 46개 핵심 입수 포인트 실시간 물때표 (Tide Table)</h2>
                     <p>부산(12개) · 울산(7개) · 거제(4개) · 포항/동해(12개) · 독도/울릉(2개) · 제주(9개) 입수 스팟 수온 및 만간조</p>
                 </div>
 
                 <!-- Region Filter Tabs for Tide Table -->
                 <div class="tide-region-tabs-bar" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;">
-                    <button class="sub-tab-btn active" data-tideregion="busan" onclick="filterTideRegion('busan')">🌊 부산 권역 (12개)</button>
-                    <button class="sub-tab-btn" data-tideregion="ulsan" onclick="filterTideRegion('ulsan')">🌊 울산 권역 (7개)</button>
-                    <button class="sub-tab-btn" data-tideregion="geoje" onclick="filterTideRegion('geoje')">⚓ 거제/경남 권역 (4개)</button>
-                    <button class="sub-tab-btn" data-tideregion="donghae" onclick="filterTideRegion('donghae')">⛰️ 포항/동해/강원 (12개)</button>
-                    <button class="sub-tab-btn" data-tideregion="islands" onclick="filterTideRegion('islands')">🇰🇷 독도 / 울릉도 (2개)</button>
-                    <button class="sub-tab-btn" data-tideregion="jeju" onclick="filterTideRegion('jeju')">🏝️ 제주도 권역 (9개)</button>
+                    <button class="sub-tab-btn active" data-tideregion="busan" onclick="filterTideRegion('busan')">부산 권역 (12개)</button>
+                    <button class="sub-tab-btn" data-tideregion="ulsan" onclick="filterTideRegion('ulsan')">울산 권역 (7개)</button>
+                    <button class="sub-tab-btn" data-tideregion="geoje" onclick="filterTideRegion('geoje')">거제/경남 권역 (4개)</button>
+                    <button class="sub-tab-btn" data-tideregion="donghae" onclick="filterTideRegion('donghae')">포항/동해/강원 (12개)</button>
+                    <button class="sub-tab-btn" data-tideregion="islands" onclick="filterTideRegion('islands')">독도 / 울릉도 (2개)</button>
+                    <button class="sub-tab-btn" data-tideregion="jeju" onclick="filterTideRegion('jeju')">제주도 권역 (9개)</button>
                 </div>
 
                 <!-- Spot Quick Search Box for Tide Table -->
@@ -317,29 +308,29 @@
         <div id="cctvViewSection" class="hidden">
             <section class="weather-section">
                 <div class="section-title">
-                    <h2><i class="fa-solid fa-video" style="color: #ff5252;"></i> 🎥 전국 44개 해양 실시간 라이브 CCTV (출처 명시)</h2>
+                    <h2><i class="fa-solid fa-video" style="color: #ff5252;"></i> 전국 44개 해양 실시간 라이브 CCTV (출처 명시)</h2>
                     <p>부산 세이프시티 · KBS 재난포털 · 제주특별자치도 재난본부 · 서귀포수협 · Playce Camp 공식 출처 생중계</p>
                 </div>
 
                 <!-- Regional Sub Tabs for CCTVs -->
                 <div class="cctv-region-tabs-bar" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
                     <button class="sub-tab-btn active" data-cctvregion="busan_gijang" onclick="filterCctvRegion('busan_gijang')">
-                        🌊 부산 기장 / 해운대 / 수영 (12개)
+                        부산 기장 / 해운대 / 수영 (12개)
                     </button>
                     <button class="sub-tab-btn" data-cctvregion="busan_south" onclick="filterCctvRegion('busan_south')">
-                        ⚓ 부산 남구 / 영도 / 서구 / 강서 (7개)
+                        부산 남구 / 영도 / 서구 / 강서 (7개)
                     </button>
                     <button class="sub-tab-btn" data-cctvregion="donghae" onclick="filterCctvRegion('donghae')">
-                        ⛰️ 경북 / 동해 / 울릉도 / 독도 (6개)
+                        경북 / 동해 / 울릉도 / 독도 (6개)
                     </button>
                     <button class="sub-tab-btn" data-cctvregion="jeju_live" onclick="filterCctvRegion('jeju_live')">
-                        🏝️ 제주도 전역 실시간 CCTV (9개)
+                        제주도 전역 실시간 CCTV (9개)
                     </button>
                     <button class="sub-tab-btn" data-cctvregion="jeonnam_namhae" onclick="filterCctvRegion('jeonnam_namhae')">
-                        ⚓ 전남 / 여수 / 완도 / 창원 (7개)
+                        전남 / 여수 / 완도 / 창원 (7개)
                     </button>
                     <button class="sub-tab-btn" data-cctvregion="seohae" onclick="filterCctvRegion('seohae')">
-                        ⚓ 서해 / 수도권 / 군산 (3개)
+                        서해 / 수도권 / 군산 (3개)
                     </button>
                 </div>
 
@@ -351,34 +342,60 @@
 
     </main>
 
+    <!-- Modal 11: Webmaster 2-Step Security Password Verification Modal -->
+    <div class="modal-overlay hidden" id="adminSecurityModal" style="z-index: 3800;">
+        <div class="modal-container glass-panel" style="max-width: 440px;">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-lock" style="color: var(--accent-gold);"></i> 웹마스터 암호 확인</h2>
+                <button class="close-btn" onclick="closeModal(document.getElementById('adminSecurityModal'))">&times;</button>
+            </div>
+            <div style="padding: 10px 0;">
+                <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 14px;">
+                    웹마스터 전용 보안 암호 4자리를 입력해 주세요.
+                </p>
+                <form onsubmit="handleVerifyAdminMasterCode(event)">
+                    <div class="form-group">
+                        <label for="adminSecurityPassInput">🔒 마스터 보안 암호 (4자리)</label>
+                        <input type="password" id="adminSecurityPassInput" maxlength="4" placeholder="암호 4자리 입력 (기본: 9999)" required autocomplete="off">
+                    </div>
+                    <div class="modal-footer" style="margin-top: 16px;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal(document.getElementById('adminSecurityModal'))">취소</button>
+                        <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, #ffb703, #ff8f00); color: #000; font-weight:800;">
+                            <i class="fa-solid fa-key"></i> 관리자 대시보드 입장
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal 10: Realtime Ocean Live Webcam Stream Player Modal -->
     <div class="modal-overlay hidden" id="oceanWebcamModal">
         <div class="modal-container glass-panel modal-lg" style="max-width: 880px;">
             <div class="modal-header">
-                <h2><i class="fa-solid fa-video" style="color: #ff5252;"></i> <span id="webcamModalTitle">🎥 바다 실시간 라이브 CCTV</span> <span class="badge-live">🔴 24H LIVE</span></h2>
+                <h2><i class="fa-solid fa-video" style="color: #ff5252;"></i> <span id="webcamModalTitle">바다 실시간 라이브 CCTV</span> <span class="badge-live">🔴 24H LIVE</span></h2>
                 <button class="close-btn" onclick="closeWebcamModal()">&times;</button>
             </div>
 
             <div style="padding: 10px 0;">
-                <!-- Webcam Video Stream Box (Supports iframe AND hls.js video stream) -->
+                <!-- Webcam Video Stream Box -->
                 <div class="webcam-player-container" style="position: relative; width: 100%; height: 450px; background: #000; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--accent-cyan);">
                     <iframe id="webcamLiveIframe" src="" style="width: 100%; height: 100%; border: none; display: none;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                     
                     <video id="webcamHlsVideo" style="width: 100%; height: 100%; object-fit: contain; display: none;" controls autoplay muted playsinline></video>
 
                     <div class="webcam-overlay-info">
-                        <span class="cam-spot-tag" id="camSpotTag">🌊 관측 스팟</span>
+                        <span class="cam-spot-tag" id="camSpotTag">관측 스팟</span>
                         <span class="cam-time-tag" id="camTimeTag">24시간 실시간 생중계 STREAM</span>
                     </div>
                 </div>
 
                 <!-- Explicit Source Legal Attribution Box -->
                 <div class="cctv-source-legal-box" style="margin-top: 10px; background: rgba(255, 183, 3, 0.08); padding: 8px 14px; border-radius: 6px; border: 1px dashed var(--accent-gold); font-size: 0.8rem; color: var(--accent-gold); text-align: center;">
-                    <i class="fa-solid fa-scale-balanced"></i> 영상 출처: <strong id="camSourceText">공공기관 CCTV</strong> (공공데이터 이용지침 및 출처 명시 준수)
+                    <i class="fa-solid fa-scale-balanced"></i> 영상 출처: <strong id="camSourceText">공공기관 CCTV</strong> (공공데이터 이용지침 준수)
                 </div>
 
                 <div class="webcam-metrics-bar" id="webcamMetricsBar" style="margin-top: 12px; background: rgba(0,0,0,0.3); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--glass-border); display: flex; justify-content: space-around; flex-wrap: wrap; gap: 10px;">
-                    <!-- Metrics injected by JS -->
                 </div>
             </div>
         </div>
@@ -408,9 +425,9 @@
                         <div class="form-group">
                             <label for="classType"><i class="fa-solid fa-graduation-cap"></i> 강습 코스 유형 *</label>
                             <select id="classType">
-                                <option value="🤿 1일 원데이 체험 강습">🤿 1일 원데이 체험 강습 (입문)</option>
-                                <option value="📜 자격증 코스 정규반">📜 자격증 라이선스 코스 (AIDA/PADI)</option>
-                                <option value="⚡ 1:1 교정 클리닉">⚡ 1:1 이퀄라이징/핀킥 원포인트 교정</option>
+                                <option value="1일 원데이 체험 강습">1일 원데이 체험 강습 (입문)</option>
+                                <option value="자격증 코스 정규반">자격증 라이선스 코스 (AIDA/PADI)</option>
+                                <option value="1:1 교정 클리닉">1:1 이퀄라이징/핀킥 원포인트 교정</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -444,9 +461,9 @@
                     <div class="form-group" id="dealMethodGroup">
                         <label for="postDealMethod"><i class="fa-solid fa-handshake"></i> 거래 방법 *</label>
                         <select id="postDealMethod">
-                            <option value="직거래" selected>🤝 직거래 (만나서 거래)</option>
-                            <option value="택배거래">📦 택배 거래 (우체국/택배)</option>
-                            <option value="직거래/택배 둘 다 가능">🤝📦 직거래 / 택배 둘 다 가능</option>
+                            <option value="직거래" selected>직거래 (만나서 거래)</option>
+                            <option value="택배거래">택배 거래 (우체국/택배)</option>
+                            <option value="직거래/택배 둘 다 가능">직거래 / 택배 둘 다 가능</option>
                         </select>
                     </div>
                 </div>
@@ -461,7 +478,7 @@
                 </div>
 
                 <div class="form-group" id="imageUploadGroup">
-                    <label id="imageUploadLabel"><i class="fa-solid fa-images"></i> 📸 사진 등록 (최대 4장, 클릭 시 대형 미리보기)</label>
+                    <label id="imageUploadLabel"><i class="fa-solid fa-images"></i> 사진 등록 (최대 4장, 클릭 시 대형 미리보기)</label>
                     <input type="file" id="postImagesInput" accept="image/*" multiple style="padding: 8px;">
                     <div class="image-preview-grid" id="imagePreviewGrid"></div>
                     <small style="color: var(--text-muted); font-size: 0.78rem;">* 업로드되는 사진은 브라우저에서 80KB 이하로 자동 압축 저장됩니다.</small>
@@ -483,7 +500,7 @@
                 </div>
 
                 <div class="form-group" id="passwordGroup">
-                    <label for="postPassword"><i class="fa-solid fa-key"></i> 🔑 게시글 비밀번호 (숫자 4자리, 본인 수정/삭제용) *</label>
+                    <label for="postPassword"><i class="fa-solid fa-key"></i> 게시글 비밀번호 (숫자 4자리, 본인 수정/삭제용) *</label>
                     <input type="password" id="postPassword" maxlength="4" pattern="[0-9]{4}" placeholder="비밀번호 4자리 (예: 1234)" required>
                 </div>
 
@@ -516,10 +533,10 @@
             <div style="padding: 10px 0 10px;">
                 <div class="auth-switch-tabs">
                     <button class="auth-tab-btn active" id="tabEmailAuth" onclick="switchAuthTab('email')">
-                        ✉️ 홈페이지 직접 가입
+                        홈페이지 직접 가입
                     </button>
                     <button class="auth-tab-btn" id="tabKakaoAuth" onclick="switchAuthTab('kakao')">
-                        💬 카카오톡 1초 로그인
+                        카카오톡 1초 로그인
                     </button>
                 </div>
 
@@ -563,7 +580,7 @@
 
                 <div style="margin-top: 18px; text-align: center; border-top: 1px dashed var(--glass-border); padding-top: 12px;">
                     <span style="font-size: 0.85rem; color: var(--accent-gold); font-weight: 700;">
-                        🎓 강사이신가요? 
+                        강사이신가요? 
                     </span>
                     <a href="javascript:void(0)" onclick="closeModal(authModal); openInstructorAuthModal();" style="font-size: 0.85rem; color: var(--accent-cyan); font-weight: 800; text-decoration: underline; margin-left: 6px;">
                         강사 전용 인증 신청하기 ➔
@@ -577,7 +594,7 @@
     <div class="modal-overlay hidden" id="instructorAuthModal">
         <div class="modal-container glass-panel" style="max-width: 500px;">
             <div class="modal-header">
-                <h2><i class="fa-solid fa-graduation-cap" style="color: var(--accent-gold);"></i> 🎓 AquaBuddy 공인 강사 인증 신청</h2>
+                <h2><i class="fa-solid fa-graduation-cap" style="color: var(--accent-gold);"></i> AquaBuddy 공인 강사 인증 신청</h2>
                 <button class="close-btn" onclick="closeModal(document.getElementById('instructorAuthModal'))">&times;</button>
             </div>
 
@@ -599,13 +616,13 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="instAppCode"><i class="fa-solid fa-id-card"></i> 🎓 강사 라이선스 코드 번호 *</label>
+                        <label for="instAppCode"><i class="fa-solid fa-id-card"></i> 강사 라이선스 코드 번호 *</label>
                         <input type="text" id="instAppCode" placeholder="예: AIDA-IN-98472 / PADI-MSDT-38102" required>
                     </div>
 
                     <div class="form-group" style="background: rgba(255,183,3,0.08); border: 1px dashed var(--accent-gold); padding: 12px; border-radius: var(--radius-sm); margin-top: 10px;">
                         <label for="instAppFile" style="color: var(--accent-gold); font-weight: 800;">
-                            <i class="fa-solid fa-file-contract"></i> 📜 강사 자격증 실물 사본 / 사진 첨부 (운영진 검증용) *
+                            <i class="fa-solid fa-file-contract"></i> 강사 자격증 실물 사본 / 사진 첨부 (운영진 검증용) *
                         </label>
                         <input type="file" id="instAppFile" accept="image/*" style="padding: 6px; font-size: 0.85rem;" required>
                         <div id="instAppCertPreview" class="cert-preview-box" style="margin-top: 8px;"></div>
@@ -622,11 +639,11 @@
         </div>
     </div>
 
-    <!-- Modal 9: 👑 Webmaster Admin Dashboard Modal (Option B Preview) -->
+    <!-- Modal 9: Protected Webmaster Admin Dashboard Modal (Includes Internal Settings Tab 5) -->
     <div class="modal-overlay hidden" id="adminDashboardModal">
         <div class="modal-container glass-panel modal-lg" style="max-width: 920px;">
             <div class="modal-header">
-                <h2><i class="fa-solid fa-crown" style="color: var(--accent-gold);"></i> 👑 AquaBuddy 웹마스터 운영자 통합 관리자 대시보드 (Admin)</h2>
+                <h2><i class="fa-solid fa-crown" style="color: var(--accent-gold);"></i> AquaBuddy 웹마스터 운영자 통합 관리자 대시보드 (Admin)</h2>
                 <button class="close-btn" onclick="closeModal(document.getElementById('adminDashboardModal'))">&times;</button>
             </div>
 
@@ -636,13 +653,17 @@
                         📊 통계 현황
                     </button>
                     <button class="admin-tab-btn" id="adminTabInstructors" onclick="switchAdminTab('instructors')">
-                        🎓 강사 인증 신청 심사대 <span class="badge-count-gold" id="adminInstPendingBadge">1</span>
+                        🎓 강사 인증 심사대 <span class="badge-count-gold" id="adminInstPendingBadge">1</span>
                     </button>
                     <button class="admin-tab-btn" id="adminTabPosts" onclick="switchAdminTab('posts')">
                         📋 전체 게시물 & 스팸 관리
                     </button>
                     <button class="admin-tab-btn" id="adminTabAffiliate" onclick="switchAdminTab('affiliate')">
                         💰 쿠팡 파트너스 수익 통계
+                    </button>
+                    <!-- Integrated Internal Protected Settings Tab -->
+                    <button class="admin-tab-btn" id="adminTabSettings" onclick="switchAdminTab('settings')" style="color: var(--accent-cyan);">
+                        ⚙️ 시스템 API & DB 연동 설정
                     </button>
                 </div>
 
@@ -673,7 +694,7 @@
 
                 <div id="adminPanelInstructors" class="hidden">
                     <h3 style="font-size: 1rem; color: var(--accent-gold); margin-bottom: 10px;">
-                        🎓 강사 실물 자격증 사본 심사 대기열
+                        강사 실물 자격증 사본 심사 대기열
                     </h3>
                     <div class="admin-table-container">
                         <table class="admin-table">
@@ -694,7 +715,7 @@
                                     <td><code>AIDA-IN-98472</code></td>
                                     <td>
                                         <button class="btn btn-secondary" onclick="openLightbox('right_ad_swimming.jpg')" style="padding: 4px 8px; font-size: 0.75rem;">
-                                            🖼️ 자격증 사본 보기
+                                            자격증 사본 보기
                                         </button>
                                     </td>
                                     <td>2026-07-28 17:20</td>
@@ -710,7 +731,7 @@
                 </div>
 
                 <div id="adminPanelPosts" class="hidden">
-                    <h3 style="font-size: 1rem; margin-bottom: 10px;">📋 등록된 전체 게시글 스팸 삭제 관리</h3>
+                    <h3 style="font-size: 1rem; margin-bottom: 10px;">등록된 전체 게시글 스팸 삭제 관리</h3>
                     <div class="admin-table-container">
                         <table class="admin-table">
                             <thead>
@@ -729,7 +750,7 @@
                 </div>
 
                 <div id="adminPanelAffiliate" class="hidden">
-                    <h3 style="font-size: 1rem; color: var(--accent-cyan); margin-bottom: 10px;">💰 쿠팡 파트너스 배너별 클릭 리포트</h3>
+                    <h3 style="font-size: 1rem; color: var(--accent-cyan); margin-bottom: 10px;">쿠팡 파트너스 배너별 클릭 리포트</h3>
                     <div class="admin-table-container">
                         <table class="admin-table">
                             <thead>
@@ -742,31 +763,52 @@
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td>🏆 중앙 메인 배너</td>
+                                    <td>중앙 메인 배너</td>
                                     <td>쿠팡 썸머 스포츠 페스타 (쿠스페)</td>
                                     <td><strong>1,420 회</strong></td>
                                     <td><span style="color: #00e676; font-weight:700;">5.2%</span></td>
                                 </tr>
                                 <tr>
-                                    <td>🤿 좌측 플로팅 배너</td>
+                                    <td>좌측 플로팅 배너</td>
                                     <td>프리다이빙 장비 모음전</td>
                                     <td><strong>680 회</strong></td>
                                     <td>4.1%</td>
                                 </tr>
                                 <tr>
-                                    <td>🥽 우측 플로팅 배너</td>
+                                    <td>우측 플로팅 배너</td>
                                     <td>스쿠버 다이빙 특가전</td>
                                     <td><strong>540 회</strong></td>
                                     <td>3.8%</td>
                                 </tr>
                                 <tr>
-                                    <td>🌊 하단 풋터 배너</td>
+                                    <td>하단 풋터 배너</td>
                                     <td>오픈워터 바다수영 장비전</td>
                                     <td><strong>480 회</strong></td>
                                     <td>4.5%</td>
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+                </div>
+
+                <!-- Internal Protected Settings Tab Panel -->
+                <div id="adminPanelSettings" class="hidden">
+                    <div style="background: rgba(0, 242, 254, 0.06); border: 1px border var(--accent-cyan); padding: 16px; border-radius: var(--radius-sm); margin-bottom: 16px;">
+                        <h4 style="color: var(--accent-cyan); margin-bottom: 8px;"><i class="fa-solid fa-shield-halved"></i> 보안 격리된 API Key 및 백엔드 연동 정보</h4>
+                        <p style="font-size: 0.83rem; color: var(--text-main);">
+                            • Supabase Backend Project URL: <strong style="color: var(--accent-cyan); font-family: monospace;">https://ogfzfgsvmjuimjjhaubs.supabase.co</strong><br>
+                            • Kakao JavaScript SDK App Key: <strong style="color: var(--accent-gold); font-family: monospace;">7c316726691ea5e02f234a85f5a20bab</strong>
+                        </p>
+                    </div>
+
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-key"></i> 쿠팡 파트너스 Tracking ID</label>
+                        <input type="text" value="AF9213595" style="background: rgba(0,0,0,0.4);" readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-key"></i> 카카오 맵/SDK JavaScript API Key</label>
+                        <input type="text" value="7c316726691ea5e02f234a85f5a20bab" style="background: rgba(0,0,0,0.4);" readonly>
                     </div>
                 </div>
             </div>
@@ -777,7 +819,7 @@
     <div class="modal-overlay hidden" id="myProfileModal">
         <div class="modal-container glass-panel" style="max-width: 520px;">
             <div class="modal-header">
-                <h2><i class="fa-solid fa-id-card"></i> 👤 내 계정 프로필 & 🎓 강사 자격 확인</h2>
+                <h2><i class="fa-solid fa-id-card"></i> 내 계정 프로필 & 강사 자격 확인</h2>
                 <button class="close-btn" onclick="closeModal(document.getElementById('myProfileModal'))">&times;</button>
             </div>
             
@@ -819,8 +861,8 @@
                 <div class="chat-user-badge">
                     <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                         <h3 id="chatBuddyName" style="font-size: 1.15rem; font-weight: 800;">버디 대화방</h3>
-                        <span id="chatRoleBadge" class="chat-role-tag host-tag">👑 모임 주최자 대화방</span>
-                        <span id="chatUnreadBadge" class="unread-badge hidden">🔴 새 메시지 0</span>
+                        <span id="chatRoleBadge" class="chat-role-tag host-tag">모임 주최자 대화방</span>
+                        <span id="chatUnreadBadge" class="unread-badge hidden">새 메시지 0</span>
                     </div>
                     <span class="chat-status-indicator" id="chatPostTitle" style="display: block; margin-top: 4px; font-size: 0.82rem; color: var(--text-muted);">
                         상대방 다이버와 실시간 대화 중
@@ -832,13 +874,13 @@
             <div class="chat-members-bar" id="chatMembersBar"></div>
 
             <div class="chat-quick-toolbar" id="chatHostQuickToolbar" style="display: none;">
-                <span style="font-size: 0.78rem; color: var(--accent-gold); font-weight: 700;">👑 주최자 대화방 관리:</span>
+                <span style="font-size: 0.78rem; color: var(--accent-gold); font-weight: 700;">주최자 대화방 관리:</span>
                 <div style="display: flex; gap: 6px; flex-wrap: wrap;">
                     <button type="button" class="btn btn-secondary" onclick="confirmBuddyMatchFromChat()" style="padding: 4px 10px; font-size: 0.75rem; background: rgba(0,242,254,0.15); color: var(--accent-cyan);">
-                        ⚡ 참가자 확정
+                        참가자 확정
                     </button>
                     <button type="button" class="btn btn-primary" onclick="finishScheduleFromChat()" style="padding: 4px 10px; font-size: 0.75rem;">
-                        ⚡ 일정 완료
+                        일정 완료
                     </button>
                 </div>
             </div>
@@ -875,10 +917,10 @@
             <div class="form-group">
                 <label><i class="fa-solid fa-tags"></i> 매너 태그 선택 (다중 선택)</label>
                 <div class="manner-tags-grid">
-                    <label class="tag-checkbox"><input type="checkbox" value="매너가 좋아요 👍" checked> 매너가 좋아요 👍</label>
-                    <label class="tag-checkbox"><input type="checkbox" value="안전수칙 준수 🛡️" checked> 안전수칙 준수 🛡️</label>
-                    <label class="tag-checkbox"><input type="checkbox" value="약속시간 엄수 ⏰" checked> 약속시간 엄수 ⏰</label>
-                    <label class="tag-checkbox warning"><input type="checkbox" value="비매너/주의 ⚠️"> 비매너/주의 ⚠️</label>
+                    <label class="tag-checkbox"><input type="checkbox" value="매너가 좋아요" checked> 매너가 좋아요</label>
+                    <label class="tag-checkbox"><input type="checkbox" value="안전수칙 준수" checked> 안전수칙 준수</label>
+                    <label class="tag-checkbox"><input type="checkbox" value="약속시간 엄수" checked> 약속시간 엄수</label>
+                    <label class="tag-checkbox warning"><input type="checkbox" value="비매너/주의"> 비매너/주의</label>
                 </div>
             </div>
 
@@ -894,39 +936,7 @@
         </div>
     </div>
 
-    <!-- Modal 5: API Key Settings Modal -->
-    <div class="modal-overlay hidden" id="settingsModal">
-        <div class="modal-container glass-panel" style="max-width: 580px;">
-            <div class="modal-header">
-                <h2><i class="fa-solid fa-sliders"></i> API Key & Supabase DB 연동 정보</h2>
-                <button class="close-btn" id="closeSettingsModalBtn">&times;</button>
-            </div>
-
-            <div class="security-warning-box">
-                <p><i class="fa-solid fa-circle-check" style="color: #00e676;"></i> <strong>Supabase 백엔드 DB & 카카오 API 연동 완료!</strong></p>
-                <p style="font-size: 0.83rem; margin-top: 4px; color: var(--text-main);">
-                    • Supabase URL: <strong style="color: var(--accent-cyan); font-family: monospace;">https://ogfzfgsvmjuimjjhaubs.supabase.co</strong><br>
-                    • Kakao Key: <strong style="color: var(--accent-gold); font-family: monospace;">7c316726691ea5e02f234a85f5a20bab</strong>
-                </p>
-            </div>
-
-            <div class="form-group">
-                <label for="coupangTrackingIdInput"><i class="fa-solid fa-key"></i> 쿠팡 파트너스 Tracking ID</label>
-                <input type="text" id="coupangTrackingIdInput" value="AF9213595" readonly>
-            </div>
-
-            <div class="form-group">
-                <label for="kakaoKeyInput"><i class="fa-solid fa-key"></i> 카카오 맵/SDK JavaScript API Key</label>
-                <input type="text" id="kakaoKeyInput" value="7c316726691ea5e02f234a85f5a20bab" readonly>
-            </div>
-
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" onclick="saveSettings()">설정 저장하기</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal 6: Post Detail View -->
+    <!-- Modal 6: Post Detail View (Redesigned Modern Glass Comment Form) -->
     <div class="modal-overlay hidden" id="detailModal">
         <div class="modal-container glass-panel modal-lg">
             <div class="modal-header">
@@ -967,11 +977,11 @@
     <!-- Bottom Footer Visual Image Ad Banner -->
     <section class="bottom-footer-ad container">
         <div class="glass-panel bottom-ad-content">
-            <a href="https://link.coupang.com/a/fKq8aVxMvA" target="_blank" class="bottom-ad-visual-card" onclick="showToast('🌊 오픈워터 바다수영 장비 기획전으로 이동합니다!')">
+            <a href="https://link.coupang.com/a/fKq8aVxMvA" target="_blank" class="bottom-ad-visual-card" onclick="showToast('오픈워터 바다수영 장비 기획전으로 이동합니다!')">
                 <img src="bottom_ad_openwater.jpg" alt="바다수영 수평선 배경" class="bottom-ad-bg-img">
                 <div class="bottom-ad-overlay-content">
                     <span class="bottom-ad-badge"><i class="fa-solid fa-water"></i> OPEN WATER GEAR</span>
-                    <h3 class="bottom-ad-title">🌊 오픈워터 바다수영 & 해양 다이빙 필수 장비 모음전</h3>
+                    <h3 class="bottom-ad-title">오픈워터 바다수영 & 해양 다이빙 필수 장비 모음전</h3>
                     <p class="bottom-ad-subtitle">체온 보호 네오프렌 슈트, 오렌지 시야 확보 안전부표 & 오픈워터 오리발 특가</p>
                 </div>
                 <div class="bottom-ad-cta-btn">
@@ -985,15 +995,22 @@
         </div>
     </section>
 
-    <!-- Footer -->
+    <!-- Footer with Discreet Webmaster Security Access Link -->
     <footer class="footer">
         <div class="container footer-content">
             <div class="footer-brand">
-                <h3><i class="fa-solid fa-water-ladder"></i> AquaBuddy Platform Open Beta v39.0</h3>
-                <p>수영 · 다이빙 · 바다수영 · 🎓 라이선스 인증 강사 클래스 · 🌊 전국 46개 입수 스팟 실시간 물때표 · 🎥 부산/제주/경북/전남/서해 44개 해양 CCTV (출처 명시)</p>
+                <h3><i class="fa-solid fa-water-ladder"></i> AquaBuddy Platform Open Beta v41.0</h3>
+                <p>수영 · 다이빙 · 바다수영 · 라이선스 인증 강사 클래스 · 전국 46개 입수 스팟 실시간 물때표 · 부산/제주/경북/전남/서해 44개 해양 CCTV</p>
             </div>
-            <div class="footer-links">
-                <p>&copy; 2026 AquaBuddy Platform. All rights reserved. Always Swim & Dive With A Buddy!</p>
+            <div class="footer-links" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                <p style="margin:0;">&copy; 2026 AquaBuddy Platform. All rights reserved. Always Swim & Dive With A Buddy!</p>
+                
+                <!-- Discreet Webmaster Security Access Easter Egg Link -->
+                <div style="display: flex; gap: 14px; font-size: 0.72rem; opacity: 0.5;">
+                    <a href="javascript:void(0)" onclick="openAdminSecurityCheck()" style="color: var(--text-dim); text-decoration: none;">
+                        <i class="fa-solid fa-lock"></i> Webmaster Access
+                    </a>
+                </div>
             </div>
         </div>
     </footer>

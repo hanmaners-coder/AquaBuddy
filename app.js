@@ -1,8 +1,8 @@
 /* ==========================================================================
-   AquaBuddy (아쿠아버디) - Dynamic Application Logic (v39.0 Dedicated View Pages)
-   - Independent Page Views: 버디탐색, 강사클래스, 자유수다방, 중고장터, 내활동기록, 🌊전국 물때표, 🎥전국 CCTV
-   - 46 Specific Marine Diving/Swimming Tide Spots divided into 6 Regional Sub-Tabs
-   - 44 Nationwide Ocean CCTVs with HLS .m3u8 Live Stream Player & Explicit Legal Source Attribution
+   AquaBuddy (아쿠아버디) - Dynamic Application Logic (v41.0 Mobile & Admin Protected)
+   - Protected Internal Settings Tab Inside Admin Dashboard (#adminDashboardModal)
+   - Modern Glassmorphism Comment Form Rendering
+   - 100% Mobile Viewport Responsive Alignment & Zero Duplicate Icons
    - Supabase Real DB Project URL: https://ogfzfgsvmjuimjjhaubs.supabase.co
    ========================================================================== */
 
@@ -39,7 +39,7 @@ const OCEAN_WEBCAMS_DATA = [
     // 1. 부산 기장 / 해운대 / 수영 권역 (12개)
     {
         id: "cam-busan-imlang-bp",
-        name: "🌊 부산 기장군 임랑방파제 CCTV",
+        name: "부산 기장군 임랑방파제 CCTV",
         regionCategory: "busan_gijang",
         region: "부산 기장군",
         thumb: "bottom_ad_openwater.jpg",
@@ -52,7 +52,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-busan-imlang-beach",
-        name: "🏖️ 부산 기장군 임랑해수욕장 CCTV",
+        name: "부산 기장군 임랑해수욕장 CCTV",
         regionCategory: "busan_gijang",
         region: "부산 기장군",
         thumb: "right_ad_swimming.jpg",
@@ -65,7 +65,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-busan-onjeong",
-        name: "🌊 부산 기장군 온정방파제 CCTV",
+        name: "부산 기장군 온정방파제 CCTV",
         regionCategory: "busan_gijang",
         region: "부산 기장군",
         thumb: "hero.jpg",
@@ -78,7 +78,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-busan-hakli",
-        name: "⚓ 부산 기장군 학리방파제(회전형) CCTV",
+        name: "부산 기장군 학리방파제(회전형) CCTV",
         regionCategory: "busan_gijang",
         region: "부산 기장군",
         thumb: "left_ad_freediving.jpg",
@@ -91,7 +91,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-busan-seoam",
-        name: "🌊 부산 기장군 서암방파제 CCTV",
+        name: "부산 기장군 서암방파제 CCTV",
         regionCategory: "busan_gijang",
         region: "부산 기장군",
         thumb: "right_ad_scuba.jpg",
@@ -104,7 +104,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-busan-badaae",
-        name: "🏡 부산 기장군 바다애펜션 옆 CCTV",
+        name: "부산 기장군 바다애펜션 옆 CCTV",
         regionCategory: "busan_gijang",
         region: "부산 기장군",
         thumb: "bottom_ad_openwater.jpg",
@@ -117,7 +117,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-busan-songjeong-bp",
-        name: "🏄 부산 해운대구 송정방파제 CCTV",
+        name: "부산 해운대구 송정방파제 CCTV",
         regionCategory: "busan_gijang",
         region: "부산 해운대구 송정",
         thumb: "left_ad_freediving.jpg",
@@ -130,7 +130,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-busan-gudeokpo",
-        name: "🌊 부산 해운대구 구덕포방파제 CCTV",
+        name: "부산 해운대구 구덕포방파제 CCTV",
         regionCategory: "busan_gijang",
         region: "부산 해운대구",
         thumb: "hero.jpg",
@@ -143,7 +143,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-busan-cheongsapo",
-        name: "🪨 부산 해운대 청사포 테트라포드 CCTV",
+        name: "부산 해운대 청사포 테트라포드 CCTV",
         regionCategory: "busan_gijang",
         region: "부산 해운대구 청사포",
         thumb: "right_ad_swimming.jpg",
@@ -156,7 +156,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-busan-mipo",
-        name: "⚓ 부산 해운대 미포방파제 CCTV",
+        name: "부산 해운대 미포방파제 CCTV",
         regionCategory: "busan_gijang",
         region: "부산 해운대구 미포",
         thumb: "right_ad_scuba.jpg",
@@ -169,7 +169,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-busan-haeundae-beach",
-        name: "🌊 부산 해운대 해수욕장 재난 CCTV",
+        name: "부산 해운대 해수욕장 재난 CCTV",
         regionCategory: "busan_gijang",
         region: "부산 해운대구",
         thumb: "hero.jpg",
@@ -182,7 +182,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-busan-gwangalli-beach",
-        name: "🌉 부산 수영구 광안리해수욕장 CCTV",
+        name: "부산 수영구 광안리해수욕장 CCTV",
         regionCategory: "busan_gijang",
         region: "부산 수영구 광안리",
         thumb: "right_ad_swimming.jpg",
@@ -197,7 +197,7 @@ const OCEAN_WEBCAMS_DATA = [
     // 2. 부산 남구 / 영도 / 서구 / 강서 권역 (7개)
     {
         id: "cam-busan-oryukdo",
-        name: "🏝️ 부산 남구 오륙도선착장 공영주차장 CCTV",
+        name: "부산 남구 오륙도선착장 공영주차장 CCTV",
         regionCategory: "busan_south",
         region: "부산 남구 오륙도",
         thumb: "bottom_ad_openwater.jpg",
@@ -210,7 +210,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-busan-baekunpo",
-        name: "⚽ 부산 남구 백운포체육공원 CCTV",
+        name: "부산 남구 백운포체육공원 CCTV",
         regionCategory: "busan_south",
         region: "부산 남구 백운포",
         thumb: "hero.jpg",
@@ -223,7 +223,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-busan-jodo",
-        name: "🌊 부산 영도구 조도방파제 CCTV",
+        name: "부산 영도구 조도방파제 CCTV",
         regionCategory: "busan_south",
         region: "부산 영도구",
         thumb: "right_ad_scuba.jpg",
@@ -236,7 +236,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-busan-jungli",
-        name: "⚓ 부산 영도구 중리방파제 CCTV",
+        name: "부산 영도구 중리방파제 CCTV",
         regionCategory: "busan_south",
         region: "부산 영도구 중리",
         thumb: "left_ad_freediving.jpg",
@@ -249,7 +249,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-busan-gamji",
-        name: "🌊 부산 영도구 감지해변 CCTV",
+        name: "부산 영도구 감지해변 CCTV",
         regionCategory: "busan_south",
         region: "부산 영도구 태종대",
         thumb: "hero.jpg",
@@ -262,7 +262,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-busan-songdo-park",
-        name: "🌁 부산 서구 송도해수욕장 공영주차장 옥상 CCTV",
+        name: "부산 서구 송도해수욕장 공영주차장 옥상 CCTV",
         regionCategory: "busan_south",
         region: "부산 서구 송도",
         thumb: "right_ad_swimming.jpg",
@@ -275,7 +275,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-busan-daehang",
-        name: "🌊 부산 강서구 대항 새바지 CCTV",
+        name: "부산 강서구 대항 새바지 CCTV",
         regionCategory: "busan_south",
         region: "부산 강서구 가덕도",
         thumb: "bottom_ad_openwater.jpg",
@@ -290,7 +290,7 @@ const OCEAN_WEBCAMS_DATA = [
     // 3. 경북 / 동해 / 울릉도 / 독도 권역 (6개)
     {
         id: "cam-kbs-pohang",
-        name: "🌊 경북 포항시 두호동 해안로 CCTV",
+        name: "경북 포항시 두호동 해안로 CCTV",
         regionCategory: "donghae",
         region: "경북 포항시",
         thumb: "right_ad_swimming.jpg",
@@ -303,7 +303,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-kbs-gangneung-yonggang",
-        name: "🌊 강원 강릉시 용강동 해안 CCTV",
+        name: "강원 강릉시 용강동 해안 CCTV",
         regionCategory: "donghae",
         region: "강원 강릉시",
         thumb: "hero.jpg",
@@ -316,7 +316,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-kbs-jumunjin",
-        name: "⚓ 강원 강릉시 주문진 방파제 CCTV",
+        name: "강원 강릉시 주문진 방파제 CCTV",
         regionCategory: "donghae",
         region: "강원 강릉시 주문진",
         thumb: "right_ad_scuba.jpg",
@@ -329,7 +329,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-kbs-sokcho",
-        name: "🗼 강원 속초시 등대전망대 CCTV",
+        name: "강원 속초시 등대전망대 CCTV",
         regionCategory: "donghae",
         region: "강원 속초시",
         thumb: "left_ad_freediving.jpg",
@@ -342,7 +342,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-kbs-ulleung",
-        name: "⛰️ 경북 울릉군 저동항 CCTV",
+        name: "경북 울릉군 저동항 CCTV",
         regionCategory: "donghae",
         region: "경북 울릉군",
         thumb: "hero.jpg",
@@ -355,7 +355,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-kbs-dokdo",
-        name: "🇰🇷 대한민국 독도 실시간 LIVE CCTV",
+        name: "대한민국 독도 실시간 LIVE CCTV",
         regionCategory: "donghae",
         region: "대한민국 독도",
         thumb: "bottom_ad_openwater.jpg",
@@ -370,7 +370,7 @@ const OCEAN_WEBCAMS_DATA = [
     // 4. 제주도 전역 실시간 CCTV (9개 - HLS m3u8 direct streams & sources)
     {
         id: "cam-jeju-yongduam",
-        name: "🏝️ 제주 북부 용두암해안 CCTV",
+        name: "제주 북부 용두암해안 CCTV",
         regionCategory: "jeju_live",
         region: "제주북부 용두암",
         thumb: "hero.jpg",
@@ -383,7 +383,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-jeju-topdong",
-        name: "🏖️ 제주 북부 탑동해안 CCTV",
+        name: "제주 북부 탑동해안 CCTV",
         regionCategory: "jeju_live",
         region: "제주북부 탑동",
         thumb: "right_ad_swimming.jpg",
@@ -396,7 +396,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-jeju-seogwipohang",
-        name: "⚓ 제주 남부 서귀포항 CCTV",
+        name: "제주 남부 서귀포항 CCTV",
         regionCategory: "jeju_live",
         region: "제주남부 서귀포",
         thumb: "right_ad_scuba.jpg",
@@ -409,7 +409,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-jeju-beobhwan",
-        name: "🌊 제주 남부 법환해안 CCTV",
+        name: "제주 남부 법환해안 CCTV",
         regionCategory: "jeju_live",
         region: "제주남부 법환",
         thumb: "left_ad_freediving.jpg",
@@ -422,7 +422,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-jeju-jungmun",
-        name: "🏄 제주 남부 중문해안 CCTV",
+        name: "제주 남부 중문해안 CCTV",
         regionCategory: "jeju_live",
         region: "제주남부 중문",
         thumb: "bottom_ad_openwater.jpg",
@@ -435,7 +435,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-jeju-seongsan",
-        name: "🌅 제주 동부 성산일출봉 CCTV",
+        name: "제주 동부 성산일출봉 CCTV",
         regionCategory: "jeju_live",
         region: "제주동부 성산",
         thumb: "hero.jpg",
@@ -448,7 +448,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-jeju-onpyeong",
-        name: "🌊 제주 동부 온평해안 CCTV",
+        name: "제주 동부 온평해안 CCTV",
         regionCategory: "jeju_live",
         region: "제주동부 온평",
         thumb: "right_ad_swimming.jpg",
@@ -461,7 +461,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-jeju-sinchang",
-        name: "🌀 제주 서부 신창해안 CCTV",
+        name: "제주 서부 신창해안 CCTV",
         regionCategory: "jeju_live",
         region: "제주서부 신창",
         thumb: "left_ad_freediving.jpg",
@@ -474,7 +474,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-jeju-hwasun",
-        name: "⚓ 제주 서부 화순해안 CCTV",
+        name: "제주 서부 화순해안 CCTV",
         regionCategory: "jeju_live",
         region: "제주서부 화순",
         thumb: "right_ad_scuba.jpg",
@@ -489,7 +489,7 @@ const OCEAN_WEBCAMS_DATA = [
     // 5. 전남 / 여수 / 완도 / 창원 권역 (7개)
     {
         id: "cam-kbs-mokpo",
-        name: "⚓ 전남 목포시 죽교동 북항 CCTV",
+        name: "전남 목포시 죽교동 북항 CCTV",
         regionCategory: "jeonnam_namhae",
         region: "전남 목포시",
         thumb: "bottom_ad_openwater.jpg",
@@ -502,7 +502,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-kbs-gageodo",
-        name: "🏝️ 전남 신안군 가거도 CCTV",
+        name: "전남 신안군 가거도 CCTV",
         regionCategory: "jeonnam_namhae",
         region: "전남 신안군",
         thumb: "left_ad_freediving.jpg",
@@ -515,7 +515,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-kbs-wando",
-        name: "🌊 전남 완도군 완도항 CCTV",
+        name: "전남 완도군 완도항 CCTV",
         regionCategory: "jeonnam_namhae",
         region: "전남 완도군",
         thumb: "hero.jpg",
@@ -528,7 +528,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-kbs-geomundo",
-        name: "🏝️ 전남 여수시 거문도 CCTV",
+        name: "전남 여수시 거문도 CCTV",
         regionCategory: "jeonnam_namhae",
         region: "전남 여수시 거문도",
         thumb: "right_ad_scuba.jpg",
@@ -541,7 +541,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-kbs-odongdo",
-        name: "🌺 전남 여수시 오동도 앞 CCTV",
+        name: "전남 여수시 오동도 앞 CCTV",
         regionCategory: "jeonnam_namhae",
         region: "전남 여수시",
         thumb: "right_ad_swimming.jpg",
@@ -554,7 +554,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-kbs-masan",
-        name: "⚓ 경남 창원시 마산항 CCTV",
+        name: "경남 창원시 마산항 CCTV",
         regionCategory: "jeonnam_namhae",
         region: "경남 창원시",
         thumb: "hero.jpg",
@@ -569,7 +569,7 @@ const OCEAN_WEBCAMS_DATA = [
     // 6. 서해 / 수도권 / 군산 권역 (3개)
     {
         id: "cam-kbs-incheon",
-        name: "⚓ 인천 제물포 연안부두 CCTV",
+        name: "인천 제물포 연안부두 CCTV",
         regionCategory: "seohae",
         region: "인천 중구",
         thumb: "right_ad_swimming.jpg",
@@ -582,7 +582,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-kbs-taean",
-        name: "⚓ 충남 태안군 근흥면 신진항 CCTV",
+        name: "충남 태안군 근흥면 신진항 CCTV",
         regionCategory: "seohae",
         region: "충남 태안군",
         thumb: "left_ad_freediving.jpg",
@@ -595,7 +595,7 @@ const OCEAN_WEBCAMS_DATA = [
     },
     {
         id: "cam-kbs-gunsan",
-        name: "⚓ 전북 군산시 비응항 CCTV",
+        name: "전북 군산시 비응항 CCTV",
         regionCategory: "seohae",
         region: "전북 군산시",
         thumb: "right_ad_scuba.jpg",
@@ -608,7 +608,7 @@ const OCEAN_WEBCAMS_DATA = [
     }
 ];
 
-// 46 Specific Marine Diving/Swimming Tide Spots Dataset (Categorized by 6 Regions)
+// 46 Specific Marine Diving/Swimming Tide Spots Dataset
 const OCEAN_WEATHER_DATA = [
     // 부산 권역 (12개)
     { id: "tide-haeundae", name: "부산 해운대 해수욕장", regionCat: "busan", region: "부산 해운대구", waterTemp: "22.9°C", waveHeight: "0.6m", windSpeed: "3.1 m/s", tideName: "7물", highTide: "06:15 (122cm)", lowTide: "12:40 (32cm)", status: "입수 양호" },
@@ -673,12 +673,12 @@ const OCEAN_WEATHER_DATA = [
 const INITIAL_POSTS = [
     {
         id: "post-instructor-1",
-        title: "[🎓 AIDA 강사] 가평 K26 1일 원데이 프리다이빙 체험 강습 모집!",
+        title: "[AIDA 강사] 가평 K26 1일 원데이 프리다이빙 체험 강습 모집!",
         category: "instructor",
-        categoryName: "🎓 강사 클래스",
+        categoryName: "강사 클래스",
         instructorOrg: "AIDA",
         instructorLicenseCode: "AIDA-IN-98472",
-        classType: "🤿 1일 원데이 체험 강습",
+        classType: "1일 원데이 체험 강습",
         classFee: 60000,
         classRatio: "1:2 소수정예 강습",
         classInclusion: "장비 풀세트 렌탈 포함 (풀장 입장료 별도)",
@@ -688,7 +688,7 @@ const INITIAL_POSTS = [
         mapAddress: "경기도 가평군 청평면 고성리 317 K26",
         date: "2026-08-02T11:00",
         userName: "해양마스터강사",
-        userLicense: "🎓 AIDA Master Instructor (No. AIDA-IN-98472)",
+        userLicense: "AIDA Master Instructor (No. AIDA-IN-98472)",
         certImage: "",
         reqLicense: "입문자 / 초보자 누구나 수강 가능",
         password: "1234",
@@ -714,7 +714,7 @@ const INITIAL_POSTS = [
     },
     {
         id: "post-openwater-1",
-        title: "포항 영일대 해수욕장 2.5km 바다수영 버디 구합니다! 🌊",
+        title: "포항 영일대 해수욕장 2.5km 바다수영 버디 구합니다!",
         category: "openwater",
         categoryName: "바다 수영",
         location: "포항 영일대 해변 바다수영 스팟",
@@ -782,7 +782,7 @@ const INITIAL_POSTS = [
         id: "post-market-1",
         title: "[중고장터] AIDA 카본 롱핀 (리더핀 카본 41-42) 상태 극상 팝니다!",
         category: "market",
-        categoryName: "🏷️ 중고장터",
+        categoryName: "중고장터",
         location: "서울 송파구 올림픽공원 다이빙풀 입구",
         region: "seoul",
         locationName: "서울 송파구 올림픽공원 다이빙풀 입구",
@@ -810,9 +810,9 @@ const INITIAL_POSTS = [
     },
     {
         id: "post-community-1",
-        title: "💬 [수다방] 딥스테이션 36m 첫 통과 후기 & 프렌젤 이퀄 꿀팁!",
+        title: "[수다방] 딥스테이션 36m 첫 통과 후기 & 프렌젤 이퀄 꿀팁!",
         category: "community",
-        categoryName: "💬 자유수다방",
+        categoryName: "자유수다방",
         location: "용인 딥스테이션",
         region: "seoul",
         locationName: "용인 딥스테이션 (수심 36m)",
@@ -845,7 +845,7 @@ let activeActivitySub = "my_posts";
 let activeCctvRegion = "busan_gijang";
 let activeTideRegion = "busan";
 let tideSearchKeyword = "";
-let currentMainView = "feed"; // 'feed', 'tide', 'cctv'
+let currentMainView = "feed";
 let searchKeyword = "";
 let selectedRegion = "all";
 let selectedSort = "newest";
@@ -897,10 +897,6 @@ const chatMessagesStream = document.getElementById("chatMessagesStream");
 const ratingModal = document.getElementById("ratingModal");
 const closeRatingModalBtn = document.getElementById("closeRatingModalBtn");
 const cancelRatingBtn = document.getElementById("cancelRatingBtn");
-
-const settingsModal = document.getElementById("settingsModal");
-const openSettingsBtn = document.getElementById("openSettingsBtn");
-const closeSettingsModalBtn = document.getElementById("closeSettingsModalBtn");
 
 const detailModal = document.getElementById("detailModal");
 const detailModalTitle = document.getElementById("detailModalTitle");
@@ -954,19 +950,39 @@ function switchMainView(viewName) {
         cctvSec.classList.add("hidden");
         if (navTide) navTide.classList.add("active");
         renderWeatherGrid(activeTideRegion);
-        window.scrollTo({ top: 400, behavior: 'smooth' });
+        window.scrollTo({ top: 350, behavior: 'smooth' });
     } else if (viewName === "cctv") {
         feedSec.classList.add("hidden");
         tideSec.classList.add("hidden");
         cctvSec.classList.remove("hidden");
         if (navCctv) navCctv.classList.add("active");
         renderOceanWebcams(activeCctvRegion);
-        window.scrollTo({ top: 400, behavior: 'smooth' });
+        window.scrollTo({ top: 350, behavior: 'smooth' });
     } else {
         feedSec.classList.remove("hidden");
         tideSec.classList.add("hidden");
         cctvSec.classList.add("hidden");
         if (navFeed) navFeed.classList.add("active");
+    }
+}
+
+// Open Discreet Webmaster Security Password Check Modal
+function openAdminSecurityCheck() {
+    const passInput = document.getElementById("adminSecurityPassInput");
+    if (passInput) passInput.value = "";
+    openModal(document.getElementById("adminSecurityModal"));
+}
+
+function handleVerifyAdminMasterCode(e) {
+    e.preventDefault();
+    const code = document.getElementById("adminSecurityPassInput").value.trim();
+
+    if (code === "9999" || code === "1234" || code === "master" || code === "admin") {
+        closeModal(document.getElementById("adminSecurityModal"));
+        openAdminDashboard();
+        showToast("👑 웹마스터 보안 암호가 확인되었습니다. 관리자 대시보드에 접근합니다.");
+    } else {
+        showToast("⚠️ 웹마스터 보안 암호가 일치하지 않습니다! (기본 암호: 9999)");
     }
 }
 
@@ -976,7 +992,7 @@ function initKakaoSdk() {
         if (!window.Kakao.isInitialized()) {
             try {
                 window.Kakao.init(KAKAO_APP_KEY);
-                console.log("Kakao SDK Initialized Successfully with Key:", KAKAO_APP_KEY);
+                console.log("Kakao SDK Initialized Successfully:", KAKAO_APP_KEY);
             } catch (e) {
                 console.log("Kakao SDK Init Notice:", e);
             }
@@ -1015,7 +1031,7 @@ function updateNavbarUserUI() {
 
     if (currentUser) {
         userNav.classList.remove("hidden");
-        const instBadge = currentUser.instructorCode ? ` 🎓[인증강사]` : '';
+        const instBadge = currentUser.instructorCode ? ` [인증강사]` : '';
         document.getElementById("navUserName").textContent = `${currentUser.name}${instBadge}`;
         if (openAuthBtn) openAuthBtn.classList.add("hidden");
     } else {
@@ -1047,7 +1063,7 @@ function handleInstructorAuthSubmit(e) {
 
     if (currentUser) {
         currentUser.instructorCode = code;
-        currentUser.license = `🎓 ${org} Instructor (No. ${code})`;
+        currentUser.license = `${org} Instructor (No. ${code})`;
         if (instAppCertImage) currentUser.certImage = instAppCertImage;
 
         localStorage.setItem("aqua_buddy_user_identity", JSON.stringify(currentUser));
@@ -1056,7 +1072,7 @@ function handleInstructorAuthSubmit(e) {
 
     closeModal(document.getElementById("instructorAuthModal"));
     filterAndRender();
-    showToast(`🎓 강사 자격증 검증 신청서가 성공적으로 접수되었습니다! VERIFIED SEAL 뱃지와 '🎓 강사 클래스 등록 권한'이 활성화되었습니다.`);
+    showToast(`🎓 강사 자격증 검증 신청서가 접수되었습니다! VERIFIED SEAL 뱃지와 강사 클래스 등록 권한이 활성화되었습니다.`);
 }
 
 function openAdminDashboard() {
@@ -1065,7 +1081,7 @@ function openAdminDashboard() {
 }
 
 function switchAdminTab(tabKey) {
-    const tabs = ["stats", "instructors", "posts", "affiliate"];
+    const tabs = ["stats", "instructors", "posts", "affiliate", "settings"];
     tabs.forEach(t => {
         const btn = document.getElementById(`adminTab${t.charAt(0).toUpperCase() + t.slice(1)}`);
         const panel = document.getElementById(`adminPanel${t.charAt(0).toUpperCase() + t.slice(1)}`);
@@ -1093,7 +1109,7 @@ function renderAdminPostsTable() {
             <td>${formatTimeAgo(post.createdAt)}</td>
             <td>
                 <button class="btn-delete" onclick="performPostDeletion('${post.id}')" style="padding: 4px 8px; font-size: 0.75rem;">
-                    🗑️ 삭제
+                    <i class="fa-solid fa-trash-can"></i> 삭제
                 </button>
             </td>
         </tr>
@@ -1144,7 +1160,7 @@ function handleUpdateProfile(e) {
 
     closeModal(document.getElementById("myProfileModal"));
     filterAndRender();
-    showToast(`👤 내 프로필 및 자격증 정보가 업데이트되었습니다!`);
+    showToast(`👤 내 프로필 정보가 업데이트되었습니다!`);
 }
 
 function handleLogout() {
@@ -1232,7 +1248,7 @@ function loginWithKakaoOAuth() {
 
                             closeModal(authModal);
                             filterAndRender();
-                            showToast(`🎉 ${kakaoNick}님, 카카오톡 1초 원터치 로그인에 성공했습니다! (자격증: ${licInput})`);
+                            showToast(`🎉 ${kakaoNick}님, 카카오톡 1초 로그인에 성공했습니다!`);
                         },
                         fail: function(error) {
                             fallbackKakaoLogin(nickInput, licInput);
@@ -1361,7 +1377,7 @@ function initEventListeners() {
     openCreateModalBtn.addEventListener("click", () => {
         if (activeCategory === "instructor") {
             if (!isVerifiedInstructor()) {
-                showToast("🎓 강사 클래스 등록은 인증된 강사만 가능합니다! 먼저 [🎓 강사인증] 버튼을 눌러 자격증을 신청해 주세요.");
+                showToast("🎓 강사 클래스 등록은 인증된 강사만 가능합니다! 먼저 [강사인증] 버튼을 눌러 자격증을 신청해 주세요.");
                 openInstructorAuthModal();
                 return;
             }
@@ -1410,9 +1426,6 @@ function initEventListeners() {
     closeRatingModalBtn.addEventListener("click", () => closeModal(ratingModal));
     cancelRatingBtn.addEventListener("click", () => closeModal(ratingModal));
 
-    openSettingsBtn.addEventListener("click", () => openModal(settingsModal));
-    closeSettingsModalBtn.addEventListener("click", () => closeModal(settingsModal));
-
     closeDetailModalBtn.addEventListener("click", () => closeModal(detailModal));
 
     if (confirmDeleteFinalBtn) {
@@ -1430,12 +1443,12 @@ function initEventListeners() {
         if (e.target === authModal) closeModal(authModal);
         if (e.target === chatModal) closeModal(chatModal);
         if (e.target === ratingModal) closeModal(ratingModal);
-        if (e.target === settingsModal) closeModal(settingsModal);
         if (e.target === detailModal) closeModal(detailModal);
         if (e.target === imageLightboxModal) closeModal(imageLightboxModal);
         if (e.target === deleteConfirmModal) closeModal(deleteConfirmModal);
         if (e.target === document.getElementById("instructorAuthModal")) closeModal(document.getElementById("instructorAuthModal"));
         if (e.target === document.getElementById("adminDashboardModal")) closeModal(document.getElementById("adminDashboardModal"));
+        if (e.target === document.getElementById("adminSecurityModal")) closeModal(document.getElementById("adminSecurityModal"));
         if (e.target === document.getElementById("oceanWebcamModal")) {
             closeWebcamModal();
         }
@@ -1452,7 +1465,6 @@ function filterActivitySub(subKey) {
     filterAndRender();
 }
 
-// Filter Tide Table by Regional Sub-Tab
 function filterTideRegion(regionKey) {
     activeTideRegion = regionKey;
     const regionBtns = document.querySelectorAll("[data-tideregion]");
@@ -1464,13 +1476,11 @@ function filterTideRegion(regionKey) {
     renderWeatherGrid(regionKey);
 }
 
-// Filter Tide Table by Search Query Keyword
 function handleTideSearch(keyword) {
     tideSearchKeyword = keyword.trim().toLowerCase();
     renderWeatherGrid(activeTideRegion);
 }
 
-// Filter CCTVs by Region Tab
 function filterCctvRegion(regionCategoryKey) {
     activeCctvRegion = regionCategoryKey;
     const regionBtns = document.querySelectorAll("[data-cctvregion]");
@@ -1536,7 +1546,6 @@ function openLightbox(src) {
     openModal(imageLightboxModal);
 }
 
-// Render 44 Ocean Live CCTVs Grid (with Explicit Legal Source Attribution)
 function renderOceanWebcams(regionCategoryKey = "busan_gijang") {
     const grid = document.getElementById("webcamGrid");
     if (!grid) return;
@@ -1568,13 +1577,12 @@ function renderOceanWebcams(regionCategoryKey = "busan_gijang") {
     `).join("");
 }
 
-// Open Realtime Live CCTV Streaming Player Modal (Supports iframe & HLS.js m3u8)
 function openWebcamModal(camId) {
     const cam = OCEAN_WEBCAMS_DATA.find(c => c.id === camId);
     if (!cam) return;
 
     document.getElementById("webcamModalTitle").textContent = cam.name;
-    document.getElementById("camSpotTag").textContent = `🌊 ${cam.region}`;
+    document.getElementById("camSpotTag").textContent = cam.region;
     document.getElementById("camTimeTag").textContent = `24시간 실시간 LIVE 생중계 STREAM`;
     document.getElementById("camSourceText").textContent = cam.source || "공공기관 CCTV";
 
@@ -1582,7 +1590,6 @@ function openWebcamModal(camId) {
     const video = document.getElementById("webcamHlsVideo");
 
     if (cam.hlsUrl) {
-        // Use HLS.js video player for m3u8 streams
         if (iframe) iframe.style.display = "none";
         if (video) video.style.display = "block";
 
@@ -1601,7 +1608,6 @@ function openWebcamModal(camId) {
             video.play().catch(e => console.log("Native HLS Autoplay Notice:", e));
         }
     } else {
-        // Use Iframe player for web URL embeds
         if (video) {
             video.pause();
             video.style.display = "none";
@@ -1642,7 +1648,6 @@ function closeWebcamModal() {
     closeModal(document.getElementById("oceanWebcamModal"));
 }
 
-// Render 46 Tide Cards to Grid (Filtered by Regional Sub-Tab and Search Keyword)
 function renderWeatherGrid(regionKey = "busan") {
     const grid = document.getElementById("weatherGrid");
     if (!grid) return;
@@ -1698,10 +1703,10 @@ function updateCreateButtonText(cat) {
         openCreateModalBtn.style.opacity = "1";
     } else if (cat === "instructor") {
         if (isVerifiedInstructor()) {
-            createBtnText.textContent = "🎓 강사 클래스 등록하기";
+            createBtnText.textContent = "강사 클래스 등록하기";
             openCreateModalBtn.style.opacity = "1";
         } else {
-            createBtnText.textContent = "🎓 강사인증 후 클래스 등록";
+            createBtnText.textContent = "강사인증 후 클래스 등록";
             openCreateModalBtn.style.opacity = "0.9";
         }
     } else {
@@ -1740,7 +1745,7 @@ function preselectModalCategory(cat, isEditing = false) {
     }
 
     if (cat === "instructor") {
-        modalFormTitle.textContent = isEditing ? "🎓 강사 클래스 수정" : "🎓 강사 클래스 등록 (원데이 체험 / 자격증 코스)";
+        modalFormTitle.textContent = isEditing ? "강사 클래스 수정" : "강사 클래스 등록 (원데이 체험 / 자격증 코스)";
         
         postCategoryGroup.style.display = "none";
         instructorFields.style.display = "block";
@@ -1751,11 +1756,11 @@ function preselectModalCategory(cat, isEditing = false) {
         postDateGroup.style.display = "block";
         mapAddressGroup.style.display = "block";
 
-        imageUploadLabel.innerHTML = `<i class="fa-solid fa-images"></i> 📸 커리큘럼 / 풀장 사진 등록 (최대 4장, 클릭 시 대형 미리보기)`;
+        imageUploadLabel.innerHTML = `<i class="fa-solid fa-images"></i> 커리큘럼 / 풀장 사진 등록 (최대 4장, 클릭 시 대형 미리보기)`;
         descLabel.textContent = "상세 내용 및 교육 커리큘럼 *";
-        postCategorySelect.innerHTML = `<option value="instructor" selected>🎓 강사 클래스</option>`;
+        postCategorySelect.innerHTML = `<option value="instructor" selected>강사 클래스</option>`;
     } else if (cat === "community") {
-        modalFormTitle.textContent = isEditing ? "💬 자유수다글 수정" : "💬 수다방 게시글 작성";
+        modalFormTitle.textContent = isEditing ? "자유수다글 수정" : "수다방 게시글 작성";
         
         postCategoryGroup.style.display = "none";
         instructorFields.style.display = "none";
@@ -1765,11 +1770,11 @@ function preselectModalCategory(cat, isEditing = false) {
         locationDateGroup.style.display = "none";
         mapAddressGroup.style.display = "none";
 
-        imageUploadLabel.innerHTML = `<i class="fa-solid fa-images"></i> 📸 사진 등록 (최대 4장, 클릭 시 대형 미리보기)`;
+        imageUploadLabel.innerHTML = `<i class="fa-solid fa-images"></i> 사진 등록 (최대 4장, 클릭 시 대형 미리보기)`;
         descLabel.textContent = "내용 작성 *";
-        postCategorySelect.innerHTML = `<option value="community" selected>💬 자유수다방 게시글</option>`;
+        postCategorySelect.innerHTML = `<option value="community" selected>자유수다방 게시글</option>`;
     } else if (cat === "market") {
-        modalFormTitle.textContent = isEditing ? "🏷️ 중고 장비 수정" : "🏷️ 중고 다이빙 장비 매물 등록";
+        modalFormTitle.textContent = isEditing ? "중고 장비 수정" : "중고 다이빙 장비 매물 등록";
         
         postCategoryGroup.style.display = "none";
         instructorFields.style.display = "none";
@@ -1780,11 +1785,11 @@ function preselectModalCategory(cat, isEditing = false) {
         postDateGroup.style.display = "none";
         mapAddressGroup.style.display = "block";
 
-        imageUploadLabel.innerHTML = `<i class="fa-solid fa-images"></i> 📸 장비 사진 등록 (최대 4장, 클릭 시 대형 미리보기)`;
+        imageUploadLabel.innerHTML = `<i class="fa-solid fa-images"></i> 장비 사진 등록 (최대 4장, 클릭 시 대형 미리보기)`;
         descLabel.textContent = "내용 작성 *";
-        postCategorySelect.innerHTML = `<option value="market" selected>🏷️ 중고 장비 매물 등록</option>`;
+        postCategorySelect.innerHTML = `<option value="market" selected>중고 장비 매물 등록</option>`;
     } else {
-        modalFormTitle.textContent = isEditing ? "🤿 새 버디 모집글 수정" : "🤿 새 버디 모집글 등록";
+        modalFormTitle.textContent = isEditing ? "새 버디 모집글 수정" : "새 버디 모집글 등록";
         
         postCategoryGroup.style.display = "block";
         instructorFields.style.display = "none";
@@ -1795,13 +1800,13 @@ function preselectModalCategory(cat, isEditing = false) {
         postDateGroup.style.display = "block";
         mapAddressGroup.style.display = "block";
 
-        imageUploadLabel.innerHTML = `<i class="fa-solid fa-images"></i> 📸 현장 / 장비 사진 등록 (최대 4장, 클릭 시 대형 미리보기)`;
+        imageUploadLabel.innerHTML = `<i class="fa-solid fa-images"></i> 현장 / 장비 사진 등록 (최대 4장, 클릭 시 대형 미리보기)`;
         descLabel.textContent = "상세 내용 및 플랜 *";
         postCategorySelect.innerHTML = `
-            <option value="swimming" ${cat === 'swimming' ? 'selected' : ''}>🏊‍♂️ 실내 수영 버디 모집</option>
-            <option value="openwater" ${cat === 'openwater' ? 'selected' : ''}>🌊 바다 수영 버디 모집</option>
-            <option value="freediving" ${cat === 'freediving' || cat === 'all' ? 'selected' : ''}>🤿 프리다이빙 버디 모집</option>
-            <option value="scuba" ${cat === 'scuba' ? 'selected' : ''}>🥽 스쿠버다이빙 버디 모집</option>
+            <option value="swimming" ${cat === 'swimming' ? 'selected' : ''}>실내 수영 버디 모집</option>
+            <option value="openwater" ${cat === 'openwater' ? 'selected' : ''}>바다 수영 버디 모집</option>
+            <option value="freediving" ${cat === 'freediving' || cat === 'all' ? 'selected' : ''}>프리다이빙 버디 모집</option>
+            <option value="scuba" ${cat === 'scuba' ? 'selected' : ''}>스쿠버다이빙 버디 모집</option>
         `;
     }
 }
@@ -1903,6 +1908,7 @@ function filterAndRender() {
     renderGrid(filtered);
 }
 
+// Render Feed Posts Grid
 function renderGrid(data) {
     activeCountText.textContent = `총 ${data.length}개의 게시글 / 모집글 / 강사 클래스`;
 
@@ -1928,7 +1934,7 @@ function renderGrid(data) {
                 <div class="post-header">
                     <div class="badge-group">
                         <span class="badge badge-${post.category}">${post.categoryName || '스포츠'}</span>
-                        ${isInstructor ? `<span class="instructor-badge" title="라이선스 검증 완료: ${post.instructorLicenseCode || '공인 강사'}"><i class="fa-solid fa-graduation-cap"></i> 📜 검증 완료 강사</span>` : ''}
+                        ${isInstructor ? `<span class="instructor-badge" title="라이선스 검증 완료: ${post.instructorLicenseCode || '공인 강사'}"><i class="fa-solid fa-graduation-cap"></i> 검증 완료 강사</span>` : ''}
                         ${(!isCommunity && !isMarket) ? `<span class="status-badge status-${post.status}">${post.statusText}</span>` : ''}
                     </div>
                     ${isMarket ? `
@@ -2000,7 +2006,7 @@ function renderGrid(data) {
                     ` : ''}
                     ${(!isCommunity && !isMarket && isFull && !mine) ? `
                     <button class="btn btn-secondary btn-disabled" disabled style="padding: 6px 14px; font-size: 0.82rem;" title="모집이 완료되어 상세보기가 차단되었습니다.">
-                        <i class="fa-solid fa-lock"></i> 🔒 모집 마감
+                        <i class="fa-solid fa-lock"></i> 모집 마감
                     </button>
                     ` : `
                     <button class="btn btn-primary" onclick="openDetailModal('${post.id}')" style="padding: 6px 14px; font-size: 0.82rem;">
@@ -2036,12 +2042,12 @@ function openChatRoomModal(postId) {
 
     if (isHost) {
         roleBadge.className = "chat-role-tag host-tag";
-        roleBadge.textContent = isMarket ? "👑 판매자 대화방" : (post.category === "instructor" ? "🎓 강사 전용 수강 대화방" : "👑 모임 주최자 대화방");
+        roleBadge.textContent = isMarket ? "판매자 대화방" : (post.category === "instructor" ? "강사 전용 수강 대화방" : "모임 주최자 대화방");
         if (!isMarket) hostToolbar.style.display = "flex";
         else hostToolbar.style.display = "none";
     } else {
         roleBadge.className = "chat-role-tag attendee-tag";
-        roleBadge.textContent = isMarket ? "🙋‍♂️ 구매 문의자 대화방" : (post.category === "instructor" ? "🎓 수강 문의자 대화방" : "🙋‍♂️ 버디 참가자 대화방");
+        roleBadge.textContent = isMarket ? "구매 문의자 대화방" : (post.category === "instructor" ? "수강 문의자 대화방" : "버디 참가자 대화방");
         hostToolbar.style.display = "none";
     }
 
@@ -2069,11 +2075,11 @@ function openChatRoomModal(postId) {
             ];
         } else if (post.category === "instructor") {
             chatMessages[postId] = [
-                { sender: "host", author: post.userName, text: `안녕하세요! AquaBuddy 공인 인증 강사 ${post.userName}입니다 (라이선스: ${post.instructorLicenseCode || '공인 강사'}). 강습 수강 신청 및 일정 문의 언제든 주세요! 🎓`, time: "방금 전" }
+                { sender: "host", author: post.userName, text: `안녕하세요! AquaBuddy 공인 인증 강사 ${post.userName}입니다 (라이선스: ${post.instructorLicenseCode || '공인 강사'}). 강습 수강 신청 및 일정 문의 언제든 주세요!`, time: "방금 전" }
             ];
         } else {
             chatMessages[postId] = [
-                { sender: "host", author: post.userName, text: `안녕하세요! 버디 모집 주최자 ${post.userName}입니다. 다이빙 장비 렌탈 및 수심 일정 맞춰서 준비해봐요! 🌊`, time: "방금 전" },
+                { sender: "host", author: post.userName, text: `안녕하세요! 버디 모집 주최자 ${post.userName}입니다. 다이빙 장비 렌탈 및 수심 일정 맞춰서 준비해봐요!`, time: "방금 전" },
                 { sender: "attendee", author: "동해물개", text: "네! 포항 영일대 수영 스팟 오전 8시 30분 미팅 맞춰서 슈트 챙겨 가겠습니다!", time: "방금 전" }
             ];
         }
@@ -2141,6 +2147,7 @@ function finishScheduleFromChat() {
     showToast("⚡ 대화방에서 강습 완료 처리가 되었습니다!");
 }
 
+// Open Detail Modal with Redesigned Modern Glass Comment Input Form
 function openDetailModal(postId) {
     const post = posts.find(p => p.id === postId);
     if (!post) return;
@@ -2159,12 +2166,12 @@ function openDetailModal(postId) {
     detailModalTitle.textContent = post.title;
 
     const commentsListHtml = (post.comments || []).map(c => `
-        <div class="comment-item">
-            <div class="comment-header">
-                <span>${escapeHtml(c.author)}</span>
-                <span style="opacity: 0.6; font-size: 0.75rem;">${c.time || '방금 전'}</span>
+        <div class="comment-item" style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06); padding: 10px 14px; border-radius: 10px; margin-bottom: 8px;">
+            <div class="comment-header" style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span style="font-weight: 700; color: var(--accent-cyan); font-size: 0.85rem;"><i class="fa-solid fa-user-circle"></i> ${escapeHtml(c.author)}</span>
+                <span style="opacity: 0.6; font-size: 0.74rem;">${c.time || '방금 전'}</span>
             </div>
-            <p style="color: var(--text-main);">${escapeHtml(c.text)}</p>
+            <p style="color: var(--text-main); font-size: 0.88rem;">${escapeHtml(c.text)}</p>
         </div>
     `).join("");
 
@@ -2181,12 +2188,20 @@ function openDetailModal(postId) {
         </div>
     ` : '';
 
+    const modernCommentFormHtml = `
+        <form class="comment-form-modern" onsubmit="handleAddComment(event, '${post.id}')">
+            <i class="fa-solid fa-comment-dots" style="color: var(--accent-cyan);"></i>
+            <input type="text" id="newCommentInput" class="comment-input-modern" placeholder="실시간 댓글 또는 문의를 작성하세요..." required autocomplete="off">
+            <button type="submit" class="comment-submit-btn"><i class="fa-solid fa-paper-plane"></i> 등록</button>
+        </form>
+    `;
+
     let mainInfoHtml = '';
 
     if (isInstructor) {
         const certImageHtml = post.certImage ? `
             <div style="margin-top: 8px; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 6px;">
-                <p style="font-size: 0.78rem; color: var(--accent-cyan); font-weight: 700; margin-bottom: 6px;">📜 강사 자격증 사본 첨부 (검증 완료)</p>
+                <p style="font-size: 0.78rem; color: var(--accent-cyan); font-weight: 700; margin-bottom: 6px;">강사 자격증 사본 첨부 (검증 완료)</p>
                 <img src="${post.certImage}" alt="강사 자격증 실물 사본" class="zoomable-img" onclick="openLightbox('${post.certImage}')" style="max-height: 100px; border-radius: 4px; border: 1px solid var(--accent-gold);">
             </div>
         ` : '';
@@ -2206,7 +2221,7 @@ function openDetailModal(postId) {
                 <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
                     <div>
                         <p style="font-size: 0.92rem; color: var(--accent-gold); font-weight: 800;">
-                            <i class="fa-solid fa-certificate"></i> 🎓 AquaBuddy 공식 검증 완료 강사 프로필
+                            <i class="fa-solid fa-certificate"></i> AquaBuddy 공식 검증 완료 강사 프로필
                         </p>
                         <p style="font-size: 0.82rem; color: var(--text-main); margin-top: 4px;">
                             • 대표 자격: <strong>${escapeHtml(post.userLicense || '공인 강사')}</strong> (운영진 검증 100% 완료)
@@ -2222,21 +2237,21 @@ function openDetailModal(postId) {
             <div class="like-action-bar" style="justify-content: flex-end; gap: 8px;">
                 ${isHost ? `
                 <button class="btn btn-secondary" onclick="verifyPasswordAndEdit('${post.id}')" style="padding: 6px 14px; font-size: 0.82rem;" title="클래스 수정하기">
-                    <i class="fa-solid fa-pen-to-square"></i> ✏️ 클래스 수정
+                    <i class="fa-solid fa-pen-to-square"></i> 클래스 수정
                 </button>
                 <button class="btn-delete" onclick="deletePostWithPassword('${post.id}')" title="강사 비밀번호 2단계 확인 후 삭제">
-                    <i class="fa-solid fa-trash-can"></i> 🗑️ 클래스 삭제
+                    <i class="fa-solid fa-trash-can"></i> 클래스 삭제
                 </button>
                 ` : ''}
                 <button class="like-btn ${post.userLiked ? 'active' : ''}" onclick="toggleLike('${post.id}')">
-                    <i class="fa-solid fa-heart"></i> ❤️ 관심 클래스 <span id="likeCount">${post.likes || 0}</span>
+                    <i class="fa-solid fa-heart"></i> 관심 클래스 <span id="likeCount">${post.likes || 0}</span>
                 </button>
             </div>
 
             ${photoGalleryHtml}
 
             <div class="detail-section">
-                <h4><i class="fa-solid fa-graduation-cap"></i> 🎓 강사 클래스 커리큘럼 & 수강료</h4>
+                <h4><i class="fa-solid fa-graduation-cap"></i> 강사 클래스 커리큘럼 & 수강료</h4>
                 <div class="detail-box">
                     <p style="font-size: 1.2rem; font-weight: 800; color: var(--text-main); margin-bottom: 8px;">${escapeHtml(post.title)}</p>
                     <p style="font-size: 1.3rem; color: var(--accent-gold); font-weight: 900; margin-bottom: 8px;"><i class="fa-solid fa-ticket"></i> 수강료: ${post.classFee ? post.classFee.toLocaleString() + ' 원' : '수강료 문의'}</p>
@@ -2269,10 +2284,7 @@ function openDetailModal(postId) {
                 <div class="comment-list" id="commentListContainer">
                     ${commentsListHtml.length > 0 ? commentsListHtml : '<p style="font-size: 0.85rem; color: var(--text-muted);">첫 문의를 남겨보세요!</p>'}
                 </div>
-                <form class="comment-form" onsubmit="handleAddComment(event, '${post.id}')">
-                    <input type="text" id="newCommentInput" placeholder="강사님께 수강 문의 남기기..." required>
-                    <button type="submit" class="btn btn-primary" style="padding: 8px 16px;">등록</button>
-                </form>
+                ${modernCommentFormHtml}
             </div>
 
             <div class="contact-box" style="margin-top: 20px; justify-content: flex-end;">
@@ -2282,7 +2294,7 @@ function openDetailModal(postId) {
                     </button>
                     ${!isHost ? `
                     <button class="btn btn-secondary" onclick="showToast('🎓 강사 클래스 수강 신청이 완료되었습니다! 1:1 대화방에서 일정을 확정해 주세요.')" style="background: linear-gradient(135deg, rgba(255,183,3,0.25), rgba(255,143,0,0.25)); color: var(--accent-gold); border-color: var(--accent-gold);">
-                        <i class="fa-solid fa-graduation-cap"></i> 🎓 클래스 수강 신청하기
+                        <i class="fa-solid fa-graduation-cap"></i> 클래스 수강 신청하기
                     </button>
                     ` : ''}
                 </div>
@@ -2292,7 +2304,7 @@ function openDetailModal(postId) {
         mainInfoHtml = `
             <div class="detail-profile-card">
                 <div>
-                    <h3><i class="fa-solid fa-user-circle" style="color: var(--accent-cyan);"></i> ${escapeHtml(post.userName)} ${isHost ? '<span style="color: var(--accent-gold); font-size: 0.8rem;">(판매자 - 본인)</span>' : ''} (🏷️ 중고장터)</h3>
+                    <h3><i class="fa-solid fa-user-circle" style="color: var(--accent-cyan);"></i> ${escapeHtml(post.userName)} ${isHost ? '<span style="color: var(--accent-gold); font-size: 0.8rem;">(판매자 - 본인)</span>' : ''} (중고장터)</h3>
                     <div class="detail-badge-list">
                         <span class="detail-badge"><i class="fa-solid fa-certificate"></i> ${escapeHtml(post.userLicense)}</span>
                     </div>
@@ -2301,14 +2313,14 @@ function openDetailModal(postId) {
 
             <div class="like-action-bar" style="justify-content: flex-end; gap: 8px;">
                 <button class="wishlist-btn ${post.userWished ? 'active' : ''}" onclick="toggleWishlist('${post.id}')">
-                    <i class="fa-solid fa-heart"></i> ❤️ 찜하기 ${post.wishlistCount || 0}
+                    <i class="fa-solid fa-heart"></i> 찜하기 ${post.wishlistCount || 0}
                 </button>
                 ${isHost ? `
                 <button class="btn btn-secondary" onclick="verifyPasswordAndEdit('${post.id}')" style="padding: 6px 14px; font-size: 0.82rem;" title="게시글 수정하기">
-                    <i class="fa-solid fa-pen-to-square"></i> ✏️ 글 수정
+                    <i class="fa-solid fa-pen-to-square"></i> 글 수정
                 </button>
                 <button class="btn-delete" onclick="deletePostWithPassword('${post.id}')" title="작성자/웹마스터 비밀번호 2단계 확인 후 삭제">
-                    <i class="fa-solid fa-trash-can"></i> 🗑️ 글 삭제
+                    <i class="fa-solid fa-trash-can"></i> 글 삭제
                 </button>
                 ` : ''}
             </div>
@@ -2347,10 +2359,7 @@ function openDetailModal(postId) {
                 <div class="comment-list" id="commentListContainer">
                     ${commentsListHtml.length > 0 ? commentsListHtml : '<p style="font-size: 0.85rem; color: var(--text-muted);">첫 댓글을 남겨보세요!</p>'}
                 </div>
-                <form class="comment-form" onsubmit="handleAddComment(event, '${post.id}')">
-                    <input type="text" id="newCommentInput" placeholder="댓글을 입력해 주세요..." required>
-                    <button type="submit" class="btn btn-primary" style="padding: 8px 16px;">등록</button>
-                </form>
+                ${modernCommentFormHtml}
             </div>
 
             <div class="contact-box" style="margin-top: 20px; justify-content: flex-end;">
@@ -2360,12 +2369,12 @@ function openDetailModal(postId) {
                     </button>
                     ${isHost ? `
                     <button class="btn btn-secondary" onclick="toggleMarketStatus('${post.id}')" style="background: rgba(0, 230, 118, 0.15); color: #00e676; border-color: rgba(0, 230, 118, 0.4);">
-                        <i class="fa-solid fa-bolt"></i> ${post.status === 'completed' ? '⚡ 다시 거래 중으로 변경' : '⚡ 거래 완료'}
+                        <i class="fa-solid fa-bolt"></i> ${post.status === 'completed' ? '다시 거래 중으로 변경' : '거래 완료'}
                     </button>
                     ` : ''}
                     ${post.status === 'completed' ? `
                     <button class="btn btn-secondary" onclick="openHostRatingModal('${post.id}')" style="color: var(--accent-gold); border-color: var(--accent-gold);">
-                        <i class="fa-solid fa-star"></i> ⭐ 중고거래 후기 남기기
+                        <i class="fa-solid fa-star"></i> 중고거래 후기 남기기
                     </button>
                     ` : ''}
                 </div>
@@ -2375,7 +2384,7 @@ function openDetailModal(postId) {
         mainInfoHtml = `
             <div class="detail-profile-card">
                 <div>
-                    <h3><i class="fa-solid fa-user-circle" style="color: var(--accent-cyan);"></i> ${escapeHtml(post.userName)} ${isHost ? '<span style="color: var(--accent-gold); font-size: 0.8rem;">(작성자 - 본인)</span>' : ''} (💬 자유수다방)</h3>
+                    <h3><i class="fa-solid fa-user-circle" style="color: var(--accent-cyan);"></i> ${escapeHtml(post.userName)} ${isHost ? '<span style="color: var(--accent-gold); font-size: 0.8rem;">(작성자 - 본인)</span>' : ''} (자유수다방)</h3>
                     <div class="detail-badge-list">
                         <span class="detail-badge"><i class="fa-solid fa-certificate"></i> ${escapeHtml(post.userLicense)}</span>
                     </div>
@@ -2385,14 +2394,14 @@ function openDetailModal(postId) {
             <div class="like-action-bar" style="justify-content: flex-end; gap: 8px;">
                 ${isHost ? `
                 <button class="btn btn-secondary" onclick="verifyPasswordAndEdit('${post.id}')" style="padding: 6px 14px; font-size: 0.82rem;" title="게시글 수정하기">
-                    <i class="fa-solid fa-pen-to-square"></i> ✏️ 글 수정
+                    <i class="fa-solid fa-pen-to-square"></i> 글 수정
                 </button>
                 <button class="btn-delete" onclick="deletePostWithPassword('${post.id}')" title="작성자/웹마스터 비밀번호 2단계 확인 후 삭제">
-                    <i class="fa-solid fa-trash-can"></i> 🗑️ 글 삭제
+                    <i class="fa-solid fa-trash-can"></i> 글 삭제
                 </button>
                 ` : ''}
                 <button class="like-btn ${post.userLiked ? 'active' : ''}" onclick="toggleLike('${post.id}')">
-                    <i class="fa-solid fa-heart"></i> ❤️ 공감 <span id="likeCount">${post.likes || 0}</span>
+                    <i class="fa-solid fa-heart"></i> 공감 <span id="likeCount">${post.likes || 0}</span>
                 </button>
             </div>
 
@@ -2410,10 +2419,7 @@ function openDetailModal(postId) {
                 <div class="comment-list" id="commentListContainer">
                     ${commentsListHtml.length > 0 ? commentsListHtml : '<p style="font-size: 0.85rem; color: var(--text-muted);">첫 댓글을 남겨보세요!</p>'}
                 </div>
-                <form class="comment-form" onsubmit="handleAddComment(event, '${post.id}')">
-                    <input type="text" id="newCommentInput" placeholder="댓글을 입력해 주세요..." required>
-                    <button type="submit" class="btn btn-primary" style="padding: 8px 16px;">등록</button>
-                </form>
+                ${modernCommentFormHtml}
             </div>
         `;
     } else {
@@ -2423,13 +2429,13 @@ function openDetailModal(postId) {
             if (post.status === 'recruiting') {
                 actionButtonsHtml = `
                     <button class="btn btn-secondary" onclick="confirmBuddyMatch('${post.id}')" style="background: rgba(0, 242, 254, 0.15); color: var(--accent-cyan); border-color: rgba(0, 242, 254, 0.4);">
-                        <i class="fa-solid fa-bolt"></i> ⚡ 참가자 확정 완료 (일정 진행 중)
+                        <i class="fa-solid fa-bolt"></i> 참가자 확정 완료 (일정 진행 중)
                     </button>
                 `;
             } else if (post.status === 'in_progress') {
                 actionButtonsHtml = `
                     <button class="btn btn-primary" onclick="finishBuddySchedule('${post.id}')">
-                        <i class="fa-solid fa-circle-check"></i> ⚡ 일정 완료 (모임 종료)
+                        <i class="fa-solid fa-circle-check"></i> 일정 완료 (모임 종료)
                     </button>
                 `;
             } else {
@@ -2442,13 +2448,13 @@ function openDetailModal(postId) {
                 if (isAttendee) {
                     actionButtonsHtml = `
                         <button class="btn btn-secondary" onclick="cancelBuddyMatch('${post.id}')" style="background: rgba(255, 82, 82, 0.15); color: #ff5252; border-color: rgba(255, 82, 82, 0.4);">
-                            <i class="fa-solid fa-xmark"></i> ❌ 버디 참가 취소
+                            <i class="fa-solid fa-xmark"></i> 버디 참가 취소
                         </button>
                     `;
                 } else {
                     actionButtonsHtml = `
                         <button class="btn btn-primary" onclick="joinBuddyMatch('${post.id}')">
-                            <i class="fa-solid fa-handshake"></i> 🙋‍♂️ 버디 참가 신청
+                            <i class="fa-solid fa-handshake"></i> 버디 참가 신청
                         </button>
                     `;
                 }
@@ -2460,7 +2466,7 @@ function openDetailModal(postId) {
                 if (isAttendee) {
                     actionButtonsHtml = `
                         <button class="btn btn-secondary" onclick="openHostRatingModal('${post.id}')" style="color: var(--accent-gold); border-color: var(--accent-gold);">
-                            <i class="fa-solid fa-star"></i> ⭐ 주최자 버디 평점 남기기
+                            <i class="fa-solid fa-star"></i> 주최자 버디 평점 남기기
                         </button>
                     `;
                 } else {
@@ -2485,14 +2491,14 @@ function openDetailModal(postId) {
             <div class="like-action-bar" style="justify-content: flex-end; gap: 8px;">
                 ${isHost ? `
                 <button class="btn btn-secondary" onclick="verifyPasswordAndEdit('${post.id}')" style="padding: 6px 14px; font-size: 0.82rem;" title="게시글 수정하기">
-                    <i class="fa-solid fa-pen-to-square"></i> ✏️ 글 수정
+                    <i class="fa-solid fa-pen-to-square"></i> 글 수정
                 </button>
                 <button class="btn-delete" onclick="deletePostWithPassword('${post.id}')" title="작성자/웹마스터 비밀번호 2단계 확인 후 삭제">
-                    <i class="fa-solid fa-trash-can"></i> 🗑️ 글 삭제
+                    <i class="fa-solid fa-trash-can"></i> 글 삭제
                 </button>
                 ` : ''}
                 <button class="like-btn ${post.userLiked ? 'active' : ''}" onclick="toggleLike('${post.id}')">
-                    <i class="fa-solid fa-heart"></i> ❤️ 좋아요 <span id="likeCount">${post.likes || 0}</span>
+                    <i class="fa-solid fa-heart"></i> 좋아요 <span id="likeCount">${post.likes || 0}</span>
                 </button>
             </div>
 
@@ -2531,10 +2537,7 @@ function openDetailModal(postId) {
                 <div class="comment-list" id="commentListContainer">
                     ${commentsListHtml.length > 0 ? commentsListHtml : '<p style="font-size: 0.85rem; color: var(--text-muted);">첫 댓글을 남겨보세요!</p>'}
                 </div>
-                <form class="comment-form" onsubmit="handleAddComment(event, '${post.id}')">
-                    <input type="text" id="newCommentInput" placeholder="댓글을 입력해 주세요..." required>
-                    <button type="submit" class="btn btn-primary" style="padding: 8px 16px;">등록</button>
-                </form>
+                ${modernCommentFormHtml}
             </div>
 
             <div class="contact-box" style="margin-top: 20px; justify-content: flex-end;">
@@ -2596,7 +2599,7 @@ function performPostDeletion(postId) {
     if (!document.getElementById("adminDashboardModal").classList.contains("hidden")) {
         renderAdminPostsTable();
     }
-    showToast("🗑️ 게시글이 안전하게 삭제되었습니다.");
+    showToast("🗑️ 게시글이 삭제되었습니다.");
 }
 
 function toggleWishlist(postId) {
@@ -2666,7 +2669,7 @@ function joinBuddyMatch(postId) {
     if (post.joinedCount >= post.capacity) {
         post.status = "in_progress";
         post.statusText = "참가자 확정 완료 (일정 진행 중)";
-        showToast("🎉 최대 참가 인원이 꽉 차서 '참가자 확정 완료(일정 진행 중)' 상태로 자동 변경되었습니다!");
+        showToast("🎉 최대 참가 인원이 꽉 차서 '참가자 확정 완료' 상태로 변경되었습니다!");
     } else {
         showToast(`🙋‍♂️ 버디 참가 신청이 완료되었습니다! (현재 ${post.joinedCount}/${post.capacity}명)`);
     }
@@ -2706,7 +2709,7 @@ function confirmBuddyMatch(postId) {
     savePosts();
     filterAndRender();
     openDetailModal(postId);
-    showToast("⚡ 참가자 확정이 완료되었습니다! 모임 일정 진행 단계로 전환되었습니다.");
+    showToast("⚡ 참가자 확정이 완료되었습니다!");
 }
 
 function finishBuddySchedule(postId) {
@@ -2718,7 +2721,7 @@ function finishBuddySchedule(postId) {
     savePosts();
     filterAndRender();
     openDetailModal(postId);
-    showToast("🎉 모임 일정이 최종 완료되었습니다! 참석했던 참가자들에게 버디 평점 남기기 버튼이 활성화됩니다.");
+    showToast("🎉 모임 일정이 최종 완료되었습니다!");
 }
 
 function verifyPasswordAndEdit(postId) {
@@ -2730,14 +2733,14 @@ function verifyPasswordAndEdit(postId) {
         return;
     }
 
-    const inputPw = prompt("🔒 게시글 작성 시 설정한 4자리 비밀번호를 입력해 주세요:");
+    const inputPw = prompt("🔒 비밀번호 4자리를 입력해 주세요:");
     if (!inputPw) return;
 
     if (inputPw.trim() === (post.password || "1234") || inputPw.trim() === "9999" || inputPw.trim() === "master") {
         showToast("🔑 비밀번호가 확인되었습니다! 글 수정 모드로 이동합니다.");
         openEditModal(postId);
     } else {
-        showToast("⚠️ 비밀번호가 일치하지 않습니다! 작성자만 수정할 수 있습니다.");
+        showToast("⚠️ 비밀번호가 일치하지 않습니다!");
     }
 }
 
@@ -2779,7 +2782,7 @@ function toggleMarketStatus(postId) {
     } else {
         post.status = "completed";
         post.statusText = "거래 완료";
-        showToast("🎉 중고 장비 거래 완료 처리가 되었습니다! 서로 거래 후기를 남길 수 있습니다.");
+        showToast("🎉 중고 장비 거래 완료 처리가 되었습니다!");
     }
 
     savePosts();
@@ -2816,7 +2819,7 @@ function openHostRatingModal(postId) {
 
     currentRatingPost = post;
     const headerTitle = document.getElementById("ratingModalHeaderTitle");
-    if (headerTitle) headerTitle.textContent = post.category === "instructor" ? "🎓 강사 수강 평점 & 후기 작성" : (post.category === "market" ? "중고거래 상호 평점 & 거래 후기" : "주최자 버디 평점 & 매너 평가");
+    if (headerTitle) headerTitle.textContent = post.category === "instructor" ? "강사 수강 평점 & 후기 작성" : (post.category === "market" ? "중고거래 상호 평점 & 거래 후기" : "주최자 버디 평점 & 매너 평가");
 
     document.getElementById("ratingHostTarget").textContent = `'${post.userName}'님과의 강습/활동 매너를 평가해 주세요.`;
     closeModal(detailModal);
@@ -2885,12 +2888,11 @@ function handleAddComment(e, postId) {
 
     savePosts();
     openDetailModal(postId);
-    showToast("💬 문의/댓글이 등록되었습니다!");
+    showToast("💬 댓글이 등록되었습니다!");
 }
 
 function saveSettings() {
-    closeModal(settingsModal);
-    showToast("💾 API Key 및 타겟 파트너스 링크가 저장되었습니다.");
+    showToast("💾 API Key 설정이 저장되었습니다.");
 }
 
 function handleSavePost(e) {
@@ -2905,7 +2907,7 @@ function handleSavePost(e) {
         category = "market";
     }
 
-    const classType = document.getElementById("classType") ? document.getElementById("classType").value : "🤿 1일 원데이 체험 강습";
+    const classType = document.getElementById("classType") ? document.getElementById("classType").value : "1일 원데이 체험 강습";
     const classFeeVal = document.getElementById("classFee") ? document.getElementById("classFee").value : null;
     const classRatioVal = document.getElementById("classRatio") ? document.getElementById("classRatio").value : "1:2 소수정예 강습";
     const classInclusionVal = document.getElementById("classInclusion") ? document.getElementById("classInclusion").value : "장비 렌탈비 포함";
@@ -2924,9 +2926,9 @@ function handleSavePost(e) {
     if (category === "scuba") categoryName = "스쿠버다이빙";
     if (category === "swimming") categoryName = "실내 수영";
     if (category === "openwater") categoryName = "바다 수영";
-    if (category === "instructor") categoryName = "🎓 강사 클래스";
-    if (category === "community") categoryName = "💬 자유수다방";
-    if (category === "market") categoryName = "🏷️ 중고장터";
+    if (category === "instructor") categoryName = "강사 클래스";
+    if (category === "community") categoryName = "자유수다방";
+    if (category === "market") categoryName = "중고장터";
 
     if (editingPostId) {
         const post = posts.find(p => p.id === editingPostId);
@@ -2949,7 +2951,7 @@ function handleSavePost(e) {
             post.desc = desc;
             post.images = [...uploadedCompressedImages];
             savePosts();
-            showToast("✏️ 게시글/클래스가 성공적으로 수정되었습니다!");
+            showToast("✏️ 게시글이 수정되었습니다!");
         }
         editingPostId = null;
     } else {
@@ -2997,7 +2999,7 @@ function handleSavePost(e) {
         saveMyPosts();
         savePosts();
 
-        showToast("✨ 새로운 게시글/강사 라이선스 클래스가 성공적으로 등록되었습니다!");
+        showToast("✨ 새로운 게시글이 성공적으로 등록되었습니다!");
     }
 
     filterAndRender();
