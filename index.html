@@ -1005,20 +1005,22 @@
     </div>
 
     <!-- Modal 3: Upgraded Modern Glassmorphism Chat Room Modal -->
-    <div class="modal-overlay hidden" id="chatModal">
-        <div class="modal-container glass-panel modal-lg chat-modal-container">
-            <div class="chat-header">
+    <div class="modal-overlay hidden" id="chatModal" style="z-index: 3800;">
+        <div class="modal-container glass-panel modal-lg chat-modal-container" style="position: relative;">
+            <div class="chat-header" style="display: flex; align-items: center; justify-content: space-between; padding-right: 48px; position: relative;">
                 <div class="chat-user-badge">
                     <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                        <h3 id="chatBuddyName" style="font-size: 1.15rem; font-weight: 800;">버디 대화방</h3>
+                        <h3 id="chatBuddyName" style="font-size: 1.1rem; font-weight: 800;">버디 대화방</h3>
                         <span id="chatRoleBadge" class="chat-role-tag host-tag">모임 주최자 대화방</span>
                         <span id="chatUnreadBadge" class="unread-badge hidden">새 메시지 0</span>
                     </div>
-                    <span class="chat-status-indicator" id="chatPostTitle" style="display: block; margin-top: 4px; font-size: 0.82rem; color: var(--text-muted);">
+                    <span class="chat-status-indicator" id="chatPostTitle" style="display: block; margin-top: 4px; font-size: 0.8rem; color: var(--text-muted);">
                         상대방 다이버와 실시간 대화 중
                     </span>
                 </div>
-                <button class="close-btn" id="closeChatModalBtn">&times;</button>
+                <button class="close-btn" id="closeChatModalBtn" style="position: absolute; top: 10px; right: 14px; background: rgba(255, 82, 82, 0.2); color: #ff5252; border: 1px solid #ff5252; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; transition: all 0.2s ease;">
+                    &times;
+                </button>
             </div>
 
             <div class="chat-members-bar" id="chatMembersBar"></div>
@@ -1026,10 +1028,10 @@
             <div class="chat-quick-toolbar" id="chatHostQuickToolbar" style="display: none;">
                 <span style="font-size: 0.78rem; color: var(--accent-gold); font-weight: 700;">주최자 대화방 관리:</span>
                 <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                    <button type="button" class="btn btn-secondary" onclick="confirmBuddyMatchFromChat()" style="padding: 4px 10px; font-size: 0.75rem; background: rgba(0,242,254,0.15); color: var(--accent-cyan);">
+                    <button type="button" class="btn btn-secondary" onclick="confirmBuddyMatchFromChat()" style="padding: 5px 12px; font-size: 0.78rem; background: rgba(0,242,254,0.15); color: var(--accent-cyan); font-weight: 800;">
                         참가자 확정
                     </button>
-                    <button type="button" class="btn btn-primary" onclick="finishScheduleFromChat()" style="padding: 4px 10px; font-size: 0.75rem;">
+                    <button type="button" class="btn btn-primary" onclick="finishScheduleFromChat()" style="padding: 5px 12px; font-size: 0.78rem; font-weight: 800;">
                         일정 완료
                     </button>
                 </div>
@@ -1037,9 +1039,11 @@
 
             <div class="chat-messages" id="chatMessagesStream"></div>
 
-            <form class="chat-input-area" id="chatForm">
-                <input type="text" id="chatMessageInput" placeholder="채팅 메시지를 입력하세요... (엔터 전송)" required autocomplete="off">
-                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> 전송</button>
+            <form class="chat-input-area-modern" id="chatForm" style="display: flex; align-items: center; gap: 10px; margin-top: 10px; background: rgba(0,0,0,0.5); padding: 8px 12px; border-radius: 28px; border: 1px solid var(--accent-cyan); box-shadow: 0 4px 16px rgba(0,242,254,0.15);">
+                <input type="text" id="chatMessageInput" placeholder="채팅 메시지를 입력하세요... (엔터 전송)" required autocomplete="off" style="flex: 1; background: transparent; border: none; color: #fff; padding: 8px 12px; font-size: 0.92rem; outline: none;">
+                <button type="submit" class="btn-chat-send-lg" style="background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); color: #000; font-weight: 900; padding: 10px 22px; border-radius: 20px; border: none; cursor: pointer; font-size: 0.92rem; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(0,242,254,0.3); white-space: nowrap;">
+                    <i class="fa-solid fa-paper-plane"></i> 전송
+                </button>
             </form>
         </div>
     </div>

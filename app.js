@@ -2323,13 +2323,21 @@ function renderGrid(data) {
     postsGrid.innerHTML = data.map(post => renderCompactPostRow(post)).join("");
 }
 
+let chatJoinTimestamps = {};
+
 function openChatRoomModal(postId) {
+    if (!currentUser) {
+        showToast("🔑 회원가입 / 로그인 후 실시간 대화방을 이용하실 수 있습니다!");
+        openModal(authModal);
+        return;
+    }
     const post = posts.find(p => p.id === postId);
     if (!post) return;
 
     currentChatPost = post;
     const isHost = isMyPost(post);
     const isMarket = post.category === "market";
+    const currentUserName = currentUser ? currentUser.name : "손님";
 
     post.unreadCount = 0;
     savePosts();
@@ -2351,7 +2359,8 @@ function openChatRoomModal(postId) {
     } else {
         roleBadge.className = "chat-role-tag attendee-tag";
         roleBadge.textContent = isMarket ? "구매 문의자 대화방" : (post.category === "instructor" ? "수강 문의자 대화방" : "버디 참가자 대화방");
-        hostToolbar.style.display = "none";
+        if (!isMarket) hostToolbar.style.display = "flex";
+        else hostToolbar.style.display = "none";
     }
 
     unreadBadge.classList.add("hidden");
@@ -2371,21 +2380,24 @@ function openChatRoomModal(postId) {
         membersBar.style.display = "none";
     }
 
-    if (!chatMessages[postId]) {
-        if (isMarket) {
-            chatMessages[postId] = [
-                { sender: "host", author: post.userName, text: `안녕하세요! '${post.title}' 중고 장비 등록한 ${post.userName}입니다. 직거래 및 가격 문의 편하게 주세요!`, time: "방금 전" }
-            ];
-        } else if (post.category === "instructor") {
-            chatMessages[postId] = [
-                { sender: "host", author: post.userName, text: `안녕하세요! AquaBuddy 공인 인증 강사 ${post.userName}입니다 (라이선스: ${post.instructorLicenseCode || '공인 강사'}). 강습 수강 신청 및 일정 문의 언제든 주세요!`, time: "방금 전" }
-            ];
-        } else {
-            chatMessages[postId] = [
-                { sender: "host", author: post.userName, text: `안녕하세요! 버디 모집 주최자 ${post.userName}입니다. 다이빙 장비 렌탈 및 수심 일정 맞춰서 준비해봐요!`, time: "방금 전" },
-                { sender: "attendee", author: "동해물개", text: "네! 포항 영일대 수영 스팟 오전 8시 30분 미팅 맞춰서 슈트 챙겨 가겠습니다!", time: "방금 전" }
-            ];
-        }
+    // Record join timestamp for history filtering (New participants don't see past chats before join!)
+    const userJoinKey = `${postId}_${currentUserName}`;
+    if (!chatJoinTimestamps[userJoinKey]) {
+        chatJoinTimestamps[userJoinKey] = Date.now();
+    }
+
+    // Clean initial system welcome message (No fake sample chat text!)
+    if (!chatMessages[postId] || chatMessages[postId].length === 0) {
+        chatMessages[postId] = [
+            {
+                id: `sys-${Date.now()}`,
+                sender: "system",
+                author: "AquaBuddy 시스템",
+                text: `💬 대화방이 생성되었습니다! 상대방 다이버와 미팅 장소, 일정 및 준비물을 소통해 보세요.`,
+                time: "방금 전",
+                timestamp: Date.now()
+            }
+        ];
     }
 
     renderChatStream(postId);
@@ -2394,7 +2406,29 @@ function openChatRoomModal(postId) {
 
 function renderChatStream(postId) {
     const stream = chatMessages[postId] || [];
-    chatMessagesStream.innerHTML = stream.map(msg => {
+    const currentUserName = currentUser ? currentUser.name : "손님";
+    const userJoinKey = `${postId}_${currentUserName}`;
+    const joinTime = chatJoinTimestamps[userJoinKey] || 0;
+    const isHost = isMyPost(currentChatPost);
+
+    // Filter stream: System messages + Host messages + User's own messages + Messages sent after user joined!
+    const visibleStream = stream.filter(msg => {
+        if (msg.sender === "system" || isHost) return true;
+        if (msg.author === currentUserName) return true;
+        return (msg.timestamp && msg.timestamp >= (joinTime - 5000));
+    });
+
+    chatMessagesStream.innerHTML = visibleStream.map(msg => {
+        if (msg.sender === "system") {
+            return `
+            <div class="chat-system-notice" style="text-align: center; margin: 10px 0;">
+                <span style="background: rgba(0, 242, 254, 0.12); color: var(--accent-cyan); font-size: 0.78rem; padding: 4px 12px; border-radius: 12px; border: 1px dashed var(--accent-cyan);">
+                    ${escapeHtml(msg.text)}
+                </span>
+            </div>
+            `;
+        }
+
         const isUserMsg = (currentUser && msg.author === currentUser.name) || msg.sender === "user";
         const isHostMsg = msg.sender === "host" || (currentChatPost && msg.author === currentChatPost.userName);
 
@@ -2402,7 +2436,7 @@ function renderChatStream(postId) {
         <div class="chat-bubble ${isUserMsg ? 'user' : (isHostMsg ? 'host' : 'attendee')}">
             ${!isUserMsg ? `
             <div class="chat-sender-info">
-                <i class="fa-solid fa-crown"></i> ${escapeHtml(msg.author || '참가자')} ${isHostMsg ? '(주최자)' : ''}
+                <i class="fa-solid ${isHostMsg ? 'fa-crown' : 'fa-user'}"></i> ${escapeHtml(msg.author || '참가자')} ${isHostMsg ? '(주최자)' : ''}
             </div>
             ` : ''}
             <p>${escapeHtml(msg.text)}</p>
@@ -2410,6 +2444,7 @@ function renderChatStream(postId) {
         </div>
         `;
     }).join("");
+
     chatMessagesStream.scrollTop = chatMessagesStream.scrollHeight;
 }
 
@@ -2425,10 +2460,12 @@ function handleSendChatMessage(e) {
     const isHostMsg = isMyPost(currentChatPost);
 
     const msgObj = {
+        id: `msg-${Date.now()}`,
         sender: isHostMsg ? "host" : "attendee",
         author: currentUserName,
         text: text,
-        time: "방금 전"
+        time: "방금 전",
+        timestamp: Date.now()
     };
 
     if (!chatMessages[postId]) chatMessages[postId] = [];
@@ -2440,18 +2477,33 @@ function handleSendChatMessage(e) {
 
 function confirmBuddyMatchFromChat() {
     if (!currentChatPost) return;
+    const isHost = isMyPost(currentChatPost);
+    if (!isHost) {
+        showToast("⚠️ 주최자(호스트)에게만 참가자 확정 관리 권한이 있습니다!");
+        return;
+    }
     confirmBuddyMatch(currentChatPost.id);
-    showToast("⚡ 대화방에서 수강생 확정 완료 토글이 수행되었습니다!");
+    showToast("⚡ 대화방에서 수강생/참가자 확정이 완료되었습니다!");
 }
 
 function finishScheduleFromChat() {
     if (!currentChatPost) return;
+    const isHost = isMyPost(currentChatPost);
+    if (!isHost) {
+        showToast("⚠️ 주최자(호스트)에게만 일정 완료 권한이 있습니다!");
+        return;
+    }
     finishBuddySchedule(currentChatPost.id);
-    showToast("⚡ 대화방에서 강습 완료 처리가 되었습니다!");
+    showToast("⚡ 대화방에서 일정 완료 처리 및 평가가 활성화되었습니다!");
 }
 
 // Open Detail Modal with Account-Based Owner Actions (Only Show Edit/Delete for Author)
 function openDetailModal(postId) {
+    if (!currentUser) {
+        showToast("🔑 회원가입 / 로그인 후 글 내용과 상세 정보를 확인하실 수 있습니다!");
+        openModal(authModal);
+        return;
+    }
     const post = posts.find(p => p.id === postId);
     if (!post) return;
 
