@@ -2051,13 +2051,15 @@ function preselectModalCategory(cat, isEditing = false) {
         postDateGroup.style.display = "block";
         mapAddressGroup.style.display = "block";
 
-        imageUploadLabel.innerHTML = `<i class="fa-solid fa-images"></i> 현장 / 장비 사진 등록 (최대 4장, 클릭 시 대형 미리보기)`;
+        imageUploadLabel.innerHTML = `<i class="fa-solid fa-images"></i> 이미지 업로드 (최대 4장)`;
         descLabel.textContent = "상세 내용 및 플랜 *";
+        const isSpecificBuddyCat = ["swimming", "openwater", "freediving", "scuba"].includes(cat);
         postCategorySelect.innerHTML = `
-            <option value="swimming" ${cat === 'swimming' ? 'selected' : ''}>실내 수영 버디 모집</option>
-            <option value="openwater" ${cat === 'openwater' ? 'selected' : ''}>바다 수영 버디 모집</option>
-            <option value="freediving" ${cat === 'freediving' || cat === 'all' ? 'selected' : ''}>프리다이빙 버디 모집</option>
-            <option value="scuba" ${cat === 'scuba' ? 'selected' : ''}>스쿠버다이빙 버디 모집</option>
+            <option value="" disabled ${!isSpecificBuddyCat ? 'selected' : ''}>-- 작성 카테고리를 선택해 주세요 --</option>
+            <option value="swimming" ${cat === 'swimming' ? 'selected' : ''}>🏊‍♂️ 실내 수영 버디 모집</option>
+            <option value="openwater" ${cat === 'openwater' ? 'selected' : ''}>🌊 바다 수영 / 오픈워터 버디 모집</option>
+            <option value="freediving" ${cat === 'freediving' ? 'selected' : ''}>🤿 프리다이빙 버디 모집</option>
+            <option value="scuba" ${cat === 'scuba' ? 'selected' : ''}>🤿 스쿠버 다이빙 버디 모집</option>
         `;
     }
 }
@@ -3228,12 +3230,21 @@ function handleSavePost(e) {
     e.preventDefault();
 
     const title = document.getElementById("postTitle").value.trim();
-    let category = activeCategory === "all" ? "freediving" : activeCategory;
+    const selCat = document.getElementById("postCategory") ? document.getElementById("postCategory").value : "";
     
-    if (document.getElementById("instructorFormFields").style.display === "block") {
+    let category = selCat;
+    if (document.getElementById("postCategoryGroup").style.display === "block") {
+        if (!selCat) {
+            showToast("⚠️ 작성 카테고리를 선택해 주세요! (실내수영 / 바다수영 / 프리다이빙 / 스쿠버다이빙)");
+            return;
+        }
+        category = selCat;
+    } else if (document.getElementById("instructorFormFields").style.display === "block") {
         category = "instructor";
     } else if (document.getElementById("marketPriceRow").style.display === "grid") {
         category = "market";
+    } else if (activeCategory === "community") {
+        category = "community";
     }
 
     const classType = document.getElementById("classType") ? document.getElementById("classType").value : "1일 원데이 체험 강습";
@@ -3250,10 +3261,10 @@ function handleSavePost(e) {
     const desc = document.getElementById("postDesc").value.trim();
 
     let categoryName = "버디 모집";
-    if (category === "freediving") categoryName = "프리다이빙";
-    if (category === "scuba") categoryName = "스쿠버다이빙";
     if (category === "swimming") categoryName = "실내 수영";
     if (category === "openwater") categoryName = "바다 수영";
+    if (category === "freediving") categoryName = "프리다이빙";
+    if (category === "scuba") categoryName = "스쿠버다이빙";
     if (category === "instructor") categoryName = "강사 클래스";
     if (category === "community") categoryName = "자유수다방";
     if (category === "market") categoryName = "중고장터";

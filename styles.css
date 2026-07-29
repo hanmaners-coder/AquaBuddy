@@ -1360,6 +1360,40 @@ body.category-view-active .hero-section {
     font-size: 0.9rem;
 }
 
+/* High Contrast Calendar Picker Icon */
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(1.8) drop-shadow(0 0 4px var(--accent-cyan));
+    cursor: pointer;
+    padding: 4px;
+}
+
+/* 2x2 Photo Grid Layout for Post Details and Upload Previews */
+.detail-photo-gallery-2x2,
+.image-preview-grid-2x2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.detail-photo-item img,
+.preview-img-item img {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid var(--glass-border);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.detail-photo-item img:hover,
+.preview-img-item img:hover {
+    transform: scale(1.03);
+    border-color: var(--accent-cyan);
+}
+
 .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;

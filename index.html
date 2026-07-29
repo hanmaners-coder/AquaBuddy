@@ -600,19 +600,17 @@
                 </div>
 
                 <div class="form-group" id="capacityGroup">
-                    <label for="postCapacity"><i class="fa-solid fa-users"></i> 모집 인원 현황 (작성자 포함 총 2명 ~ 4명) *</label>
-                    <select id="postCapacity">
-                        <option value="2">작성자 포함 총 2명 (추가 1명 모집)</option>
-                        <option value="3">작성자 포함 총 3명 (추가 2명 모집)</option>
-                        <option value="4" selected>작성자 포함 총 4명 (추가 3명 모집 - 최대인원)</option>
-                    </select>
+                    <label for="postCapacity"><i class="fa-solid fa-users"></i> 모집 인원 현황 (작성자 포함 총 인원 수) *</label>
+                    <input type="number" id="postCapacity" min="2" max="50" value="4" placeholder="예: 4 (명)" required style="background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); color: #fff; padding: 10px 14px; border-radius: var(--radius-sm); font-size: 0.95rem; font-weight: 700;">
                 </div>
 
                 <div class="form-group" id="imageUploadGroup">
-                    <label id="imageUploadLabel"><i class="fa-solid fa-images"></i> 사진 등록 (최대 4장, 클릭 시 대형 미리보기)</label>
-                    <input type="file" id="postImagesInput" accept="image/*" multiple style="padding: 8px;">
-                    <div class="image-preview-grid" id="imagePreviewGrid"></div>
-                    <small style="color: var(--text-muted); font-size: 0.78rem;">* 업로드되는 사진은 브라우저에서 80KB 이하로 자동 압축 저장됩니다.</small>
+                    <label id="imageUploadLabel"><i class="fa-solid fa-images"></i> 이미지 업로드 (최대 4장)</label>
+                    <label for="postImagesInput" class="custom-file-upload-box" style="display: flex; align-items: center; justify-content: center; gap: 8px; background: rgba(0, 242, 254, 0.08); border: 2px dashed var(--accent-cyan); padding: 14px; border-radius: 12px; cursor: pointer; color: var(--accent-cyan); font-weight: 800; transition: all 0.2s ease;">
+                        <i class="fa-solid fa-cloud-arrow-up" style="font-size: 1.2rem;"></i> 이미지 업로드 (클릭하여 사진 첨부)
+                    </label>
+                    <input type="file" id="postImagesInput" accept="image/*" multiple style="display: none;">
+                    <div class="image-preview-grid-2x2" id="imagePreviewGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px;"></div>
                 </div>
 
                 <div class="form-row" id="locationDateGroup">
