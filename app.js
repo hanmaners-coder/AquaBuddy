@@ -1598,6 +1598,16 @@ function initEventListeners() {
     cancelCreateBtn.addEventListener("click", () => closeModal(createModal));
     createPostForm.addEventListener("submit", handleSavePost);
 
+    const mapAddrInput = document.getElementById("postMapAddress");
+    if (mapAddrInput) {
+        mapAddrInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                searchMapAddressInModal();
+            }
+        });
+    }
+
     if (postImagesInput) {
         postImagesInput.addEventListener("change", handleImageUpload);
     }
@@ -3260,6 +3270,191 @@ function renderFallbackMapUI(container, query, spotInfo) {
     container.innerHTML = `
         <iframe src="${osmUrl}" style="width:100%; height:100%; border:none; border-radius:8px;"></iframe>
     `;
+}
+
+let modalPickerMap = null;
+let modalPickerMarker = null;
+
+function searchMapAddressInModal() {
+    const input = document.getElementById("postMapAddress");
+    const container = document.getElementById("mapSearchResultsContainer");
+    if (!input || !container) return;
+
+    const query = input.value.trim();
+    if (!query) {
+        showToast("⚠️ 검색할 위치나 장소명(예: 양산시 국민체육센터, 딥스테이션)을 입력해 주세요!");
+        return;
+    }
+
+    container.classList.remove("hidden");
+    container.innerHTML = `<div style="padding: 10px; text-align: center; color: var(--accent-cyan); font-weight: 700; font-size: 0.85rem;"><i class="fa-solid fa-spinner fa-spin"></i> '${escapeHtml(query)}' 위치 검색 중...</div>`;
+
+    let results = [];
+    const queryLower = query.toLowerCase();
+
+    for (const key in FAMOUS_SPOT_COORDS) {
+        if (key.includes(queryLower) || queryLower.includes(key)) {
+            const s = FAMOUS_SPOT_COORDS[key];
+            results.push({
+                placeName: s.title,
+                address: s.title,
+                lat: s.lat,
+                lng: s.lng,
+                type: "추천 스팟"
+            });
+        }
+    }
+
+    if (window.kakao && window.kakao.maps) {
+        window.kakao.maps.load(() => {
+            if (kakao.maps.services && kakao.maps.services.Places) {
+                const places = new kakao.maps.services.Places();
+                places.keywordSearch(query, (data, status) => {
+                    if (status === kakao.maps.services.Status.OK && data && data.length > 0) {
+                        data.slice(0, 5).forEach(item => {
+                            results.push({
+                                placeName: item.place_name,
+                                address: item.road_address_name || item.address_name,
+                                lat: parseFloat(item.y),
+                                lng: parseFloat(item.x),
+                                type: item.category_group_name || "카카오 지도 검색"
+                            });
+                        });
+                    }
+                    renderSearchResultsList(results, query);
+                });
+            } else if (kakao.maps.services && kakao.maps.services.Geocoder) {
+                const geocoder = new kakao.maps.services.Geocoder();
+                geocoder.addressSearch(query, (data, status) => {
+                    if (status === kakao.maps.services.Status.OK && data && data.length > 0) {
+                        data.slice(0, 5).forEach(item => {
+                            results.push({
+                                placeName: query,
+                                address: item.road_address_name || item.address_name,
+                                lat: parseFloat(item.y),
+                                lng: parseFloat(item.x),
+                                type: "주소"
+                            });
+                        });
+                    }
+                    renderSearchResultsList(results, query);
+                });
+            } else {
+                renderSearchResultsList(results, query);
+            }
+        });
+    } else {
+        renderSearchResultsList(results, query);
+    }
+}
+
+function renderSearchResultsList(results, query) {
+    const container = document.getElementById("mapSearchResultsContainer");
+    if (!container) return;
+
+    if (results.length === 0) {
+        container.innerHTML = `
+            <div style="padding: 10px; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+                <p>📍 '${escapeHtml(query)}' 검색 결과를 찾지 못했습니다.</p>
+                <p style="font-size: 0.78rem; margin-top: 4px; color: var(--accent-cyan);">지도를 직접 클릭하거나 📍 핀을 드래그해서 위치를 지정해 보세요!</p>
+            </div>
+        `;
+        initModalMapPicker(37.2750, 127.2340, query);
+        return;
+    }
+
+    container.innerHTML = results.map((r, idx) => `
+        <div class="search-result-item" onclick="selectMapSearchResult('${escapeHtml(r.address || r.placeName)}', ${r.lat}, ${r.lng})" style="padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.08); cursor: pointer; transition: background 0.2s ease;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <strong style="color: var(--accent-cyan); font-size: 0.88rem;"><i class="fa-solid fa-location-dot"></i> ${escapeHtml(r.placeName)}</strong>
+                <span style="font-size: 0.72rem; background: rgba(255,183,3,0.2); color: var(--accent-gold); padding: 2px 6px; border-radius: 4px;">${escapeHtml(r.type)}</span>
+            </div>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">${escapeHtml(r.address)}</p>
+        </div>
+    `).join("");
+
+    selectMapSearchResult(results[0].address || results[0].placeName, results[0].lat, results[0].lng, false);
+}
+
+function selectMapSearchResult(addressText, lat, lng, hideContainer = true) {
+    const input = document.getElementById("postMapAddress");
+    const container = document.getElementById("mapSearchResultsContainer");
+    if (input) input.value = addressText;
+    if (hideContainer && container) container.classList.add("hidden");
+
+    initModalMapPicker(lat, lng, addressText);
+    showToast(`📍 핀 위치가 '${addressText}'(으)로 세팅되었습니다.`);
+}
+
+function initModalMapPicker(lat, lng, addressLabel) {
+    const pickerBox = document.getElementById("modalMapPicker");
+    if (!pickerBox) return;
+
+    pickerBox.style.display = "block";
+
+    if (window.kakao && window.kakao.maps) {
+        window.kakao.maps.load(() => {
+            try {
+                const coords = new kakao.maps.LatLng(lat, lng);
+                const mapOptions = { center: coords, level: 3 };
+
+                if (!modalPickerMap) {
+                    modalPickerMap = new kakao.maps.Map(pickerBox, mapOptions);
+                } else {
+                    modalPickerMap.setCenter(coords);
+                }
+
+                setTimeout(() => {
+                    modalPickerMap.relayout();
+                    modalPickerMap.setCenter(coords);
+                }, 100);
+
+                if (modalPickerMarker) modalPickerMarker.setMap(null);
+
+                modalPickerMarker = new kakao.maps.Marker({
+                    position: coords,
+                    map: modalPickerMap,
+                    draggable: true
+                });
+
+                kakao.maps.event.addListener(modalPickerMarker, 'dragend', function() {
+                    const newPos = modalPickerMarker.getPosition();
+                    updateAddressFromCoords(newPos.getLat(), newPos.getLng());
+                });
+
+                kakao.maps.event.addListener(modalPickerMap, 'click', function(mouseEvent) {
+                    const clickedCoords = mouseEvent.latLng;
+                    modalPickerMarker.setPosition(clickedCoords);
+                    updateAddressFromCoords(clickedCoords.getLat(), clickedCoords.getLng());
+                });
+
+            } catch(e) {
+                console.log("Modal Map Picker Catch:", e);
+            }
+        });
+    }
+}
+
+function updateAddressFromCoords(lat, lng) {
+    const input = document.getElementById("postMapAddress");
+    if (window.kakao && window.kakao.maps && kakao.maps.services && kakao.maps.services.Geocoder) {
+        const geocoder = new kakao.maps.services.Geocoder();
+        geocoder.coord2Address(lng, lat, (result, status) => {
+            if (status === kakao.maps.services.Status.OK && result[0]) {
+                const addr = result[0].road_address 
+                    ? result[0].road_address.address_name 
+                    : result[0].address.address_name;
+                if (input) input.value = addr;
+                showToast(`📍 핀 위치 이동 완료: '${addr}'`);
+            } else {
+                if (input) input.value = `위도: ${lat.toFixed(4)}, 경도: ${lng.toFixed(4)}`;
+                showToast(`📍 핀 위치 이동 완료 (위도 ${lat.toFixed(4)}, 경도 ${lng.toFixed(4)})`);
+            }
+        });
+    } else {
+        if (input) input.value = `위도: ${lat.toFixed(4)}, 경도: ${lng.toFixed(4)}`;
+        showToast(`📍 핀 위치 이동 완료`);
+    }
 }
 
 function handleAddComment(e, postId) {
