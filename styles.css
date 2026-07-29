@@ -228,6 +228,7 @@ body {
     align-items: center;
     gap: 6px;
     flex-wrap: nowrap;
+    flex-shrink: 0;
 }
 
 .user-nav-badge {
@@ -265,10 +266,18 @@ body {
     box-shadow: 0 6px 20px rgba(0, 242, 254, 0.6) !important;
 }
 
+@media (max-width: 768px) {
+    .logo-text { font-size: 1.25rem; }
+    .nav-inst-btn { display: none !important; }
+    .user-nav-badge { max-width: 90px; padding: 5px 8px; font-size: 0.73rem; }
+    .btn-vibrant-action { font-size: 0.78rem !important; padding: 6px 10px !important; }
+}
+
 @media (max-width: 480px) {
-    .logo-text { font-size: 1.2rem; }
-    .btn-vibrant-action { font-size: 0.76rem !important; padding: 6px 10px !important; }
-    .user-nav-badge { max-width: 90px; font-size: 0.72rem; padding: 4px 8px; }
+    .logo-text { font-size: 1.15rem; }
+    .nav-container-top { gap: 4px; }
+    .user-nav-badge { max-width: 80px; padding: 4px 6px; font-size: 0.7rem; }
+    .btn-vibrant-action { font-size: 0.75rem !important; padding: 5px 9px !important; }
 }
 
 /* Nav Category Links Grid */
