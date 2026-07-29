@@ -2637,7 +2637,12 @@ function openDetailModal(postId) {
             </div>
 
             <div class="comments-section">
-                <h4><i class="fa-solid fa-comments"></i> 수강 후기 & 실시간 문의 (${(post.comments || []).length})</h4>
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                    <h4 style="margin: 0;"><i class="fa-solid fa-comments"></i> 실시간 댓글 (${(post.comments || []).length})</h4>
+                    <button class="like-btn ${post.userLiked ? 'active' : ''}" onclick="toggleLike('${post.id}')" style="padding: 6px 14px; font-size: 0.82rem; border-radius: 20px;">
+                        <i class="fa-solid fa-heart"></i> 공감 <span id="likeCount">${post.likes || 0}</span>
+                    </button>
+                </div>
                 <div class="comment-list" id="commentListContainer">
                     ${commentsListHtml.length > 0 ? commentsListHtml : '<p style="font-size: 0.85rem; color: var(--text-muted);">첫 문의를 남겨보세요!</p>'}
                 </div>
@@ -2739,27 +2744,23 @@ function openDetailModal(postId) {
         `;
     } else if (isCommunity) {
         mainInfoHtml = `
-            <div class="detail-profile-card">
+            <div class="detail-profile-card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                 <div>
                     <h3><i class="fa-solid fa-user-circle" style="color: var(--accent-cyan);"></i> ${escapeHtml(post.userName)} ${isHost ? '<span style="color: var(--accent-gold); font-size: 0.8rem;">(작성자 - 본인)</span>' : ''} (자유수다방)</h3>
                     <div class="detail-badge-list">
                         <span class="detail-badge"><i class="fa-solid fa-certificate"></i> ${escapeHtml(post.userLicense)}</span>
                     </div>
                 </div>
-            </div>
-
-            <div class="like-action-bar" style="justify-content: flex-end; gap: 8px;">
                 ${(isHost || isAdminAuthenticated) ? `
-                <button class="btn btn-secondary" onclick="verifyPasswordAndEdit('${post.id}')" style="padding: 6px 14px; font-size: 0.82rem;" title="게시글 1초 수정">
-                    <i class="fa-solid fa-pen-to-square"></i> 글 수정
-                </button>
-                <button class="btn-delete" onclick="deletePostWithPassword('${post.id}')" title="작성자 1초 삭제">
-                    <i class="fa-solid fa-trash-can"></i> 글 삭제
-                </button>
+                <div style="display: flex; gap: 6px;">
+                    <button class="btn btn-secondary" onclick="verifyPasswordAndEdit('${post.id}')" style="padding: 5px 12px; font-size: 0.78rem;" title="글 수정">
+                        <i class="fa-solid fa-pen-to-square"></i> 글 수정
+                    </button>
+                    <button class="btn-delete" onclick="deletePostWithPassword('${post.id}')" style="padding: 5px 12px; font-size: 0.78rem;" title="글 삭제">
+                        <i class="fa-solid fa-trash-can"></i> 글 삭제
+                    </button>
+                </div>
                 ` : ''}
-                <button class="like-btn ${post.userLiked ? 'active' : ''}" onclick="toggleLike('${post.id}')">
-                    <i class="fa-solid fa-heart"></i> 공감 <span id="likeCount">${post.likes || 0}</span>
-                </button>
             </div>
 
             ${photoGalleryHtml}
@@ -2772,7 +2773,12 @@ function openDetailModal(postId) {
             </div>
 
             <div class="comments-section">
-                <h4><i class="fa-solid fa-comments"></i> 실시간 댓글 (${(post.comments || []).length})</h4>
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                    <h4 style="margin: 0;"><i class="fa-solid fa-comments"></i> 실시간 댓글 (${(post.comments || []).length})</h4>
+                    <button class="like-btn ${post.userLiked ? 'active' : ''}" onclick="toggleLike('${post.id}')" style="padding: 6px 14px; font-size: 0.82rem; border-radius: 20px;">
+                        <i class="fa-solid fa-heart"></i> 공감 <span id="likeCount">${post.likes || 0}</span>
+                    </button>
+                </div>
                 <div class="comment-list" id="commentListContainer">
                     ${commentsListHtml.length > 0 ? commentsListHtml : '<p style="font-size: 0.85rem; color: var(--text-muted);">첫 댓글을 남겨보세요!</p>'}
                 </div>
