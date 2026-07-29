@@ -1569,61 +1569,71 @@ function initEventListeners() {
         });
     });
 
-    searchInput.addEventListener("input", (e) => {
-        searchKeyword = e.target.value.trim().toLowerCase();
-        filterAndRender();
-    });
+    if (searchInput) {
+        searchInput.addEventListener("input", (e) => {
+            searchKeyword = e.target.value.trim().toLowerCase();
+            filterAndRender();
+        });
+    }
 
-    regionSelect.addEventListener("change", (e) => {
-        selectedRegion = e.target.value;
-        filterAndRender();
-    });
+    if (regionSelect) {
+        regionSelect.addEventListener("change", (e) => {
+            selectedRegion = e.target.value;
+            filterAndRender();
+        });
+    }
 
-    sortSelect.addEventListener("change", (e) => {
-        selectedSort = e.target.value;
-        filterAndRender();
-    });
+    if (sortSelect) {
+        sortSelect.addEventListener("change", (e) => {
+            selectedSort = e.target.value;
+            filterAndRender();
+        });
+    }
 
-    resetFiltersBtn.addEventListener("click", () => {
-        activeCategory = "all";
-        searchKeyword = "";
-        selectedRegion = "all";
-        selectedSort = "newest";
+    if (resetFiltersBtn) {
+        resetFiltersBtn.addEventListener("click", () => {
+            activeCategory = "all";
+            searchKeyword = "";
+            selectedRegion = "all";
+            selectedSort = "newest";
 
-        searchInput.value = "";
-        regionSelect.value = "all";
-        sortSelect.value = "newest";
+            if (searchInput) searchInput.value = "";
+            if (regionSelect) regionSelect.value = "all";
+            if (sortSelect) sortSelect.value = "newest";
 
-        tabBtns.forEach(b => b.classList.remove("active"));
-        tabBtns[0].classList.add("active");
+            tabBtns.forEach(b => b.classList.remove("active"));
+            if (tabBtns[0]) tabBtns[0].classList.add("active");
 
-        updateCreateButtonText("all");
-        renderAdBanner();
-        filterAndRender();
-        showToast("모든 필터가 초기화되었습니다.");
-    });
+            updateCreateButtonText("all");
+            renderAdBanner();
+            filterAndRender();
+            showToast("모든 필터가 초기화되었습니다.");
+        });
+    }
 
-    openCreateModalBtn.addEventListener("click", () => {
-        if (!currentUser) {
-            showToast("🔑 회원가입 / 로그인 후 글을 작성하실 수 있습니다!");
-            openModal(authModal);
-            return;
-        }
-        if (activeCategory === "instructor") {
-            if (!isVerifiedInstructor()) {
-                showToast("🎓 강사 클래스 등록은 인증된 강사만 가능합니다! 먼저 [강사인증] 버튼을 눌러 자격증을 신청해 주세요.");
-                openInstructorAuthModal();
+    if (openCreateModalBtn) {
+        openCreateModalBtn.addEventListener("click", () => {
+            if (!currentUser) {
+                showToast("🔑 회원가입 / 로그인 후 글을 작성하실 수 있습니다!");
+                openModal(authModal);
                 return;
             }
-        }
-        editingPostId = null;
-        preselectModalCategory(activeCategory);
-        openModal(createModal);
-    });
+            if (activeCategory === "instructor") {
+                if (!isVerifiedInstructor()) {
+                    showToast("🎓 강사 클래스 등록은 인증된 강사만 가능합니다! 먼저 [강사인증] 버튼을 눌러 자격증을 신청해 주세요.");
+                    openInstructorAuthModal();
+                    return;
+                }
+            }
+            editingPostId = null;
+            preselectModalCategory(activeCategory);
+            openModal(createModal);
+        });
+    }
 
-    closeCreateModalBtn.addEventListener("click", () => closeModal(createModal));
-    cancelCreateBtn.addEventListener("click", () => closeModal(createModal));
-    createPostForm.addEventListener("submit", handleSavePost);
+    if (closeCreateModalBtn) closeCreateModalBtn.addEventListener("click", () => closeModal(createModal));
+    if (cancelCreateBtn) cancelCreateBtn.addEventListener("click", () => closeModal(createModal));
+    if (createPostForm) createPostForm.addEventListener("submit", handleSavePost);
 
     const mapAddrInput = document.getElementById("postMapAddress");
     if (mapAddrInput) {
@@ -1790,6 +1800,7 @@ function handleImageUpload(e) {
 }
 
 function renderImagePreviews() {
+    if (!imagePreviewGrid) return;
     imagePreviewGrid.innerHTML = uploadedCompressedImages.map((src, index) => `
         <div class="preview-thumb-box">
             <img src="${src}" alt="사진 미리보기" class="zoomable-img" onclick="openLightbox('${src}')">
@@ -2183,10 +2194,12 @@ function filterAndRender() {
     const postsSec = document.querySelector(".posts-section");
     const filterSec = document.getElementById("feed");
 
-    if (activeCategory === "activity_log") {
-        activitySubFilterBar.classList.remove("hidden");
-    } else {
-        activitySubFilterBar.classList.add("hidden");
+    if (activitySubFilterBar) {
+        if (activeCategory === "activity_log") {
+            activitySubFilterBar.classList.remove("hidden");
+        } else {
+            activitySubFilterBar.classList.add("hidden");
+        }
     }
 
     if (activeCategory === "all" || activeCategory === "home") {
@@ -2195,7 +2208,7 @@ function filterAndRender() {
         if (filterSec) filterSec.style.display = "none";
         if (postsSec) postsSec.style.display = "none";
         renderDashboardBlocks();
-        activeCountText.textContent = `AquaBuddy 통합 대시보드 - 주요 카테고리 핫이슈`;
+        if (activeCountText) activeCountText.textContent = `AquaBuddy 통합 대시보드 - 주요 카테고리 핫이슈`;
         return;
     }
 
@@ -2355,17 +2368,19 @@ function renderCompactPostRow(post) {
 
 // Render Feed Posts in Compact Simplified List View Mode
 function renderGrid(data) {
-    activeCountText.textContent = `총 ${data.length}개의 게시글 / 모집글 / 강사 클래스`;
+    if (activeCountText) activeCountText.textContent = `총 ${data.length}개의 게시글 / 모집글 / 강사 클래스`;
 
     if (data.length === 0) {
-        postsGrid.innerHTML = "";
-        emptyState.classList.remove("hidden");
+        if (postsGrid) postsGrid.innerHTML = "";
+        if (emptyState) emptyState.classList.remove("hidden");
         return;
     }
 
-    emptyState.classList.add("hidden");
-    postsGrid.className = "compact-post-table";
-    postsGrid.innerHTML = data.map(post => renderCompactPostRow(post)).join("");
+    if (emptyState) emptyState.classList.add("hidden");
+    if (postsGrid) {
+        postsGrid.className = "compact-post-table";
+        postsGrid.innerHTML = data.map(post => renderCompactPostRow(post)).join("");
+    }
 }
 
 let chatJoinTimestamps = {};
