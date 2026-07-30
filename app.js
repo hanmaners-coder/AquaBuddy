@@ -4618,3 +4618,23 @@ function generateBubbles() {
         container.appendChild(bubble);
     }
 }
+
+// Explicit Window Global Bindings for HTML Inline Onclick Handlers
+if (typeof window !== "undefined") {
+    window.openModal = openModal;
+    window.closeModal = closeModal;
+    window.openProfileModal = openProfileModal;
+    window.openDetailModal = openDetailModal;
+    window.openWebcamModal = openWebcamModal;
+    window.openChatRoomModal = openChatRoomModal;
+    window.openInstructorAuthModal = openInstructorAuthModal;
+    window.openAdminSecurityCheck = openAdminSecurityCheck;
+    window.openInquiryModal = openInquiryModal;
+    window.filterByCategory = filterByCategory;
+    window.switchMainView = switchMainView;
+    window.filterInstructorSub = filterInstructorSub;
+    window.filterActivitySub = filterActivitySub;
+    window.filterTideRegion = filterTideRegion;
+    window.filterCctvRegion = filterCctvRegion;
+    window.handleLogout = handleLogout;
+}
