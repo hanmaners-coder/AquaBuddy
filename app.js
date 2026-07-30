@@ -3219,7 +3219,7 @@ function reopenBuddySchedule(postId) {
     showToast("🔄 게시물 상태가 다시 '모집 중'으로 변경되었습니다!");
 }
 
-let currentRatingScore = 5;
+currentRatingScore = 5;
 
 function setRatingScore(score) {
     currentRatingScore = score;
