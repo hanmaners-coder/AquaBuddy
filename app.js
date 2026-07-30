@@ -3368,13 +3368,6 @@ function finishScheduleFromChat() {
 
 // Open Detail Modal with Account-Based Owner Actions (Only Show Edit/Delete for Author)
 function openDetailModal(postId) {
-    if (!currentUser || !currentUser.name) {
-        showToast("🔑 로그인 후 버디 모임 및 강사 클래스 상세 정보를 확인하실 수 있습니다!");
-        switchAuthTab('login');
-        openModal(document.getElementById("authModal"));
-        return;
-    }
-
     const post = posts.find(p => p.id === postId);
     if (!post) return;
 
@@ -3838,6 +3831,12 @@ function performPostDeletion(postId) {
 }
 
 function toggleWishlist(postId) {
+    if (!currentUser || !currentUser.name) {
+        showToast("🔑 로그인 후 찜하기(관심상품) 기능을 이용하실 수 있습니다!");
+        switchAuthTab('login');
+        openModal(document.getElementById("authModal"));
+        return;
+    }
     const post = posts.find(p => p.id === postId);
     if (!post) return;
 
@@ -3860,6 +3859,12 @@ function toggleWishlist(postId) {
 }
 
 function toggleLike(postId) {
+    if (!currentUser || !currentUser.name) {
+        showToast("🔑 로그인 후 공감/좋아요 기능을 이용하실 수 있습니다!");
+        switchAuthTab('login');
+        openModal(document.getElementById("authModal"));
+        return;
+    }
     const post = posts.find(p => p.id === postId);
     if (!post) return;
 
@@ -4377,6 +4382,12 @@ function updateAddressFromCoords(lat, lng) {
 
 function handleAddComment(e, postId) {
     e.preventDefault();
+    if (!currentUser || !currentUser.name) {
+        showToast("🔑 로그인 후 실시간 댓글을 작성하실 수 있습니다!");
+        switchAuthTab('login');
+        openModal(document.getElementById("authModal"));
+        return;
+    }
     const post = posts.find(p => p.id === postId);
     if (!post) return;
 
