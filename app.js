@@ -1633,58 +1633,73 @@ function approveInstructorCertDemo(name) {
 function openProfileModal() {
     if (!currentUser || !currentUser.name) {
         switchAuthTab('login');
-        openModal(authModal);
+        openModal(document.getElementById("authModal"));
         return;
     }
 
-    const isInstructor = !!(currentUser.instructorCode || currentUser.isApprovedInstructor || currentUser.provider?.includes("강사"));
+    try {
+        const isInstructor = isVerifiedInstructor() || isPendingInstructor() || !!(currentUser.provider && currentUser.provider.includes("강사"));
 
-    document.getElementById("myProfNameDisplay").innerHTML = isInstructor
-        ? `${escapeHtml(currentUser.name)} <span class="badge badge-instructor" style="font-size:0.75rem; vertical-align:middle; margin-left:6px; background:linear-gradient(135deg, #ffb703, #ff8f00); color:#000; font-weight:900;"><i class="fa-solid fa-graduation-cap"></i> VERIFIED INSTRUCTOR (공인 강사)</span>`
-        : escapeHtml(currentUser.name);
-
-    document.getElementById("myProfProviderDisplay").textContent = isInstructor
-        ? `🎓 AquaBuddy 검증 공인 강사 계정`
-        : `${currentUser.provider || 'AquaBuddy'} 인증 계정`;
-
-    document.getElementById("myProfNickInput").value = currentUser.name;
-    document.getElementById("myProfLicenseInput").value = currentUser.license || "";
-
-    const myReviews = (currentUser.reviews || []);
-    const completedCount = currentUser.completedCount || 0;
-
-    if (myReviews.length === 0 && completedCount === 0) {
-        document.getElementById("myProfAvgScore").innerHTML = `<span style="color:var(--accent-cyan);"><i class="fa-solid fa-seedling"></i> 신규 다이버 🌱 (평점 평가 대기 중)</span>`;
-        document.getElementById("myProfMeetingCount").textContent = `모임 0회 완료`;
-
-        const reviewsListEl = document.getElementById("myProfReviewsList");
-        if (reviewsListEl) {
-            reviewsListEl.innerHTML = `
-                <div style="font-size: 0.82rem; color: var(--text-muted); text-align: center; padding: 12px; background: rgba(0,0,0,0.3); border-radius: 8px; border: 1px dashed var(--glass-border);">
-                    <i class="fa-solid fa-water" style="color:var(--accent-cyan); margin-bottom:4px; font-size:1.2rem; display:block;"></i>
-                    아직 작성된 한줄평이 없습니다. 첫 버디 모임을 함께하고 첫 번째 평점과 후기를 공유해 보세요! 🌊
-                </div>
-            `;
+        const nameDisplay = document.getElementById("myProfNameDisplay");
+        if (nameDisplay) {
+            nameDisplay.innerHTML = isInstructor
+                ? `${escapeHtml(currentUser.name)} <span class="badge badge-instructor" style="font-size:0.75rem; vertical-align:middle; margin-left:6px; background:linear-gradient(135deg, #ffb703, #ff8f00); color:#000; font-weight:900;"><i class="fa-solid fa-graduation-cap"></i> VERIFIED INSTRUCTOR (공인 강사)</span>`
+                : escapeHtml(currentUser.name);
         }
-    } else {
-        const avgScore = myReviews.length > 0
-            ? (myReviews.reduce((sum, r) => sum + r.score, 0) / myReviews.length).toFixed(1)
-            : "5.0";
-        document.getElementById("myProfAvgScore").textContent = `★ ${avgScore} / 5.0`;
-        document.getElementById("myProfMeetingCount").textContent = `모임 ${completedCount}회 완료`;
 
+        const providerDisplay = document.getElementById("myProfProviderDisplay");
+        if (providerDisplay) {
+            providerDisplay.textContent = isInstructor
+                ? `🎓 AquaBuddy 검증 공인 강사 계정`
+                : `${currentUser.provider || 'AquaBuddy'} 인증 계정`;
+        }
+
+        const nickInput = document.getElementById("myProfNickInput");
+        if (nickInput) nickInput.value = currentUser.name || "";
+
+        const licenseInput = document.getElementById("myProfLicenseInput");
+        if (licenseInput) licenseInput.value = currentUser.license || "";
+
+        const myReviews = (currentUser.reviews || []);
+        const completedCount = currentUser.completedCount || 0;
+
+        const scoreEl = document.getElementById("myProfAvgScore");
+        const countEl = document.getElementById("myProfMeetingCount");
         const reviewsListEl = document.getElementById("myProfReviewsList");
-        if (reviewsListEl) {
-            reviewsListEl.innerHTML = myReviews.slice(-3).reverse().map(r => `
-                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.06); padding: 8px 12px; border-radius: 8px;">
-                    <div style="display: flex; justify-content: space-between; font-size: 0.78rem; margin-bottom: 2px;">
-                        <span style="color: var(--accent-cyan); font-weight: 700;">👤 ${escapeHtml(r.author)}</span>
-                        <span style="color: var(--accent-gold); font-weight: 800;">★ ${r.score}</span>
+
+        if (myReviews.length === 0 && completedCount === 0) {
+            if (scoreEl) scoreEl.innerHTML = `<span style="color:var(--accent-cyan);"><i class="fa-solid fa-seedling"></i> 신규 다이버 🌱 (평점 평가 대기 중)</span>`;
+            if (countEl) countEl.textContent = `모임 0회 완료`;
+
+            if (reviewsListEl) {
+                reviewsListEl.innerHTML = `
+                    <div style="font-size: 0.82rem; color: var(--text-muted); text-align: center; padding: 12px; background: rgba(0,0,0,0.3); border-radius: 8px; border: 1px dashed var(--glass-border);">
+                        <i class="fa-solid fa-water" style="color:var(--accent-cyan); margin-bottom:4px; font-size:1.2rem; display:block;"></i>
+                        아직 작성된 한줄평이 없습니다. 첫 버디 모임을 함께하고 첫 번째 평점과 후기를 공유해 보세요! 🌊
                     </div>
-                    <p style="font-size: 0.82rem; color: var(--text-main); line-height: 1.3;">"${escapeHtml(r.comment)}"</p>
-                </div>
-            `).join("");
+                `;
+            }
+        } else {
+            const avgScore = myReviews.length > 0
+                ? (myReviews.reduce((sum, r) => sum + r.score, 0) / myReviews.length).toFixed(1)
+                : "5.0";
+            if (scoreEl) scoreEl.textContent = `★ ${avgScore} / 5.0`;
+            if (countEl) countEl.textContent = `모임 ${completedCount}회 완료`;
+
+            if (reviewsListEl) {
+                reviewsListEl.innerHTML = myReviews.slice(-3).reverse().map(r => `
+                    <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.06); padding: 8px 12px; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.78rem; margin-bottom: 2px;">
+                            <span style="color: var(--accent-cyan); font-weight: 700;">👤 ${escapeHtml(r.author || '다이버')}</span>
+                            <span style="color: var(--accent-gold); font-weight: 800;">★ ${r.score || 5}</span>
+                        </div>
+                        <p style="font-size: 0.82rem; color: var(--text-main); line-height: 1.3;">"${escapeHtml(r.comment || '')}"</p>
+                    </div>
+                `).join("");
+            }
         }
+    } catch (err) {
+        console.log("Profile Modal Render Notice:", err);
     }
 
     openModal(document.getElementById("myProfileModal"));
@@ -3486,7 +3501,7 @@ function openDetailModal(postId) {
             <div class="detail-section">
                 <h4><i class="fa-solid fa-align-left"></i> 상세 교육 설명</h4>
                 <div class="detail-box">
-                    ${escapeHtml(post.desc).replace(/\n/g, '<br>')}
+                    ${escapeHtml(post.desc || '').replace(/\n/g, '<br>')}
                 </div>
             </div>
 
@@ -3566,7 +3581,7 @@ function openDetailModal(postId) {
             <div class="detail-section">
                 <h4><i class="fa-solid fa-align-left"></i> 내용 작성</h4>
                 <div class="detail-box">
-                    ${escapeHtml(post.desc).replace(/\n/g, '<br>')}
+                    ${escapeHtml(post.desc || '').replace(/\n/g, '<br>')}
                 </div>
             </div>
 
@@ -3622,7 +3637,7 @@ function openDetailModal(postId) {
             <div class="detail-section">
                 <h4><i class="fa-solid fa-align-left"></i> 내용 작성</h4>
                 <div class="detail-box">
-                    ${escapeHtml(post.desc).replace(/\n/g, '<br>')}
+                    ${escapeHtml(post.desc || '').replace(/\n/g, '<br>')}
                 </div>
             </div>
 
@@ -3761,7 +3776,7 @@ function openDetailModal(postId) {
             <div class="detail-section">
                 <h4><i class="fa-solid fa-align-left"></i> 상세 내용</h4>
                 <div class="detail-box">
-                    ${escapeHtml(post.desc).replace(/\n/g, '<br>')}
+                    ${escapeHtml(post.desc || '').replace(/\n/g, '<br>')}
                 </div>
             </div>
 
