@@ -1324,7 +1324,7 @@ function initUserIdentity() {
 
     // [DEBUG] Bypass login checks globally based on user request
     if (!currentUser || !currentUser.name) {
-        currentUser = { name: "테스트유저", provider: "로컬테스트", instructorStatus: "approved", reviews: [], completedCount: 0 };
+        currentUser = { name: "게스트", provider: "로컬테스트", instructorStatus: "approved", reviews: [], completedCount: 0 };
     }
 
     checkKakaoOAuthCallback();
