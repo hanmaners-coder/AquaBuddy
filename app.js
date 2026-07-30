@@ -1421,61 +1421,244 @@ function handleLogout() {
     showToast("👋 성공적으로 로그아웃되었습니다.");
 }
 
-function switchAuthTab(type) {
-    const emailTabBtn = document.getElementById("tabEmailAuth");
-    const kakaoTabBtn = document.getElementById("tabKakaoAuth");
-    const emailBox = document.getElementById("emailAuthFormBox");
-    const kakaoBox = document.getElementById("kakaoAuthFormBox");
-
-    if (type === "email") {
-        emailTabBtn.classList.add("active");
-        kakaoTabBtn.classList.remove("active");
-        emailBox.classList.remove("hidden");
-        kakaoBox.classList.add("hidden");
-    } else {
-        kakaoTabBtn.classList.add("active");
-        emailTabBtn.classList.remove("active");
-        kakaoBox.classList.remove("hidden");
-        emailBox.classList.add("hidden");
+// User Database Management (Local Storage)
+function getRegisteredUsers() {
+    try {
+        const data = localStorage.getItem("aqua_buddy_registered_users");
+        return data ? JSON.parse(data) : {};
+    } catch(e) {
+        return {};
     }
 }
 
-function handleDirectEmailAuth(e) {
-    e.preventDefault();
+function saveRegisteredUser(userObj) {
+    const users = getRegisteredUsers();
+    users[userObj.email.toLowerCase()] = userObj;
+    localStorage.setItem("aqua_buddy_registered_users", JSON.stringify(users));
+}
 
-    const email = document.getElementById("directEmailInput").value.trim();
-    const pw = document.getElementById("directPasswordInput").value.trim();
-    const nick = document.getElementById("socialNicknameInput").value.trim() || "바다마스터";
-    const license = document.getElementById("socialLicenseInput").value.trim() || "AIDA 3 / 레스큐 소지";
+function switchAuthTab(type) {
+    const tabLogin = document.getElementById("tabLogin");
+    const tabSignup = document.getElementById("tabSignup");
+    const tabKakaoAuth = document.getElementById("tabKakaoAuth");
+
+    const loginBox = document.getElementById("loginFormBox");
+    const signupBox = document.getElementById("signupFormBox");
+    const kakaoBox = document.getElementById("kakaoAuthFormBox");
+
+    const titleEl = document.getElementById("authModalTitle");
+
+    [tabLogin, tabSignup, tabKakaoAuth].forEach(t => t?.classList.remove("active"));
+    [loginBox, signupBox, kakaoBox].forEach(b => b?.classList.add("hidden"));
+
+    if (type === "login") {
+        if (tabLogin) tabLogin.classList.add("active");
+        if (loginBox) loginBox.classList.remove("hidden");
+        if (titleEl) titleEl.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> AquaBuddy 로그인`;
+    } else if (type === "signup") {
+        if (tabSignup) tabSignup.classList.add("active");
+        if (signupBox) signupBox.classList.remove("hidden");
+        if (titleEl) titleEl.innerHTML = `<i class="fa-solid fa-user-plus"></i> AquaBuddy 회원가입`;
+    } else if (type === "kakao") {
+        if (tabKakaoAuth) tabKakaoAuth.classList.add("active");
+        if (kakaoBox) kakaoBox.classList.remove("hidden");
+        if (titleEl) titleEl.innerHTML = `<i class="fa-solid fa-comment"></i> 카카오 1초 로그인`;
+    }
+}
+
+function handleDirectLogin(e) {
+    e.preventDefault();
+    const email = document.getElementById("loginEmailInput").value.trim().toLowerCase();
+    const pw = document.getElementById("loginPasswordInput").value.trim();
 
     if (!email || !pw) {
-        showToast("⚠️ 이메일 주소와 비밀번호를 입력해 주세요!");
+        showToast("⚠️ 이메일과 비밀번호를 입력해 주세요.");
+        return;
+    }
+
+    const users = getRegisteredUsers();
+    const user = users[email];
+
+    if (!user || user.password !== pw) {
+        showToast("❌ 이메일 또는 비밀번호가 일치하지 않습니다. (회원가입이 필요할 수 있습니다)");
         return;
     }
 
     currentUser = {
-        email: email,
-        name: nick,
-        license: license,
-        instructorCode: "",
-        provider: "홈페이지 직가입",
-        avatar: "E"
+        email: user.email,
+        name: user.name,
+        license: user.license,
+        instructorCode: user.instructorCode || "",
+        provider: user.provider || "홈페이지 회원",
+        avatar: user.name.charAt(0).toUpperCase()
     };
 
     localStorage.setItem("aqua_buddy_user_identity", JSON.stringify(currentUser));
     updateNavbarUserUI();
-
-    closeModal(authModal);
+    closeModal(document.getElementById("authModal"));
     filterAndRender();
-    showToast(`🎉 ${nick}님, 홈페이지 계정 가입 및 로그인에 성공하셨습니다!`);
+    showToast(`🎉 Welcome back, ${currentUser.name}님!`);
+}
+
+function handleDirectSignup(e) {
+    e.preventDefault();
+    const email = document.getElementById("signupEmailInput").value.trim().toLowerCase();
+    const pw = document.getElementById("signupPasswordInput").value.trim();
+    const realName = document.getElementById("signupRealNameInput") ? document.getElementById("signupRealNameInput").value.trim() : "";
+    const nick = document.getElementById("signupNicknameInput").value.trim();
+    const phone = document.getElementById("signupPhoneInput") ? document.getElementById("signupPhoneInput").value.trim() : "";
+    const license = document.getElementById("signupLicenseInput").value.trim();
+
+    if (!email || !pw || !realName || !nick || !license || !phone) {
+        showToast("⚠️ 모든 필수 항목을 입력해 주세요.");
+        return;
+    }
+
+    const users = getRegisteredUsers();
+    if (users[email]) {
+        showToast("⚠️ 이미 가입된 이메일입니다. 로그인해 주세요.");
+        switchAuthTab("login");
+        return;
+    }
+
+    const newUser = {
+        email: email,
+        password: pw,
+        realName: realName,
+        name: nick,
+        phone: phone,
+        license: license,
+        instructorCode: "",
+        provider: "홈페이지 회원",
+        createdAt: new Date().toISOString()
+    };
+
+    saveRegisteredUser(newUser);
+
+    currentUser = {
+        email: newUser.email,
+        realName: newUser.realName,
+        name: newUser.name,
+        phone: newUser.phone,
+        license: newUser.license,
+        instructorCode: "",
+        provider: "홈페이지 회원",
+        avatar: nick.charAt(0).toUpperCase()
+    };
+
+    localStorage.setItem("aqua_buddy_user_identity", JSON.stringify(currentUser));
+    updateNavbarUserUI();
+    closeModal(document.getElementById("authModal"));
+    filterAndRender();
+    showToast(`🎉 ${nick}님, 회원가입이 완료되어 자동으로 로그인되었습니다!`);
+}
+
+function openFindAccountModal() {
+    closeModal(document.getElementById("authModal"));
+    const findModal = document.getElementById("findAccountModal");
+    if (findModal) {
+        switchFindTab('id');
+        openModal(findModal);
+    }
+}
+
+function switchFindTab(type) {
+    const tabFindId = document.getElementById("tabFindId");
+    const tabResetPw = document.getElementById("tabResetPw");
+    const findIdBox = document.getElementById("findIdFormBox");
+    const resetPwBox = document.getElementById("resetPwFormBox");
+    const resultBox = document.getElementById("findIdResult");
+
+    if (resultBox) resultBox.style.display = "none";
+
+    if (type === "id") {
+        tabFindId?.classList.add("active");
+        tabResetPw?.classList.remove("active");
+        findIdBox?.classList.remove("hidden");
+        resetPwBox?.classList.add("hidden");
+    } else {
+        tabResetPw?.classList.add("active");
+        tabFindId?.classList.remove("active");
+        resetPwBox?.classList.remove("hidden");
+        findIdBox?.classList.add("hidden");
+    }
+}
+
+function handleFindId(e) {
+    e.preventDefault();
+    const nameInput = document.getElementById("findIdName");
+    const name = nameInput ? nameInput.value.trim().toLowerCase() : "";
+    const phone = document.getElementById("findIdPhone") ? document.getElementById("findIdPhone").value.trim().replace(/[^0-9]/g, "") : "";
+    const resultBox = document.getElementById("findIdResult");
+
+    if (!name || !phone) {
+        showToast("⚠️ 이름과 휴대폰 번호를 모두 입력해 주세요.");
+        return;
+    }
+
+    const users = getRegisteredUsers();
+    const foundUser = Object.values(users).find(u => {
+        const uPhone = (u.phone || "").replace(/[^0-9]/g, "");
+        const uName = (u.realName || u.name || "").toLowerCase();
+        return uName === name && uPhone === phone;
+    });
+
+    if (resultBox) {
+        resultBox.style.display = "block";
+        if (foundUser) {
+            const parts = foundUser.email.split("@");
+            const maskedEmail = parts[0].length > 2 ? parts[0].substring(0, 2) + "***@" + parts[1] : parts[0] + "***@" + (parts[1] || "");
+            resultBox.innerHTML = `✅ <strong>${escapeHtml(foundUser.name)}</strong> 님의 가입 이메일(아이디): <br><strong style="color:var(--accent-cyan); font-size:1.05rem; margin-top:4px; display:inline-block;">${escapeHtml(maskedEmail)}</strong>`;
+        } else {
+            resultBox.innerHTML = `❌ 입력하신 이름(${escapeHtml(name)})과 휴대폰 번호에 해당하는 계정을 찾을 수 없습니다.`;
+        }
+    }
+}
+
+function handleResetPassword(e) {
+    e.preventDefault();
+    const email = document.getElementById("resetPwEmail").value.trim().toLowerCase();
+    const nameInput = document.getElementById("resetPwName");
+    const name = nameInput ? nameInput.value.trim().toLowerCase() : "";
+    const phone = document.getElementById("resetPwPhone") ? document.getElementById("resetPwPhone").value.trim().replace(/[^0-9]/g, "") : "";
+    const newPw = document.getElementById("newPasswordInput").value.trim();
+
+    if (!email || !name || !phone || !newPw) {
+        showToast("⚠️ 이메일, 이름, 휴대폰 번호, 새 비밀번호를 모두 입력해 주세요.");
+        return;
+    }
+
+    const users = getRegisteredUsers();
+    const user = users[email];
+
+    if (!user) {
+        showToast("❌ 등록되지 않은 이메일 주소입니다.");
+        return;
+    }
+
+    const userPhone = (user.phone || "").replace(/[^0-9]/g, "");
+    const userName = (user.realName || user.name || "").toLowerCase();
+
+    if (userName !== name || userPhone !== phone) {
+        showToast("❌ 가입 시 입력하신 이름 또는 휴대폰 번호 정보가 일치하지 않습니다.");
+        return;
+    }
+
+    users[email].password = newPw;
+    localStorage.setItem("aqua_buddy_registered_users", JSON.stringify(users));
+
+    closeModal(document.getElementById("findAccountModal"));
+    showToast("🔑 비밀번호가 성공적으로 변경되었습니다. 새 비밀번호로 로그인해 주세요.");
+    openModal(document.getElementById("authModal"));
+    switchAuthTab("login");
 }
 
 function loginWithKakaoOAuth() {
-    const nickInput = document.getElementById("socialNicknameInput") ? document.getElementById("socialNicknameInput").value.trim() : "카카오다이버";
-    const licInput = document.getElementById("socialLicenseInput") ? document.getElementById("socialLicenseInput").value.trim() : "AIDA 3 / 수영 다이버";
+    const nickInput = document.getElementById("kakaoNicknameInput") ? document.getElementById("kakaoNicknameInput").value.trim() : "";
+    const licInput = document.getElementById("kakaoLicenseInput") ? document.getElementById("kakaoLicenseInput").value.trim() : "";
 
-    localStorage.setItem("aqua_buddy_pending_auth_nick", nickInput);
-    localStorage.setItem("aqua_buddy_pending_auth_lic", licInput);
+    if (nickInput) localStorage.setItem("aqua_buddy_pending_auth_nick", nickInput);
+    if (licInput) localStorage.setItem("aqua_buddy_pending_auth_lic", licInput);
 
     initKakaoSdk();
 
@@ -1486,8 +1669,8 @@ function loginWithKakaoOAuth() {
     if (window.Kakao && window.Kakao.isInitialized() && window.Kakao.Auth && window.Kakao.Auth.authorize) {
         try {
             window.Kakao.Auth.authorize({
-                redirectUri: redirectTargetUri,
-                prompt: 'login'
+                redirectUri: redirectTargetUri
+                // Removed prompt: 'login' to enable smooth SSO / session-retaining login
             });
             return;
         } catch (e) {
@@ -1495,9 +1678,9 @@ function loginWithKakaoOAuth() {
         }
     }
 
-    // Direct Kakao OAuth URL Fallback (Guarantees Kakao Login Screen across all mobile/Vercel environments)
+    // Direct Kakao OAuth URL Fallback (No forced re-prompting)
     const encodedRedirect = encodeURIComponent(redirectTargetUri);
-    window.location.href = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_APP_KEY}&redirect_uri=${encodedRedirect}&response_type=code&prompt=login`;
+    window.location.href = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_APP_KEY}&redirect_uri=${encodedRedirect}&response_type=code`;
 }
 
 function checkKakaoOAuthCallback() {
@@ -1510,7 +1693,7 @@ function checkKakaoOAuthCallback() {
         window.history.replaceState({}, document.title, cleanUrl);
 
         const pendingNick = localStorage.getItem("aqua_buddy_pending_auth_nick") || "카카오다이버";
-        const pendingLic = localStorage.getItem("aqua_buddy_pending_auth_lic") || "AIDA 3 / 수영 다이버";
+        const pendingLic = localStorage.getItem("aqua_buddy_pending_auth_lic") || "자격증 정보 미입력";
 
         localStorage.removeItem("aqua_buddy_pending_auth_nick");
         localStorage.removeItem("aqua_buddy_pending_auth_lic");
@@ -1526,7 +1709,7 @@ function checkKakaoOAuthCallback() {
 
         localStorage.setItem("aqua_buddy_user_identity", JSON.stringify(currentUser));
         updateNavbarUserUI();
-        showToast(`🎉 ${pendingNick}님, 카카오톡 공식 인증 로그인에 성공하셨습니다!`);
+        showToast(`🎉 ${pendingNick}님, 카카오톡 로그인에 성공하셨습니다!`);
     }
 }
 
@@ -1719,7 +1902,10 @@ function initEventListeners() {
         });
     }
 
-    if (openAuthModalBtn) openAuthModalBtn.addEventListener("click", () => openModal(authModal));
+    if (openAuthModalBtn) openAuthModalBtn.addEventListener("click", () => {
+        switchAuthTab('login');
+        openModal(authModal);
+    });
     if (closeAuthModalBtn) closeAuthModalBtn.addEventListener("click", () => closeModal(authModal));
 
     if (closeChatModalBtn) closeChatModalBtn.addEventListener("click", () => closeModal(chatModal));
@@ -1750,6 +1936,7 @@ function initEventListeners() {
         if (e.target === deleteConfirmModal) closeModal(deleteConfirmModal);
         if (e.target === inquiryModal) closeModal(inquiryModal);
         if (e.target === document.getElementById("instructorAuthModal")) closeModal(document.getElementById("instructorAuthModal"));
+        if (e.target === document.getElementById("findAccountModal")) closeModal(document.getElementById("findAccountModal"));
         if (e.target === document.getElementById("adminDashboardModal")) closeModal(document.getElementById("adminDashboardModal"));
         if (e.target === document.getElementById("adminSecurityModal")) closeModal(document.getElementById("adminSecurityModal"));
         if (e.target === document.getElementById("oceanWebcamModal")) {

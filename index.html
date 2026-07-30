@@ -656,58 +656,115 @@
         </div>
     </div>
 
-    <!-- Modal 2: Simplified 2-Way User Auth Modal -->
+    <!-- Modal 2: 3-Way User Auth Modal (Login / Signup / Kakao) -->
     <div class="modal-overlay hidden" id="authModal">
         <div class="modal-container glass-panel" style="max-width: 480px;">
             <div class="modal-header">
-                <h2><i class="fa-solid fa-user-shield"></i> AquaBuddy 회원가입 & 로그인</h2>
+                <h2 id="authModalTitle"><i class="fa-solid fa-user-shield"></i> AquaBuddy 계정 로그인</h2>
                 <button class="close-btn" id="closeAuthModalBtn">&times;</button>
             </div>
             
             <div style="padding: 10px 0 10px;">
                 <div class="auth-switch-tabs">
-                    <button class="auth-tab-btn active" id="tabEmailAuth" onclick="switchAuthTab('email')">
-                        홈페이지 직접 가입
+                    <button class="auth-tab-btn active" id="tabLogin" onclick="switchAuthTab('login')">
+                        로그인
+                    </button>
+                    <button class="auth-tab-btn" id="tabSignup" onclick="switchAuthTab('signup')">
+                        회원가입
                     </button>
                     <button class="auth-tab-btn" id="tabKakaoAuth" onclick="switchAuthTab('kakao')">
-                        카카오톡 1초 로그인
+                        카카오 1초
                     </button>
                 </div>
 
-                <div style="background: rgba(0,242,254,0.05); border: 1px dashed var(--glass-border); padding: 12px; border-radius: var(--radius-sm); margin-bottom: 14px;">
-                    <div class="form-group" style="margin-bottom: 8px;">
-                        <label for="socialNicknameInput"><i class="fa-solid fa-user"></i> AquaBuddy 닉네임 *</label>
-                        <input type="text" id="socialNicknameInput" placeholder="예: 포항딥다이버" value="바다마스터" required>
-                    </div>
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label for="socialLicenseInput"><i class="fa-solid fa-certificate"></i> 대표 자격증 / 수영 경력 *</label>
-                        <input type="text" id="socialLicenseInput" placeholder="예: AIDA 3 / PADI Advanced / 초보" value="AIDA 3 / 레스큐 소지" required>
-                    </div>
-                </div>
-
-                <div id="emailAuthFormBox">
-                    <form id="directSignupForm" onsubmit="handleDirectEmailAuth(event)">
+                <!-- 1. 로그인 폼 -->
+                <div id="loginFormBox">
+                    <form id="directLoginForm" onsubmit="handleDirectLogin(event)">
                         <div class="form-group">
-                            <label for="directEmailInput"><i class="fa-solid fa-envelope"></i> 이메일 주소 (아이디) *</label>
-                            <input type="email" id="directEmailInput" placeholder="example@naver.com" required>
+                            <label for="loginEmailInput"><i class="fa-solid fa-envelope"></i> 이메일 (아이디) *</label>
+                            <input type="email" id="loginEmailInput" placeholder="example@naver.com" required>
                         </div>
                         <div class="form-group">
-                            <label for="directPasswordInput"><i class="fa-solid fa-lock"></i> 비밀번호 *</label>
-                            <input type="password" id="directPasswordInput" placeholder="비밀번호 6자리 이상" required>
+                            <label for="loginPasswordInput"><i class="fa-solid fa-lock"></i> 비밀번호 *</label>
+                            <input type="password" id="loginPasswordInput" placeholder="비밀번호 입력" required>
                         </div>
                         <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; margin-top: 8px;">
-                            <i class="fa-solid fa-user-plus"></i> 회원가입 / 로그인 완료
+                            <i class="fa-solid fa-right-to-bracket"></i> 로그인
                         </button>
+                        <div style="display:flex; justify-content:space-between; margin-top: 14px; font-size:0.83rem;">
+                            <a href="javascript:void(0)" onclick="openFindAccountModal()" style="color: var(--text-muted); text-decoration: underline;">
+                                아이디 / 비밀번호 찾기
+                            </a>
+                            <a href="javascript:void(0)" onclick="switchAuthTab('signup')" style="color: var(--accent-cyan); font-weight: 700;">
+                                계정이 없으신가요? 회원가입
+                            </a>
+                        </div>
                     </form>
                 </div>
 
+                <!-- 2. 회원가입 폼 -->
+                <div id="signupFormBox" class="hidden">
+                    <form id="directSignupForm" onsubmit="handleDirectSignup(event)">
+                        <div class="form-group">
+                            <label for="signupEmailInput"><i class="fa-solid fa-envelope"></i> 이메일 주소 (아이디) *</label>
+                            <input type="email" id="signupEmailInput" placeholder="example@naver.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="signupPasswordInput"><i class="fa-solid fa-lock"></i> 비밀번호 (6자 이상) *</label>
+                            <input type="password" id="signupPasswordInput" placeholder="비밀번호 입력" required minlength="6">
+                        </div>
+                        <div class="form-group">
+                            <label for="signupRealNameInput"><i class="fa-solid fa-id-card"></i> 이름 (본인 확인/아이디 찾기용) *</label>
+                            <input type="text" id="signupRealNameInput" placeholder="홍길동" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="signupNicknameInput"><i class="fa-solid fa-user"></i> 닉네임 (커뮤니티 활동용) *</label>
+                            <input type="text" id="signupNicknameInput" placeholder="예: 포항딥다이버" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="signupPhoneInput"><i class="fa-solid fa-mobile-screen"></i> 휴대폰 번호 *</label>
+                            <input type="tel" id="signupPhoneInput" placeholder="010-1234-5678" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="signupLicenseInput"><i class="fa-solid fa-certificate"></i> 대표 자격증 / 수영·다이빙 경력 *</label>
+                            <input type="text" id="signupLicenseInput" placeholder="예: AIDA 3 / PADI Advanced / 프리다이빙 1년차" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; margin-top: 8px;">
+                            <i class="fa-solid fa-user-plus"></i> 회원가입 완료
+                        </button>
+                        <div style="text-align:center; margin-top: 14px; font-size:0.83rem;">
+                            <a href="javascript:void(0)" onclick="switchAuthTab('login')" style="color: var(--accent-cyan); font-weight: 700;">
+                                이미 계정이 있으신가요? 로그인하기
+                            </a>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- 3. 카카오 1초 로그인 폼 -->
                 <div id="kakaoAuthFormBox" class="hidden">
-                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 14px; text-align: center;">
-                        카카오 계정으로 1초만에 쉽고 빠르게 가입합니다.
-                    </p>
+                    <div style="background: rgba(255, 235, 0, 0.08); border: 1px dashed rgba(255, 235, 0, 0.3); padding: 12px; border-radius: var(--radius-sm); margin-bottom: 14px; text-align: center;">
+                        <p style="color: var(--text-main); font-size: 0.88rem; margin-bottom: 4px; font-weight: 700;">
+                            💛 카카오 계정으로 1초만에 간편 로그인
+                        </p>
+                        <p style="color: var(--text-muted); font-size: 0.8rem; margin: 0;">
+                            최초 1회 로그인 후 자동으로 로그인 상태가 유지됩니다.
+                        </p>
+                    </div>
+
+                    <div style="background: rgba(0,242,254,0.05); border: 1px solid var(--glass-border); padding: 12px; border-radius: var(--radius-sm); margin-bottom: 14px;">
+                        <div class="form-group" style="margin-bottom: 8px;">
+                            <label for="kakaoNicknameInput"><i class="fa-solid fa-user"></i> 닉네임 (기본값 설정 가능)</label>
+                            <input type="text" id="kakaoNicknameInput" placeholder="미입력 시 '카카오다이버'로 설정됩니다.">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="kakaoLicenseInput"><i class="fa-solid fa-certificate"></i> 자격증 / 경력</label>
+                            <input type="text" id="kakaoLicenseInput" placeholder="예: AIDA 2 / 수영 초보">
+                        </div>
+                    </div>
+
                     <div class="social-login-group">
                         <button class="social-btn kakao" onclick="loginWithKakaoOAuth()">
-                            <i class="fa-solid fa-comment"></i> 카카오톡 1초 로그인 / 회원가입
+                            <i class="fa-solid fa-comment"></i> 카카오톡으로 계속하기
                         </button>
                     </div>
                 </div>
@@ -719,6 +776,65 @@
                     <a href="javascript:void(0)" onclick="closeModal(authModal); openInstructorAuthModal();" style="font-size: 0.85rem; color: var(--accent-cyan); font-weight: 800; text-decoration: underline; margin-left: 6px;">
                         강사 전용 인증 신청하기 ➔
                     </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Find ID / Reset Password -->
+    <div class="modal-overlay hidden" id="findAccountModal">
+        <div class="modal-container glass-panel" style="max-width: 460px;">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-key"></i> 계정 / 비밀번호 찾기</h2>
+                <button class="close-btn" onclick="closeModal(document.getElementById('findAccountModal'))">&times;</button>
+            </div>
+            <div style="padding: 10px 0;">
+                <div class="auth-switch-tabs">
+                    <button class="auth-tab-btn active" id="tabFindId" onclick="switchFindTab('id')">아이디(이메일) 찾기</button>
+                    <button class="auth-tab-btn" id="tabResetPw" onclick="switchFindTab('pw')">비밀번호 재설정</button>
+                </div>
+
+                <!-- Find ID Form -->
+                <div id="findIdFormBox">
+                    <form onsubmit="handleFindId(event)">
+                        <div class="form-group">
+                            <label for="findIdName"><i class="fa-solid fa-user"></i> 이름 (성함)</label>
+                            <input type="text" id="findIdName" placeholder="가입 시 등록한 이름" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="findIdPhone"><i class="fa-solid fa-mobile-screen"></i> 휴대폰 번호</label>
+                            <input type="tel" id="findIdPhone" placeholder="010-1234-5678" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width:100%; padding: 12px; margin-top: 6px;">
+                            <i class="fa-solid fa-search"></i> 아이디(이메일) 조회
+                        </button>
+                    </form>
+                    <div id="findIdResult" style="margin-top: 12px; padding: 12px; background: rgba(0,242,254,0.08); border: 1px solid var(--glass-border); border-radius: 8px; display: none; text-align: center; font-size: 0.9rem;"></div>
+                </div>
+
+                <!-- Reset Password Form -->
+                <div id="resetPwFormBox" class="hidden">
+                    <form onsubmit="handleResetPassword(event)">
+                        <div class="form-group">
+                            <label for="resetPwEmail"><i class="fa-solid fa-envelope"></i> 가입된 이메일 주소</label>
+                            <input type="email" id="resetPwEmail" placeholder="example@naver.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="resetPwName"><i class="fa-solid fa-user"></i> 이름 (성함)</label>
+                            <input type="text" id="resetPwName" placeholder="가입 시 등록한 이름" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="resetPwPhone"><i class="fa-solid fa-mobile-screen"></i> 가입 시 등록한 휴대폰 번호</label>
+                            <input type="tel" id="resetPwPhone" placeholder="010-1234-5678" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="newPasswordInput"><i class="fa-solid fa-lock"></i> 변경할 새 비밀번호</label>
+                            <input type="password" id="newPasswordInput" placeholder="새 비밀번호 (6자 이상)" required minlength="6">
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width:100%; padding: 12px; margin-top: 6px;">
+                            <i class="fa-solid fa-key"></i> 비밀번호 변경하기
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
