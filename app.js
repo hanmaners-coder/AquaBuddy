@@ -1378,6 +1378,28 @@ function safeLocalStorageSet(key, value) {
     }
 }
 
+async function syncUserToSupabaseCloud(userData) {
+    if (!userData || !userData.email) return;
+    if (!supabaseClient) return;
+    try {
+        const payload = {
+            email: (userData.email || "").toLowerCase(),
+            real_name: userData.realName || userData.name || "",
+            name: userData.name || "",
+            phone: userData.phone || "",
+            license: userData.license || "",
+            instructor_code: userData.instructorCode || "",
+            instructor_status: userData.instructorStatus || "none",
+            provider: userData.provider || "홈페이지 회원",
+            created_at: userData.createdAt || new Date().toISOString()
+        };
+        await supabaseClient.from('users').upsert([payload], { onConflict: 'email' });
+        console.log("Supabase Cloud User DB Synced Successfully:", payload.email);
+    } catch (err) {
+        console.log("Supabase User Sync Notice (Fallback Active):", err);
+    }
+}
+
 function handleInstructorAuthSubmit(e) {
     e.preventDefault();
 
@@ -1410,6 +1432,7 @@ function handleInstructorAuthSubmit(e) {
                 users[userKey].isApprovedInstructor = false;
                 if (instAppCertImage) users[userKey].certImage = instAppCertImage;
                 safeLocalStorageSet("aqua_buddy_registered_users", JSON.stringify(users));
+                syncUserToSupabaseCloud(users[userKey]);
             }
         }
         updateNavbarUserUI();
@@ -1426,13 +1449,14 @@ function openAdminDashboard() {
         openAdminSecurityCheck();
         return;
     }
+    renderAdminUsersTable();
     renderAdminPostsTable();
     renderAdminInquiriesTable();
     openModal(document.getElementById("adminDashboardModal"));
 }
 
 function switchAdminTab(tabKey) {
-    const tabs = ["stats", "inquiries", "instructors", "posts", "affiliate", "settings"];
+    const tabs = ["stats", "inquiries", "users", "instructors", "posts", "affiliate", "settings"];
     tabs.forEach(t => {
         const btn = document.getElementById(`adminTab${t.charAt(0).toUpperCase() + t.slice(1)}`);
         const panel = document.getElementById(`adminPanel${t.charAt(0).toUpperCase() + t.slice(1)}`);
@@ -1445,8 +1469,92 @@ function switchAdminTab(tabKey) {
         }
     });
 
+    if (tabKey === "users") renderAdminUsersTable();
     if (tabKey === "posts") renderAdminPostsTable();
     if (tabKey === "inquiries") renderAdminInquiriesTable();
+}
+
+function renderAdminUsersTable() {
+    const tbody = document.getElementById("adminUsersTbody");
+    const countBadge = document.getElementById("adminUsersCountBadge");
+
+    const usersMap = getRegisteredUsers();
+    const usersList = Object.values(usersMap);
+
+    if (countBadge) countBadge.textContent = usersList.length;
+
+    if (!tbody) return;
+
+    if (usersList.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" style="text-align:center; color: var(--text-muted); padding: 20px;">
+                    가입된 회원 DB가 없습니다.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = usersList.map(u => {
+        const regDate = u.createdAt ? formatDate(u.createdAt) : "가입 완료";
+        const statusText = u.instructorStatus === "approved"
+            ? `<span style="color:#00e676; font-weight:700;"><i class="fa-solid fa-graduation-cap"></i> 공인 강사 (승인)</span>`
+            : (u.instructorStatus === "pending"
+                ? `<span style="color:var(--accent-gold); font-weight:700;"><i class="fa-solid fa-clock"></i> 심사 대기중</span>`
+                : `<span style="color:var(--text-dim);">일반 다이버</span>`);
+
+        return `
+            <tr>
+                <td style="font-size:0.8rem; color:var(--text-muted);">${regDate}</td>
+                <td><strong>${escapeHtml(u.realName || u.name || '미입력')}</strong></td>
+                <td>${escapeHtml(u.name || '-')}</td>
+                <td><code style="color:var(--accent-cyan);">${escapeHtml(u.email || '-')}</code></td>
+                <td>${escapeHtml(u.phone || '미입력')}</td>
+                <td>${statusText}</td>
+                <td><span class="badge badge-secondary" style="font-size:0.75rem;">${escapeHtml(u.provider || '홈페이지 회원')}</span></td>
+            </tr>
+        `;
+    }).join("");
+}
+
+function exportUserDbToCsv() {
+    const usersMap = getRegisteredUsers();
+    const usersList = Object.values(usersMap);
+
+    if (usersList.length === 0) {
+        showToast("⚠️ 다운로드할 회원 DB 가입 데이터가 없습니다.");
+        return;
+    }
+
+    let csvContent = "\uFEFF가입일시,실명(성함),닉네임,이메일(아이디),휴대폰번호,자격증/경력,강사승인상태,가입경로\n";
+
+    usersList.forEach(u => {
+        const dateStr = u.createdAt || "";
+        const realName = (u.realName || u.name || "").replace(/,/g, " ");
+        const nick = (u.name || "").replace(/,/g, " ");
+        const email = (u.email || "").replace(/,/g, " ");
+        const phone = (u.phone || "").replace(/,/g, " ");
+        const license = (u.license || "").replace(/,/g, " ");
+        const status = u.instructorStatus || "일반회원";
+        const provider = (u.provider || "홈페이지").replace(/,/g, " ");
+
+        csvContent += `"${dateStr}","${realName}","${nick}","${email}","${phone}","${license}","${status}","${provider}"\n`;
+    });
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const now = new Date();
+    const dateTag = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+    
+    link.setAttribute("href", url);
+    link.setAttribute("download", `AquaBuddy_Users_DB_${dateTag}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showToast("📥 전체 회원 DB가 성공적으로 CSV 엑셀 파일로 다운로드되었습니다!");
 }
 
 function renderAdminInquiriesTable() {
@@ -1808,6 +1916,7 @@ function handleDirectSignup(e) {
     };
 
     saveRegisteredUser(newUser);
+    syncUserToSupabaseCloud(newUser);
 
     currentUser = {
         email: newUser.email,

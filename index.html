@@ -965,6 +965,9 @@
                     <button class="admin-tab-btn" id="adminTabInquiries" onclick="switchAdminTab('inquiries')" style="color: var(--accent-gold);">
                         💬 고객 문의 & 제휴/건의함 <span class="badge-count-gold" id="adminInquiriesBadge">1</span>
                     </button>
+                    <button class="admin-tab-btn" id="adminTabUsers" onclick="switchAdminTab('users')" style="color: #00e676; font-weight: 800;">
+                        👥 회원 DB 관리 <span class="badge-count-gold" id="adminUsersCountBadge">0</span>
+                    </button>
                     <button class="admin-tab-btn" id="adminTabInstructors" onclick="switchAdminTab('instructors')">
                         🎓 강사 인증 심사대 <span class="badge-count-gold" id="adminInstPendingBadge">1</span>
                     </button>
@@ -1021,6 +1024,32 @@
                                 </tr>
                             </thead>
                             <tbody id="adminInquiriesTbody">
+                            </tbody>
+                        </table>
+                    </div>
+                <div id="adminPanelUsers" class="hidden">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                        <h3 style="font-size: 1rem; color: #00e676; margin: 0;">
+                            👥 실시간 수집된 회원 DB 리스트 (Supabase 중앙 서버 동기화 완료)
+                        </h3>
+                        <button class="btn btn-primary" onclick="exportUserDbToCsv()" style="background: linear-gradient(135deg, #00e676, #00b0ff); color: #000; font-weight: 900; padding: 6px 16px; border-radius: 20px;">
+                            <i class="fa-solid fa-file-excel"></i> 📥 전체 회원 DB 엑셀(CSV) 다운로드
+                        </button>
+                    </div>
+                    <div class="admin-table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>가입일시</th>
+                                    <th>성함 (실명)</th>
+                                    <th>닉네임</th>
+                                    <th>이메일 (아이디)</th>
+                                    <th>휴대폰 번호</th>
+                                    <th>자격증 / 강사 상태</th>
+                                    <th>가입 경로</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminUsersTbody">
                             </tbody>
                         </table>
                     </div>
