@@ -728,9 +728,10 @@ const OCEAN_WEATHER_DATA = [
 const INITIAL_POSTS = [
     {
         id: "post-instructor-1",
-        title: "[AIDA 강사] 가평 K26 1일 원데이 프리다이빙 체험 강습 모집!",
+        title: "[프리다이빙] 가평 K26 1일 원데이 프리다이빙 체험 & AIDA2 자격증 코스!",
         category: "instructor",
-        categoryName: "강사 클래스",
+        instSubCategory: "freediving",
+        categoryName: "강사 클래스 (프리다이빙)",
         instructorOrg: "AIDA",
         instructorLicenseCode: "AIDA-IN-98472",
         classType: "1일 원데이 체험 강습",
@@ -751,7 +752,7 @@ const INITIAL_POSTS = [
         attendees: ["해양마스터강사"],
         hostRating: 5.0,
         hostReviewsCount: 42,
-        desc: "수영을 못해도 OK! AIDA 공인 인증 강사(라이선스: AIDA-IN-98472)가 1:2 소수 정예로 안전하고 재미있게 수심 10m 프리다이빙을 체험시켜 드립니다. 수중 영상 무료 촬영 서비스!",
+        desc: "수영을 못해도 OK! AIDA 공인 인증 강사가 1:2 소수 정예로 안전하고 재미있게 수심 10m 프리다이빙을 체험시켜 드립니다. 고화질 수중 영상 무료 촬영 서비스 포함!",
         status: "recruiting",
         statusText: "수강생 모집 중",
         likes: 28,
@@ -765,6 +766,120 @@ const INITIAL_POSTS = [
         ],
         images: [],
         createdAt: "2026-07-27T22:00:00"
+    },
+    {
+        id: "post-instructor-swim",
+        title: "[실내수영] 자유형/배영 영법 교정 & 스타트/턴 1:1 개인레슨",
+        category: "instructor",
+        instSubCategory: "swim",
+        categoryName: "강사 클래스 (실내수영)",
+        instructorOrg: "체육지도자",
+        instructorLicenseCode: "SWIM-IN-5519",
+        classType: "1:1 교정 클리닉",
+        classFee: 50000,
+        classRatio: "1:1 개인밀착 강습",
+        classInclusion: "수중 폼 영상 분석 리포트 포함",
+        location: "양산시 국민체육센터 수영장",
+        region: "yeongnam",
+        locationName: "양산시 국민체육센터 수영장",
+        mapAddress: "경남 양산시 물금읍 가촌리 1312",
+        date: "2026-08-03T10:00",
+        userName: "수영마스터코치",
+        userLicense: "전문스포츠지도사 1급 (수영)",
+        certImage: "",
+        reqLicense: "자유형 50m 가능자 / 폼 교정 희망 다이버",
+        capacity: 2,
+        joinedCount: 1,
+        attendees: ["수영마스터코치"],
+        hostRating: 4.9,
+        hostReviewsCount: 31,
+        desc: "호흡이 차고 어깨가 아프신가요? 1:1 수중 카메라 촬영 폼 분석으로 스트로크와 캐치 동작을 완벽히 교정해 드립니다.",
+        status: "recruiting",
+        statusText: "수강생 모집 중",
+        likes: 19,
+        userLiked: false,
+        wishlistCount: 12,
+        userWished: false,
+        unreadCount: 0,
+        comments: [],
+        images: [],
+        createdAt: "2026-07-28T14:00:00"
+    },
+    {
+        id: "post-instructor-ocean",
+        title: "[바다수영] 동해/포항 오픈워터 해양 수영 & 스노클링 입수 안전 강습",
+        category: "instructor",
+        instSubCategory: "ocean_swim",
+        categoryName: "강사 클래스 (바다수영)",
+        instructorOrg: "KUA",
+        instructorLicenseCode: "OCEAN-IN-3019",
+        classType: "1일 원데이 체험 강습",
+        classFee: 70000,
+        classRatio: "1:3 소수그룹 강습",
+        classInclusion: "오렌지 안전부표 렌탈 & 조류 적응 훈련",
+        location: "포항 영일대 해양 레저 스팟",
+        region: "yeongnam",
+        locationName: "포항 영일대 해수욕장",
+        mapAddress: "경북 포항시 북구 두호동 1014",
+        date: "2026-08-04T09:00",
+        userName: "오픈워터대장",
+        userLicense: "바다수영 10년 / KUA 지도자",
+        certImage: "",
+        reqLicense: "실내수영 100m 완료자",
+        capacity: 3,
+        joinedCount: 1,
+        attendees: ["오픈워터대장"],
+        hostRating: 5.0,
+        hostReviewsCount: 27,
+        desc: "바다 입수가 무서운 분들을 위한 실전 해양 수영 훈련! 너울 파도 대처법, 조류 탈출법, 수트 착용 조력 적응을 안전하게 지도합니다.",
+        status: "recruiting",
+        statusText: "수강생 모집 중",
+        likes: 22,
+        userLiked: false,
+        wishlistCount: 15,
+        userWished: false,
+        unreadCount: 0,
+        comments: [],
+        images: [],
+        createdAt: "2026-07-28T15:30:00"
+    },
+    {
+        id: "post-instructor-scuba",
+        title: "[스쿠버다이빙] 제주 서귀포 문섬/범섬 오픈워터 라이선스 정규 코스",
+        category: "instructor",
+        instSubCategory: "scuba",
+        categoryName: "강사 클래스 (스쿠버다이빙)",
+        instructorOrg: "SSI",
+        instructorLicenseCode: "SSI-CD-10928",
+        classType: "자격증 코스 정규반",
+        classFee: 350000,
+        classRatio: "1:2 소수정예 강습",
+        classInclusion: "SSI 국제 라이선스 발급비 & 공기통 렌탈 포함",
+        location: "제주 서귀포 문섬 해양 스팟",
+        region: "jeju",
+        locationName: "제주 서귀포 문섬 해양 스팟",
+        mapAddress: "제주특별자치도 서귀포시 서귀동 756",
+        date: "2026-08-10T10:00",
+        userName: "스쿠버코스디렉터",
+        userLicense: "SSI Course Director (No. 10928)",
+        certImage: "",
+        reqLicense: "만 10세 이상 누구나 수강 가능",
+        capacity: 2,
+        joinedCount: 1,
+        attendees: ["스쿠버코스디렉터"],
+        hostRating: 5.0,
+        hostReviewsCount: 88,
+        desc: "세계적인 청정 다이빙 스팟 서귀포 문섬에서 진행되는 3일 정규 오픈워터 코스! SSI 코스 디렉터 직강으로 중성부력과 수중 안전을 완벽 마스터해 드립니다.",
+        status: "recruiting",
+        statusText: "수강생 모집 중",
+        likes: 45,
+        userLiked: false,
+        wishlistCount: 30,
+        userWished: false,
+        unreadCount: 0,
+        comments: [],
+        images: [],
+        createdAt: "2026-07-28T18:00:00"
     },
     {
         id: "post-openwater-1",
@@ -1360,37 +1475,150 @@ function approveInstructorCertDemo(name) {
 function openProfileModal() {
     if (!currentUser) return;
 
-    document.getElementById("myProfNameDisplay").textContent = currentUser.name;
-    document.getElementById("myProfProviderDisplay").textContent = `${currentUser.provider || 'AquaBuddy'} 인증 계정`;
+    const isInstructor = !!(currentUser.instructorCode || currentUser.isApprovedInstructor || currentUser.provider?.includes("강사"));
+
+    document.getElementById("myProfNameDisplay").innerHTML = isInstructor
+        ? `${escapeHtml(currentUser.name)} <span class="badge badge-instructor" style="font-size:0.75rem; vertical-align:middle; margin-left:6px; background:linear-gradient(135deg, #ffb703, #ff8f00); color:#000; font-weight:900;"><i class="fa-solid fa-graduation-cap"></i> VERIFIED INSTRUCTOR (공인 강사)</span>`
+        : escapeHtml(currentUser.name);
+
+    document.getElementById("myProfProviderDisplay").textContent = isInstructor
+        ? `🎓 AquaBuddy 검증 공인 강사 계정`
+        : `${currentUser.provider || 'AquaBuddy'} 인증 계정`;
+
     document.getElementById("myProfNickInput").value = currentUser.name;
     document.getElementById("myProfLicenseInput").value = currentUser.license || "";
 
-    let myReviews = (currentUser.reviews || []);
-    if (myReviews.length === 0) {
-        myReviews = [
-            { author: "포항다이버", score: 5.0, comment: "안전하게 수심 연습 같이해주셔서 너무 감사했습니다!", date: "2026-07-28" },
-            { author: "동해물개", score: 5.0, comment: "약속 시간 엄수하시고 핀킥 교정 꿀팁도 주셨어요!", date: "2026-07-25" },
-            { author: "가평물개", score: 4.8, comment: "K26 버디 모임 최고였습니다. 매너 좋으세요!", date: "2026-07-20" }
-        ];
-    }
-    const avgScore = (myReviews.reduce((sum, r) => sum + r.score, 0) / myReviews.length).toFixed(1);
-    document.getElementById("myProfAvgScore").textContent = `★ ${avgScore} / 5.0`;
-    document.getElementById("myProfMeetingCount").textContent = `모임 ${currentUser.completedCount || 12}회 완료`;
+    const myReviews = (currentUser.reviews || []);
+    const completedCount = currentUser.completedCount || 0;
 
-    const reviewsListEl = document.getElementById("myProfReviewsList");
-    if (reviewsListEl) {
-        reviewsListEl.innerHTML = myReviews.slice(-3).reverse().map(r => `
-            <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.06); padding: 8px 12px; border-radius: 8px;">
-                <div style="display: flex; justify-content: space-between; font-size: 0.78rem; margin-bottom: 2px;">
-                    <span style="color: var(--accent-cyan); font-weight: 700;">👤 ${escapeHtml(r.author)}</span>
-                    <span style="color: var(--accent-gold); font-weight: 800;">★ ${r.score}</span>
+    if (myReviews.length === 0 && completedCount === 0) {
+        document.getElementById("myProfAvgScore").innerHTML = `<span style="color:var(--accent-cyan);"><i class="fa-solid fa-seedling"></i> 신규 다이버 🌱 (평점 평가 대기 중)</span>`;
+        document.getElementById("myProfMeetingCount").textContent = `모임 0회 완료`;
+
+        const reviewsListEl = document.getElementById("myProfReviewsList");
+        if (reviewsListEl) {
+            reviewsListEl.innerHTML = `
+                <div style="font-size: 0.82rem; color: var(--text-muted); text-align: center; padding: 12px; background: rgba(0,0,0,0.3); border-radius: 8px; border: 1px dashed var(--glass-border);">
+                    <i class="fa-solid fa-water" style="color:var(--accent-cyan); margin-bottom:4px; font-size:1.2rem; display:block;"></i>
+                    아직 작성된 한줄평이 없습니다. 첫 버디 모임을 함께하고 첫 번째 평점과 후기를 공유해 보세요! 🌊
                 </div>
-                <p style="font-size: 0.82rem; color: var(--text-main); line-height: 1.3;">"${escapeHtml(r.comment)}"</p>
-            </div>
-        `).join("");
+            `;
+        }
+    } else {
+        const avgScore = myReviews.length > 0
+            ? (myReviews.reduce((sum, r) => sum + r.score, 0) / myReviews.length).toFixed(1)
+            : "5.0";
+        document.getElementById("myProfAvgScore").textContent = `★ ${avgScore} / 5.0`;
+        document.getElementById("myProfMeetingCount").textContent = `모임 ${completedCount}회 완료`;
+
+        const reviewsListEl = document.getElementById("myProfReviewsList");
+        if (reviewsListEl) {
+            reviewsListEl.innerHTML = myReviews.slice(-3).reverse().map(r => `
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.06); padding: 8px 12px; border-radius: 8px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.78rem; margin-bottom: 2px;">
+                        <span style="color: var(--accent-cyan); font-weight: 700;">👤 ${escapeHtml(r.author)}</span>
+                        <span style="color: var(--accent-gold); font-weight: 800;">★ ${r.score}</span>
+                    </div>
+                    <p style="font-size: 0.82rem; color: var(--text-main); line-height: 1.3;">"${escapeHtml(r.comment)}"</p>
+                </div>
+            `).join("");
+        }
     }
 
     openModal(document.getElementById("myProfileModal"));
+}
+
+let activeInstructorSubFilter = "all";
+
+function filterInstructorSub(subType) {
+    activeInstructorSubFilter = subType;
+    document.querySelectorAll("#instructorSubFilterBar .sub-tab-btn").forEach(btn => {
+        if (btn.dataset.instsub === subType) {
+            btn.classList.add("active");
+        } else {
+            btn.classList.remove("active");
+        }
+    });
+    filterAndRender();
+}
+
+let pendingInquiryClassId = null;
+
+function openInstructorInquiryModal(classId) {
+    pendingInquiryClassId = classId;
+    const post = OCEAN_CLASSES_DATA ? OCEAN_CLASSES_DATA.find(c => c.id === classId) : null;
+    
+    const targetClassEl = document.getElementById("instInquiryTargetClass");
+    const targetInstEl = document.getElementById("instInquiryTargetInstructor");
+
+    if (post) {
+        if (targetClassEl) targetClassEl.textContent = `클래스명: ${post.title}`;
+        if (targetInstEl) targetInstEl.textContent = `담당 강사: ${post.userName} (${post.userLicense || '공인 강사'})`;
+    } else {
+        if (targetClassEl) targetClassEl.textContent = `클래스명: 강사 1:1 레슨 문의`;
+        if (targetInstEl) targetInstEl.textContent = `담당 강사: AquaBuddy 공인 강사`;
+    }
+
+    openModal(document.getElementById("instructorInquiryModal"));
+}
+
+function handleSendInstructorInquiry(e) {
+    e.preventDefault();
+    const msg = document.getElementById("instInquiryMessage").value.trim();
+    const contact = document.getElementById("instInquiryContact").value.trim();
+
+    if (!msg || !contact) {
+        showToast("⚠️ 문의 내용과 연락처를 모두 입력해 주세요.");
+        return;
+    }
+
+    closeModal(document.getElementById("instructorInquiryModal"));
+    showToast("✉️ 강사님께 1:1 문의 메시지가 전달되었습니다. 답변을 기다려 주세요!");
+}
+
+let pendingHostSubmitEvent = null;
+
+function interceptHostSubmit(e) {
+    e.preventDefault();
+    pendingHostSubmitEvent = e;
+    const checkEl = document.getElementById("hostDisclaimerCheck");
+    if (checkEl) checkEl.checked = false;
+    openModal(document.getElementById("hostDisclaimerModal"));
+}
+
+function confirmHostDisclaimerSubmit() {
+    const checkEl = document.getElementById("hostDisclaimerCheck");
+    if (!checkEl || !checkEl.checked) {
+        showToast("⚠️ 해양 안전 수칙 및 플랫폼 면책 방침에 동의해 주세요.");
+        return;
+    }
+
+    closeModal(document.getElementById("hostDisclaimerModal"));
+    if (typeof handleSavePost === "function") {
+        handleSavePost(pendingHostSubmitEvent);
+    }
+}
+
+let pendingJoinPostId = null;
+
+function interceptJoinPost(postId) {
+    pendingJoinPostId = postId;
+    const checkEl = document.getElementById("participantDisclaimerCheck");
+    if (checkEl) checkEl.checked = false;
+    openModal(document.getElementById("participantDisclaimerModal"));
+}
+
+function confirmParticipantDisclaimerSubmit() {
+    const checkEl = document.getElementById("participantDisclaimerCheck");
+    if (!checkEl || !checkEl.checked) {
+        showToast("⚠️ 해양 입수 안전 수칙 및 면책 동의에 체크해 주세요.");
+        return;
+    }
+
+    closeModal(document.getElementById("participantDisclaimerModal"));
+    if (pendingJoinPostId && typeof handleJoinPostDirect === "function") {
+        handleJoinPostDirect(pendingJoinPostId);
+    }
 }
 
 function handleUpdateProfile(e) {
@@ -1819,6 +2047,15 @@ function initEventListeners() {
             btn.classList.add("active");
             activeCategory = btn.dataset.category;
             
+            const instSubBar = document.getElementById("instructorSubFilterBar");
+            if (instSubBar) {
+                if (activeCategory === "instructor") {
+                    instSubBar.classList.remove("hidden");
+                } else {
+                    instSubBar.classList.add("hidden");
+                }
+            }
+
             updateCreateButtonText(activeCategory);
             renderAdBanner();
             filterAndRender();
@@ -1889,7 +2126,7 @@ function initEventListeners() {
 
     if (closeCreateModalBtn) closeCreateModalBtn.addEventListener("click", () => closeModal(createModal));
     if (cancelCreateBtn) cancelCreateBtn.addEventListener("click", () => closeModal(createModal));
-    if (createPostForm) createPostForm.addEventListener("submit", handleSavePost);
+    if (createPostForm) createPostForm.addEventListener("submit", interceptHostSubmit);
 
     const mapAddrInput = document.getElementById("postMapAddress");
     if (mapAddrInput) {
@@ -3356,6 +3593,15 @@ function toggleLike(postId) {
 }
 
 function joinBuddyMatch(postId) {
+    if (!currentUser) {
+        showToast("🔑 로그인 후 참가 신청을 진행하실 수 있습니다!");
+        openModal(authModal);
+        return;
+    }
+    interceptJoinPost(postId);
+}
+
+function handleJoinPostDirect(postId) {
     const post = posts.find(p => p.id === postId);
     if (!post) return;
 
