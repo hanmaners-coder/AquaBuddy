@@ -1921,6 +1921,21 @@ function openWebcamModal(camId) {
         if (iframe) iframe.style.display = "none";
         if (video) video.style.display = "block";
 
+        const fallbackToIframe = () => {
+            if (activeHlsPlayer) {
+                activeHlsPlayer.destroy();
+                activeHlsPlayer = null;
+            }
+            if (video) {
+                video.pause();
+                video.style.display = "none";
+            }
+            if (iframe && cam.embedUrl) {
+                iframe.style.display = "block";
+                iframe.src = cam.embedUrl;
+            }
+        };
+
         if (Hls && Hls.isSupported()) {
             if (activeHlsPlayer) {
                 activeHlsPlayer.destroy();
@@ -1931,9 +1946,18 @@ function openWebcamModal(camId) {
             activeHlsPlayer.on(Hls.Events.MANIFEST_PARSED, function() {
                 video.play().catch(e => console.log("HLS Autoplay Notice:", e));
             });
+            activeHlsPlayer.on(Hls.Events.ERROR, function(event, data) {
+                if (data.fatal) {
+                    console.warn("HLS fatal error, falling back to iframe:", data);
+                    fallbackToIframe();
+                }
+            });
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
             video.src = cam.hlsUrl;
+            video.onerror = fallbackToIframe;
             video.play().catch(e => console.log("Native HLS Autoplay Notice:", e));
+        } else {
+            fallbackToIframe();
         }
     } else {
         if (video) {
