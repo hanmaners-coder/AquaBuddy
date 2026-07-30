@@ -1329,6 +1329,8 @@ function initUserIdentity() {
 function updateNavbarUserUI() {
     const userNav = document.getElementById("userProfileNav");
     const openAuthBtn = document.getElementById("openAuthModalBtn");
+    const navActivity = document.getElementById("navLinkActivity");
+    const tabActivity = document.querySelector('.tab-btn[data-category="activity_log"]');
 
     if (currentUser && currentUser.name) {
         if (userNav) userNav.classList.remove("hidden");
@@ -1336,9 +1338,19 @@ function updateNavbarUserUI() {
         const navName = document.getElementById("navUserName");
         if (navName) navName.textContent = `${currentUser.name}${instBadge}`;
         if (openAuthBtn) openAuthBtn.classList.add("hidden");
+
+        if (navActivity) navActivity.style.display = "inline-flex";
+        if (tabActivity) tabActivity.style.display = "inline-flex";
     } else {
         if (userNav) userNav.classList.add("hidden");
         if (openAuthBtn) openAuthBtn.classList.remove("hidden");
+
+        if (navActivity) navActivity.style.display = "none";
+        if (tabActivity) tabActivity.style.display = "none";
+
+        if (activeCategory === "activity_log") {
+            activeCategory = "all";
+        }
     }
 
     updateCreateButtonText(activeCategory);
@@ -1619,7 +1631,11 @@ function approveInstructorCertDemo(name) {
 }
 
 function openProfileModal() {
-    if (!currentUser) return;
+    if (!currentUser || !currentUser.name) {
+        switchAuthTab('login');
+        openModal(authModal);
+        return;
+    }
 
     const isInstructor = !!(currentUser.instructorCode || currentUser.isApprovedInstructor || currentUser.provider?.includes("강사"));
 

@@ -117,7 +117,7 @@
                 <a href="#" class="nav-item" id="navLinkMarket" onclick="switchMainView('feed'); filterByCategory('market'); return false;">
                     <i class="fa-solid fa-tags"></i> 중고장터
                 </a>
-                <a href="#" class="nav-item" id="navLinkActivity" onclick="switchMainView('feed'); filterByCategory('activity_log'); return false;">
+                <a href="#" class="nav-item" id="navLinkActivity" onclick="if(!currentUser){switchAuthTab('login');openModal(authModal);return false;} switchMainView('feed'); filterByCategory('activity_log'); return false;">
                     <i class="fa-solid fa-clipboard-list"></i> 내 활동기록
                 </a>
                 <a href="#" class="nav-item" id="navLinkTide" onclick="switchMainView('tide'); return false;">
