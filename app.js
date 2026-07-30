@@ -1311,21 +1311,11 @@ function initKakaoSdk() {
 
 // Initialize User Identity
 function initUserIdentity() {
-    let savedUser = localStorage.getItem("aqua_buddy_user_identity");
-    if (savedUser) {
-        try {
-            currentUser = JSON.parse(savedUser);
-        } catch(e) {
-            currentUser = null;
-        }
-    } else {
-        currentUser = null;
-    }
-
-    // [DEBUG] Bypass login checks globally based on user request
-    if (!currentUser || !currentUser.name) {
-        currentUser = { name: "게스트", provider: "로컬테스트", instructorStatus: "approved", reviews: [], completedCount: 0 };
-    }
+    // [완전 제거] 기존 로그인 데이터를 무시하고 삭제합니다.
+    localStorage.removeItem("aqua_buddy_user_identity");
+    
+    // 무조건 게스트로 로그인 통과되게 고정 (강사 권한 부여)
+    currentUser = { name: "게스트", provider: "로컬", instructorStatus: "approved", reviews: [], completedCount: 0 };
 
     checkKakaoOAuthCallback();
     updateNavbarUserUI();
