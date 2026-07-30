@@ -1779,3 +1779,72 @@ input[type="time"]::-webkit-calendar-picker-indicator {
     transform: translateY(-2px);
     filter: brightness(1.05);
 }
+
+/* =========================================================
+   📱 RESPONSIVE OPTIMIZATION (MOBILE & TABLET) v2.0
+   ========================================================= */
+
+@media (max-width: 1024px) {
+    .filter-grid-clean {
+        gap: 10px;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Navbar compacting */
+    .navbar {
+        padding: 10px 14px;
+        gap: 8px;
+    }
+    .logo {
+        font-size: 1.2rem;
+    }
+    
+    /* Filter Section */
+    .filter-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 6px;
+    }
+    .filter-header h2 {
+        font-size: 1.15rem;
+    }
+    .active-count {
+        font-size: 0.85rem;
+        text-align: left;
+    }
+
+    /* Form Controls Optimization */
+    .filter-grid-clean .filter-item input,
+    .filter-grid-clean .filter-item select,
+    .filter-grid-clean .reset-filter-btn {
+        padding: 12px 14px;
+        font-size: 0.9rem;
+        height: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Extreme Mobile Optimization */
+    .navbar {
+        padding: 8px 10px;
+    }
+    .logo {
+        font-size: 1.1rem;
+    }
+    .logo i {
+        font-size: 1.2rem;
+    }
+    
+    /* Hide specific texts to save space */
+    #createBtnText {
+        display: none !important;
+    }
+    .nav-actions .btn {
+        padding: 8px 12px !important;
+        font-size: 0.95rem;
+    }
+    .nav-user-container {
+        font-size: 0.8rem;
+    }
+}
