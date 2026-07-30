@@ -2875,16 +2875,21 @@ function filterAndRender() {
     });
 
     filtered.sort((a, b) => {
-        if (selectedSort === "newest") return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
-        if (selectedSort === "oldest") return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
-        if (selectedSort === "max_capacity") return (b.capacity || 1) - (a.capacity || 1);
-        if (selectedSort === "min_capacity") return (a.capacity || 1) - (b.capacity || 1);
+        if (a.isPremium && !b.isPremium) return -1;
+        if (!a.isPremium && b.isPremium) return 1;
+
+        if (selectedSort === "premium") {
+            return (b.likes || 0) - (a.likes || 0);
+        }
+        if (selectedSort === "popularity") {
+            return (b.likes || 0) + (b.wishlistCount || 0) - ((a.likes || 0) + (a.wishlistCount || 0));
+        }
         if (selectedSort === "closing_soon") {
             if (a.status === "recruiting" && b.status !== "recruiting") return -1;
             if (a.status !== "recruiting" && b.status === "recruiting") return 1;
             return new Date(a.date || 0) - new Date(b.date || 0);
         }
-        return 0;
+        return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
     });
 
     renderGrid(filtered);
