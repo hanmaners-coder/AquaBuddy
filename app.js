@@ -1500,10 +1500,13 @@ function handleDirectLogin(e) {
     showToast(`🎉 Welcome back, ${currentUser.name}님!`);
 }
 
+let verifiedResetEmail = null;
+
 function handleDirectSignup(e) {
     e.preventDefault();
     const email = document.getElementById("signupEmailInput").value.trim().toLowerCase();
     const pw = document.getElementById("signupPasswordInput").value.trim();
+    const pwConfirm = document.getElementById("signupPasswordConfirmInput") ? document.getElementById("signupPasswordConfirmInput").value.trim() : pw;
     const realName = document.getElementById("signupRealNameInput") ? document.getElementById("signupRealNameInput").value.trim() : "";
     const nick = document.getElementById("signupNicknameInput").value.trim();
     const phone = document.getElementById("signupPhoneInput") ? document.getElementById("signupPhoneInput").value.trim() : "";
@@ -1511,6 +1514,11 @@ function handleDirectSignup(e) {
 
     if (!email || !pw || !realName || !nick || !license || !phone) {
         showToast("⚠️ 모든 필수 항목을 입력해 주세요.");
+        return;
+    }
+
+    if (pw !== pwConfirm) {
+        showToast("⚠️ 비밀번호와 비밀번호 확인이 일치하지 않습니다.");
         return;
     }
 
@@ -1569,6 +1577,12 @@ function switchFindTab(type) {
     const resetPwBox = document.getElementById("resetPwFormBox");
     const resultBox = document.getElementById("findIdResult");
 
+    const step1Box = document.getElementById("findPwStep1Box");
+    const step2Box = document.getElementById("findPwStep2Box");
+    if (step1Box) step1Box.classList.remove("hidden");
+    if (step2Box) step2Box.classList.add("hidden");
+    verifiedResetEmail = null;
+
     if (resultBox) resultBox.style.display = "none";
 
     if (type === "id") {
@@ -1615,16 +1629,15 @@ function handleFindId(e) {
     }
 }
 
-function handleResetPassword(e) {
+function handleVerifyResetUser(e) {
     e.preventDefault();
     const email = document.getElementById("resetPwEmail").value.trim().toLowerCase();
     const nameInput = document.getElementById("resetPwName");
     const name = nameInput ? nameInput.value.trim().toLowerCase() : "";
     const phone = document.getElementById("resetPwPhone") ? document.getElementById("resetPwPhone").value.trim().replace(/[^0-9]/g, "") : "";
-    const newPw = document.getElementById("newPasswordInput").value.trim();
 
-    if (!email || !name || !phone || !newPw) {
-        showToast("⚠️ 이메일, 이름, 휴대폰 번호, 새 비밀번호를 모두 입력해 주세요.");
+    if (!email || !name || !phone) {
+        showToast("⚠️ 이메일, 이름, 휴대폰 번호를 모두 입력해 주세요.");
         return;
     }
 
@@ -1632,7 +1645,7 @@ function handleResetPassword(e) {
     const user = users[email];
 
     if (!user) {
-        showToast("❌ 등록되지 않은 이메일 주소입니다.");
+        showToast("❌ 가입되지 않은 이메일 주소입니다.");
         return;
     }
 
@@ -1644,22 +1657,47 @@ function handleResetPassword(e) {
         return;
     }
 
-    users[email].password = newPw;
-    localStorage.setItem("aqua_buddy_registered_users", JSON.stringify(users));
+    verifiedResetEmail = email;
+    document.getElementById("findPwStep1Box")?.classList.add("hidden");
+    document.getElementById("findPwStep2Box")?.classList.remove("hidden");
+    showToast("✓ 본인 확인이 완료되었습니다! 사용할 새 비밀번호를 입력해 주세요.");
+}
 
+function handleFinalResetPassword(e) {
+    e.preventDefault();
+    if (!verifiedResetEmail) {
+        showToast("⚠️ 본인 확인 절차를 다시 진행해 주세요.");
+        switchFindTab('pw');
+        return;
+    }
+
+    const newPw = document.getElementById("newPasswordInput").value.trim();
+    const newPwConfirm = document.getElementById("newPasswordConfirmInput") ? document.getElementById("newPasswordConfirmInput").value.trim() : newPw;
+
+    if (!newPw || newPw.length < 6) {
+        showToast("⚠️ 비밀번호는 6자 이상이어야 합니다.");
+        return;
+    }
+
+    if (newPw !== newPwConfirm) {
+        showToast("⚠️ 새 비밀번호와 비밀번호 확인이 일치하지 않습니다.");
+        return;
+    }
+
+    const users = getRegisteredUsers();
+    if (users[verifiedResetEmail]) {
+        users[verifiedResetEmail].password = newPw;
+        localStorage.setItem("aqua_buddy_registered_users", JSON.stringify(users));
+    }
+
+    verifiedResetEmail = null;
     closeModal(document.getElementById("findAccountModal"));
-    showToast("🔑 비밀번호가 성공적으로 변경되었습니다. 새 비밀번호로 로그인해 주세요.");
+    showToast("🔑 비밀번호가 성공적으로 변경되었습니다! 새 비밀번호로 로그인해 주세요.");
     openModal(document.getElementById("authModal"));
     switchAuthTab("login");
 }
 
 function loginWithKakaoOAuth() {
-    const nickInput = document.getElementById("kakaoNicknameInput") ? document.getElementById("kakaoNicknameInput").value.trim() : "";
-    const licInput = document.getElementById("kakaoLicenseInput") ? document.getElementById("kakaoLicenseInput").value.trim() : "";
-
-    if (nickInput) localStorage.setItem("aqua_buddy_pending_auth_nick", nickInput);
-    if (licInput) localStorage.setItem("aqua_buddy_pending_auth_lic", licInput);
-
     initKakaoSdk();
 
     const redirectTargetUri = (typeof window !== "undefined" && window.location.origin)
@@ -1670,7 +1708,6 @@ function loginWithKakaoOAuth() {
         try {
             window.Kakao.Auth.authorize({
                 redirectUri: redirectTargetUri
-                // Removed prompt: 'login' to enable smooth SSO / session-retaining login
             });
             return;
         } catch (e) {
@@ -1678,7 +1715,6 @@ function loginWithKakaoOAuth() {
         }
     }
 
-    // Direct Kakao OAuth URL Fallback (No forced re-prompting)
     const encodedRedirect = encodeURIComponent(redirectTargetUri);
     window.location.href = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_APP_KEY}&redirect_uri=${encodedRedirect}&response_type=code`;
 }
@@ -1692,16 +1728,20 @@ function checkKakaoOAuthCallback() {
         const cleanUrl = window.location.origin + window.location.pathname;
         window.history.replaceState({}, document.title, cleanUrl);
 
-        const pendingNick = localStorage.getItem("aqua_buddy_pending_auth_nick") || "카카오다이버";
-        const pendingLic = localStorage.getItem("aqua_buddy_pending_auth_lic") || "자격증 정보 미입력";
+        // Check if there is an existing identity in localstorage or user DB
+        const savedUserStr = localStorage.getItem("aqua_buddy_user_identity");
+        let existingUser = null;
+        if (savedUserStr) {
+            try { existingUser = JSON.parse(savedUserStr); } catch(e) {}
+        }
 
-        localStorage.removeItem("aqua_buddy_pending_auth_nick");
-        localStorage.removeItem("aqua_buddy_pending_auth_lic");
+        const nick = (existingUser && existingUser.name) ? existingUser.name : "카카오 다이버";
+        const license = (existingUser && existingUser.license) ? existingUser.license : "자격증 정보 미입력";
 
         currentUser = {
-            name: pendingNick,
-            license: pendingLic,
-            instructorCode: "",
+            name: nick,
+            license: license,
+            instructorCode: (existingUser && existingUser.instructorCode) ? existingUser.instructorCode : "",
             provider: "카카오톡 정식인증",
             avatar: "K",
             kakaoCode: authCode
@@ -1709,9 +1749,11 @@ function checkKakaoOAuthCallback() {
 
         localStorage.setItem("aqua_buddy_user_identity", JSON.stringify(currentUser));
         updateNavbarUserUI();
-        showToast(`🎉 ${pendingNick}님, 카카오톡 로그인에 성공하셨습니다!`);
+        showToast(`🎉 ${nick}님, 카카오톡 1초 로그인에 성공하셨습니다!`);
     }
 }
+
+
 
 function isMyPost(post) {
     if (!post) return false;
