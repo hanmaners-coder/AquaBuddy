@@ -1332,7 +1332,7 @@ function updateNavbarUserUI() {
 
     if (currentUser && currentUser.name) {
         if (userNav) userNav.classList.remove("hidden");
-        const instBadge = currentUser.instructorCode ? ` [인증강사]` : '';
+        const instBadge = isVerifiedInstructor() ? ` [공인강사]` : (isPendingInstructor() ? ` [심사대기중]` : '');
         const navName = document.getElementById("navUserName");
         if (navName) navName.textContent = `${currentUser.name}${instBadge}`;
         if (openAuthBtn) openAuthBtn.classList.add("hidden");
@@ -1345,7 +1345,13 @@ function updateNavbarUserUI() {
 }
 
 function isVerifiedInstructor() {
-    return currentUser && currentUser.instructorCode && currentUser.instructorCode.trim().length > 0;
+    if (!currentUser) return false;
+    return currentUser.instructorStatus === "approved" || currentUser.isApprovedInstructor === true;
+}
+
+function isPendingInstructor() {
+    if (!currentUser) return false;
+    return currentUser.instructorStatus === "pending";
 }
 
 function openInstructorAuthModal() {
@@ -1370,16 +1376,33 @@ function handleInstructorAuthSubmit(e) {
 
     if (currentUser) {
         currentUser.instructorCode = code;
+        currentUser.instructorOrg = org;
         currentUser.license = `${org} Instructor (No. ${code})`;
+        currentUser.instructorStatus = "pending";
+        currentUser.isApprovedInstructor = false;
         if (instAppCertImage) currentUser.certImage = instAppCertImage;
 
         localStorage.setItem("aqua_buddy_user_identity", JSON.stringify(currentUser));
+
+        if (currentUser.email) {
+            const users = getRegisteredUsers();
+            const userKey = currentUser.email.toLowerCase();
+            if (users[userKey]) {
+                users[userKey].instructorCode = code;
+                users[userKey].instructorOrg = org;
+                users[userKey].license = currentUser.license;
+                users[userKey].instructorStatus = "pending";
+                users[userKey].isApprovedInstructor = false;
+                if (instAppCertImage) users[userKey].certImage = instAppCertImage;
+                localStorage.setItem("aqua_buddy_registered_users", JSON.stringify(users));
+            }
+        }
         updateNavbarUserUI();
     }
 
     closeModal(document.getElementById("instructorAuthModal"));
     filterAndRender();
-    showToast(`🎓 강사 자격증 검증 신청서가 접수되었습니다! VERIFIED SEAL 뱃지와 강사 클래스 등록 권한이 활성화되었습니다.`);
+    showToast(`⏳ 강사 자격증 심사 신청이 제출되었습니다! (웹마스터 승인 완료 후 클래스 등록이 활성화됩니다)`);
 }
 
 function openAdminDashboard() {
@@ -2112,8 +2135,12 @@ function initEventListeners() {
                 return;
             }
             if (activeCategory === "instructor") {
+                if (isPendingInstructor()) {
+                    showToast("⏳ 강사 자격증 실물 심사가 진행 중입니다! (웹마스터 승인 완료 후 클래스 등록이 가능합니다)");
+                    return;
+                }
                 if (!isVerifiedInstructor()) {
-                    showToast("🎓 강사 클래스 등록은 인증된 강사만 가능합니다! 먼저 [강사인증] 버튼을 눌러 자격증을 신청해 주세요.");
+                    showToast("🎓 강사 클래스 등록은 승인된 공인 강사만 가능합니다! 먼저 [강사인증] 버튼을 눌러 자격증을 신청해 주세요.");
                     openInstructorAuthModal();
                     return;
                 }
@@ -2526,8 +2553,11 @@ function updateCreateButtonText(cat) {
         if (isVerifiedInstructor()) {
             createBtnText.textContent = "강사 클래스 등록하기";
             openCreateModalBtn.style.opacity = "1";
+        } else if (isPendingInstructor()) {
+            createBtnText.textContent = "⏳ 강사 심사 진행 중 (대기)";
+            openCreateModalBtn.style.opacity = "0.8";
         } else {
-            createBtnText.textContent = "강사인증 후 클래스 등록";
+            createBtnText.textContent = "강사인증 신청 후 등록";
             openCreateModalBtn.style.opacity = "0.9";
         }
     } else {
@@ -2716,6 +2746,15 @@ function filterAndRender() {
     const postsSec = document.querySelector(".posts-section");
     const filterSec = document.getElementById("feed");
 
+    const instSubBar = document.getElementById("instructorSubFilterBar");
+    if (instSubBar) {
+        if (activeCategory === "instructor") {
+            instSubBar.classList.remove("hidden");
+        } else {
+            instSubBar.classList.add("hidden");
+        }
+    }
+
     if (activitySubFilterBar) {
         if (activeCategory === "activity_log") {
             activitySubFilterBar.classList.remove("hidden");
@@ -2751,8 +2790,12 @@ function filterAndRender() {
             return isMyPost(post);
         }
 
-        // Category-Scoped Search Filtering
-        if (activeCategory === "freediving" || activeCategory === "buddy") {
+        if (activeCategory === "instructor") {
+            if (post.category !== "instructor") return false;
+            if (activeInstructorSubFilter !== "all" && post.instSubCategory && post.instSubCategory !== activeInstructorSubFilter) {
+                return false;
+            }
+        } else if (activeCategory === "freediving" || activeCategory === "buddy") {
             if (!["freediving", "scuba", "swimming", "openwater"].includes(post.category)) {
                 return false;
             }
@@ -4175,11 +4218,13 @@ function handleSavePost(e) {
         editingPostId = null;
     } else {
         const newPostId = "post-" + Date.now();
+        const instSubCategoryVal = category === "instructor" ? (document.getElementById("instSubCategorySelect") ? document.getElementById("instSubCategorySelect").value : "freediving") : null;
         const newPost = {
             id: newPostId,
             title,
             category,
             categoryName,
+            instSubCategory: instSubCategoryVal,
             certImage: category === "instructor" ? (currentUser ? currentUser.certImage : uploadedCertImage) : null,
             classType: category === "instructor" ? classType : null,
             classFee: category === "instructor" && classFeeVal ? parseInt(classFeeVal) : null,
@@ -4230,10 +4275,12 @@ function handleSavePost(e) {
 }
 
 function openModal(modal) {
+    if (!modal) return;
     modal.classList.remove("hidden");
 }
 
 function closeModal(modal) {
+    if (!modal) return;
     modal.classList.add("hidden");
 }
 
