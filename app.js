@@ -1363,6 +1363,21 @@ function openInstructorAuthModal() {
     openModal(document.getElementById("instructorAuthModal"));
 }
 
+function safeLocalStorageSet(key, value) {
+    try {
+        localStorage.setItem(key, value);
+    } catch (e) {
+        console.warn("Storage quota limit reached, attempting safe cleanup...", e);
+        try {
+            // Clean up temporary large items if quota is exceeded
+            localStorage.removeItem("aqua_buddy_posts_v27");
+            localStorage.setItem(key, value);
+        } catch (err) {
+            console.error("Safe storage set failure handled silently:", err);
+        }
+    }
+}
+
 function handleInstructorAuthSubmit(e) {
     e.preventDefault();
 
@@ -1382,7 +1397,7 @@ function handleInstructorAuthSubmit(e) {
         currentUser.isApprovedInstructor = false;
         if (instAppCertImage) currentUser.certImage = instAppCertImage;
 
-        localStorage.setItem("aqua_buddy_user_identity", JSON.stringify(currentUser));
+        safeLocalStorageSet("aqua_buddy_user_identity", JSON.stringify(currentUser));
 
         if (currentUser.email) {
             const users = getRegisteredUsers();
@@ -1394,7 +1409,7 @@ function handleInstructorAuthSubmit(e) {
                 users[userKey].instructorStatus = "pending";
                 users[userKey].isApprovedInstructor = false;
                 if (instAppCertImage) users[userKey].certImage = instAppCertImage;
-                localStorage.setItem("aqua_buddy_registered_users", JSON.stringify(users));
+                safeLocalStorageSet("aqua_buddy_registered_users", JSON.stringify(users));
             }
         }
         updateNavbarUserUI();
@@ -2015,11 +2030,31 @@ function isMyPost(post) {
     return false;
 }
 
+function getPostInstSubCategory(post) {
+    if (post.instSubCategory) return post.instSubCategory;
+    const title = (post.title || "").toLowerCase();
+    const desc = (post.desc || "").toLowerCase();
+
+    if (title.includes("실내수영") || title.includes("수영장") || desc.includes("영법") || title.includes("자유형")) return "swim";
+    if (title.includes("바다수영") || title.includes("오픈워터") || desc.includes("바다입수") || title.includes("스노클")) return "ocean_swim";
+    if (title.includes("프리다이빙") || title.includes("aida") || title.includes("k26") || title.includes("딥스테이션")) return "freediving";
+    if (title.includes("스쿠버") || title.includes("ssi") || title.includes("padi") || title.includes("공기통")) return "scuba";
+
+    return "freediving";
+}
+
 function loadPosts() {
     const saved = localStorage.getItem("aqua_buddy_posts_v27");
     if (saved) {
         try {
-            posts = JSON.parse(saved);
+            const parsed = JSON.parse(saved);
+            const existingIds = new Set(parsed.map(p => p.id));
+            INITIAL_POSTS.forEach(initP => {
+                if (!existingIds.has(initP.id)) {
+                    parsed.push(initP);
+                }
+            });
+            posts = parsed;
         } catch (e) {
             posts = [...INITIAL_POSTS];
         }
@@ -2193,16 +2228,37 @@ function initEventListeners() {
             if (!file) return;
             const reader = new FileReader();
             reader.onload = (evt) => {
-                instAppCertImage = evt.target.result;
-                const prev = document.getElementById("instAppCertPreview");
-                if (prev) {
-                    prev.innerHTML = `
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <img src="${instAppCertImage}" alt="자격증 미리보기" style="height:60px; border-radius:4px; border:1px solid var(--accent-gold);" class="zoomable-img" onclick="openLightbox('${instAppCertImage}')">
-                            <span style="font-size:0.78rem; color:#00e676; font-weight:700;"><i class="fa-solid fa-circle-check"></i> 자격증 사본 첨부 완료</span>
-                        </div>
-                    `;
-                }
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement("canvas");
+                    const MAX_WIDTH = 500;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > MAX_WIDTH) {
+                        height = Math.round((height * MAX_WIDTH) / width);
+                        width = MAX_WIDTH;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+
+                    const ctx = canvas.getContext("2d");
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    instAppCertImage = canvas.toDataURL("image/jpeg", 0.5);
+
+                    const prev = document.getElementById("instAppCertPreview");
+                    if (prev) {
+                        prev.innerHTML = `
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <img src="${instAppCertImage}" alt="자격증 미리보기" style="height:60px; border-radius:4px; border:1px solid var(--accent-gold);" class="zoomable-img" onclick="openLightbox('${instAppCertImage}')">
+                                <span style="font-size:0.78rem; color:#00e676; font-weight:700;"><i class="fa-solid fa-circle-check"></i> 자격증 사본 압축 첨부 완료</span>
+                            </div>
+                        `;
+                    }
+                };
+                img.src = evt.target.result;
             };
             reader.readAsDataURL(file);
         });
@@ -2792,8 +2848,9 @@ function filterAndRender() {
 
         if (activeCategory === "instructor") {
             if (post.category !== "instructor") return false;
-            if (activeInstructorSubFilter !== "all" && post.instSubCategory && post.instSubCategory !== activeInstructorSubFilter) {
-                return false;
+            if (activeInstructorSubFilter !== "all") {
+                const subCat = getPostInstSubCategory(post);
+                if (subCat !== activeInstructorSubFilter) return false;
             }
         } else if (activeCategory === "freediving" || activeCategory === "buddy") {
             if (!["freediving", "scuba", "swimming", "openwater"].includes(post.category)) {
