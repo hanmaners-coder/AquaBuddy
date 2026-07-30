@@ -335,6 +335,7 @@ const OCEAN_WEBCAMS_DATA = [
         region: "경북 포항시",
         thumb: "right_ad_swimming.jpg",
         embedUrl: "https://d.kbs.co.kr/special/cctvShare?cctvId=9988",
+        hlsUrl: "/api/cctv?cctvId=9988",
         source: "KBS 재난포털",
         status: "영일대 해안로 입수 최상",
         waterTemp: "21.5°C",
@@ -348,6 +349,7 @@ const OCEAN_WEBCAMS_DATA = [
         region: "강원 강릉시",
         thumb: "hero.jpg",
         embedUrl: "https://d.kbs.co.kr/special/cctvShare?cctvId=9952",
+        hlsUrl: "/api/cctv?cctvId=9952",
         source: "KBS 재난포털",
         status: "동해 파수 0.7m",
         waterTemp: "19.8°C",
@@ -361,6 +363,7 @@ const OCEAN_WEBCAMS_DATA = [
         region: "강원 강릉시 주문진",
         thumb: "right_ad_scuba.jpg",
         embedUrl: "https://d.kbs.co.kr/special/cctvShare?cctvId=9995",
+        hlsUrl: "/api/cctv?cctvId=9995",
         source: "KBS 재난포털",
         status: "주문진 항만 시야 양호",
         waterTemp: "20.1°C",
@@ -374,6 +377,7 @@ const OCEAN_WEBCAMS_DATA = [
         region: "강원 속초시",
         thumb: "left_ad_freediving.jpg",
         embedUrl: "https://d.kbs.co.kr/special/cctvShare?cctvId=9986",
+        hlsUrl: "/api/cctv?cctvId=9986",
         source: "KBS 재난포털",
         status: "속초 해상 고화질 조망",
         waterTemp: "19.5°C",
@@ -387,6 +391,7 @@ const OCEAN_WEBCAMS_DATA = [
         region: "경북 울릉군",
         thumb: "hero.jpg",
         embedUrl: "https://d.kbs.co.kr/special/cctvShare?cctvId=9987",
+        hlsUrl: "/api/cctv?cctvId=9987",
         source: "KBS 재난포털",
         status: "울릉 청정 시야 20m+",
         waterTemp: "21.0°C",
@@ -400,6 +405,7 @@ const OCEAN_WEBCAMS_DATA = [
         region: "대한민국 독도",
         thumb: "bottom_ad_openwater.jpg",
         embedUrl: "https://d.kbs.co.kr/special/cctvShare?cctvId=9957",
+        hlsUrl: "/api/cctv?cctvId=9957",
         source: "KBS 재난포털",
         status: "독도 동도/서도 해상 생중계",
         waterTemp: "20.5°C",
@@ -534,6 +540,7 @@ const OCEAN_WEBCAMS_DATA = [
         region: "전남 목포시",
         thumb: "bottom_ad_openwater.jpg",
         embedUrl: "https://d.kbs.co.kr/special/cctvShare?cctvId=9992",
+        hlsUrl: "/api/cctv?cctvId=9992",
         source: "KBS 재난포털",
         status: "서남해 파도 잔잔함",
         waterTemp: "23.2°C",
@@ -547,6 +554,7 @@ const OCEAN_WEBCAMS_DATA = [
         region: "전남 신안군",
         thumb: "left_ad_freediving.jpg",
         embedUrl: "https://d.kbs.co.kr/special/cctvShare?cctvId=9983",
+        hlsUrl: "/api/cctv?cctvId=9983",
         source: "KBS 재난포털",
         status: "대한민국 최서남단 가거도",
         waterTemp: "23.8°C",
@@ -560,6 +568,7 @@ const OCEAN_WEBCAMS_DATA = [
         region: "전남 완도군",
         thumb: "hero.jpg",
         embedUrl: "https://d.kbs.co.kr/special/cctvShare?cctvId=9984",
+        hlsUrl: "/api/cctv?cctvId=9984",
         source: "KBS 재난포털",
         status: "완도 다도해 시야 최상",
         waterTemp: "23.5°C",
@@ -573,6 +582,7 @@ const OCEAN_WEBCAMS_DATA = [
         region: "전남 여수시 거문도",
         thumb: "right_ad_scuba.jpg",
         embedUrl: "https://d.kbs.co.kr/special/cctvShare?cctvId=9993",
+        hlsUrl: "/api/cctv?cctvId=9993",
         source: "KBS 재난포털",
         status: "거문도 명품 시야 18m+",
         waterTemp: "24.0°C",
@@ -586,6 +596,7 @@ const OCEAN_WEBCAMS_DATA = [
         region: "전남 여수시",
         thumb: "right_ad_swimming.jpg",
         embedUrl: "https://d.kbs.co.kr/special/cctvShare?cctvId=9994",
+        hlsUrl: "/api/cctv?cctvId=9994",
         source: "KBS 재난포털",
         status: "오동도 해상 잔잔함",
         waterTemp: "23.9°C",
@@ -599,6 +610,7 @@ const OCEAN_WEBCAMS_DATA = [
         region: "경남 창원시",
         thumb: "hero.jpg",
         embedUrl: "https://d.kbs.co.kr/special/cctvShare?cctvId=9985",
+        hlsUrl: "/api/cctv?cctvId=9985",
         source: "KBS 재난포털",
         status: "마산만 수면 안정",
         waterTemp: "23.4°C",
@@ -614,6 +626,7 @@ const OCEAN_WEBCAMS_DATA = [
         region: "인천 중구",
         thumb: "right_ad_swimming.jpg",
         embedUrl: "https://d.kbs.co.kr/special/cctvShare?cctvId=9981",
+        hlsUrl: "/api/cctv?cctvId=9981",
         source: "KBS 재난포털",
         status: "서해 중부 연안 조위 양호",
         waterTemp: "22.1°C",
@@ -627,6 +640,7 @@ const OCEAN_WEBCAMS_DATA = [
         region: "충남 태안군",
         thumb: "left_ad_freediving.jpg",
         embedUrl: "https://d.kbs.co.kr/special/cctvShare?cctvId=9980",
+        hlsUrl: "/api/cctv?cctvId=9980",
         source: "KBS 재난포털",
         status: "태안 신진도 다이빙스팟",
         waterTemp: "22.5°C",
@@ -640,6 +654,7 @@ const OCEAN_WEBCAMS_DATA = [
         region: "전북 군산시",
         thumb: "right_ad_scuba.jpg",
         embedUrl: "https://d.kbs.co.kr/special/cctvShare?cctvId=9979",
+        hlsUrl: "/api/cctv?cctvId=9979",
         source: "KBS 재난포털",
         status: "새만금/비응항 해상 기상",
         waterTemp: "22.8°C",
@@ -1064,6 +1079,11 @@ function saveInquiries() {
 
 // Open Unified Customer & Partner Feedback Modal (#inquiryModal)
 function openInquiryModal(defaultCategory = 'general') {
+    if (!currentUser) {
+        showToast("🔑 로그인 후 문의하기를 이용하실 수 있습니다.");
+        openModal(authModal);
+        return;
+    }
     const categorySelect = document.getElementById("inquiryCategory");
     const nameInput = document.getElementById("inquiryName");
     const contactInput = document.getElementById("inquiryContact");
@@ -1132,6 +1152,11 @@ function handleSaveInquiry(e) {
 
 // Open Discreet Webmaster Security Password Check Modal
 function openAdminSecurityCheck() {
+    if (!currentUser) {
+        showToast("🔑 관리자 모드는 로그인 후 이용 가능합니다.");
+        openModal(authModal);
+        return;
+    }
     const passInput = document.getElementById("adminSecurityPassInput");
     if (passInput) passInput.value = "";
     openModal(document.getElementById("adminSecurityModal"));
@@ -2566,6 +2591,11 @@ function finishScheduleFromChat() {
 
 // Open Detail Modal with Account-Based Owner Actions (Only Show Edit/Delete for Author)
 function openDetailModal(postId) {
+    if (!currentUser) {
+        showToast("🔑 로그인 후 상세 내용을 확인할 수 있습니다.");
+        openModal(authModal);
+        return;
+    }
     const post = posts.find(p => p.id === postId);
     if (!post) return;
 
