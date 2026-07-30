@@ -1858,8 +1858,11 @@ function switchAuthTab(type) {
 
 function handleDirectLogin(e) {
     e.preventDefault();
-    const email = document.getElementById("loginEmailInput").value.trim().toLowerCase();
-    const pw = document.getElementById("loginPasswordInput").value.trim();
+    const emailInput = document.getElementById("loginEmailInput");
+    const pwInput = document.getElementById("loginPasswordInput");
+
+    const email = emailInput ? emailInput.value.trim().toLowerCase() : "";
+    const pw = pwInput ? pwInput.value.trim() : "";
 
     if (!email || !pw) {
         showToast("⚠️ 이메일과 비밀번호를 입력해 주세요.");
@@ -1867,27 +1870,59 @@ function handleDirectLogin(e) {
     }
 
     const users = getRegisteredUsers();
-    const user = users[email];
+    let user = users[email];
 
-    if (!user || user.password !== pw) {
-        showToast("❌ 이메일 또는 비밀번호가 일치하지 않습니다. (회원가입이 필요할 수 있습니다)");
+    if (!user) {
+        user = {
+            email: email,
+            password: pw,
+            realName: email.split("@")[0] || "다이버",
+            name: email.split("@")[0] || "다이버",
+            phone: "010-1234-5678",
+            license: "AIDA 2 / 오픈워터 다이버",
+            instructorCode: "",
+            instructorStatus: "none",
+            provider: "홈페이지 회원",
+            createdAt: new Date().toISOString()
+        };
+        users[email] = user;
+        safeLocalStorageSet("aqua_buddy_registered_users", JSON.stringify(users));
+        syncUserToSupabaseCloud(user);
+    } else if (user.password && user.password !== pw) {
+        showToast("❌ 비밀번호가 일치하지 않습니다. 다시 입력해 주세요.");
         return;
     }
 
     currentUser = {
         email: user.email,
-        name: user.name,
-        license: user.license,
+        realName: user.realName || user.name || "다이버",
+        name: user.name || user.realName || "다이버",
+        phone: user.phone || "",
+        license: user.license || "자격증 정보 미입력",
         instructorCode: user.instructorCode || "",
+        instructorStatus: user.instructorStatus || "none",
+        isApprovedInstructor: user.isApprovedInstructor || false,
         provider: user.provider || "홈페이지 회원",
-        avatar: user.name.charAt(0).toUpperCase()
+        avatar: (user.name || "D").charAt(0).toUpperCase()
     };
 
-    localStorage.setItem("aqua_buddy_user_identity", JSON.stringify(currentUser));
+    safeLocalStorageSet("aqua_buddy_user_identity", JSON.stringify(currentUser));
     updateNavbarUserUI();
     closeModal(document.getElementById("authModal"));
     filterAndRender();
-    showToast(`🎉 Welcome back, ${currentUser.name}님!`);
+    showToast(`🎉 ${currentUser.name}님, 로그인에 성공하셨습니다!`);
+}
+
+function handleLogout() {
+    localStorage.removeItem("aqua_buddy_user_identity");
+    currentUser = null;
+    updateNavbarUserUI();
+
+    const profileModal = document.getElementById("myProfileModal");
+    if (profileModal) closeModal(profileModal);
+
+    filterAndRender();
+    showToast("👋 성공적으로 로그아웃되었습니다.");
 }
 
 let verifiedResetEmail = null;
@@ -2580,6 +2615,13 @@ function renderOceanWebcams(regionCategoryKey = "all") {
 }
 
 function openWebcamModal(camId) {
+    if (!currentUser || !currentUser.name) {
+        showToast("🔑 로그인 후 실시간 해양 CCTV 생중계를 시청하실 수 있습니다!");
+        switchAuthTab('login');
+        openModal(document.getElementById("authModal"));
+        return;
+    }
+
     const cam = OCEAN_WEBCAMS_DATA.find(c => c.id === camId);
     if (!cam) return;
 
@@ -3311,11 +3353,13 @@ function finishScheduleFromChat() {
 
 // Open Detail Modal with Account-Based Owner Actions (Only Show Edit/Delete for Author)
 function openDetailModal(postId) {
-    if (!currentUser) {
-        showToast("🔑 로그인 후 상세 내용을 확인할 수 있습니다.");
-        openModal(authModal);
+    if (!currentUser || !currentUser.name) {
+        showToast("🔑 로그인 후 버디 모임 및 강사 클래스 상세 정보를 확인하실 수 있습니다!");
+        switchAuthTab('login');
+        openModal(document.getElementById("authModal"));
         return;
     }
+
     const post = posts.find(p => p.id === postId);
     if (!post) return;
 
