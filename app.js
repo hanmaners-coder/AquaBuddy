@@ -3160,7 +3160,7 @@ function renderCompactPostRow(post) {
     const priceText = isInst ? (post.classFee ? post.classFee.toLocaleString() + '원' : '수강료 문의') : (isMarket ? (post.price ? post.price.toLocaleString() + '원' : '가격협의') : '');
     
     return `
-        <div class="compact-post-row" onclick="openDetailModal('${post.id}')">
+        <div class="compact-post-row" data-post-id="${post.id}" onclick="openDetailModal('${post.id}')">
             <div class="compact-row-main">
                 <span class="badge badge-${post.category}">${post.categoryName}</span>
                 <span class="compact-post-title">${escapeHtml(post.title)}</span>
@@ -4637,4 +4637,24 @@ if (typeof window !== "undefined") {
     window.filterTideRegion = filterTideRegion;
     window.filterCctvRegion = filterCctvRegion;
     window.handleLogout = handleLogout;
+}
+
+// Universal Document Event Delegation for Post Row & Profile Clicks
+if (typeof document !== "undefined") {
+    document.addEventListener("click", function(e) {
+        const row = e.target.closest(".compact-post-row");
+        if (row) {
+            const postId = row.dataset.postId || (row.getAttribute("onclick") ? (row.getAttribute("onclick").match(/'([^']+)'/) || [])[1] : null);
+            if (postId) {
+                openDetailModal(postId);
+            }
+            return;
+        }
+
+        const profileBtn = e.target.closest("#userProfileNav");
+        if (profileBtn) {
+            openProfileModal();
+            return;
+        }
+    });
 }
