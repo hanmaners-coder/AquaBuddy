@@ -3363,44 +3363,50 @@ function finishScheduleFromChat() {
 
 // Open Detail Modal with Account-Based Owner Actions (Only Show Edit/Delete for Author)
 function openDetailModal(postId) {
-    const post = posts.find(p => p.id === postId);
-    if (!post) return;
+    try {
+        const post = posts.find(p => String(p.id) === String(postId));
+        if (!post) {
+            console.warn("Post not found:", postId);
+            return;
+        }
 
-    const isInstructor = post.category === "instructor";
-    const isMarket = post.category === "market";
-    const isCommunity = post.category === "community";
-    const currentUserName = currentUser ? currentUser.name : "다이버";
-    
-    const isHost = isMyPost(post);
-    const isAttendee = post.attendees && post.attendees.includes(currentUserName);
+        const isInstructor = post.category === "instructor";
+        const isMarket = post.category === "market";
+        const isCommunity = post.category === "community";
+        const currentUserName = currentUser ? currentUser.name : "다이버";
+        
+        const isHost = isMyPost(post);
+        const isAttendee = Array.isArray(post.attendees) && post.attendees.includes(currentUserName);
 
-    const encodedLocation = encodeURIComponent(post.mapAddress || post.locationName);
-    const kakaoMapUrl = `https://map.kakao.com/?q=${encodedLocation}`;
+        const encodedLocation = encodeURIComponent(post.mapAddress || post.locationName || '');
+        const kakaoMapUrl = `https://map.kakao.com/?q=${encodedLocation}`;
 
-    detailModalTitle.textContent = post.title;
+        if (detailModalTitle) detailModalTitle.textContent = post.title || '게시글 상세';
 
-    const commentsListHtml = (post.comments || []).map(c => `
-        <div class="comment-item" style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06); padding: 10px 14px; border-radius: 10px; margin-bottom: 8px;">
-            <div class="comment-header" style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                <span style="font-weight: 700; color: var(--accent-cyan); font-size: 0.85rem;"><i class="fa-solid fa-user-circle"></i> ${escapeHtml(c.author)}</span>
-                <span style="opacity: 0.6; font-size: 0.74rem;">${c.time || '방금 전'}</span>
+        const comments = Array.isArray(post.comments) ? post.comments : [];
+        const commentsListHtml = comments.map(c => `
+            <div class="comment-item" style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06); padding: 10px 14px; border-radius: 10px; margin-bottom: 8px;">
+                <div class="comment-header" style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                    <span style="font-weight: 700; color: var(--accent-cyan); font-size: 0.85rem;"><i class="fa-solid fa-user-circle"></i> ${escapeHtml(c.author || '')}</span>
+                    <span style="opacity: 0.6; font-size: 0.74rem;">${c.time || '방금 전'}</span>
+                </div>
+                <p style="color: var(--text-main); font-size: 0.88rem;">${escapeHtml(c.text || '')}</p>
             </div>
-            <p style="color: var(--text-main); font-size: 0.88rem;">${escapeHtml(c.text)}</p>
-        </div>
-    `).join("");
+        `).join("");
 
-    const photoGalleryHtml = (post.images && post.images.length > 0) ? `
-        <div class="detail-section">
-            <h4><i class="fa-solid fa-camera"></i> 첨부 사진 (클릭 시 확대 미리보기)</h4>
-            <div class="detail-photo-gallery">
-                ${post.images.map(imgSrc => `
-                    <div class="detail-photo-item">
-                        <img src="${imgSrc}" alt="첨부 사진" class="zoomable-img" onclick="openLightbox('${imgSrc}')">
-                    </div>
-                `).join("")}
+        const images = Array.isArray(post.images) ? post.images : [];
+        const photoGalleryHtml = (images.length > 0) ? `
+            <div class="detail-section">
+                <h4><i class="fa-solid fa-camera"></i> 첨부 사진 (클릭 시 확대 미리보기)</h4>
+                <div class="detail-photo-gallery">
+                    ${images.map(imgSrc => `
+                        <div class="detail-photo-item">
+                            <img src="${imgSrc}" alt="첨부 사진" class="zoomable-img" onclick="openLightbox('${imgSrc}')">
+                        </div>
+                    `).join("")}
+                </div>
             </div>
-        </div>
-    ` : '';
+        ` : '';
 
     const modernCommentFormHtml = `
         <form class="comment-form-modern" onsubmit="handleAddComment(event, '${post.id}')">
@@ -3787,13 +3793,21 @@ function openDetailModal(postId) {
         `;
     }
 
-    detailModalBody.innerHTML = mainInfoHtml;
-    openModal(detailModal);
+        if (detailModalBody) detailModalBody.innerHTML = mainInfoHtml;
+        openModal(detailModal);
 
-    if (!isCommunity) {
-        setTimeout(() => {
-            initKakaoLiveMap(post.mapAddress || post.locationName);
-        }, 150);
+        if (!isCommunity) {
+            setTimeout(() => {
+                try {
+                    initKakaoLiveMap(post.mapAddress || post.locationName);
+                } catch(mapErr) {
+                    console.log("Kakao Map init notice:", mapErr);
+                }
+            }, 150);
+        }
+    } catch(err) {
+        console.error("openDetailModal error:", err);
+        alert("게시글 상세 정보 열기 중 오류가 발생했습니다:\n" + err.message);
     }
 }
 
