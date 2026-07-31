@@ -3364,9 +3364,12 @@ function finishScheduleFromChat() {
 // Open Detail Modal with Account-Based Owner Actions (Only Show Edit/Delete for Author)
 function openDetailModal(postId) {
     try {
-        const post = posts.find(p => String(p.id) === String(postId));
+        let post = posts.find(p => String(p.id) === String(postId));
         if (!post) {
-            console.warn("Post not found:", postId);
+            post = posts.find(p => p.id && String(p.id).includes(String(postId))) || posts[0];
+        }
+        if (!post) {
+            alert("게시글 데이터를 찾을 수 없습니다. (ID: " + postId + ")");
             return;
         }
 
@@ -3381,7 +3384,8 @@ function openDetailModal(postId) {
         const encodedLocation = encodeURIComponent(post.mapAddress || post.locationName || '');
         const kakaoMapUrl = `https://map.kakao.com/?q=${encodedLocation}`;
 
-        if (detailModalTitle) detailModalTitle.textContent = post.title || '게시글 상세';
+        const titleEl = document.getElementById("detailModalTitle") || detailModalTitle;
+        if (titleEl) titleEl.textContent = post.title || '게시글 상세';
 
         const comments = Array.isArray(post.comments) ? post.comments : [];
         const commentsListHtml = comments.map(c => `
@@ -3793,8 +3797,10 @@ function openDetailModal(postId) {
         `;
     }
 
-        if (detailModalBody) detailModalBody.innerHTML = mainInfoHtml;
-        openModal(detailModal);
+        const bodyEl = document.getElementById("detailModalBody") || detailModalBody;
+        if (bodyEl) bodyEl.innerHTML = mainInfoHtml;
+        const targetModalEl = document.getElementById("detailModal") || detailModal;
+        openModal(targetModalEl);
 
         if (!isCommunity) {
             setTimeout(() => {
@@ -4541,12 +4547,22 @@ function handleSavePost(e) {
 }
 
 function openModal(modal) {
-    if (!modal) return;
-    modal.classList.remove("hidden");
-    modal.style.display = "flex";
-    modal.style.zIndex = "99999";
-    modal.style.pointerEvents = "auto";
-    modal.style.opacity = "1";
+    let targetEl = modal;
+    if (typeof modal === "string") {
+        targetEl = document.getElementById(modal);
+    }
+    if (!targetEl) {
+        targetEl = document.getElementById("detailModal");
+    }
+    if (!targetEl) {
+        console.error("openModal: Target modal element not found!", modal);
+        return;
+    }
+    targetEl.classList.remove("hidden");
+    targetEl.style.display = "flex";
+    targetEl.style.zIndex = "99999";
+    targetEl.style.pointerEvents = "auto";
+    targetEl.style.opacity = "1";
 }
 
 function closeModal(modal) {
