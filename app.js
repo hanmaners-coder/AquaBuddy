@@ -3383,6 +3383,7 @@ function renderDynamicDetailModal(post) {
 
     const isInstructor = post.category === "instructor";
     const isMarket = post.category === "market";
+    const isCommunity = post.category === "community";
     const priceText = isInstructor ? (post.classFee ? post.classFee.toLocaleString() + '원' : '수강료 문의') : (isMarket ? (post.price ? post.price.toLocaleString() + '원' : '가격협의') : '');
 
     const images = Array.isArray(post.images) ? post.images : [];
@@ -3391,7 +3392,7 @@ function renderDynamicDetailModal(post) {
     const comments = Array.isArray(post.comments) ? post.comments : [];
     const commentsHtml = comments.map(c => `
         <div style="background:rgba(255,255,255,0.06); padding:8px 12px; border-radius:6px; margin-bottom:6px; font-size:0.85rem;">
-            <strong style="color:#00f2fe;">👤 ${escapeHtml(c.author || '익명')}</strong>: ${escapeHtml(c.text || '')}
+            <strong style="color:#00f2fe;">👤 ${escapeHtml(c.author || '익명')}</strong> <span style="opacity:0.6; font-size:0.75rem;">(${c.time || '방금 전'})</span>: ${escapeHtml(c.text || '')}
         </div>
     `).join("");
 
@@ -3419,10 +3420,15 @@ function renderDynamicDetailModal(post) {
                 <button onclick="document.getElementById('dynamicDetailModalOverlay').remove()" style="background: #00f2fe; border: none; color: #000; font-weight: bold; font-size: 1.3rem; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center;">&times;</button>
             </div>
             
-            <div style="margin-bottom: 14px; font-size: 0.9rem; line-height: 1.6;">
-                <p style="color: #ffb703; font-weight: bold; margin-bottom: 6px;">👤 작성자: ${escapeHtml(post.userName || '다이버')} | 카테고리: ${escapeHtml(post.categoryName || post.category)}</p>
-                ${priceText ? `<p style="color: #00e676; font-weight: bold; font-size: 1.1rem; margin-bottom: 8px;">💰 ${priceText}</p>` : ''}
-                ${post.mapAddress || post.locationName ? `<p style="color: #a0aec0; margin-bottom: 8px;">📍 장소: ${escapeHtml(post.mapAddress || post.locationName)}</p>` : ''}
+            <div style="margin-bottom: 14px; font-size: 0.9rem; line-height: 1.6; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+                <div>
+                    <p style="color: #ffb703; font-weight: bold; margin: 0 0 6px 0;">👤 작성자: ${escapeHtml(post.userName || '다이버')} | 카테고리: ${escapeHtml(post.categoryName || post.category)}</p>
+                    ${priceText ? `<p style="color: #00e676; font-weight: bold; font-size: 1.1rem; margin: 0 0 8px 0;">💰 ${priceText}</p>` : ''}
+                    ${post.mapAddress || post.locationName ? `<p style="color: #a0aec0; margin: 0;">📍 장소: ${escapeHtml(post.mapAddress || post.locationName)}</p>` : ''}
+                </div>
+                <button onclick="toggleLike('${post.id}'); renderDynamicDetailModal(posts.find(p=>p.id==='${post.id}'));" style="background: rgba(255, 82, 82, 0.15); border: 1px solid #ff5252; color: #ff5252; padding: 6px 14px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 0.85rem;">
+                    ❤️ 관심 / 좋아요 ${post.likes || 0}
+                </button>
             </div>
 
             <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1); padding: 14px; border-radius: 10px; margin-bottom: 16px; font-size: 0.92rem; line-height: 1.6;">
@@ -3433,18 +3439,61 @@ function renderDynamicDetailModal(post) {
             ${imagesHtml ? `<div style="margin-bottom: 16px;"><h4 style="margin-top: 0; margin-bottom: 8px; color: #00f2fe;">📷 첨부 이미지</h4>${imagesHtml}</div>` : ''}
 
             <div style="margin-bottom: 16px;">
-                <h4 style="margin-top: 0; margin-bottom: 8px; color: #00f2fe;">💬 댓글 (${comments.length})</h4>
-                ${commentsHtml || '<p style="color: #a0aec0; font-size: 0.85rem;">작성된 댓글이 없습니다.</p>'}
+                <h4 style="margin-top: 0; margin-bottom: 8px; color: #00f2fe;">💬 실시간 댓글 (${comments.length})</h4>
+                <div style="max-height: 180px; overflow-y: auto; margin-bottom: 10px;">
+                    ${commentsHtml || '<p style="color: #a0aec0; font-size: 0.85rem; margin: 0;">작성된 댓글이 없습니다. 첫 댓글을 남겨보세요!</p>'}
+                </div>
+                
+                <!-- 댓글 작성 폼 -->
+                <form onsubmit="handleDynamicCommentSubmit(event, '${post.id}')" style="display: flex; gap: 8px;">
+                    <input type="text" id="dynamicCommentInput_${post.id}" placeholder="실시간 댓글 또는 문의를 입력하세요..." style="flex: 1; background: rgba(0,0,0,0.5); border: 1px solid #00f2fe; color: #fff; padding: 9px 12px; border-radius: 8px; font-size: 0.88rem;" required autocomplete="off">
+                    <button type="submit" style="background: #00f2fe; border: none; color: #000; font-weight: bold; padding: 9px 16px; border-radius: 8px; cursor: pointer; font-size: 0.88rem;">등록</button>
+                </form>
             </div>
 
-            <div style="text-align: right; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 14px;">
-                <button onclick="document.getElementById('dynamicDetailModalOverlay').remove()" style="background: linear-gradient(135deg, #ff5252, #d32f2f); border: none; color: #fff; padding: 10px 22px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.95rem;">닫기 ✖</button>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 14px;">
+                <div>
+                    ${!isCommunity ? `
+                    <button onclick="document.getElementById('dynamicDetailModalOverlay').remove(); openChatRoomModal('${post.id}');" style="background: linear-gradient(135deg, #00f2fe, #4facfe); border: none; color: #000; font-weight: bold; padding: 9px 18px; border-radius: 8px; cursor: pointer; font-size: 0.9rem;">
+                        💬 실시간 대화방 참여
+                    </button>
+                    ` : ''}
+                </div>
+                <button onclick="document.getElementById('dynamicDetailModalOverlay').remove()" style="background: linear-gradient(135deg, #ff5252, #d32f2f); border: none; color: #fff; padding: 9px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.9rem;">닫기 ✖</button>
             </div>
         </div>
     `;
 
     document.body.appendChild(overlay);
 }
+
+function handleDynamicCommentSubmit(e, postId) {
+    e.preventDefault();
+    if (!currentUser || !currentUser.name) {
+        showToast("🔑 로그인 후 실시간 댓글을 작성하실 수 있습니다!");
+        switchAuthTab('login');
+        openModal(document.getElementById("authModal"));
+        return;
+    }
+    const input = document.getElementById("dynamicCommentInput_" + postId);
+    if (!input) return;
+    const text = input.value.trim();
+    if (!text) return;
+
+    const post = posts.find(p => String(p.id) === String(postId));
+    if (post) {
+        if (!Array.isArray(post.comments)) post.comments = [];
+        post.comments.push({
+            author: currentUser.name,
+            text: text,
+            time: "방금 전"
+        });
+        savePosts();
+        renderDynamicDetailModal(post);
+        showToast("💬 댓글이 등록되었습니다!");
+    }
+}
+window.handleDynamicCommentSubmit = handleDynamicCommentSubmit;
 
 // Open Detail Modal with Account-Based Owner Actions (Only Show Edit/Delete for Author)
 function openDetailModal(postId) {
