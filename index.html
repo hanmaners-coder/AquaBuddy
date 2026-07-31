@@ -78,17 +78,17 @@
             <!-- Right Quick Actions (Guaranteed Mobile Fit for '+ 버디모집하기') -->
             <div class="nav-actions">
                 <!-- Dedicated Instructor Certification Button -->
-                <button type="button" class="btn btn-secondary nav-inst-btn" onclick="openInstructorAuthModal()" title="강사이신가요? 1초 강사 인증 신청" style="display: none !important;">
+                <button type="button" class="btn btn-secondary nav-inst-btn" onclick="openInstructorAuthModal()" title="강사이신가요? 1초 강사 인증 신청">
                     <i class="fa-solid fa-graduation-cap"></i> 강사인증
                 </button>
 
-                <!-- Clickable User Profile Badge (Hidden permanently due to user request) -->
-                <div id="userProfileNav" class="user-nav-badge hidden" onclick="openProfileModal()" style="display: none !important; cursor: pointer;" title="클릭하여 내 프로필 확인">
+                <!-- Clickable User Profile Badge -->
+                <div id="userProfileNav" class="user-nav-badge hidden" onclick="openProfileModal()" style="cursor: pointer;" title="클릭하여 내 프로필/계정 정보 확인">
                     <i class="fa-solid fa-user-circle"></i>
-                    <span id="navUserName">게스트</span>
+                    <span id="navUserName">다이버</span>
                 </div>
 
-                <button type="button" class="btn btn-primary nav-login-btn" id="openAuthModalBtn" style="display: none !important;">
+                <button type="button" class="btn btn-primary nav-login-btn" id="openAuthModalBtn">
                     <i class="fa-solid fa-right-to-bracket"></i> 로그인 / 회원가입
                 </button>
 
@@ -1477,6 +1477,6 @@
 
     <!-- App Configuration & Main Logic Script -->
     <script src="config.js?v=45.0"></script>
-    <script src="app.js?v=49.0"></script>
+    <script src="app.js?v=59.0"></script>
 </body>
 </html>

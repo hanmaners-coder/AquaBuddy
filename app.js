@@ -1311,11 +1311,16 @@ function initKakaoSdk() {
 
 // Initialize User Identity
 function initUserIdentity() {
-    // [완전 제거] 기존 로그인 데이터를 무시하고 삭제합니다.
-    localStorage.removeItem("aqua_buddy_user_identity");
-    
-    // 무조건 게스트로 로그인 통과되게 고정 (강사 권한 부여)
-    currentUser = { name: "게스트", provider: "로컬", instructorStatus: "approved", reviews: [], completedCount: 0 };
+    let savedUser = localStorage.getItem("aqua_buddy_user_identity");
+    if (savedUser) {
+        try {
+            currentUser = JSON.parse(savedUser);
+        } catch(e) {
+            currentUser = null;
+        }
+    } else {
+        currentUser = null;
+    }
 
     checkKakaoOAuthCallback();
     updateNavbarUserUI();
@@ -1625,6 +1630,81 @@ function approveInstructorCertDemo(name) {
     showToast(`🎓 '${name}' 강사님의 자격증 실물 심사가 승인되어 'VERIFIED SEAL' 뱃지가 최종 발급되었습니다!`);
 }
 
+function renderDynamicProfileModal(user) {
+    let existing = document.getElementById("dynamicProfileModalOverlay");
+    if (existing) existing.remove();
+
+    const isInstructor = isVerifiedInstructor() || isPendingInstructor() || !!(user.provider && user.provider.includes("강사"));
+    const myReviews = (user.reviews || []);
+    const completedCount = user.completedCount || 0;
+    const avgScore = myReviews.length > 0
+        ? (myReviews.reduce((sum, r) => sum + r.score, 0) / myReviews.length).toFixed(1)
+        : "5.0";
+
+    const overlay = document.createElement("div");
+    overlay.id = "dynamicProfileModalOverlay";
+    overlay.style.cssText = `
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background: rgba(0, 0, 0, 0.92) !important;
+        z-index: 9999999 !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        padding: 16px !important;
+        box-sizing: border-box !important;
+    `;
+
+    overlay.innerHTML = `
+        <div style="background: #0d1b2a; border: 2px solid #00f2fe; box-shadow: 0 0 50px rgba(0, 242, 254, 0.6); border-radius: 16px; width: 100%; max-width: 520px; max-height: 85vh; overflow-y: auto; padding: 24px; color: #ffffff; position: relative; font-family: sans-serif;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0, 242, 254, 0.3); padding-bottom: 12px; margin-bottom: 16px;">
+                <h2 style="margin: 0; font-size: 1.2rem; color: #00f2fe;"><i class="fa-solid fa-id-card"></i> 내 프로필 & 계정 정보</h2>
+                <button onclick="document.getElementById('dynamicProfileModalOverlay').remove()" style="background: #00f2fe; border: none; color: #000; font-weight: bold; font-size: 1.3rem; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center;">&times;</button>
+            </div>
+
+            <div style="background: rgba(255, 255, 255, 0.05); padding: 14px; border-radius: 10px; margin-bottom: 16px;">
+                <h3 style="margin: 0 0 4px 0; color: #fff; font-size: 1.15rem;">
+                    👤 ${escapeHtml(user.name || '다이버')}
+                    ${isInstructor ? '<span style="background: linear-gradient(135deg, #ffb703, #ff8f00); color: #000; font-size: 0.75rem; font-weight: 900; padding: 3px 8px; border-radius: 12px; margin-left: 6px;">VERIFIED INSTRUCTOR</span>' : ''}
+                </h3>
+                <p style="margin: 0; color: #a0aec0; font-size: 0.85rem;">${isInstructor ? '🎓 AquaBuddy 검증 공인 강사 계정' : `${escapeHtml(user.provider || 'AquaBuddy')} 인증 계정`}</p>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+                <div style="flex: 1; background: rgba(0, 242, 254, 0.1); border: 1px solid rgba(0, 242, 254, 0.3); padding: 10px; border-radius: 8px; text-align: center;">
+                    <span style="font-size: 0.8rem; color: #a0aec0;">매너 평점</span>
+                    <div style="font-weight: bold; color: #ffb703; font-size: 1.1rem; margin-top: 2px;">★ ${avgScore} / 5.0</div>
+                </div>
+                <div style="flex: 1; background: rgba(0, 242, 254, 0.1); border: 1px solid rgba(0, 242, 254, 0.3); padding: 10px; border-radius: 8px; text-align: center;">
+                    <span style="font-size: 0.8rem; color: #a0aec0;">버디 모임 참여</span>
+                    <div style="font-weight: bold; color: #00f2fe; font-size: 1.1rem; margin-top: 2px;">${completedCount}회 완료</div>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 0.85rem; color: #00f2fe; margin-bottom: 4px; font-weight: bold;">자격증 / 라이센스 정보</label>
+                <div style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); padding: 10px 12px; border-radius: 8px; font-size: 0.9rem; color: #fff;">
+                    📜 ${escapeHtml(user.license || '자격증 정보 미입력')}
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px; margin-top: 16px;">
+                <button onclick="document.getElementById('dynamicProfileModalOverlay').remove(); handleLogout();" style="background: rgba(255, 82, 82, 0.2); border: 1px solid #ff5252; color: #ff5252; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.85rem;">
+                    🚪 로그아웃
+                </button>
+                <button onclick="document.getElementById('dynamicProfileModalOverlay').remove();" style="background: #00f2fe; border: none; color: #000; padding: 8px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.9rem;">
+                    닫기 ✖
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+}
+
 function openProfileModal() {
     if (!currentUser || !currentUser.name) {
         switchAuthTab('login');
@@ -1632,72 +1712,7 @@ function openProfileModal() {
         return;
     }
 
-    try {
-        const isInstructor = isVerifiedInstructor() || isPendingInstructor() || !!(currentUser.provider && currentUser.provider.includes("강사"));
-
-        const nameDisplay = document.getElementById("myProfNameDisplay");
-        if (nameDisplay) {
-            nameDisplay.innerHTML = isInstructor
-                ? `${escapeHtml(currentUser.name)} <span class="badge badge-instructor" style="font-size:0.75rem; vertical-align:middle; margin-left:6px; background:linear-gradient(135deg, #ffb703, #ff8f00); color:#000; font-weight:900;"><i class="fa-solid fa-graduation-cap"></i> VERIFIED INSTRUCTOR (공인 강사)</span>`
-                : escapeHtml(currentUser.name);
-        }
-
-        const providerDisplay = document.getElementById("myProfProviderDisplay");
-        if (providerDisplay) {
-            providerDisplay.textContent = isInstructor
-                ? `🎓 AquaBuddy 검증 공인 강사 계정`
-                : `${currentUser.provider || 'AquaBuddy'} 인증 계정`;
-        }
-
-        const nickInput = document.getElementById("myProfNickInput");
-        if (nickInput) nickInput.value = currentUser.name || "";
-
-        const licenseInput = document.getElementById("myProfLicenseInput");
-        if (licenseInput) licenseInput.value = currentUser.license || "";
-
-        const myReviews = (currentUser.reviews || []);
-        const completedCount = currentUser.completedCount || 0;
-
-        const scoreEl = document.getElementById("myProfAvgScore");
-        const countEl = document.getElementById("myProfMeetingCount");
-        const reviewsListEl = document.getElementById("myProfReviewsList");
-
-        if (myReviews.length === 0 && completedCount === 0) {
-            if (scoreEl) scoreEl.innerHTML = `<span style="color:var(--accent-cyan);"><i class="fa-solid fa-seedling"></i> 신규 다이버 🌱 (평점 평가 대기 중)</span>`;
-            if (countEl) countEl.textContent = `모임 0회 완료`;
-
-            if (reviewsListEl) {
-                reviewsListEl.innerHTML = `
-                    <div style="font-size: 0.82rem; color: var(--text-muted); text-align: center; padding: 12px; background: rgba(0,0,0,0.3); border-radius: 8px; border: 1px dashed var(--glass-border);">
-                        <i class="fa-solid fa-water" style="color:var(--accent-cyan); margin-bottom:4px; font-size:1.2rem; display:block;"></i>
-                        아직 작성된 한줄평이 없습니다. 첫 버디 모임을 함께하고 첫 번째 평점과 후기를 공유해 보세요! 🌊
-                    </div>
-                `;
-            }
-        } else {
-            const avgScore = myReviews.length > 0
-                ? (myReviews.reduce((sum, r) => sum + r.score, 0) / myReviews.length).toFixed(1)
-                : "5.0";
-            if (scoreEl) scoreEl.textContent = `★ ${avgScore} / 5.0`;
-            if (countEl) countEl.textContent = `모임 ${completedCount}회 완료`;
-
-            if (reviewsListEl) {
-                reviewsListEl.innerHTML = myReviews.slice(-3).reverse().map(r => `
-                    <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.06); padding: 8px 12px; border-radius: 8px;">
-                        <div style="display: flex; justify-content: space-between; font-size: 0.78rem; margin-bottom: 2px;">
-                            <span style="color: var(--accent-cyan); font-weight: 700;">👤 ${escapeHtml(r.author || '다이버')}</span>
-                            <span style="color: var(--accent-gold); font-weight: 800;">★ ${r.score || 5}</span>
-                        </div>
-                        <p style="font-size: 0.82rem; color: var(--text-main); line-height: 1.3;">"${escapeHtml(r.comment || '')}"</p>
-                    </div>
-                `).join("");
-            }
-        }
-    } catch (err) {
-        console.log("Profile Modal Render Notice:", err);
-    }
-
-    openModal(document.getElementById("myProfileModal"));
+    renderDynamicProfileModal(currentUser);
 }
 
 let activeInstructorSubFilter = "all";
@@ -2459,7 +2474,8 @@ function initEventListeners() {
     }
 
     window.addEventListener("click", (e) => {
-        if (e.target === createModal) closeModal(createModal);
+        // [작성글 보호] 모집하기/글작성 모달은 바탕 클릭으로 닫히지 않게 조치 (작성 중 내용 날림 방지)
+        // if (e.target === createModal) closeModal(createModal);
         if (e.target === authModal) closeModal(authModal);
         if (e.target === chatModal) closeModal(chatModal);
         if (e.target === ratingModal) closeModal(ratingModal);
@@ -3361,6 +3377,75 @@ function finishScheduleFromChat() {
     showToast("⚡ 대화방에서 일정 완료 처리 및 평가가 활성화되었습니다!");
 }
 
+function renderDynamicDetailModal(post) {
+    let existing = document.getElementById("dynamicDetailModalOverlay");
+    if (existing) existing.remove();
+
+    const isInstructor = post.category === "instructor";
+    const isMarket = post.category === "market";
+    const priceText = isInstructor ? (post.classFee ? post.classFee.toLocaleString() + '원' : '수강료 문의') : (isMarket ? (post.price ? post.price.toLocaleString() + '원' : '가격협의') : '');
+
+    const images = Array.isArray(post.images) ? post.images : [];
+    const imagesHtml = images.map(img => `<img src="${img}" style="max-width:100%; border-radius:8px; margin-top:8px; border:1px solid #00f2fe;">`).join("");
+
+    const comments = Array.isArray(post.comments) ? post.comments : [];
+    const commentsHtml = comments.map(c => `
+        <div style="background:rgba(255,255,255,0.06); padding:8px 12px; border-radius:6px; margin-bottom:6px; font-size:0.85rem;">
+            <strong style="color:#00f2fe;">👤 ${escapeHtml(c.author || '익명')}</strong>: ${escapeHtml(c.text || '')}
+        </div>
+    `).join("");
+
+    const overlay = document.createElement("div");
+    overlay.id = "dynamicDetailModalOverlay";
+    overlay.style.cssText = `
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background: rgba(0, 0, 0, 0.92) !important;
+        z-index: 9999999 !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        padding: 16px !important;
+        box-sizing: border-box !important;
+    `;
+
+    overlay.innerHTML = `
+        <div style="background: #0d1b2a; border: 2px solid #00f2fe; box-shadow: 0 0 50px rgba(0, 242, 254, 0.6); border-radius: 16px; width: 100%; max-width: 680px; max-height: 85vh; overflow-y: auto; padding: 24px; color: #ffffff; position: relative; font-family: sans-serif;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0, 242, 254, 0.3); padding-bottom: 12px; margin-bottom: 16px;">
+                <h2 style="margin: 0; font-size: 1.25rem; color: #00f2fe;">${escapeHtml(post.title || '게시글 상세')}</h2>
+                <button onclick="document.getElementById('dynamicDetailModalOverlay').remove()" style="background: #00f2fe; border: none; color: #000; font-weight: bold; font-size: 1.3rem; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center;">&times;</button>
+            </div>
+            
+            <div style="margin-bottom: 14px; font-size: 0.9rem; line-height: 1.6;">
+                <p style="color: #ffb703; font-weight: bold; margin-bottom: 6px;">👤 작성자: ${escapeHtml(post.userName || '다이버')} | 카테고리: ${escapeHtml(post.categoryName || post.category)}</p>
+                ${priceText ? `<p style="color: #00e676; font-weight: bold; font-size: 1.1rem; margin-bottom: 8px;">💰 ${priceText}</p>` : ''}
+                ${post.mapAddress || post.locationName ? `<p style="color: #a0aec0; margin-bottom: 8px;">📍 장소: ${escapeHtml(post.mapAddress || post.locationName)}</p>` : ''}
+            </div>
+
+            <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1); padding: 14px; border-radius: 10px; margin-bottom: 16px; font-size: 0.92rem; line-height: 1.6;">
+                <h4 style="margin-top: 0; margin-bottom: 8px; color: #00f2fe;">📝 상세 설명</h4>
+                ${escapeHtml(post.desc || '상세 내용이 없습니다.').replace(/\n/g, '<br>')}
+            </div>
+
+            ${imagesHtml ? `<div style="margin-bottom: 16px;"><h4 style="margin-top: 0; margin-bottom: 8px; color: #00f2fe;">📷 첨부 이미지</h4>${imagesHtml}</div>` : ''}
+
+            <div style="margin-bottom: 16px;">
+                <h4 style="margin-top: 0; margin-bottom: 8px; color: #00f2fe;">💬 댓글 (${comments.length})</h4>
+                ${commentsHtml || '<p style="color: #a0aec0; font-size: 0.85rem;">작성된 댓글이 없습니다.</p>'}
+            </div>
+
+            <div style="text-align: right; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 14px;">
+                <button onclick="document.getElementById('dynamicDetailModalOverlay').remove()" style="background: linear-gradient(135deg, #ff5252, #d32f2f); border: none; color: #fff; padding: 10px 22px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.95rem;">닫기 ✖</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+}
+
 // Open Detail Modal with Account-Based Owner Actions (Only Show Edit/Delete for Author)
 function openDetailModal(postId) {
     try {
@@ -3372,6 +3457,9 @@ function openDetailModal(postId) {
             alert("게시글 데이터를 찾을 수 없습니다. (ID: " + postId + ")");
             return;
         }
+
+        // [동적 100% 보장 팝업] 기존 모달 바인딩 문제 방지를 위해 실시간 팝업 노출
+        renderDynamicDetailModal(post);
 
         const isInstructor = post.category === "instructor";
         const isMarket = post.category === "market";
@@ -4559,15 +4647,55 @@ function openModal(modal) {
         return;
     }
     targetEl.classList.remove("hidden");
-    targetEl.style.display = "flex";
-    targetEl.style.zIndex = "99999";
-    targetEl.style.pointerEvents = "auto";
-    targetEl.style.opacity = "1";
+    targetEl.style.setProperty("display", "flex", "important");
+    targetEl.style.setProperty("position", "fixed", "important");
+    targetEl.style.setProperty("top", "0px", "important");
+    targetEl.style.setProperty("left", "0px", "important");
+    targetEl.style.setProperty("width", "100vw", "important");
+    targetEl.style.setProperty("height", "100vh", "important");
+    targetEl.style.setProperty("z-index", "999999", "important");
+    targetEl.style.setProperty("pointer-events", "auto", "important");
+    targetEl.style.setProperty("opacity", "1", "important");
+    targetEl.style.setProperty("visibility", "visible", "important");
+    targetEl.style.setProperty("background", "rgba(0, 0, 0, 0.95)", "important");
+    targetEl.style.setProperty("justify-content", "center", "important");
+    targetEl.style.setProperty("align-items", "center", "important");
+    targetEl.style.backdropFilter = "none";
+    targetEl.style.webkitBackdropFilter = "none";
+
+    const innerContainer = targetEl.querySelector(".modal-container");
+    if (innerContainer) {
+        innerContainer.style.setProperty("display", "block", "important");
+        innerContainer.style.setProperty("visibility", "visible", "important");
+        innerContainer.style.setProperty("opacity", "1", "important");
+        innerContainer.style.setProperty("background", "#0d1b2a", "important");
+        innerContainer.style.setProperty("border", "2px solid #00f2fe", "important");
+        innerContainer.style.setProperty("box-shadow", "0 0 50px rgba(0, 242, 254, 0.5)", "important");
+        innerContainer.style.setProperty("color", "#ffffff", "important");
+        innerContainer.style.setProperty("position", "relative", "important");
+        innerContainer.style.setProperty("z-index", "1000000", "important");
+        innerContainer.style.setProperty("margin", "auto", "important");
+        innerContainer.style.setProperty("max-height", "90vh", "important");
+        innerContainer.style.setProperty("overflow-y", "auto", "important");
+    }
+
+    const modalBodyEl = targetEl.querySelector(".modal-body");
+    if (modalBodyEl) {
+        modalBodyEl.style.setProperty("display", "block", "important");
+        modalBodyEl.style.setProperty("visibility", "visible", "important");
+        modalBodyEl.style.setProperty("opacity", "1", "important");
+        modalBodyEl.style.setProperty("color", "#ffffff", "important");
+    }
 }
 
 function closeModal(modal) {
-    if (!modal) return;
-    modal.classList.add("hidden");
+    let targetEl = modal;
+    if (typeof modal === "string") {
+        targetEl = document.getElementById(modal);
+    }
+    if (!targetEl) return;
+    targetEl.classList.add("hidden");
+    targetEl.style.setProperty("display", "none", "important");
 }
 
 function showToast(message) {
