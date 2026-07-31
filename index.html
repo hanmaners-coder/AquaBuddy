@@ -20,12 +20,6 @@
     <!-- HLS.js Library for m3u8 Live Video Streaming -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     
-    <!-- Kakao JavaScript SDK for OAuth 1-Touch Sign-In -->
-    <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" crossorigin="anonymous"></script>
-    
-    <!-- Kakao Maps JavaScript API SDK -->
-    <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=7c316726691ea5e02f234a85f5a20bab&libraries=services"></script>
-    
     <!-- Custom CSS -->
     <link rel="stylesheet" href="styles.css?v=45.0">
 </head>
@@ -703,9 +697,7 @@
                     <button class="auth-tab-btn" id="tabSignup" onclick="switchAuthTab('signup')">
                         회원가입
                     </button>
-                    <button class="auth-tab-btn" id="tabKakaoAuth" onclick="switchAuthTab('kakao')">
-                        카카오 1초
-                    </button>
+                    
                 </div>
 
                 <!-- 1. 로그인 폼 -->
@@ -734,9 +726,7 @@
 
                     <div style="margin-top: 16px; border-top: 1px dashed var(--glass-border); padding-top: 14px; text-align: center;">
                         <span style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-bottom: 8px;">또는 간편 로그인</span>
-                        <button class="social-btn kakao" onclick="loginWithKakaoOAuth()" style="width: 100%;">
-                            <i class="fa-solid fa-comment"></i> 카카오톡 1초 간편 로그인
-                        </button>
+                        
                     </div>
                 </div>
 
@@ -783,29 +773,11 @@
 
                     <div style="margin-top: 16px; border-top: 1px dashed var(--glass-border); padding-top: 14px; text-align: center;">
                         <span style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-bottom: 8px;">또는 간편 가입</span>
-                        <button class="social-btn kakao" onclick="loginWithKakaoOAuth()" style="width: 100%;">
-                            <i class="fa-solid fa-comment"></i> 카카오톡 1초 간편가입
-                        </button>
+                        
                     </div>
                 </div>
 
-                <!-- 3. 카카오 1초 로그인 폼 -->
-                <div id="kakaoAuthFormBox" class="hidden">
-                    <div style="background: rgba(255, 235, 0, 0.08); border: 1px dashed rgba(255, 235, 0, 0.3); padding: 12px; border-radius: var(--radius-sm); margin-bottom: 14px; text-align: center;">
-                        <p style="color: var(--text-main); font-size: 0.88rem; margin-bottom: 4px; font-weight: 700;">
-                            💛 카카오 계정으로 1초만에 간편 로그인
-                        </p>
-                        <p style="color: var(--text-muted); font-size: 0.8rem; margin: 0;">
-                            기존 회원은 즉시 자동 로그인되며, 신규 회원은 1초만에 자동 가입됩니다.
-                        </p>
-                    </div>
-
-                    <div class="social-login-group">
-                        <button class="social-btn kakao" onclick="loginWithKakaoOAuth()" style="width: 100%; padding: 14px; font-size: 1rem;">
-                            <i class="fa-solid fa-comment"></i> 카카오톡으로 1초 로그인 / 가입
-                        </button>
-                    </div>
-                </div>
+                
 
                 <div style="margin-top: 18px; text-align: center; border-top: 1px dashed var(--glass-border); padding-top: 12px;">
                     <span style="font-size: 0.85rem; color: var(--accent-gold); font-weight: 700;">

@@ -21,9 +21,7 @@ const SUPABASE_ANON_KEY = (typeof window !== "undefined" && window.AQUA_CONFIG &
     ? window.AQUA_CONFIG.supabase.anonKey
     : "sb_publishable_yq1u37mBsk6LfPqq428BOA_DKEEqaoW";
 
-const KAKAO_APP_KEY = (typeof window !== "undefined" && window.AQUA_CONFIG && window.AQUA_CONFIG.kakao)
-    ? window.AQUA_CONFIG.kakao.appKey
-    : "7c316726691ea5e02f234a85f5a20bab";
+// Kakao integration removed per user request
 
 const COUPANG_CUSPE_URL = (typeof window !== "undefined" && window.AQUA_CONFIG && window.AQUA_CONFIG.coupang)
     ? window.AQUA_CONFIG.coupang.cuspeUrl
@@ -3320,7 +3318,7 @@ function renderChatStream(postId) {
             </div>
             ` : ''}
             <p>${escapeHtml(msg.text)}</p>
-            <span class="chat-time">${msg.time}</span>
+            <span class="chat-time"><p style="font-size: 0.82rem; color: var(--accent-cyan);" id="myProfProviderDisplay">홈페이지 회원</p></span>
         </div>
         `;
     }).join("");
