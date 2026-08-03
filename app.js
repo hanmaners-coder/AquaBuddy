@@ -38,6 +38,23 @@ if (typeof window !== "undefined" && window.supabase && window.supabase.createCl
     }
 }
 
+// Famous Diving & Swimming Spot Coordinates Map Safeguard
+if (typeof window !== "undefined" && typeof window.FAMOUS_SPOT_COORDS === "undefined") {
+    window.FAMOUS_SPOT_COORDS = {
+        "k26": { title: "가평 K26 잠수풀", lat: 37.7128, lng: 127.5253, address: "경기 가평군 청평면 고성리 26" },
+        "딥스테이션": { title: "용인 딥스테이션", lat: 37.2801, lng: 127.2023, address: "경기 용인시 처인구 포곡읍 에버랜드로 156" },
+        "파라다이브": { title: "이천 파라다이브", lat: 37.2915, lng: 127.4642, address: "경기 이천시 신둔면 원적로 851" },
+        "송도스포츠파크": { title: "송도 잠수풀", lat: 37.3752, lng: 126.6321, address: "인천 연수구 인천신항대로 892" },
+        "올림픽공원": { title: "올림픽공원 수영장", lat: 37.5184, lng: 127.1264, address: "서울 송파구 올림픽로 424" },
+        "성남종합운동장": { title: "성남 실내수영장", lat: 37.4338, lng: 127.1428, address: "경기 성남시 중원구 둔촌대로 258" },
+        "수원월드컵": { title: "수원월드컵 잠수풀", lat: 37.2872, lng: 127.0366, address: "경기 수원시 팔달구 창룡대로 210" },
+        "문수": { title: "울산 문수수영장", lat: 35.5342, lng: 129.2562, address: "울산 남구 문수로 44" },
+        "창원": { title: "창원 실내수영장", lat: 35.2345, lng: 128.6756, address: "경남 창원시 성산구 원이대로 450" },
+        "서귀포": { title: "제주 서귀포 해양포인트", lat: 33.2481, lng: 126.5639, address: "제주 서귀포시 서귀동" }
+    };
+}
+var FAMOUS_SPOT_COORDS = (typeof window !== "undefined" && window.FAMOUS_SPOT_COORDS) ? window.FAMOUS_SPOT_COORDS : {};
+
 // Security State & Hashing Helper
 let isAdminAuthenticated = false;
 
@@ -1267,6 +1284,7 @@ function handleSaveInquiry(e) {
 function openAdminSecurityCheck() {
     if (!currentUser) {
         showToast("🔑 관리자 모드는 로그인 후 이용 가능합니다.");
+        resetAuthForm();
         openModal(authModal);
         return;
     }
@@ -1706,6 +1724,7 @@ function renderDynamicProfileModal(user) {
 function openProfileModal() {
     if (!currentUser || !currentUser.name) {
         switchAuthTab('login');
+        resetAuthForm();
         openModal(document.getElementById("authModal"));
         return;
     }
@@ -1878,66 +1897,74 @@ function switchAuthTab(type) {
         if (titleEl) titleEl.innerHTML = `<i class="fa-solid fa-comment"></i> 카카오 1초 로그인`;
     }
 }
+function resetAuthForm() {
+    const fields = [
+        "loginEmailInput",
+        "loginPasswordInput",
+        "signupEmailInput",
+        "signupPasswordInput",
+        "signupPasswordConfirmInput",
+        "signupRealNameInput",
+        "signupNicknameInput",
+        "signupPhoneInput",
+        "signupLicenseInput"
+    ];
+    fields.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = "";
+    });
+}
 
 function handleDirectLogin(e) {
     e.preventDefault();
     const emailInput = document.getElementById("loginEmailInput");
     const pwInput = document.getElementById("loginPasswordInput");
-
     const email = emailInput ? emailInput.value.trim().toLowerCase() : "";
     const pw = pwInput ? pwInput.value.trim() : "";
 
     if (!email || !pw) {
-        showToast("⚠️ 이메일과 비밀번호를 입력해 주세요.");
+        alert("⚠️ 이메일과 비밀번호를 입력해 주세요.");
         return;
     }
 
-    const users = getRegisteredUsers();
-    let user = users[email];
-
-    if (!user) {
-        user = {
-            email: email,
-            password: pw,
-            realName: email.split("@")[0] || "다이버",
-            name: email.split("@")[0] || "다이버",
-            phone: "010-1234-5678",
-            license: "AIDA 2 / 오픈워터 다이버",
-            instructorCode: "",
-            instructorStatus: "none",
-            provider: "홈페이지 회원",
-            createdAt: new Date().toISOString()
-        };
-        users[email] = user;
-        safeLocalStorageSet("aqua_buddy_registered_users", JSON.stringify(users));
-        syncUserToSupabaseCloud(user);
-    } else if (user.password && user.password !== pw) {
-        showToast("❌ 비밀번호가 일치하지 않습니다. 다시 입력해 주세요.");
-        return;
-    }
-
-    currentUser = {
-        email: user.email,
-        realName: user.realName || user.name || "다이버",
-        name: user.name || user.realName || "다이버",
-        phone: user.phone || "",
-        license: user.license || "자격증 정보 미입력",
-        instructorCode: user.instructorCode || "",
-        instructorStatus: user.instructorStatus || "none",
-        isApprovedInstructor: user.isApprovedInstructor || false,
-        provider: user.provider || "홈페이지 회원",
-        avatar: (user.name || "D").charAt(0).toUpperCase()
-    };
-
-    safeLocalStorageSet("aqua_buddy_user_identity", JSON.stringify(currentUser));
-    updateNavbarUserUI();
-    closeModal(document.getElementById("authModal"));
-    filterAndRender();
-    showToast(`🎉 ${currentUser.name}님, 로그인에 성공하셨습니다!`);
+    // Call backend API for Supabase login
+    fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password: pw })
+    })
+        .then(res => res.json().then(data => ({ status: res.status, body: data })))
+        .then(({ status, body }) => {
+            if (status !== 200) {
+                const msg = body.error || "로그인에 실패했습니다.";
+                alert(`❌ ${msg}`);
+                return;
+            }
+            const token = body.token;
+            // Store token for later API calls
+            localStorage.setItem("aqua_buddy_user_token", token);
+            // Minimal currentUser object
+            currentUser = {
+                email: email,
+                name: email.split("@")[0] || "다이버",
+                avatar: (email.split("@")[0] || "D").charAt(0).toUpperCase()
+            };
+            safeLocalStorageSet("aqua_buddy_user_identity", JSON.stringify(currentUser));
+            updateNavbarUserUI();
+            closeModal(document.getElementById("authModal"));
+            resetAuthForm();
+            filterAndRender();
+            alert(`🎉 ${currentUser.name}님, 로그인에 성공하셨습니다!`);
+        })
+        .catch(err => {
+            console.error(err);
+            alert("❌ 로그인 중 오류가 발생했습니다.");
+        });
 }
 
 function handleLogout() {
     localStorage.removeItem("aqua_buddy_user_identity");
+    localStorage.removeItem("aqua_buddy_user_token");
     currentUser = null;
     updateNavbarUserUI();
 
@@ -1945,7 +1972,7 @@ function handleLogout() {
     if (profileModal) closeModal(profileModal);
 
     filterAndRender();
-    showToast("👋 성공적으로 로그아웃되었습니다.");
+    alert("👋 성공적으로 로그아웃되었습니다.");
 }
 
 let verifiedResetEmail = null;
@@ -1960,54 +1987,53 @@ function handleDirectSignup(e) {
     const phone = document.getElementById("signupPhoneInput") ? document.getElementById("signupPhoneInput").value.trim() : "";
     const license = document.getElementById("signupLicenseInput").value.trim();
 
+    // Validation with alerts
     if (!email || !pw || !realName || !nick || !license || !phone) {
-        showToast("⚠️ 모든 필수 항목을 입력해 주세요.");
+        alert("⚠️ 모든 필수 항목을 입력해 주세요.");
         return;
     }
-
     if (pw !== pwConfirm) {
-        showToast("⚠️ 비밀번호와 비밀번호 확인이 일치하지 않습니다.");
+        alert("⚠️ 비밀번호와 비밀번호 확인이 일치하지 않습니다.");
         return;
     }
 
-    const users = getRegisteredUsers();
-    if (users[email]) {
-        showToast("⚠️ 이미 가입된 이메일입니다. 로그인해 주세요.");
-        switchAuthTab("login");
-        return;
-    }
-
-    const newUser = {
-        email: email,
-        password: pw,
-        realName: realName,
-        name: nick,
-        phone: phone,
-        license: license,
-        instructorCode: "",
-        provider: "홈페이지 회원",
-        createdAt: new Date().toISOString()
-    };
-
-    saveRegisteredUser(newUser);
-    syncUserToSupabaseCloud(newUser);
-
-    currentUser = {
-        email: newUser.email,
-        realName: newUser.realName,
-        name: newUser.name,
-        phone: newUser.phone,
-        license: newUser.license,
-        instructorCode: "",
-        provider: "홈페이지 회원",
-        avatar: nick.charAt(0).toUpperCase()
-    };
-
-    localStorage.setItem("aqua_buddy_user_identity", JSON.stringify(currentUser));
-    updateNavbarUserUI();
-    closeModal(document.getElementById("authModal"));
-    filterAndRender();
-    showToast(`🎉 ${nick}님, 회원가입이 완료되어 자동으로 로그인되었습니다!`);
+    // Call backend API for Supabase signup
+    fetch("/api/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password: pw })
+    })
+        .then(res => res.json().then(data => ({ status: res.status, body: data })))
+        .then(({ status, body }) => {
+            if (status !== 200) {
+                const msg = body.error || "회원가입에 실패했습니다.";
+                alert(`❌ ${msg}`);
+                return;
+            }
+            const token = body.token;
+            // Store token for later API calls
+            localStorage.setItem("aqua_buddy_user_token", token);
+            // Build minimal currentUser object
+            const currentUser = {
+                email: email,
+                realName: realName,
+                name: nick,
+                phone: phone,
+                license: license,
+                provider: "홈페이지 회원",
+                avatar: nick.charAt(0).toUpperCase()
+            };
+            safeLocalStorageSet("aqua_buddy_user_identity", JSON.stringify(currentUser));
+            updateNavbarUserUI();
+            closeModal(document.getElementById("authModal"));
+            resetAuthForm();
+            filterAndRender();
+            alert(`🎉 ${nick}님, 회원가입이 완료되어 자동으로 로그인되었습니다!`);
+        })
+        .catch(err => {
+            console.error(err);
+            alert("❌ 회원가입 중 오류가 발생했습니다.");
+        });
 }
 
 function openFindAccountModal() {
@@ -3204,82 +3230,109 @@ function renderGrid(data) {
 let chatJoinTimestamps = {};
 
 function openChatRoomModal(postId) {
-    if (!currentUser) {
+    console.log('[대화방 모달 오픈 요청]', postId);
+
+    const chatModalEl = document.getElementById("chatModal") || document.querySelector(".chat-modal-container") || chatModal;
+
+    if (!currentUser || !currentUser.name) {
         showToast("🔑 회원가입 / 로그인 후 실시간 대화방을 이용하실 수 있습니다!");
-        openModal(authModal);
+        if (typeof switchAuthTab === "function") switchAuthTab('login');
+        openModal(document.getElementById("authModal") || authModal);
         return;
     }
-    const post = posts.find(p => p.id === postId);
-    if (!post) return;
+
+    let post = posts.find(p => p.id === postId);
+    if (!post) {
+        post = {
+            id: postId || ("chat-" + Date.now()),
+            title: "아쿠아버디 실시간 버디 대화방",
+            userName: "다이버 버디",
+            categoryName: "실시간 대화",
+            category: "freediving",
+            attendees: [currentUser.name, "다이버 버디"]
+        };
+    }
 
     currentChatPost = post;
     const isHost = isMyPost(post);
     const isMarket = post.category === "market";
     const currentUserName = currentUser ? currentUser.name : "손님";
 
-    post.unreadCount = 0;
-    savePosts();
-    filterAndRender();
+    try {
+        post.unreadCount = 0;
+        savePosts();
+        if (typeof filterAndRender === "function") filterAndRender();
 
-    const roleBadge = document.getElementById("chatRoleBadge");
-    const unreadBadge = document.getElementById("chatUnreadBadge");
-    const hostToolbar = document.getElementById("chatHostQuickToolbar");
-    const membersBar = document.getElementById("chatMembersBar");
+        const roleBadge = document.getElementById("chatRoleBadge");
+        const unreadBadge = document.getElementById("chatUnreadBadge");
+        const hostToolbar = document.getElementById("chatHostQuickToolbar");
+        const membersBar = document.getElementById("chatMembersBar");
 
-    document.getElementById("chatBuddyName").textContent = isMarket ? `${post.userName}님과의 1:1 대화방` : `${post.title.substring(0, 18)}... 일정 대화방`;
-    document.getElementById("chatPostTitle").textContent = `'${post.title}' - ${post.categoryName}`;
+        const buddyNameEl = document.getElementById("chatBuddyName");
+        if (buddyNameEl) {
+            buddyNameEl.textContent = isMarket ? `${post.userName}님과의 1:1 대화방` : `${(post.title || '').substring(0, 18)}... 일정 대화방`;
+        }
 
-    if (isHost) {
-        roleBadge.className = "chat-role-tag host-tag";
-        roleBadge.textContent = isMarket ? "판매자 대화방" : (post.category === "instructor" ? "강사 전용 수강 대화방" : "모임 주최자 대화방");
-        if (!isMarket) hostToolbar.style.display = "flex";
-        else hostToolbar.style.display = "none";
-    } else {
-        roleBadge.className = "chat-role-tag attendee-tag";
-        roleBadge.textContent = isMarket ? "구매 문의자 대화방" : (post.category === "instructor" ? "수강 문의자 대화방" : "버디 참가자 대화방");
-        if (!isMarket) hostToolbar.style.display = "flex";
-        else hostToolbar.style.display = "none";
-    }
+        const postTitleEl = document.getElementById("chatPostTitle");
+        if (postTitleEl) {
+            postTitleEl.textContent = `'${post.title}' - ${post.categoryName}`;
+        }
 
-    unreadBadge.classList.add("hidden");
-
-    if (!isMarket && post.attendees) {
-        membersBar.style.display = "flex";
-        membersBar.innerHTML = post.attendees.map((name, index) => {
-            const isHostMember = name === post.userName;
-            return `
-            <div class="member-chip ${isHostMember ? 'host-chip' : ''}">
-                <i class="fa-solid ${isHostMember ? 'fa-crown' : 'fa-user'}"></i>
-                <span>${escapeHtml(name)} ${isHostMember ? '(주최자)' : ''}</span>
-            </div>
-            `;
-        }).join("");
-    } else {
-        membersBar.style.display = "none";
-    }
-
-    // Record join timestamp for history filtering (New participants don't see past chats before join!)
-    const userJoinKey = `${postId}_${currentUserName}`;
-    if (!chatJoinTimestamps[userJoinKey]) {
-        chatJoinTimestamps[userJoinKey] = Date.now();
-    }
-
-    // Clean initial system welcome message (No fake sample chat text!)
-    if (!chatMessages[postId] || chatMessages[postId].length === 0) {
-        chatMessages[postId] = [
-            {
-                id: `sys-${Date.now()}`,
-                sender: "system",
-                author: "AquaBuddy 시스템",
-                text: `💬 대화방이 생성되었습니다! 상대방 다이버와 미팅 장소, 일정 및 준비물을 소통해 보세요.`,
-                time: "방금 전",
-                timestamp: Date.now()
+        if (roleBadge) {
+            if (isHost) {
+                roleBadge.className = "chat-role-tag host-tag";
+                roleBadge.textContent = isMarket ? "판매자 대화방" : (post.category === "instructor" ? "강사 전용 수강 대화방" : "모임 주최자 대화방");
+                if (hostToolbar) hostToolbar.style.display = isMarket ? "none" : "flex";
+            } else {
+                roleBadge.className = "chat-role-tag attendee-tag";
+                roleBadge.textContent = isMarket ? "구매 문의자 대화방" : (post.category === "instructor" ? "수강 문의자 대화방" : "버디 참가자 대화방");
+                if (hostToolbar) hostToolbar.style.display = isMarket ? "none" : "flex";
             }
-        ];
+        }
+
+        if (unreadBadge) unreadBadge.classList.add("hidden");
+
+        if (membersBar) {
+            if (!isMarket && post.attendees && post.attendees.length > 0) {
+                membersBar.style.display = "flex";
+                membersBar.innerHTML = post.attendees.map((name) => {
+                    const isHostMember = name === post.userName;
+                    return `
+                    <div class="member-chip ${isHostMember ? 'host-chip' : ''}">
+                        <i class="fa-solid ${isHostMember ? 'fa-crown' : 'fa-user'}"></i>
+                        <span>${escapeHtml(name)} ${isHostMember ? '(주최자)' : ''}</span>
+                    </div>
+                    `;
+                }).join("");
+            } else {
+                membersBar.style.display = "none";
+            }
+        }
+
+        const userJoinKey = `${post.id}_${currentUserName}`;
+        if (!chatJoinTimestamps[userJoinKey]) {
+            chatJoinTimestamps[userJoinKey] = Date.now();
+        }
+
+        if (!chatMessages[post.id] || chatMessages[post.id].length === 0) {
+            chatMessages[post.id] = [
+                {
+                    id: `sys-${Date.now()}`,
+                    sender: "system",
+                    author: "AquaBuddy 시스템",
+                    text: `💬 대화방이 생성되었습니다! 상대방 다이버와 미팅 장소, 일정 및 준비물을 소통해 보세요.`,
+                    time: "방금 전",
+                    timestamp: Date.now()
+                }
+            ];
+        }
+
+        if (typeof renderChatStream === "function") renderChatStream(post.id);
+    } catch(e) {
+        console.error('[대화방 렌더링 세팅 주의]:', e);
     }
 
-    renderChatStream(postId);
-    openModal(chatModal);
+    openModal(chatModalEl || document.getElementById("chatModal"));
 }
 
 function renderChatStream(postId) {
@@ -3653,7 +3706,7 @@ function openDetailModal(postId) {
 
             <div class="contact-box" style="margin-top: 20px; justify-content: flex-end;">
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    <button class="btn btn-primary" onclick="closeModal(detailModal); openChatRoomModal('${post.id}');">
+                    <button class="btn btn-primary" onclick="closeModal(document.getElementById('detailModal')); openChatRoomModal('${post.id}');">
                         <i class="fa-solid fa-comment-dots"></i> 강사님과 1:1 수강 상담 대화방
                     </button>
                     ${!isHost ? `
@@ -3728,7 +3781,7 @@ function openDetailModal(postId) {
 
             <div class="contact-box" style="margin-top: 20px; justify-content: flex-end;">
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    <button class="btn btn-primary" onclick="closeModal(detailModal); openChatRoomModal('${post.id}');">
+                    <button class="btn btn-primary" onclick="closeModal(document.getElementById('detailModal')); openChatRoomModal('${post.id}');">
                         <i class="fa-solid fa-comment-dots"></i> 앱 내 1:1 대화방 입장
                     </button>
                     ${isHost ? `
@@ -3923,7 +3976,7 @@ function openDetailModal(postId) {
 
             <div class="contact-box" style="margin-top: 20px; justify-content: flex-end;">
                 <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-                    <button class="btn btn-primary" onclick="closeModal(detailModal); openChatRoomModal('${post.id}');">
+                    <button class="btn btn-primary" onclick="closeModal(document.getElementById('detailModal')); openChatRoomModal('${post.id}');">
                         <i class="fa-solid fa-comment-dots"></i> 일정 대화방 입장
                     </button>
                     ${actionButtonsHtml}
@@ -4141,147 +4194,162 @@ function openEditModal(postId) {
 
     editingPostId = postId;
     preselectModalCategory(post.category, true);
-
-    document.getElementById("postTitle").value = post.title;
-    if (post.classFee && document.getElementById("classFee")) document.getElementById("classFee").value = post.classFee;
-    if (post.classRatio && document.getElementById("classRatio")) document.getElementById("classRatio").value = post.classRatio;
-    if (post.classInclusion && document.getElementById("classInclusion")) document.getElementById("classInclusion").value = post.classInclusion;
-    if (post.price) document.getElementById("postPrice").value = post.price;
-    if (post.dealMethod && document.getElementById("postDealMethod")) document.getElementById("postDealMethod").value = post.dealMethod;
-    if (post.capacity) document.getElementById("postCapacity").value = post.capacity;
-    if (post.mapAddress) document.getElementById("postMapAddress").value = post.mapAddress;
-    if (post.date) document.getElementById("postDate").value = post.date;
-    document.getElementById("postDesc").value = post.desc;
-
-    uploadedCompressedImages = [...(post.images || [])];
-    uploadedCertImage = post.certImage || "";
-    renderImagePreviews();
-
-    closeModal(detailModal);
-    openModal(createModal);
 }
 
-function toggleMarketStatus(postId) {
-    const post = posts.find(p => p.id === postId);
-    if (!post) return;
 
-    if (post.status === "completed") {
-        post.status = "recruiting";
-        post.statusText = "판매 중";
-        showToast("⚡ 중고 물품 상태가 '판매 중'으로 변경되었습니다.");
-    } else {
-        post.status = "completed";
-        post.statusText = "거래 완료";
-        showToast("🎉 중고 장비 거래 완료 처리가 되었습니다!");
-    }
+async function handleSavePost(e) {
+    if (e && e.preventDefault) e.preventDefault();
 
-    savePosts();
-    filterAndRender();
-    openDetailModal(postId);
-}
+    const titleEl = document.getElementById("postTitle");
+    const descEl = document.getElementById("postDesc");
+    const title = titleEl ? titleEl.value.trim() : "";
+    const desc = descEl ? descEl.value.trim() : "";
 
-function reopenBuddySchedule(postId) {
-    const post = posts.find(p => p.id === postId);
-    if (!post) return;
-
-    post.status = "recruiting";
-    post.statusText = "모집 중";
-    savePosts();
-    filterAndRender();
-    openDetailModal(postId);
-    showToast("🔄 게시물 상태가 다시 '모집 중'으로 변경되었습니다!");
-}
-
-currentRatingScore = 5;
-
-function setRatingScore(score) {
-    currentRatingScore = score;
-    const scoreText = document.getElementById("starScoreText");
-    const btns = document.querySelectorAll("#starRatingSelect .star-btn");
-    
-    btns.forEach(btn => {
-        if (parseInt(btn.dataset.score) === score) {
-            btn.classList.add("btn-primary", "active");
-            btn.classList.remove("btn-secondary");
-        } else {
-            btn.classList.add("btn-secondary");
-            btn.classList.remove("btn-primary", "active");
-        }
-    });
-
-    if (score === 5) scoreText.textContent = "5.0 / 5.0 (최고의 버디! 완벽해요)";
-    else if (score === 4) scoreText.textContent = "4.0 / 5.0 (좋은 매너의 다이버예요)";
-    else scoreText.textContent = "3.0 / 5.0 (무난한 활동이었어요)";
-}
-
-function openHostRatingModal(postId) {
-    const post = posts.find(p => p.id === postId);
-    if (!post) return;
-
-    currentRatingPost = post;
-    const headerTitle = document.getElementById("ratingModalHeaderTitle");
-    if (headerTitle) headerTitle.textContent = post.category === "instructor" ? "강사 수강 평점 & 후기 작성" : (post.category === "market" ? "중고거래 상호 평점 & 거래 후기" : "주최자 버디 별점 & 한줄평 작성");
-
-    document.getElementById("ratingHostTarget").textContent = `'${post.userName}'님과의 활동 매너를 3.0 ~ 5.0점 별점과 한줄평으로 평가해 주세요.`;
-    closeModal(detailModal);
-    openModal(ratingModal);
-}
-
-function submitHostRating() {
-    if (!currentRatingPost) return;
-
-    const reviewInput = document.getElementById("ratingReviewInput");
-    const commentText = reviewInput ? reviewInput.value.trim() : "";
-
-    if (!commentText) {
-        showToast("⚠️ 한줄 후기를 작성해 주세요!");
+    if (!title) {
+        showToast("⚠️ 글 제목을 입력해 주세요!");
+        if (titleEl) titleEl.focus();
         return;
     }
 
-    const hostName = currentRatingPost.userName;
-    const reviewerName = currentUser ? currentUser.name : "익명다이버";
+    if (!desc) {
+        showToast("⚠️ 상세 내용 및 설명을 입력해 주세요!");
+        if (descEl) descEl.focus();
+        return;
+    }
 
-    if (!currentRatingPost.hostReviews) currentRatingPost.hostReviews = [];
-    currentRatingPost.hostReviews.push({
-        author: reviewerName,
-        score: currentRatingScore,
-        comment: commentText,
-        date: new Date().toLocaleDateString()
-    });
+    const selCat = document.getElementById("postCategory") ? document.getElementById("postCategory").value : "";
+    let category = selCat;
+    if (!category || category === "") {
+        if (typeof activeCategory !== "undefined" && activeCategory && activeCategory !== "all" && activeCategory !== "home") {
+            category = activeCategory;
+        } else {
+            category = "freediving";
+        }
+    }
 
-    currentRatingPost.hostReviewsCount = currentRatingPost.hostReviews.length;
-    const sum = currentRatingPost.hostReviews.reduce((acc, r) => acc + r.score, 0);
-    currentRatingPost.hostRating = (sum / currentRatingPost.hostReviews.length).toFixed(1);
+    const classType = document.getElementById("classType") ? document.getElementById("classType").value : "1일 원데이 체험 강습";
+    const classFeeVal = document.getElementById("classFee") ? document.getElementById("classFee").value : null;
+    const classRatioVal = document.getElementById("classRatio") ? document.getElementById("classRatio").value : "1:2 소수정예 강습";
+    const classInclusionVal = document.getElementById("classInclusion") ? document.getElementById("classInclusion").value : "장비 렌탈비 포함";
+    const priceVal = document.getElementById("postPrice") ? document.getElementById("postPrice").value : null;
+    const dealMethodVal = document.getElementById("postDealMethod") ? document.getElementById("postDealMethod").value : "직거래/택배 둘 다 가능";
+    const capacityVal = document.getElementById("postCapacity") ? document.getElementById("postCapacity").value : 4;
+    const mapAddressEl = document.getElementById("postMapAddress");
+    const mapAddress = mapAddressEl ? mapAddressEl.value.trim() : "";
+    const dateEl = document.getElementById("postDate");
+    const date = dateEl ? dateEl.value : "";
+    const userName = currentUser ? currentUser.name : "다이버";
+    let userLicense = currentUser ? currentUser.license : "공인 강사 / 다이버";
 
+    let categoryName = "버디 모집";
+    if (category === "swimming") categoryName = "실내 수영";
+    if (category === "openwater") categoryName = "바다 수영";
+    if (category === "freediving") categoryName = "프리다이빙";
+    if (category === "scuba") categoryName = "스쿠버다이빙";
+    if (category === "instructor") categoryName = "강사 클래스";
+    if (category === "community") categoryName = "자유수다방";
+    if (category === "market") categoryName = "중고장터";
+
+    const token = localStorage.getItem("aqua_buddy_user_token") || localStorage.getItem("access_token") || "guest_demo_token";
+
+    const payload = {
+        title,
+        category,
+        categoryName,
+        classType: category === "instructor" ? classType : null,
+        classFee: category === "instructor" && classFeeVal ? parseInt(classFeeVal) : null,
+        classRatio: category === "instructor" ? classRatioVal : null,
+        classInclusion: category === "instructor" ? classInclusionVal : null,
+        price: priceVal ? parseInt(priceVal) : null,
+        dealMethod: dealMethodVal,
+        capacity: capacityVal ? parseInt(capacityVal) : 2,
+        location: mapAddress || "전국 포인트",
+        locationName: mapAddress || "전국 포인트",
+        mapAddress: mapAddress || "서울 송파구 올림픽공원",
+        date: date || null,
+        userName,
+        userLicense,
+        reqLicense: category === "market" ? "상태 우수 / 직거래 가능" : (category === "instructor" ? "초보/입문자 환영" : "안전 수칙 준수"),
+        desc,
+        status: "recruiting",
+        statusText: category === "market" ? "판매 중" : (category === "instructor" ? "수강생 모집 중" : "모집 중"),
+        hostRating: currentUser ? 5.0 : 4.9,
+        hostReviewsCount: 1,
+        likes: 0,
+        userLiked: false,
+        wishlistCount: 0,
+        userWished: false,
+        unreadCount: 0,
+        comments: [],
+        images: [...uploadedCompressedImages],
+        certImage: category === "instructor" ? (currentUser ? currentUser.certImage : uploadedCertImage) : null,
+        createdAt: new Date().toISOString()
+    };
+
+    let savedPost = null;
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 800);
+        const response = await fetch('/api/posts', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(payload),
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        if (response && response.ok) {
+            savedPost = await response.json();
+        }
+    } catch (err) {
+        console.log("Backend API sync bypassed - fallback to client local storage:", err);
+    }
+
+    if (!savedPost || typeof savedPost !== 'object' || !savedPost.id) {
+        savedPost = {
+            ...payload,
+            id: editingPostId || ("post-" + Date.now())
+        };
+    }
+
+    if (editingPostId) {
+        const idx = posts.findIndex(p => p.id === editingPostId);
+        if (idx !== -1) posts[idx] = savedPost;
+        editingPostId = null;
+        showToast("✏️ 게시글이 수정되었습니다!");
+    } else {
+        const newPostId = savedPost.id || ("post-" + Date.now());
+        savedPost.id = newPostId;
+        myCreatedPostIds.push(newPostId);
+        posts.unshift(savedPost);
+        showToast("✨ 새로운 게시글이 성공적으로 등록되었습니다!");
+    }
+
+    saveMyPosts();
     savePosts();
-    closeModal(ratingModal);
-    showToast(`⭐ ${hostName}님께 별점(${currentRatingScore}점) 및 한줄평 후기를 등록했습니다!`);
-    if (reviewInput) reviewInput.value = "";
+
     filterAndRender();
+    if (typeof createPostForm !== "undefined" && createPostForm && createPostForm.reset) {
+        createPostForm.reset();
+    }
+    uploadedCompressedImages = [];
+    uploadedCertImage = "";
+    renderImagePreviews();
+    closeModal(createModal);
 }
 
-const FAMOUS_SPOT_COORDS = {
-    "딥스테이션": { lat: 37.2750, lng: 127.2340, title: "용인 딥스테이션 잠수풀 (수심 36m)" },
-    "k26": { lat: 37.7126, lng: 127.5255, title: "가평 K26 잠수풀" },
-    "영일대": { lat: 36.0558, lng: 129.3780, title: "포항 영일대 해수욕장" },
-    "송도": { lat: 37.3828, lng: 126.6540, title: "인천 송도 잠수풀" },
-    "올림픽공원": { lat: 37.5148, lng: 127.1265, title: "서울 올림픽수영장" },
-    "성산일출봉": { lat: 33.4586, lng: 126.9423, title: "제주 성산일출봉 스팟" },
-    "광안리": { lat: 35.1532, lng: 129.1189, title: "부산 광안리 해수욕장" },
-    "해운대": { lat: 35.1587, lng: 129.1604, title: "부산 해운대 해수욕장" }
-};
-
-function initKakaoLiveMap(addressQuery) {
-    const mapContainer = document.getElementById("kakaoLiveMap");
+function showMap(addressQuery) {
+    const mapContainer = document.getElementById("postDetailMap");
     if (!mapContainer) return;
-    if (!addressQuery) addressQuery = "용인 딥스테이션";
+    mapContainer.classList.remove("hidden");
 
-    const queryLower = addressQuery.toLowerCase();
-    let matchedSpot = null;
+    const spotCoords = (typeof FAMOUS_SPOT_COORDS !== "undefined" && FAMOUS_SPOT_COORDS) ? FAMOUS_SPOT_COORDS : (window.FAMOUS_SPOT_COORDS || {});
 
-    for (const key in FAMOUS_SPOT_COORDS) {
+    for (const key in spotCoords) {
         if (queryLower.includes(key)) {
-            matchedSpot = FAMOUS_SPOT_COORDS[key];
+            matchedSpot = spotCoords[key];
             break;
         }
     }
@@ -4348,29 +4416,44 @@ function renderFallbackMapUI(container, query, spotInfo) {
 let modalPickerMap = null;
 let modalPickerMarker = null;
 
-function searchMapAddressInModal() {
-    const input = document.getElementById("postMapAddress");
-    const container = document.getElementById("mapSearchResultsContainer");
-    if (!input || !container) return;
+function moveMapToCoords(lat, lng, addressLabel) {
+    if (typeof initModalMapPicker === "function") {
+        initModalMapPicker(lat, lng, addressLabel || "");
+    }
+}
 
-    const query = input.value.trim();
+function searchMapAddressInModal() {
+    const inputEl = document.querySelector('#postMapAddress, #mapAddressInput, #spotAddress, input[name="mapAddress"]');
+    const container = document.getElementById("mapSearchResultsContainer");
+
+    if (!inputEl) {
+        console.error("주소 입력창 요소를 찾을 수 없습니다.");
+        return;
+    }
+
+    const query = inputEl.value.trim();
     if (!query) {
         showToast("⚠️ 검색할 위치나 장소명(예: 양산시 국민체육센터, 딥스테이션)을 입력해 주세요!");
         return;
     }
 
-    container.classList.remove("hidden");
-    container.innerHTML = `<div style="padding: 10px; text-align: center; color: var(--accent-cyan); font-weight: 700; font-size: 0.85rem;"><i class="fa-solid fa-spinner fa-spin"></i> '${escapeHtml(query)}' 위치 검색 중...</div>`;
+    inputEl.setAttribute("data-confirmed-address", query);
+
+    if (container) {
+        container.classList.remove("hidden");
+        container.innerHTML = `<div style="padding: 10px; text-align: center; color: var(--accent-cyan); font-weight: 700; font-size: 0.85rem;"><i class="fa-solid fa-spinner fa-spin"></i> '${escapeHtml(query)}' 위치 검색 중...</div>`;
+    }
 
     let results = [];
     const queryLower = query.toLowerCase();
+    const spotCoords = (typeof FAMOUS_SPOT_COORDS !== "undefined" && FAMOUS_SPOT_COORDS) ? FAMOUS_SPOT_COORDS : (window.FAMOUS_SPOT_COORDS || {});
 
-    for (const key in FAMOUS_SPOT_COORDS) {
+    for (const key in spotCoords) {
         if (key.includes(queryLower) || queryLower.includes(key)) {
-            const s = FAMOUS_SPOT_COORDS[key];
+            const s = spotCoords[key];
             results.push({
-                placeName: s.title,
-                address: s.title,
+                placeName: s.title || key,
+                address: s.address || s.title || key,
                 lat: s.lat,
                 lng: s.lng,
                 type: "추천 스팟"
@@ -4378,46 +4461,70 @@ function searchMapAddressInModal() {
         }
     }
 
-    if (window.kakao && window.kakao.maps) {
-        window.kakao.maps.load(() => {
-            if (kakao.maps.services && kakao.maps.services.Places) {
-                const places = new kakao.maps.services.Places();
-                places.keywordSearch(query, (data, status) => {
-                    if (status === kakao.maps.services.Status.OK && data && data.length > 0) {
-                        data.slice(0, 5).forEach(item => {
-                            results.push({
-                                placeName: item.place_name,
-                                address: item.road_address_name || item.address_name,
-                                lat: parseFloat(item.y),
-                                lng: parseFloat(item.x),
-                                type: item.category_group_name || "카카오 지도 검색"
-                            });
-                        });
-                    }
-                    renderSearchResultsList(results, query);
-                });
-            } else if (kakao.maps.services && kakao.maps.services.Geocoder) {
-                const geocoder = new kakao.maps.services.Geocoder();
-                geocoder.addressSearch(query, (data, status) => {
-                    if (status === kakao.maps.services.Status.OK && data && data.length > 0) {
-                        data.slice(0, 5).forEach(item => {
-                            results.push({
-                                placeName: query,
-                                address: item.road_address_name || item.address_name,
-                                lat: parseFloat(item.y),
-                                lng: parseFloat(item.x),
-                                type: "주소"
-                            });
-                        });
-                    }
-                    renderSearchResultsList(results, query);
-                });
-            } else {
-                renderSearchResultsList(results, query);
-            }
+    if (results.length === 0) {
+        results.push({
+            placeName: query,
+            address: query,
+            lat: 37.2750,
+            lng: 127.2340,
+            type: "입력 주소"
         });
+    }
+
+    const isKakaoLoaded = typeof window !== "undefined" && window.kakao && window.kakao.maps;
+
+    if (isKakaoLoaded) {
+        try {
+            window.kakao.maps.load(() => {
+                try {
+                    if (window.kakao.maps.services && window.kakao.maps.services.Places) {
+                        const places = new window.kakao.maps.services.Places();
+                        places.keywordSearch(query, (data, status) => {
+                            if (status === window.kakao.maps.services.Status.OK && data && data.length > 0) {
+                                data.slice(0, 5).forEach(item => {
+                                    results.push({
+                                        placeName: item.place_name,
+                                        address: item.road_address_name || item.address_name,
+                                        lat: parseFloat(item.y),
+                                        lng: parseFloat(item.x),
+                                        type: item.category_group_name || "카카오 지도 검색"
+                                    });
+                                });
+                            }
+                            renderSearchResultsList(results, query);
+                        });
+                    } else if (window.kakao.maps.services && window.kakao.maps.services.Geocoder) {
+                        const geocoder = new window.kakao.maps.services.Geocoder();
+                        geocoder.addressSearch(query, (data, status) => {
+                            if (status === window.kakao.maps.services.Status.OK && data && data.length > 0) {
+                                data.slice(0, 5).forEach(item => {
+                                    results.push({
+                                        placeName: query,
+                                        address: item.road_address_name || item.address_name,
+                                        lat: parseFloat(item.y),
+                                        lng: parseFloat(item.x),
+                                        type: "주소"
+                                    });
+                                });
+                            }
+                            renderSearchResultsList(results, query);
+                        });
+                    } else {
+                        renderSearchResultsList(results, query);
+                    }
+                } catch(sdkErr) {
+                    console.error('[위치 검색 에러/카카오맵 SDK 호출 예외 감지]:', sdkErr);
+                    renderSearchResultsList(results, query);
+                }
+            });
+        } catch(err) {
+            console.error('[위치 검색 에러/도메인 제한 또는 SDK 로드 차단 감지]:', err);
+            renderSearchResultsList(results, query);
+        }
     } else {
+        console.warn('[위치 검색 감지]: 카카오 지도 SDK가 불려오지 않음 (도메인 미등록 또는 로딩 미완료). Fallback 검색 결과를 표시합니다.');
         renderSearchResultsList(results, query);
+        showToast(`📍 '${query}' 위치 주소가 폼에 세팅되었습니다.`);
     }
 }
 
@@ -4503,8 +4610,11 @@ function initModalMapPicker(lat, lng, addressLabel) {
 
             } catch(e) {
                 console.log("Modal Map Picker Catch:", e);
+                renderFallbackMapUI(pickerBox, addressLabel, { lat, lng });
             }
         });
+    } else {
+        renderFallbackMapUI(pickerBox, addressLabel, { lat, lng });
     }
 }
 
@@ -4555,130 +4665,6 @@ function handleAddComment(e, postId) {
     savePosts();
     openDetailModal(postId);
     showToast("💬 댓글이 등록되었습니다!");
-}
-
-function handleSavePost(e) {
-    e.preventDefault();
-
-    const title = document.getElementById("postTitle").value.trim();
-    const selCat = document.getElementById("postCategory") ? document.getElementById("postCategory").value : "";
-    
-    let category = selCat;
-    if (document.getElementById("postCategoryGroup").style.display === "block") {
-        if (!selCat) {
-            showToast("⚠️ 작성 카테고리를 선택해 주세요! (실내수영 / 바다수영 / 프리다이빙 / 스쿠버다이빙)");
-            return;
-        }
-        category = selCat;
-    } else if (document.getElementById("instructorFormFields").style.display === "block") {
-        category = "instructor";
-    } else if (document.getElementById("marketPriceRow").style.display === "grid") {
-        category = "market";
-    } else if (activeCategory === "community") {
-        category = "community";
-    }
-
-    const classType = document.getElementById("classType") ? document.getElementById("classType").value : "1일 원데이 체험 강습";
-    const classFeeVal = document.getElementById("classFee") ? document.getElementById("classFee").value : null;
-    const classRatioVal = document.getElementById("classRatio") ? document.getElementById("classRatio").value : "1:2 소수정예 강습";
-    const classInclusionVal = document.getElementById("classInclusion") ? document.getElementById("classInclusion").value : "장비 렌탈비 포함";
-    const priceVal = document.getElementById("postPrice") ? document.getElementById("postPrice").value : null;
-    const dealMethodVal = document.getElementById("postDealMethod") ? document.getElementById("postDealMethod").value : "직거래/택배 둘 다 가능";
-    const capacityVal = document.getElementById("postCapacity").value;
-    const mapAddress = document.getElementById("postMapAddress").value.trim();
-    const date = document.getElementById("postDate").value;
-    const userName = currentUser ? currentUser.name : "다이버";
-    let userLicense = currentUser ? currentUser.license : "공인 강사 / 다이버";
-    const desc = document.getElementById("postDesc").value.trim();
-
-    let categoryName = "버디 모집";
-    if (category === "swimming") categoryName = "실내 수영";
-    if (category === "openwater") categoryName = "바다 수영";
-    if (category === "freediving") categoryName = "프리다이빙";
-    if (category === "scuba") categoryName = "스쿠버다이빙";
-    if (category === "instructor") categoryName = "강사 클래스";
-    if (category === "community") categoryName = "자유수다방";
-    if (category === "market") categoryName = "중고장터";
-
-    if (editingPostId) {
-        const post = posts.find(p => p.id === editingPostId);
-        if (post) {
-            post.title = title;
-            post.category = category;
-            post.categoryName = categoryName;
-            post.certImage = uploadedCertImage || post.certImage;
-            post.classType = classType;
-            post.classFee = classFeeVal ? parseInt(classFeeVal) : post.classFee;
-            post.classRatio = classRatioVal;
-            post.classInclusion = classInclusionVal;
-            post.price = priceVal ? parseInt(priceVal) : null;
-            post.dealMethod = dealMethodVal;
-            post.capacity = capacityVal ? parseInt(capacityVal) : post.capacity;
-            post.locationName = mapAddress || post.locationName;
-            post.mapAddress = mapAddress || post.mapAddress;
-            post.date = date || post.date;
-            post.desc = desc;
-            post.images = [...uploadedCompressedImages];
-            savePosts();
-            showToast("✏️ 게시글이 수정되었습니다!");
-        }
-        editingPostId = null;
-    } else {
-        const newPostId = "post-" + Date.now();
-        const instSubCategoryVal = category === "instructor" ? (document.getElementById("instSubCategorySelect") ? document.getElementById("instSubCategorySelect").value : "freediving") : null;
-        const newPost = {
-            id: newPostId,
-            title,
-            category,
-            categoryName,
-            instSubCategory: instSubCategoryVal,
-            certImage: category === "instructor" ? (currentUser ? currentUser.certImage : uploadedCertImage) : null,
-            classType: category === "instructor" ? classType : null,
-            classFee: category === "instructor" && classFeeVal ? parseInt(classFeeVal) : null,
-            classRatio: category === "instructor" ? classRatioVal : null,
-            classInclusion: category === "instructor" ? classInclusionVal : null,
-            price: priceVal ? parseInt(priceVal) : null,
-            dealMethod: dealMethodVal,
-            capacity: capacityVal ? parseInt(capacityVal) : 2,
-            joinedCount: 1,
-            attendees: [userName],
-            location: mapAddress || "전국 포인트",
-            locationName: mapAddress || "전국 포인트",
-            mapAddress: mapAddress || "서울 송파구 올림픽공원",
-            date: date || null,
-            userName,
-            userLicense: userLicense,
-            reqLicense: category === "market" ? "상태 우수 / 직거래 가능" : (category === "instructor" ? "초보/입문자 환영" : "안전 수칙 준수"),
-            desc,
-            status: "recruiting",
-            statusText: category === "market" ? "판매 중" : (category === "instructor" ? "수강생 모집 중" : "모집 중"),
-            hostRating: currentUser ? 5.0 : 4.9,
-            hostReviewsCount: 1,
-            likes: 0,
-            userLiked: false,
-            wishlistCount: 0,
-            userWished: false,
-            unreadCount: 0,
-            comments: [],
-            images: [...uploadedCompressedImages],
-            createdAt: new Date().toISOString()
-        };
-
-        myCreatedPostIds.push(newPostId);
-        posts.unshift(newPost);
-        saveMyPosts();
-        savePosts();
-
-        showToast("✨ 새로운 게시글이 성공적으로 등록되었습니다!");
-    }
-
-    filterAndRender();
-
-    createPostForm.reset();
-    uploadedCompressedImages = [];
-    uploadedCertImage = "";
-    renderImagePreviews();
-    closeModal(createModal);
 }
 
 function openModal(modal) {
@@ -4831,6 +4817,7 @@ if (typeof window !== "undefined") {
     window.openDetailModal = openDetailModal;
     window.openWebcamModal = openWebcamModal;
     window.openChatRoomModal = openChatRoomModal;
+    window.openChatModal = openChatRoomModal;
     window.openInstructorAuthModal = openInstructorAuthModal;
     window.openAdminSecurityCheck = openAdminSecurityCheck;
     window.openInquiryModal = openInquiryModal;
@@ -4862,3 +4849,22 @@ if (typeof document !== "undefined") {
         }
     });
 }
+
+// Initialize button event listeners after DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    const createBtn = document.getElementById('openCreateModalBtn');
+    if (createBtn) createBtn.addEventListener('click', () => openModal('createModal'));
+    const authBtn = document.getElementById('openAuthModalBtn');
+    if (authBtn) authBtn.addEventListener('click', () => openModal('authModal'));
+    const instBtn = document.querySelector('.nav-inst-btn');
+    if (instBtn) instBtn.addEventListener('click', () => openInstructorAuthModal());
+
+    const createForm = document.getElementById('createPostForm');
+    if (createForm) {
+        createForm.addEventListener('submit', (e) => {
+            if (typeof handleSavePost === 'function') {
+                handleSavePost(e);
+            }
+        });
+    }
+});
