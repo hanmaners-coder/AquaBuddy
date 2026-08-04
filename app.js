@@ -1415,59 +1415,60 @@ function safeLocalStorageSet(key, value) {
     }
 }
 
-async function restoreUserFromSupabaseCloud(email) {
-    const userKey = (email || "").toLowerCase();
-    if (!userKey) return null;
+async function syncUserProfileWithSupabase(email) {
+    if (!email) return null;
+    const userKey = email.toLowerCase();
+    try {
+        let dbUser = null;
+        if (supabaseClient) {
+            const { data, error } = await supabaseClient
+                .from('users')
+                .select('*')
+                .eq('email', userKey)
+                .maybeSingle();
 
-    let localUsers = getRegisteredUsers();
-    let localUser = localUsers[userKey] || {};
-
-    let dbUser = null;
-    if (supabaseClient) {
-        try {
-            const { data, error } = await supabaseClient.from('users').select('*').eq('email', userKey).single();
             if (!error && data) {
                 dbUser = data;
             } else {
-                const { data: profData } = await supabaseClient.from('profiles').select('*').eq('email', userKey).single();
+                const { data: profData } = await supabaseClient
+                    .from('profiles')
+                    .select('*')
+                    .eq('email', userKey)
+                    .maybeSingle();
                 if (profData) dbUser = profData;
             }
-        } catch (err) {
-            console.warn("Supabase fetch user profile notice:", err);
         }
+
+        if (dbUser) {
+            currentUser = {
+                ...currentUser,
+                email: userKey,
+                realName: dbUser.real_name || dbUser.realName || currentUser?.realName || dbUser.nickname || "다이버",
+                real_name: dbUser.real_name || dbUser.realName || currentUser?.real_name || "다이버",
+                name: dbUser.nickname || dbUser.name || currentUser?.name || "다이버",
+                nickname: dbUser.nickname || dbUser.name || currentUser?.nickname || "다이버",
+                phone: (dbUser.phone && dbUser.phone !== "010-0000-0000") ? dbUser.phone : (currentUser?.phone || ""),
+                license: dbUser.license_info || dbUser.license || currentUser?.license || "자유다이버",
+                license_info: dbUser.license_info || dbUser.license || currentUser?.license_info || "자유다이버",
+                instructorStatus: dbUser.instructor_status || dbUser.instructorStatus || currentUser?.instructorStatus || "none",
+                rejectionReason: dbUser.rejection_reason || dbUser.rejectionReason || currentUser?.rejectionReason || "",
+                provider: dbUser.provider || currentUser?.provider || "홈페이지 회원"
+            };
+
+            safeLocalStorageSet("aqua_buddy_user_identity", JSON.stringify(currentUser));
+            localStorage.setItem("currentUser", JSON.stringify(currentUser));
+            saveRegisteredUser(currentUser);
+            if (typeof updateNavbarUserUI === "function") updateNavbarUserUI();
+        }
+    } catch (e) {
+        console.error("프로필 Cloud Sync 실패:", e);
     }
+    return currentUser;
+}
+window.syncUserProfileWithSupabase = syncUserProfileWithSupabase;
 
-    const finalRealName = dbUser?.real_name || dbUser?.realName || localUser.realName || dbUser?.name || localUser.name || "다이버";
-    const finalNick = dbUser?.nickname || dbUser?.name || localUser.name || localUser.nickname || email.split('@')[0] || "다이버";
-    const finalPhone = (dbUser?.phone && dbUser.phone !== "010-0000-0000") 
-        ? dbUser.phone 
-        : ((localUser.phone && localUser.phone !== "010-0000-0000") ? localUser.phone : "");
-    const finalLicense = dbUser?.license_info || dbUser?.license || localUser.license_info || localUser.license || "자유다이버";
-    const finalInstructorStatus = dbUser?.instructor_status || dbUser?.instructorStatus || localUser.instructorStatus || "none";
-    const finalRejectionReason = dbUser?.rejection_reason || dbUser?.rejectionReason || localUser.rejectionReason || "";
-    const finalProvider = dbUser?.provider || localUser.provider || "홈페이지 회원";
-    const finalCreatedAt = dbUser?.created_at || localUser.createdAt || new Date().toISOString();
-
-    const restoredUser = {
-        ...localUser,
-        email: userKey,
-        realName: finalRealName,
-        name: finalNick,
-        nickname: finalNick,
-        phone: finalPhone,
-        license: finalLicense,
-        license_info: finalLicense,
-        instructorStatus: finalInstructorStatus,
-        rejectionReason: finalRejectionReason,
-        provider: finalProvider,
-        avatar: finalNick.charAt(0).toUpperCase(),
-        createdAt: finalCreatedAt
-    };
-
-    saveRegisteredUser(restoredUser);
-    safeLocalStorageSet("aqua_buddy_user_identity", JSON.stringify(restoredUser));
-
-    return restoredUser;
+async function restoreUserFromSupabaseCloud(email) {
+    return await syncUserProfileWithSupabase(email);
 }
 
 async function syncUserToSupabaseCloud(userData) {
@@ -2105,13 +2106,17 @@ function renderDynamicProfileModal(user) {
     document.body.appendChild(overlay);
 }
 
-function openProfileModal() {
-    if (!currentUser || !currentUser.name) {
+async function openProfileModal() {
+    if (!currentUser || (!currentUser.name && !currentUser.email)) {
         if (typeof switchAuthTab === "function") switchAuthTab('login');
         if (typeof resetAuthForm === "function") resetAuthForm();
         const authM = document.getElementById("authModal");
         if (authM) openModal(authM);
         return;
+    }
+
+    if (currentUser.email) {
+        await syncUserProfileWithSupabase(currentUser.email);
     }
 
     // Populate static modal fields if present
@@ -2122,7 +2127,7 @@ function openProfileModal() {
     const nickInp = document.getElementById("myProfNickInput");
     const licInp = document.getElementById("myProfLicenseInput");
 
-    if (nameEl) nameEl.textContent = currentUser.name || "다이버";
+    if (nameEl) nameEl.textContent = currentUser.name || currentUser.nickname || "다이버";
     if (provEl) provEl.textContent = currentUser.provider || "가입 회원";
     if (phoneEl) phoneEl.textContent = `📞 연락처: ${currentUser.phone && currentUser.phone !== "010-0000-0000" ? currentUser.phone : "미등록"}`;
     if (scoreEl) {
