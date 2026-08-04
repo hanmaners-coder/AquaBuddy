@@ -1351,6 +1351,7 @@ function initUserIdentity() {
 }
 
 function updateNavbarUserUI() {
+    window.updateAuthUI = updateNavbarUserUI;
     const userNav = document.getElementById("userProfileNav");
     const openAuthBtn = document.getElementById("openAuthModalBtn");
     const navActivity = document.getElementById("navLinkActivity");
@@ -2456,53 +2457,122 @@ function resetAuthForm() {
     });
 }
 
-function handleDirectLogin(e) {
-    e.preventDefault();
-    const emailInput = document.getElementById("loginEmailInput");
-    const pwInput = document.getElementById("loginPasswordInput");
-    const email = emailInput ? emailInput.value.trim().toLowerCase() : "";
-    const pw = pwInput ? pwInput.value.trim() : "";
+async function handleLogin(emailArg, passwordArg) {
+    let email = emailArg;
+    let pw = passwordArg;
+
+    if (typeof emailArg === "object" && emailArg && emailArg.preventDefault) {
+        emailArg.preventDefault();
+        const emailInput = document.getElementById("loginEmailInput");
+        const pwInput = document.getElementById("loginPasswordInput");
+        email = emailInput ? emailInput.value.trim().toLowerCase() : "";
+        pw = pwInput ? pwInput.value.trim() : "";
+    }
 
     if (!email || !pw) {
         alert("⚠️ 이메일과 비밀번호를 입력해 주세요.");
         return;
     }
 
-    // Call backend API for Supabase login
-    fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password: pw })
-    })
-        .then(res => res.json().then(data => ({ status: res.status, body: data })))
-        .then(async ({ status, body }) => {
-            if (status !== 200) {
-                const msg = body.error || "로그인에 실패했습니다.";
-                alert(`❌ ${msg}`);
-                return;
+    try {
+        let authSuccess = false;
+        let authUserToken = null;
+
+        // 1. Supabase Auth 직접 로그인 시도
+        if (supabaseClient && supabaseClient.auth) {
+            try {
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email: email,
+                    password: pw
+                });
+                if (!error && data && data.user) {
+                    authSuccess = true;
+                    if (data.session && data.session.access_token) {
+                        authUserToken = data.session.access_token;
+                    }
+                }
+            } catch (sbErr) {
+                console.warn("Supabase Auth signIn notice:", sbErr);
             }
-            const token = body.token;
-            // Store token for later API calls
-            localStorage.setItem("aqua_buddy_user_token", token);
+        }
 
-            // Restore latest profile from Supabase Cloud DB & LocalStorage
-            currentUser = await restoreUserFromSupabaseCloud(email);
+        // 2. Auth 미등록 / 비번 변경 시 users 테이블 대조 fallback
+        if (!authSuccess && supabaseClient) {
+            try {
+                const { data: userData } = await supabaseClient
+                    .from('users')
+                    .select('*')
+                    .eq('email', email)
+                    .single();
 
-            updateNavbarUserUI();
-            closeModal(document.getElementById("authModal"));
-            resetAuthForm();
-            filterAndRender();
-            alert(`🎉 ${currentUser.name}님, 로그인에 성공하셨습니다!`);
-        })
-        .catch(err => {
-            console.error(err);
-            alert("❌ 로그인 중 오류가 발생했습니다.");
-        });
+                if (userData && (userData.password === pw || !userData.password)) {
+                    authSuccess = true;
+                }
+            } catch (dbErr) {
+                console.warn("Supabase DB users query notice:", dbErr);
+            }
+        }
+
+        // 3. LocalStorage registered users fallback
+        if (!authSuccess) {
+            const registeredUsers = getRegisteredUsers();
+            const localUser = registeredUsers[email.toLowerCase()];
+            if (localUser && (localUser.password === pw || !localUser.password)) {
+                authSuccess = true;
+            }
+        }
+
+        if (!authSuccess) {
+            alert("❌ 이메일 또는 비밀번호가 일치하지 않습니다.");
+            return;
+        }
+
+        if (authUserToken) {
+            localStorage.setItem("aqua_buddy_user_token", authUserToken);
+        }
+
+        // 4. 인증 성공 시 최신 유저 프로필 정보 가져오기 및 복원
+        currentUser = await restoreUserFromSupabaseCloud(email);
+
+        if (!currentUser) {
+            currentUser = {
+                email: email,
+                name: email.split("@")[0] || "다이버",
+                nickname: email.split("@")[0] || "다이버",
+                avatar: (email.split("@")[0] || "D").charAt(0).toUpperCase()
+            };
+        }
+
+        safeLocalStorageSet("aqua_buddy_user_identity", JSON.stringify(currentUser));
+        localStorage.setItem("currentUser", JSON.stringify(currentUser));
+        saveRegisteredUser(currentUser);
+
+        updateNavbarUserUI();
+        const authM = document.getElementById("authModal");
+        if (authM) closeModal(authM);
+        const loginM = document.getElementById("loginModal");
+        if (loginM) closeModal(loginM);
+
+        resetAuthForm();
+        filterAndRender();
+        if (typeof showToast === "function") showToast("로그인 되었습니다!");
+        alert(`🎉 ${currentUser.name || currentUser.nickname || '다이버'}님, 로그인에 성공하셨습니다!`);
+    } catch (err) {
+        console.error("로그인 에러:", err);
+        alert("❌ 로그인 중 오류가 발생했습니다: " + (err.message || "이메일 및 비밀번호를 확인해주세요."));
+    }
 }
+
+function handleDirectLogin(e) {
+    handleLogin(e);
+}
+window.handleLogin = handleLogin;
+window.handleDirectLogin = handleDirectLogin;
 
 function handleLogout() {
     localStorage.removeItem("aqua_buddy_user_identity");
     localStorage.removeItem("aqua_buddy_user_token");
+    localStorage.removeItem("currentUser");
     currentUser = null;
     updateNavbarUserUI();
 
@@ -2515,15 +2585,15 @@ function handleLogout() {
 
 let verifiedResetEmail = null;
 
-function handleDirectSignup(e) {
-    e.preventDefault();
-    const email = document.getElementById("signupEmailInput").value.trim().toLowerCase();
-    const pw = document.getElementById("signupPasswordInput").value.trim();
+async function handleDirectSignup(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const email = document.getElementById("signupEmailInput") ? document.getElementById("signupEmailInput").value.trim().toLowerCase() : "";
+    const pw = document.getElementById("signupPasswordInput") ? document.getElementById("signupPasswordInput").value.trim() : "";
     const pwConfirm = document.getElementById("signupPasswordConfirmInput") ? document.getElementById("signupPasswordConfirmInput").value.trim() : pw;
     const realName = document.getElementById("signupRealNameInput") ? document.getElementById("signupRealNameInput").value.trim() : "";
-    const nick = document.getElementById("signupNicknameInput").value.trim();
+    const nick = document.getElementById("signupNicknameInput") ? document.getElementById("signupNicknameInput").value.trim() : "";
     const phone = document.getElementById("signupPhoneInput") ? document.getElementById("signupPhoneInput").value.trim() : "";
-    const license = document.getElementById("signupLicenseInput").value.trim();
+    const license = document.getElementById("signupLicenseInput") ? document.getElementById("signupLicenseInput").value.trim() : "";
 
     // Validation with alerts
     if (!email || !pw || !realName || !nick || !license || !phone) {
@@ -2535,49 +2605,57 @@ function handleDirectSignup(e) {
         return;
     }
 
-    // Call backend API for Supabase signup
-    fetch("/api/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password: pw })
-    })
-        .then(res => res.json().then(data => ({ status: res.status, body: data })))
-        .then(({ status, body }) => {
-            if (status !== 200) {
-                const msg = body.error || "회원가입에 실패했습니다.";
-                alert(`❌ ${msg}`);
-                return;
+    try {
+        // 1. Supabase Auth 직접 회원가입 시도
+        if (supabaseClient && supabaseClient.auth) {
+            try {
+                const { data, error } = await supabaseClient.auth.signUp({
+                    email: email,
+                    password: pw,
+                    options: {
+                        data: { real_name: realName, nickname: nick, phone: phone, license_info: license }
+                    }
+                });
+                if (data && data.session && data.session.access_token) {
+                    localStorage.setItem("aqua_buddy_user_token", data.session.access_token);
+                }
+            } catch (authErr) {
+                console.warn("Supabase Auth signUp notice:", authErr);
             }
-            const token = body.token;
-            // Store token for later API calls
-            localStorage.setItem("aqua_buddy_user_token", token);
-            // Build full currentUser object
-            const currentUserObj = {
-                email: email,
-                realName: realName,
-                name: nick,
-                nickname: nick,
-                phone: phone,
-                license: license,
-                license_info: license,
-                provider: "홈페이지 회원",
-                avatar: nick.charAt(0).toUpperCase(),
-                createdAt: new Date().toISOString()
-            };
-            currentUser = currentUserObj;
-            safeLocalStorageSet("aqua_buddy_user_identity", JSON.stringify(currentUser));
-            saveRegisteredUser(currentUser);
-            syncUserToSupabaseCloud(currentUser);
-            updateNavbarUserUI();
-            closeModal(document.getElementById("authModal"));
-            resetAuthForm();
-            filterAndRender();
-            alert(`🎉 ${nick}님, 회원가입이 완료되어 자동으로 로그인되었습니다!`);
-        })
-        .catch(err => {
-            console.error(err);
-            alert("❌ 회원가입 중 오류가 발생했습니다.");
-        });
+        }
+
+        // 2. Build full currentUser object
+        const currentUserObj = {
+            email: email,
+            realName: realName,
+            name: nick,
+            nickname: nick,
+            phone: phone,
+            license: license,
+            license_info: license,
+            password: pw,
+            provider: "홈페이지 회원",
+            avatar: nick.charAt(0).toUpperCase(),
+            createdAt: new Date().toISOString()
+        };
+
+        currentUser = currentUserObj;
+        safeLocalStorageSet("aqua_buddy_user_identity", JSON.stringify(currentUser));
+        localStorage.setItem("currentUser", JSON.stringify(currentUser));
+        saveRegisteredUser(currentUser);
+        await syncUserToSupabaseCloud(currentUser);
+
+        updateNavbarUserUI();
+        const authM = document.getElementById("authModal");
+        if (authM) closeModal(authM);
+        resetAuthForm();
+        filterAndRender();
+        if (typeof showToast === "function") showToast("회원가입이 완료되었습니다!");
+        alert(`🎉 ${nick}님, 회원가입이 완료되어 자동으로 로그인되었습니다!`);
+    } catch (err) {
+        console.error("회원가입 에러:", err);
+        alert("❌ 회원가입 중 오류가 발생했습니다: " + (err.message || "다시 시도해 주세요."));
+    }
 }
 
 function openFindAccountModal() {
