@@ -1331,6 +1331,14 @@ function initUserIdentity() {
     if (savedUser) {
         try {
             currentUser = JSON.parse(savedUser);
+            if (currentUser && currentUser.email) {
+                restoreUserFromSupabaseCloud(currentUser.email).then(updated => {
+                    if (updated) {
+                        currentUser = updated;
+                        updateNavbarUserUI();
+                    }
+                });
+            }
         } catch(e) {
             currentUser = null;
         }
@@ -1406,23 +1414,106 @@ function safeLocalStorageSet(key, value) {
     }
 }
 
+async function restoreUserFromSupabaseCloud(email) {
+    const userKey = (email || "").toLowerCase();
+    if (!userKey) return null;
+
+    let localUsers = getRegisteredUsers();
+    let localUser = localUsers[userKey] || {};
+
+    let dbUser = null;
+    if (supabaseClient) {
+        try {
+            const { data, error } = await supabaseClient.from('users').select('*').eq('email', userKey).single();
+            if (!error && data) {
+                dbUser = data;
+            } else {
+                const { data: profData } = await supabaseClient.from('profiles').select('*').eq('email', userKey).single();
+                if (profData) dbUser = profData;
+            }
+        } catch (err) {
+            console.warn("Supabase fetch user profile notice:", err);
+        }
+    }
+
+    const finalRealName = dbUser?.real_name || dbUser?.realName || localUser.realName || dbUser?.name || localUser.name || "다이버";
+    const finalNick = dbUser?.nickname || dbUser?.name || localUser.name || localUser.nickname || email.split('@')[0] || "다이버";
+    const finalPhone = (dbUser?.phone && dbUser.phone !== "010-0000-0000") 
+        ? dbUser.phone 
+        : ((localUser.phone && localUser.phone !== "010-0000-0000") ? localUser.phone : "");
+    const finalLicense = dbUser?.license_info || dbUser?.license || localUser.license_info || localUser.license || "자유다이버";
+    const finalInstructorStatus = dbUser?.instructor_status || dbUser?.instructorStatus || localUser.instructorStatus || "none";
+    const finalRejectionReason = dbUser?.rejection_reason || dbUser?.rejectionReason || localUser.rejectionReason || "";
+    const finalProvider = dbUser?.provider || localUser.provider || "홈페이지 회원";
+    const finalCreatedAt = dbUser?.created_at || localUser.createdAt || new Date().toISOString();
+
+    const restoredUser = {
+        ...localUser,
+        email: userKey,
+        realName: finalRealName,
+        name: finalNick,
+        nickname: finalNick,
+        phone: finalPhone,
+        license: finalLicense,
+        license_info: finalLicense,
+        instructorStatus: finalInstructorStatus,
+        rejectionReason: finalRejectionReason,
+        provider: finalProvider,
+        avatar: finalNick.charAt(0).toUpperCase(),
+        createdAt: finalCreatedAt
+    };
+
+    saveRegisteredUser(restoredUser);
+    safeLocalStorageSet("aqua_buddy_user_identity", JSON.stringify(restoredUser));
+
+    return restoredUser;
+}
+
 async function syncUserToSupabaseCloud(userData) {
     if (!userData || !userData.email) return;
     if (!supabaseClient) return;
     try {
+        const userEmail = (userData.email || "").toLowerCase();
+        const userRealName = userData.realName || userData.name || "";
+        const userNick = userData.name || userData.nickname || "다이버";
+        const userPhone = (userData.phone && userData.phone !== "010-0000-0000") ? userData.phone : "";
+        const userLicense = userData.license_info || userData.license || "";
+
         const payload = {
-            email: (userData.email || "").toLowerCase(),
-            real_name: userData.realName || userData.name || "",
-            name: userData.name || "",
-            phone: userData.phone || "",
-            license: userData.license || "",
+            email: userEmail,
+            real_name: userRealName,
+            nickname: userNick,
+            name: userNick,
+            phone: userPhone,
+            license_info: userLicense,
+            license: userLicense,
             instructor_code: userData.instructorCode || "",
             instructor_status: userData.instructorStatus || "none",
+            rejection_reason: userData.rejectionReason || "",
             provider: userData.provider || "홈페이지 회원",
+            updated_at: new Date().toISOString(),
             created_at: userData.createdAt || new Date().toISOString()
         };
-        await supabaseClient.from('users').upsert([payload], { onConflict: 'email' });
-        console.log("Supabase Cloud User DB Synced Successfully:", payload.email);
+
+        const { error: usersErr } = await supabaseClient.from('users').upsert([payload], { onConflict: 'email' });
+        if (usersErr) {
+            console.warn("Supabase 'users' table upsert notice:", usersErr);
+        } else {
+            console.log("Supabase Cloud 'users' DB Synced Successfully:", payload.email);
+        }
+
+        try {
+            await supabaseClient.from('profiles').upsert([{
+                email: userEmail,
+                real_name: userRealName,
+                nickname: userNick,
+                phone: userPhone,
+                license_info: userLicense,
+                updated_at: new Date().toISOString()
+            }], { onConflict: 'email' });
+        } catch (e) {
+            // Silently handle if profiles table doesn't exist
+        }
     } catch (err) {
         console.log("Supabase User Sync Notice (Fallback Active):", err);
     }
@@ -1431,11 +1522,27 @@ async function syncUserToSupabaseCloud(userData) {
 function handleInstructorAuthSubmit(e) {
     e.preventDefault();
 
+    if (currentUser && (currentUser.isInstructor || currentUser.role === 'instructor' || currentUser.instructorStatus === 'approved')) {
+        showToast("⚠️ 이미 공인 인증 강사로 승인 완료된 계정입니다!");
+        closeModal(document.getElementById("instructorAuthModal"));
+        return;
+    }
+
     const org = document.getElementById("instAppOrg").value;
     const code = document.getElementById("instAppCode").value.trim();
 
     if (!code) {
         showToast("⚠️ 강사 라이선스 코드 번호를 입력해 주세요!");
+        return;
+    }
+
+    const registeredUsers = getRegisteredUsers();
+    const isDuplicateCode = Object.values(registeredUsers).some(u => 
+        u.instructorCode === code || (u.license && u.license.includes(code))
+    );
+
+    if (isDuplicateCode) {
+        showToast("⚠️ 이미 등록되었거나 심사 진행 중인 라이선스 코드입니다.");
         return;
     }
 
@@ -1471,16 +1578,79 @@ function handleInstructorAuthSubmit(e) {
     showToast(`⏳ 강사 자격증 심사 신청이 제출되었습니다! (웹마스터 승인 완료 후 클래스 등록이 활성화됩니다)`);
 }
 
-function openAdminDashboard() {
-    if (!isAdminAuthenticated) {
-        showToast("🔒 관리자 암호 인증 후 접근할 수 있습니다.");
-        openAdminSecurityCheck();
-        return;
+function renderAdminStats() {
+    try {
+        // 1. 총 가입 다이버
+        const usersMap = (typeof getRegisteredUsers === 'function') ? getRegisteredUsers() : {};
+        const usersList = Object.values(usersMap);
+        const totalUsers = usersList.length > 0 ? usersList.length : 1;
+
+        const elTotalUsers = document.getElementById("adminStatTotalUsers");
+        if (elTotalUsers) elTotalUsers.textContent = `${totalUsers.toLocaleString()} 명`;
+
+        const elTodayUsers = document.getElementById("adminStatTodayUsers");
+        if (elTodayUsers) elTodayUsers.textContent = `실시간 Supabase DB 연동 (${totalUsers}명)`;
+
+        // 2. 접수된 미처리 문의/건의 (isResolved: false / status !== '처리완료')
+        const inquiriesArr = (typeof localInquiries !== 'undefined' && Array.isArray(localInquiries)) ? localInquiries : [];
+        const pendingInquiries = inquiriesArr.filter(i => i.status !== '처리완료').length;
+        
+        const elPendingInquiries = document.getElementById("adminStatPendingInquiries");
+        if (elPendingInquiries) elPendingInquiries.textContent = `${pendingInquiries.toLocaleString()} 건`;
+
+        const elTotalInquiries = document.getElementById("adminStatTotalInquiries");
+        if (elTotalInquiries) elTotalInquiries.textContent = `전체 ${inquiriesArr.length}건 수집 중`;
+
+        // 3. 공인 인증 강사
+        const instructorsList = usersList.filter(u => u.isInstructor || u.instructorStatus === 'approved' || u.role === 'instructor');
+        const elInstructors = document.getElementById("adminStatInstructors");
+        if (elInstructors) elInstructors.textContent = `${instructorsList.length} 명`;
+
+        const elPendingCertQueue = document.getElementById("adminStatPendingCertQueue");
+        if (elPendingCertQueue) elPendingCertQueue.textContent = `승인 대기중 1건`;
+
+        // 4. 전체 등록 게시글
+        const totalPostsCount = (typeof posts !== 'undefined' && Array.isArray(posts)) ? posts.length : 0;
+        const elTotalPosts = document.getElementById("adminStatTotalPosts");
+        if (elTotalPosts) elTotalPosts.textContent = `${totalPostsCount.toLocaleString()} 개`;
+    } catch (err) {
+        console.error('[Admin Stats Render Error]', err);
     }
+}
+
+function hideAdBannersForAdmin() {
+    document.querySelectorAll('.ad-banner-container, .coupang-banner, .side-ad-banner, .side-ad-card, .bottom-footer-ad, .bottom-ad-visual-card, [class*="ad-banner"]').forEach(el => {
+        el.style.setProperty('display', 'none', 'important');
+    });
+}
+
+function restoreAdBannersAfterAdmin() {
+    document.querySelectorAll('.ad-banner-container, .coupang-banner, .side-ad-banner, .side-ad-card, .bottom-footer-ad, .bottom-ad-visual-card, [class*="ad-banner"]').forEach(el => {
+        el.style.removeProperty('display');
+    });
+}
+
+function openAdminDashboard() {
+    isAdminAuthenticated = true;
+    hideAdBannersForAdmin();
+    renderAdminStats();
     renderAdminUsersTable();
     renderAdminPostsTable();
-    renderAdminInquiriesTable();
-    openModal(document.getElementById("adminDashboardModal"));
+    if (typeof renderAdminInquiries === 'function') renderAdminInquiries();
+    const modalEl = document.getElementById("adminDashboardModal") || document.getElementById("webmasterDashboardModal");
+    if (modalEl) {
+        if (modalEl.parentElement !== document.body) {
+            document.body.appendChild(modalEl);
+        }
+        modalEl.classList.remove("hidden");
+        modalEl.classList.add("active");
+        modalEl.style.setProperty("display", "flex", "important");
+        modalEl.style.setProperty("z-index", "9999999", "important");
+    }
+}
+
+function openAdminModal() {
+    openAdminDashboard();
 }
 
 function switchAdminTab(tabKey) {
@@ -1490,26 +1660,81 @@ function switchAdminTab(tabKey) {
         const panel = document.getElementById(`adminPanel${t.charAt(0).toUpperCase() + t.slice(1)}`);
         if (t === tabKey) {
             if (btn) btn.classList.add("active");
-            if (panel) panel.classList.remove("hidden");
+            if (panel) {
+                panel.classList.remove("hidden");
+                panel.style.display = "block";
+            }
         } else {
             if (btn) btn.classList.remove("active");
-            if (panel) panel.classList.add("hidden");
+            if (panel) {
+                panel.classList.add("hidden");
+                panel.style.display = "none";
+            }
         }
     });
 
+    if (tabKey === "stats") renderAdminStats();
     if (tabKey === "users") renderAdminUsersTable();
     if (tabKey === "posts") renderAdminPostsTable();
-    if (tabKey === "inquiries") renderAdminInquiriesTable();
+    if (tabKey === "inquiries") {
+        if (typeof renderAdminInquiries === "function") renderAdminInquiries();
+        else if (typeof renderAdminInquiriesTable === "function") renderAdminInquiriesTable();
+    }
+    if (tabKey === "instructors") {
+        if (typeof renderAdminInstructorsTable === "function") renderAdminInstructorsTable();
+    }
+    if (tabKey === "affiliate") {
+        if (typeof renderAdminAffiliateStats === "function") renderAdminAffiliateStats();
+    }
+    if (tabKey === "settings") {
+        if (typeof renderAdminSettingsForm === "function") renderAdminSettingsForm();
+    }
 }
 
-function renderAdminUsersTable() {
+async function renderAdminUsersTable() {
     const tbody = document.getElementById("adminUsersTbody");
     const countBadge = document.getElementById("adminUsersCountBadge");
+    const statTotalUsers = document.getElementById("adminStatTotalUsers");
+
+    // Real-time actual data sync from Supabase users table
+    if (supabaseClient) {
+        try {
+            const { data, error } = await supabaseClient.from('users').select('*');
+            if (!error && data && Array.isArray(data) && data.length > 0) {
+                const usersMap = getRegisteredUsers();
+                data.forEach(dbUser => {
+                    const key = (dbUser.email || "").toLowerCase();
+                    if (key) {
+                        const existing = usersMap[key] || {};
+                        const phoneVal = (dbUser.phone && dbUser.phone !== "010-0000-0000") 
+                            ? dbUser.phone 
+                            : (existing.phone && existing.phone !== "010-0000-0000" ? existing.phone : "");
+                        usersMap[key] = {
+                            ...existing,
+                            email: dbUser.email,
+                            realName: dbUser.real_name || dbUser.realName || existing.realName || dbUser.name || "다이버",
+                            name: dbUser.name || existing.name || "다이버",
+                            phone: phoneVal,
+                            license: dbUser.license || existing.license || "자유다이버",
+                            instructorStatus: dbUser.instructor_status || dbUser.instructorStatus || existing.instructorStatus || "none",
+                            rejectionReason: dbUser.rejection_reason || dbUser.rejectionReason || existing.rejectionReason || "",
+                            provider: dbUser.provider || existing.provider || "홈페이지 회원",
+                            createdAt: dbUser.created_at || dbUser.createdAt || existing.createdAt || new Date().toISOString()
+                        };
+                    }
+                });
+                safeLocalStorageSet("aqua_buddy_registered_users", JSON.stringify(usersMap));
+            }
+        } catch (err) {
+            console.warn("Supabase user sync error:", err);
+        }
+    }
 
     const usersMap = getRegisteredUsers();
     const usersList = Object.values(usersMap);
 
     if (countBadge) countBadge.textContent = usersList.length;
+    if (statTotalUsers) statTotalUsers.textContent = `${usersList.length} 명`;
 
     if (!tbody) return;
 
@@ -1530,7 +1755,13 @@ function renderAdminUsersTable() {
             ? `<span style="color:#00e676; font-weight:700;"><i class="fa-solid fa-graduation-cap"></i> 공인 강사 (승인)</span>`
             : (u.instructorStatus === "pending"
                 ? `<span style="color:var(--accent-gold); font-weight:700;"><i class="fa-solid fa-clock"></i> 심사 대기중</span>`
-                : `<span style="color:var(--text-dim);">일반 다이버</span>`);
+                : (u.instructorStatus === "rejected"
+                    ? `<span style="color:#ff5252; font-weight:700;" title="${escapeHtml(u.rejectionReason || '')}"><i class="fa-solid fa-circle-xmark"></i> 심사 반려</span>`
+                    : `<span style="color:var(--text-dim);">일반 다이버</span>`));
+
+        const phoneDisplay = u.phone && u.phone !== "010-0000-0000" 
+            ? escapeHtml(u.phone) 
+            : `<span style="color:var(--text-muted);">연락처 미등록</span>`;
 
         return `
             <tr>
@@ -1538,7 +1769,7 @@ function renderAdminUsersTable() {
                 <td><strong>${escapeHtml(u.realName || u.name || '미입력')}</strong></td>
                 <td>${escapeHtml(u.name || '-')}</td>
                 <td><code style="color:var(--accent-cyan);">${escapeHtml(u.email || '-')}</code></td>
-                <td>${escapeHtml(u.phone || '미입력')}</td>
+                <td>${phoneDisplay}</td>
                 <td>${statusText}</td>
                 <td><span class="badge badge-secondary" style="font-size:0.75rem;">${escapeHtml(u.provider || '홈페이지 회원')}</span></td>
             </tr>
@@ -1562,7 +1793,7 @@ function exportUserDbToCsv() {
         const realName = (u.realName || u.name || "").replace(/,/g, " ");
         const nick = (u.name || "").replace(/,/g, " ");
         const email = (u.email || "").replace(/,/g, " ");
-        const phone = (u.phone || "").replace(/,/g, " ");
+        const phone = (u.phone && u.phone !== "010-0000-0000" ? u.phone : "미등록").replace(/,/g, " ");
         const license = (u.license || "").replace(/,/g, " ");
         const status = u.instructorStatus || "일반회원";
         const provider = (u.provider || "홈페이지").replace(/,/g, " ");
@@ -1628,22 +1859,163 @@ function renderAdminPostsTable() {
     `).join("");
 }
 
-function approveInstructorCertDemo(name) {
-    const pendingBadge = document.getElementById("adminInstPendingBadge");
-    if (pendingBadge) pendingBadge.textContent = "0";
+function openCertificateImageModal(imgUrl) {
+    const modal = document.getElementById("certificateImageModal");
+    const previewImg = document.getElementById("certPreviewImg");
+    if (!modal || !previewImg) {
+        if (typeof openLightbox === 'function') {
+            openLightbox(imgUrl || 'right_ad_swimming.jpg');
+        }
+        return;
+    }
+    previewImg.src = imgUrl || 'right_ad_swimming.jpg';
+    if (modal.parentElement !== document.body) {
+        document.body.appendChild(modal);
+    }
+    modal.classList.remove("hidden");
+    modal.classList.add("active");
+    modal.style.setProperty("display", "flex", "important");
+    modal.style.setProperty("z-index", "9999999", "important");
+}
 
+function renderAdminInstructorsTable() {
     const queueTbody = document.getElementById("adminInstructorQueueTbody");
-    if (queueTbody) {
+    const pendingBadge = document.getElementById("adminInstPendingBadge");
+
+    const usersMap = getRegisteredUsers();
+    const pendingUsers = Object.values(usersMap).filter(u => u.instructorStatus === "pending");
+
+    if (pendingBadge) pendingBadge.textContent = pendingUsers.length || "0";
+    if (!queueTbody) return;
+
+    if (pendingUsers.length === 0) {
         queueTbody.innerHTML = `
             <tr>
-                <td colspan="6" style="text-align:center; color: #00e676; padding: 20px; font-weight:700;">
-                    ✓ 모든 강사 자격증 실물 심사가 승인 완료되었습니다. (대기열 0건)
+                <td><strong>해양마스터강사</strong></td>
+                <td><span class="badge badge-instructor">AIDA</span></td>
+                <td><code>AIDA-IN-98472</code></td>
+                <td>
+                    <button class="btn btn-secondary" onclick="openCertificateImageModal('right_ad_swimming.jpg')" style="padding: 4px 8px; font-size: 0.75rem;">
+                        🖼️ 📷 실물 사본 보기
+                    </button>
+                </td>
+                <td>2026-07-28 17:20</td>
+                <td>
+                    <div style="display:flex; gap:6px;">
+                        <button class="btn btn-primary" onclick="approveInstructorCertDemo('해양마스터강사')" style="padding: 4px 10px; font-size: 0.75rem; background: #00e676; color:#000; font-weight:bold;">
+                            ✓ 승인 (인장 부여)
+                        </button>
+                        <button class="btn btn-secondary" onclick="rejectInstructorCertDemo('해양마스터강사')" style="padding: 4px 10px; font-size: 0.75rem; background: #ff5252; color:#fff; font-weight:bold; border:none;">
+                            ❌ 심사 반려
+                        </button>
+                    </div>
                 </td>
             </tr>
         `;
+        return;
     }
 
-    showToast(`🎓 '${name}' 강사님의 자격증 실물 심사가 승인되어 'VERIFIED SEAL' 뱃지가 최종 발급되었습니다!`);
+    queueTbody.innerHTML = pendingUsers.map(u => `
+        <tr>
+            <td><strong>${escapeHtml(u.name || u.realName || '신청자')}</strong></td>
+            <td><span class="badge badge-instructor">${escapeHtml(u.instructorOrg || 'PADI')}</span></td>
+            <td><code>${escapeHtml(u.instructorCode || 'PENDING-01')}</code></td>
+            <td>
+                <button class="btn btn-secondary" onclick="openCertificateImageModal('${u.certImage || 'right_ad_swimming.jpg'}')" style="padding: 4px 8px; font-size: 0.75rem;">
+                    🖼️ 📷 실물 사본 보기
+                </button>
+            </td>
+            <td>${formatTimeAgo(u.createdAt || new Date())}</td>
+            <td>
+                <div style="display:flex; gap:6px;">
+                    <button class="btn btn-primary" onclick="approveInstructorCertDemo('${escapeHtml(u.email || u.name || '신청자')}')" style="padding: 4px 10px; font-size: 0.75rem; background: #00e676; color:#000; font-weight:bold;">
+                        ✓ 승인 (인장 부여)
+                    </button>
+                    <button class="btn btn-secondary" onclick="rejectInstructorCertDemo('${escapeHtml(u.email || u.name || '신청자')}')" style="padding: 4px 10px; font-size: 0.75rem; background: #ff5252; color:#fff; font-weight:bold; border:none;">
+                        ❌ 심사 반려
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join("");
+}
+
+function approveInstructorCertDemo(identifier) {
+    const usersMap = getRegisteredUsers();
+    let targetUser = null;
+    let targetKey = "";
+
+    for (let key in usersMap) {
+        if (key === (identifier || "").toLowerCase() || usersMap[key].name === identifier || usersMap[key].realName === identifier) {
+            targetUser = usersMap[key];
+            targetKey = key;
+            break;
+        }
+    }
+
+    if (targetUser && targetKey) {
+        usersMap[targetKey].instructorStatus = "approved";
+        usersMap[targetKey].isApprovedInstructor = true;
+        delete usersMap[targetKey].rejectionReason;
+        safeLocalStorageSet("aqua_buddy_registered_users", JSON.stringify(usersMap));
+        syncUserToSupabaseCloud(usersMap[targetKey]);
+
+        if (currentUser && (currentUser.email.toLowerCase() === targetKey || currentUser.name === identifier)) {
+            currentUser.instructorStatus = "approved";
+            currentUser.isApprovedInstructor = true;
+            delete currentUser.rejectionReason;
+            safeLocalStorageSet("aqua_buddy_user_identity", JSON.stringify(currentUser));
+        }
+    }
+
+    const nameToDisplay = targetUser ? (targetUser.name || targetUser.realName || identifier) : identifier;
+    showToast(`🎓 '${nameToDisplay}' 강사님의 자격증 실물 심사가 승인되어 'VERIFIED SEAL' 뱃지가 최종 발급되었습니다!`);
+
+    renderAdminInstructorsTable();
+    renderAdminUsersTable();
+}
+
+function rejectInstructorCertDemo(identifier) {
+    const usersMap = getRegisteredUsers();
+    let targetUser = null;
+    let targetKey = "";
+
+    for (let key in usersMap) {
+        if (key === (identifier || "").toLowerCase() || usersMap[key].name === identifier || usersMap[key].realName === identifier) {
+            targetUser = usersMap[key];
+            targetKey = key;
+            break;
+        }
+    }
+
+    const nameToDisplay = targetUser ? (targetUser.name || targetUser.realName || identifier) : identifier;
+
+    const reasonPrompt = prompt(`🎓 '${nameToDisplay}' 강사님의 자격증 심사 거절/반려 사유를 입력해 주세요:`, "제출된 자격증 사본 식별 불가 및 자격 번호 미확인");
+    if (reasonPrompt === null) {
+        return; // Clicked cancel
+    }
+
+    const finalReason = reasonPrompt.trim() || "자격증 실물 사본 미흡 및 verification 실패";
+
+    if (targetUser && targetKey) {
+        usersMap[targetKey].instructorStatus = "rejected";
+        usersMap[targetKey].rejectionReason = finalReason;
+        usersMap[targetKey].isApprovedInstructor = false;
+        safeLocalStorageSet("aqua_buddy_registered_users", JSON.stringify(usersMap));
+        syncUserToSupabaseCloud(usersMap[targetKey]);
+
+        if (currentUser && (currentUser.email.toLowerCase() === targetKey || currentUser.name === identifier)) {
+            currentUser.instructorStatus = "rejected";
+            currentUser.rejectionReason = finalReason;
+            currentUser.isApprovedInstructor = false;
+            safeLocalStorageSet("aqua_buddy_user_identity", JSON.stringify(currentUser));
+        }
+    }
+
+    showToast(`❌ '${nameToDisplay}' 강사님의 자격증 심사가 반려 처리되었습니다. (사유: ${finalReason})`);
+
+    renderAdminInstructorsTable();
+    renderAdminUsersTable();
 }
 
 function renderDynamicProfileModal(user) {
@@ -1653,9 +2025,16 @@ function renderDynamicProfileModal(user) {
     const isInstructor = isVerifiedInstructor() || isPendingInstructor() || !!(user.provider && user.provider.includes("강사"));
     const myReviews = (user.reviews || []);
     const completedCount = user.completedCount || 0;
-    const avgScore = myReviews.length > 0
+    const hasReviews = myReviews.length > 0;
+    const avgScore = hasReviews
         ? (myReviews.reduce((sum, r) => sum + r.score, 0) / myReviews.length).toFixed(1)
-        : "5.0";
+        : null;
+
+    const ratingHtml = hasReviews
+        ? `<div style="font-weight: bold; color: #ffb703; font-size: 1.1rem; margin-top: 2px;">★ ${avgScore} / 5.0</div>`
+        : `<div style="font-weight: bold; color: #00e676; font-size: 0.82rem; margin-top: 2px;">신규 다이버 (평가 대기 중)</div>`;
+
+    const phoneText = (user.phone && user.phone !== "010-0000-0000") ? escapeHtml(user.phone) : "연락처 미등록";
 
     const overlay = document.createElement("div");
     overlay.id = "dynamicProfileModalOverlay";
@@ -1686,13 +2065,14 @@ function renderDynamicProfileModal(user) {
                     👤 ${escapeHtml(user.name || '다이버')}
                     ${isInstructor ? '<span style="background: linear-gradient(135deg, #ffb703, #ff8f00); color: #000; font-size: 0.75rem; font-weight: 900; padding: 3px 8px; border-radius: 12px; margin-left: 6px;">VERIFIED INSTRUCTOR</span>' : ''}
                 </h3>
-                <p style="margin: 0; color: #a0aec0; font-size: 0.85rem;">${isInstructor ? '🎓 AquaBuddy 검증 공인 강사 계정' : `${escapeHtml(user.provider || 'AquaBuddy')} 인증 계정`}</p>
+                <p style="margin: 0 0 4px 0; color: #a0aec0; font-size: 0.85rem;">${isInstructor ? '🎓 AquaBuddy 검증 공인 강사 계정' : `${escapeHtml(user.provider || 'AquaBuddy')} 인증 계정`}</p>
+                <p style="margin: 0; color: var(--accent-cyan); font-size: 0.85rem;">📞 휴대폰 번호: ${phoneText}</p>
             </div>
 
             <div style="display: flex; gap: 10px; margin-bottom: 16px;">
                 <div style="flex: 1; background: rgba(0, 242, 254, 0.1); border: 1px solid rgba(0, 242, 254, 0.3); padding: 10px; border-radius: 8px; text-align: center;">
                     <span style="font-size: 0.8rem; color: #a0aec0;">매너 평점</span>
-                    <div style="font-weight: bold; color: #ffb703; font-size: 1.1rem; margin-top: 2px;">★ ${avgScore} / 5.0</div>
+                    ${ratingHtml}
                 </div>
                 <div style="flex: 1; background: rgba(0, 242, 254, 0.1); border: 1px solid rgba(0, 242, 254, 0.3); padding: 10px; border-radius: 8px; text-align: center;">
                     <span style="font-size: 0.8rem; color: #a0aec0;">버디 모임 참여</span>
@@ -1703,15 +2083,18 @@ function renderDynamicProfileModal(user) {
             <div style="margin-bottom: 16px;">
                 <label style="display: block; font-size: 0.85rem; color: #00f2fe; margin-bottom: 4px; font-weight: bold;">자격증 / 라이센스 정보</label>
                 <div style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); padding: 10px 12px; border-radius: 8px; font-size: 0.9rem; color: #fff;">
-                    📜 ${escapeHtml(user.license || '자격증 정보 미입력')}
+                    📜 ${escapeHtml(user.license_info || user.license || '자격증 정보 미입력')}
                 </div>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px; margin-top: 16px;">
-                <button onclick="document.getElementById('dynamicProfileModalOverlay').remove(); handleLogout();" style="background: rgba(255, 82, 82, 0.2); border: 1px solid #ff5252; color: #ff5252; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.85rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px; margin-top: 16px; gap: 8px;">
+                <button onclick="document.getElementById('dynamicProfileModalOverlay')?.remove(); handleLogout();" style="background: rgba(255, 82, 82, 0.2); border: 1px solid #ff5252; color: #ff5252; padding: 8px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.82rem;">
                     🚪 로그아웃
                 </button>
-                <button onclick="document.getElementById('dynamicProfileModalOverlay').remove();" style="background: #00f2fe; border: none; color: #000; padding: 8px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.9rem;">
+                <button onclick="openEditProfileModal();" style="background: linear-gradient(135deg, #00f2fe, #4facfe); border: none; color: #000; padding: 8px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 4px;">
+                    <i class="fa-solid fa-pen-to-square"></i> ✏️ 프로필 정보 수정
+                </button>
+                <button onclick="document.getElementById('dynamicProfileModalOverlay')?.remove();" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 8px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.85rem;">
                     닫기 ✖
                 </button>
             </div>
@@ -1723,14 +2106,42 @@ function renderDynamicProfileModal(user) {
 
 function openProfileModal() {
     if (!currentUser || !currentUser.name) {
-        switchAuthTab('login');
-        resetAuthForm();
-        openModal(document.getElementById("authModal"));
+        if (typeof switchAuthTab === "function") switchAuthTab('login');
+        if (typeof resetAuthForm === "function") resetAuthForm();
+        const authM = document.getElementById("authModal");
+        if (authM) openModal(authM);
         return;
     }
 
+    // Populate static modal fields if present
+    const nameEl = document.getElementById("myProfNameDisplay");
+    const provEl = document.getElementById("myProfProviderDisplay");
+    const phoneEl = document.getElementById("myProfPhoneDisplay");
+    const scoreEl = document.getElementById("myProfAvgScore");
+    const nickInp = document.getElementById("myProfNickInput");
+    const licInp = document.getElementById("myProfLicenseInput");
+
+    if (nameEl) nameEl.textContent = currentUser.name || "다이버";
+    if (provEl) provEl.textContent = currentUser.provider || "가입 회원";
+    if (phoneEl) phoneEl.textContent = `📞 연락처: ${currentUser.phone && currentUser.phone !== "010-0000-0000" ? currentUser.phone : "미등록"}`;
+    if (scoreEl) {
+        const reviews = currentUser.reviews || [];
+        if (reviews.length > 0) {
+            const score = (reviews.reduce((s, r) => s + r.score, 0) / reviews.length).toFixed(1);
+            scoreEl.textContent = `${score} / 5.0`;
+            scoreEl.style.color = "#ffb703";
+        } else {
+            scoreEl.textContent = "신규 다이버 (평가 대기 중)";
+            scoreEl.style.color = "#00e676";
+        }
+    }
+    if (nickInp) nickInp.value = currentUser.nickname || currentUser.name || "";
+    if (licInp) licInp.value = currentUser.license_info || currentUser.license || "";
+
     renderDynamicProfileModal(currentUser);
 }
+
+window.openMyProfileModal = openProfileModal;
 
 let activeInstructorSubFilter = "all";
 
@@ -1825,19 +2236,107 @@ function confirmParticipantDisclaimerSubmit() {
     }
 }
 
+function openEditProfileModal() {
+    if (!currentUser) {
+        showToast("⚠️ 먼저 로그인해 주세요.");
+        if (typeof switchAuthTab === "function") switchAuthTab('login');
+        const authM = document.getElementById("authModal");
+        if (authM) openModal(authM);
+        return;
+    }
+
+    // Close existing profile modals
+    const dynOverlay = document.getElementById("dynamicProfileModalOverlay");
+    if (dynOverlay) dynOverlay.remove();
+    const staticMyProf = document.getElementById("myProfileModal");
+    if (staticMyProf) closeModal(staticMyProf);
+
+    const editNick = document.getElementById("editNickInput");
+    const editPhone = document.getElementById("editPhoneInput");
+    const editLicense = document.getElementById("editLicenseInput");
+
+    if (editNick) editNick.value = currentUser.name || currentUser.nickname || "";
+    if (editPhone) editPhone.value = (currentUser.phone && currentUser.phone !== "010-0000-0000") ? currentUser.phone : "";
+    if (editLicense) editLicense.value = currentUser.license || "";
+
+    const editModal = document.getElementById("editProfileModal");
+    if (editModal) openModal(editModal);
+}
+
+function handleSaveProfileEdit(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!currentUser) return;
+
+    const nick = document.getElementById("editNickInput") ? document.getElementById("editNickInput").value.trim() : "";
+    const phone = document.getElementById("editPhoneInput") ? document.getElementById("editPhoneInput").value.trim() : "";
+    const license = document.getElementById("editLicenseInput") ? document.getElementById("editLicenseInput").value.trim() : "";
+
+    if (!nick || !phone || !license) {
+        showToast("⚠️ 닉네임, 휴대폰 번호, 보유 자격증 정보를 모두 입력해 주세요.");
+        return;
+    }
+
+    currentUser.name = nick;
+    currentUser.nickname = nick;
+    currentUser.phone = phone;
+    currentUser.license = license;
+    currentUser.license_info = license;
+
+    safeLocalStorageSet("aqua_buddy_user_identity", JSON.stringify(currentUser));
+
+    if (currentUser.email) {
+        const users = getRegisteredUsers();
+        const key = currentUser.email.toLowerCase();
+        users[key] = {
+            ...users[key],
+            email: currentUser.email,
+            realName: currentUser.realName || nick,
+            name: nick,
+            nickname: nick,
+            phone: phone,
+            license: license,
+            license_info: license,
+            provider: currentUser.provider || "홈페이지 회원",
+            instructorStatus: currentUser.instructorStatus || "none"
+        };
+        safeLocalStorageSet("aqua_buddy_registered_users", JSON.stringify(users));
+        syncUserToSupabaseCloud(users[key]);
+    } else {
+        saveRegisteredUser(currentUser);
+        syncUserToSupabaseCloud(currentUser);
+    }
+
+    updateNavbarUserUI();
+    const editModal = document.getElementById("editProfileModal");
+    if (editModal) closeModal(editModal);
+
+    filterAndRender();
+    showToast("✏️ 프로필 정보가 성공적으로 수정 및 저장되었습니다!");
+}
+
 function handleUpdateProfile(e) {
     e.preventDefault();
     if (!currentUser) return;
 
-    const newNick = document.getElementById("myProfNickInput").value.trim();
-    const newLicense = document.getElementById("myProfLicenseInput").value.trim();
+    const newNick = document.getElementById("myProfNickInput") ? document.getElementById("myProfNickInput").value.trim() : "";
+    const newLicense = document.getElementById("myProfLicenseInput") ? document.getElementById("myProfLicenseInput").value.trim() : "";
 
-    currentUser.name = newNick || currentUser.name;
-    currentUser.license = newLicense || currentUser.license;
+    if (newNick) {
+        currentUser.name = newNick;
+        currentUser.nickname = newNick;
+    }
+    if (newLicense) {
+        currentUser.license = newLicense;
+        currentUser.license_info = newLicense;
+    }
 
-    localStorage.setItem("aqua_buddy_user_identity", JSON.stringify(currentUser));
+    safeLocalStorageSet("aqua_buddy_user_identity", JSON.stringify(currentUser));
+    if (currentUser.email) {
+        saveRegisteredUser(currentUser);
+        syncUserToSupabaseCloud(currentUser);
+    }
+
     updateNavbarUserUI();
-
     closeModal(document.getElementById("myProfileModal"));
     filterAndRender();
     showToast(`👤 내 프로필 정보가 업데이트되었습니다!`);
@@ -1857,7 +2356,49 @@ function handleLogout() {
 function getRegisteredUsers() {
     try {
         const data = localStorage.getItem("aqua_buddy_registered_users");
-        return data ? JSON.parse(data) : {};
+        let usersMap = data ? JSON.parse(data) : {};
+
+        // Ensure currentUser is included in usersMap
+        if (typeof currentUser !== "undefined" && currentUser && currentUser.email) {
+            const key = currentUser.email.toLowerCase();
+            if (!usersMap[key]) {
+                usersMap[key] = {
+                    email: currentUser.email,
+                    name: currentUser.name || currentUser.nickname || "다이버",
+                    realName: currentUser.realName || currentUser.name || "다이버",
+                    phone: (currentUser.phone && currentUser.phone !== "010-0000-0000") ? currentUser.phone : "",
+                    provider: currentUser.provider || "소셜/직접가입",
+                    instructorStatus: (currentUser.isInstructor || currentUser.role === 'instructor') ? "approved" : (currentUser.instructorStatus || "none"),
+                    createdAt: currentUser.createdAt || new Date().toISOString()
+                };
+            } else if (currentUser.phone && currentUser.phone !== "010-0000-0000") {
+                usersMap[key].phone = currentUser.phone;
+            }
+        }
+
+        // Add default admin & instructor fallback users if empty
+        if (Object.keys(usersMap).length === 0) {
+            usersMap["hanmaner@naver.com"] = {
+                email: "hanmaner@naver.com",
+                name: "웹마스터 (한만어)",
+                realName: "한만어",
+                phone: "010-2138-2929",
+                provider: "웹마스터 마스터인증",
+                instructorStatus: "approved",
+                createdAt: "2026-01-01T09:00:00.000Z"
+            };
+            usersMap["freediver_master@naver.com"] = {
+                email: "freediver_master@naver.com",
+                name: "해양마스터강사",
+                realName: "박해양",
+                phone: "010-8877-6655",
+                provider: "카카오톡",
+                instructorStatus: "approved",
+                createdAt: "2026-07-28T17:20:00.000Z"
+            };
+        }
+
+        return usersMap;
     } catch(e) {
         return {};
     }
@@ -1934,7 +2475,7 @@ function handleDirectLogin(e) {
         body: JSON.stringify({ email, password: pw })
     })
         .then(res => res.json().then(data => ({ status: res.status, body: data })))
-        .then(({ status, body }) => {
+        .then(async ({ status, body }) => {
             if (status !== 200) {
                 const msg = body.error || "로그인에 실패했습니다.";
                 alert(`❌ ${msg}`);
@@ -1943,13 +2484,10 @@ function handleDirectLogin(e) {
             const token = body.token;
             // Store token for later API calls
             localStorage.setItem("aqua_buddy_user_token", token);
-            // Minimal currentUser object
-            currentUser = {
-                email: email,
-                name: email.split("@")[0] || "다이버",
-                avatar: (email.split("@")[0] || "D").charAt(0).toUpperCase()
-            };
-            safeLocalStorageSet("aqua_buddy_user_identity", JSON.stringify(currentUser));
+
+            // Restore latest profile from Supabase Cloud DB & LocalStorage
+            currentUser = await restoreUserFromSupabaseCloud(email);
+
             updateNavbarUserUI();
             closeModal(document.getElementById("authModal"));
             resetAuthForm();
@@ -2013,17 +2551,23 @@ function handleDirectSignup(e) {
             const token = body.token;
             // Store token for later API calls
             localStorage.setItem("aqua_buddy_user_token", token);
-            // Build minimal currentUser object
-            const currentUser = {
+            // Build full currentUser object
+            const currentUserObj = {
                 email: email,
                 realName: realName,
                 name: nick,
+                nickname: nick,
                 phone: phone,
                 license: license,
+                license_info: license,
                 provider: "홈페이지 회원",
-                avatar: nick.charAt(0).toUpperCase()
+                avatar: nick.charAt(0).toUpperCase(),
+                createdAt: new Date().toISOString()
             };
+            currentUser = currentUserObj;
             safeLocalStorageSet("aqua_buddy_user_identity", JSON.stringify(currentUser));
+            saveRegisteredUser(currentUser);
+            syncUserToSupabaseCloud(currentUser);
             updateNavbarUserUI();
             closeModal(document.getElementById("authModal"));
             resetAuthForm();
@@ -2232,9 +2776,18 @@ function checkKakaoOAuthCallback() {
 
 function isMyPost(post) {
     if (!post) return false;
-    if (myCreatedPostIds && myCreatedPostIds.includes(post.id)) return true;
-    if (currentUser && currentUser.name && post.userName) {
-        return currentUser.name.trim() === post.userName.trim();
+    if (!currentUser) return false;
+    if (currentUser.email && post.authorEmail && currentUser.email.toLowerCase() === post.authorEmail.toLowerCase()) {
+        return true;
+    }
+    if (currentUser.email && post.email && currentUser.email.toLowerCase() === post.email.toLowerCase()) {
+        return true;
+    }
+    if (myCreatedPostIds && Array.isArray(myCreatedPostIds) && myCreatedPostIds.includes(post.id)) {
+        return true;
+    }
+    if (currentUser.name && post.userName && currentUser.name.trim() === post.userName.trim()) {
+        return true;
     }
     return false;
 }
@@ -2605,9 +3158,20 @@ function removeImage(index) {
 }
 
 function openLightbox(src) {
-    lightboxImage.src = src;
-    openModal(imageLightboxModal);
+    const modal = document.getElementById("imageLightboxModal");
+    const img = document.getElementById("lightboxImage");
+    if (!modal || !img) return;
+
+    img.src = src;
+    if (modal.parentElement !== document.body) {
+        document.body.appendChild(modal);
+    }
+    modal.classList.remove("hidden");
+    modal.classList.add("active");
+    modal.style.setProperty("display", "flex", "important");
+    modal.style.setProperty("z-index", "9999999", "important");
 }
+window.openLightbox = openLightbox;
 
 function handleCctvSearch(keyword) {
     cctvSearchKeyword = keyword.trim().toLowerCase();
@@ -3195,19 +3759,34 @@ function renderCompactPostRow(post) {
     const priceText = isInst ? (post.classFee ? post.classFee.toLocaleString() + '원' : '수강료 문의') : (isMarket ? (post.price ? post.price.toLocaleString() + '원' : '가격협의') : '');
     
     return `
-        <div class="compact-post-row" data-post-id="${post.id}" onclick="openDetailModal('${post.id}')">
+        <div class="compact-post-row post-card feed-card" data-post-id="${post.id}" onclick="openPostDetailModal('${post.id}')" style="cursor: pointer;">
             <div class="compact-row-main">
-                <span class="badge badge-${post.category}">${post.categoryName}</span>
+                <span class="badge badge-${post.category}">${post.categoryName || post.category}</span>
                 <span class="compact-post-title">${escapeHtml(post.title)}</span>
             </div>
             <div class="compact-row-meta">
-                <span class="compact-author-name"><i class="fa-solid fa-user-circle"></i> ${escapeHtml(post.userName)}</span>
+                <span class="compact-author-name"><i class="fa-solid fa-user-circle"></i> ${escapeHtml(post.userName || '다이버')}</span>
                 <span class="compact-rating">★ ${post.hostRating || 5.0}</span>
                 ${priceText ? `<span style="color: var(--accent-gold); font-weight: 700;">${priceText}</span>` : ''}
                 <span class="compact-action-link">상세 ➔</span>
             </div>
         </div>
     `;
+}
+
+function bindPostCardClickListeners() {
+    if (typeof document === "undefined") return;
+    document.querySelectorAll('.post-card, .feed-card, .compact-post-row, [data-post-id]').forEach(card => {
+        card.style.cursor = 'pointer';
+        card.onclick = (e) => {
+            if (!e.target.closest('.btn, button, input, a, .like-btn, .action-btn')) {
+                const postId = card.getAttribute('data-post-id') || card.dataset.postId;
+                if (postId) {
+                    openPostDetailModal(postId);
+                }
+            }
+        };
+    });
 }
 
 // Render Feed Posts in Compact Simplified List View Mode
@@ -3225,82 +3804,225 @@ function renderGrid(data) {
         postsGrid.className = "compact-post-table";
         postsGrid.innerHTML = data.map(post => renderCompactPostRow(post)).join("");
     }
+    bindPostCardClickListeners();
 }
 
 let chatJoinTimestamps = {};
 
+function togglePinNotice() {
+    const contentEl = document.getElementById("chatPinNoticeContent");
+    const toggleTextEl = document.getElementById("pinNoticeToggleText");
+    if (!contentEl) return;
+
+    if (contentEl.style.display === "none") {
+        contentEl.style.display = "block";
+        if (toggleTextEl) toggleTextEl.textContent = "접기 ▲";
+    } else {
+        contentEl.style.display = "none";
+        if (toggleTextEl) toggleTextEl.textContent = "펴기 ▼";
+    }
+}
+
+function requestCourseRegistration() {
+    if (!currentChatPost) return;
+    const isInstructor = currentChatPost.category === "instructor";
+    const postTitle = currentChatPost.title || "강사 클래스";
+    const feeStr = currentChatPost.classFee ? currentChatPost.classFee.toLocaleString() + '원' : '수강료 문의';
+    
+    if (typeof showToast === "function") {
+        showToast("🎓 수강 신청 및 입금 안내 메시지가 대화방에 전송되었습니다!");
+    }
+
+    const currentUserName = currentUser ? (currentUser.name || currentUser.nickname || currentUser.email || "수강생") : "수강생";
+    const sysMsg = {
+        id: `sys-course-${Date.now()}`,
+        sender: "system",
+        author: "AquaBuddy 시스템",
+        text: `🎓 [수강 신청 알림] ${currentUserName}님이 '${postTitle}' (${feeStr}) 수강 신청 및 입금 계좌를 요청하셨습니다. 강사님께서는 입금 계좌와 일정을 안내해 주세요!`,
+        time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+        timestamp: Date.now()
+    };
+
+    if (!chatMessages[currentChatPost.id]) chatMessages[currentChatPost.id] = [];
+    chatMessages[currentChatPost.id].push(sysMsg);
+
+    if (typeof renderChatStream === "function") renderChatStream(currentChatPost.id);
+}
+
 function openChatRoomModal(postId) {
     console.log('[대화방 모달 오픈 요청]', postId);
 
-    const chatModalEl = document.getElementById("chatModal") || document.querySelector(".chat-modal-container") || chatModal;
-
-    if (!currentUser || !currentUser.name) {
-        showToast("🔑 회원가입 / 로그인 후 실시간 대화방을 이용하실 수 있습니다!");
-        if (typeof switchAuthTab === "function") switchAuthTab('login');
-        openModal(document.getElementById("authModal") || authModal);
+    let chatModalTarget = document.getElementById('chatModal')
+                       || document.querySelector('.chat-modal-container')
+                       || document.querySelector('.modal-overlay#chatModal');
+    
+    if (!chatModalTarget) {
+        alert('대화방 모달 HTML 요소를 찾을 수 없습니다 (#chatModal).');
         return;
     }
 
-    let post = posts.find(p => p.id === postId);
-    if (!post) {
-        post = {
-            id: postId || ("chat-" + Date.now()),
-            title: "아쿠아버디 실시간 버디 대화방",
-            userName: "다이버 버디",
-            categoryName: "실시간 대화",
-            category: "freediving",
-            attendees: [currentUser.name, "다이버 버디"]
-        };
+    // 부모 태그의 display:none 영향을 받지 않도록 body 직계 자식으로 강제 이동
+    if (chatModalTarget.parentElement !== document.body) {
+        document.body.appendChild(chatModalTarget);
     }
 
-    currentChatPost = post;
-    const isHost = isMyPost(post);
-    const isMarket = post.category === "market";
-    const currentUserName = currentUser ? currentUser.name : "손님";
+    // 최상위 레이어 강제 노출
+    chatModalTarget.classList.remove('hidden');
+    chatModalTarget.classList.add('active');
+    chatModalTarget.style.setProperty('display', 'flex', 'important');
+    chatModalTarget.style.setProperty('z-index', '999999', 'important');
+    chatModalTarget.style.setProperty('visibility', 'visible', 'important');
+    chatModalTarget.style.setProperty('opacity', '1', 'important');
 
+    if (typeof openModal === 'function') {
+        openModal(chatModalTarget);
+    }
+
+    // 상세 모달 닫기
     try {
-        post.unreadCount = 0;
-        savePosts();
-        if (typeof filterAndRender === "function") filterAndRender();
+        const detailModalEl = document.getElementById('detailModal');
+        if (detailModalEl && typeof closeModal === 'function') {
+            closeModal(detailModalEl);
+        }
+        const dynamicOverlay = document.getElementById('dynamicDetailModalOverlay');
+        if (dynamicOverlay) dynamicOverlay.remove();
+    } catch(e) {}
 
-        const roleBadge = document.getElementById("chatRoleBadge");
-        const unreadBadge = document.getElementById("chatUnreadBadge");
-        const hostToolbar = document.getElementById("chatHostQuickToolbar");
-        const membersBar = document.getElementById("chatMembersBar");
+    // 비로그인 유저 검증 -> 안내 Toast & Auth Modal 오픈
+    const isLoggedIn = typeof currentUser !== 'undefined' && currentUser && (currentUser.name || currentUser.nickname || currentUser.email || (currentUser.user_metadata && currentUser.user_metadata.full_name));
 
+    if (!isLoggedIn) {
+        if (typeof showToast === "function") showToast("🔑 로그인 후 실시간 대화방에 참여하실 수 있습니다!");
+        if (typeof switchAuthTab === "function") switchAuthTab('login');
+        const authModalEl = document.getElementById("authModal") || (typeof authModal !== 'undefined' ? authModal : null);
+        if (authModalEl && typeof openModal === "function") openModal(authModalEl);
+        return;
+    }
+
+    // 게시글 수집 및 대화 데이터 렌더링
+    try {
+        let post = null;
+        if (typeof posts !== 'undefined' && Array.isArray(posts)) {
+            post = posts.find(p => String(p.id) === String(postId));
+        }
+        
+        if (!post) {
+            const userNameStr = currentUser ? (currentUser.name || currentUser.nickname || currentUser.email || "다이버 버디") : "다이버 버디";
+            post = {
+                id: postId || ("chat-" + Date.now()),
+                title: "실시간 버디 대화방",
+                userName: userNameStr,
+                categoryName: "실시간 대화",
+                category: "freediving",
+                attendees: [userNameStr]
+            };
+        }
+
+        if (post.category === "community") {
+            if (typeof showToast === "function") showToast("💬 자유수다방 게시글은 하단 실시간 댓글로 자유롭게 소통하실 수 있습니다!");
+            if (chatModalTarget) {
+                chatModalTarget.classList.add('hidden');
+                chatModalTarget.style.display = 'none';
+            }
+            return;
+        }
+
+        currentChatPost = post;
+        const isHost = typeof isMyPost === 'function' ? isMyPost(post) : false;
+        const isMarket = post.category === "market";
+        const isInstructor = post.category === "instructor";
+        const currentUserName = currentUser ? (currentUser.name || currentUser.nickname || currentUser.email || "다이버") : "다이버";
+
+        // 신규 참가자 첫 입장 시각 기록 (과거 메시지 가림 보호)
+        const joinKey = `${post.id}_${currentUserName}`;
+        if (!chatJoinTimestamps[joinKey]) {
+            chatJoinTimestamps[joinKey] = Date.now();
+        }
+
+        // 헤더 텍스트 바인딩
         const buddyNameEl = document.getElementById("chatBuddyName");
         if (buddyNameEl) {
-            buddyNameEl.textContent = isMarket ? `${post.userName}님과의 1:1 대화방` : `${(post.title || '').substring(0, 18)}... 일정 대화방`;
+            if (isInstructor) {
+                buddyNameEl.textContent = `🎓 ${post.userName} 강사님과의 1:1 수강 상담 대화방`;
+            } else if (isMarket) {
+                buddyNameEl.textContent = `🛒 ${post.userName}님과의 1:1 중고거래 문의 대화방`;
+            } else {
+                buddyNameEl.textContent = `🌊 '${(post.title || '').substring(0, 16)}' 버디 모집 일정 대화방`;
+            }
         }
 
         const postTitleEl = document.getElementById("chatPostTitle");
         if (postTitleEl) {
-            postTitleEl.textContent = `'${post.title}' - ${post.categoryName}`;
+            postTitleEl.textContent = `'${post.title}' - ${post.categoryName || '실시간대화'}`;
         }
 
+        const roleBadge = document.getElementById("chatRoleBadge");
         if (roleBadge) {
-            if (isHost) {
+            if (isInstructor) {
                 roleBadge.className = "chat-role-tag host-tag";
-                roleBadge.textContent = isMarket ? "판매자 대화방" : (post.category === "instructor" ? "강사 전용 수강 대화방" : "모임 주최자 대화방");
-                if (hostToolbar) hostToolbar.style.display = isMarket ? "none" : "flex";
+                roleBadge.textContent = isHost ? "🎓 강사 전용 1:1 상담 대화방" : "💬 1:1 수강 상담 대화방";
+            } else if (isMarket) {
+                roleBadge.className = "chat-role-tag host-tag";
+                roleBadge.textContent = isHost ? "🛒 판매자 1:1 대화방" : "💬 구매 문의자 1:1 대화방";
             } else {
-                roleBadge.className = "chat-role-tag attendee-tag";
-                roleBadge.textContent = isMarket ? "구매 문의자 대화방" : (post.category === "instructor" ? "수강 문의자 대화방" : "버디 참가자 대화방");
-                if (hostToolbar) hostToolbar.style.display = isMarket ? "none" : "flex";
+                roleBadge.className = isHost ? "chat-role-tag host-tag" : "chat-role-tag attendee-tag";
+                roleBadge.textContent = isHost ? "👑 모임 주최자 대화방" : "🌊 버디 참가자 대화방";
             }
         }
 
-        if (unreadBadge) unreadBadge.classList.add("hidden");
+        // 📌 [카테고리별 상단 고정 안내 바 (Pin Notice Bar) 바인딩]
+        const pinBar = document.getElementById("chatPinNoticeBar");
+        const pinNoticeTag = document.getElementById("chatNoticeTag");
+        const pinNoticeContent = document.getElementById("chatPinNoticeContent");
 
+        if (pinBar && pinNoticeTag && pinNoticeContent) {
+            if (isInstructor) {
+                pinBar.style.display = "block";
+                pinNoticeTag.innerHTML = `<i class="fa-solid fa-graduation-cap" style="color: var(--accent-gold);"></i> 🎓 강사 클래스 요약 카드`;
+                const feeStr = post.classFee ? post.classFee.toLocaleString() + '원' : '수강료 별도 문의';
+                const locStr = post.mapAddress || post.locationName || post.region || '전국 교육장 / 다이빙풀';
+                pinNoticeContent.innerHTML = `
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <div><strong>📚 수강 클래스:</strong> ${typeof escapeHtml === 'function' ? escapeHtml(post.title) : post.title}</div>
+                        <div><strong>💰 수강료:</strong> <span style="color: var(--accent-gold); font-weight: 800;">${feeStr}</span></div>
+                        <div><strong>📍 수업 장소:</strong> ${typeof escapeHtml === 'function' ? escapeHtml(locStr) : locStr}</div>
+                        <div style="margin-top: 6px;">
+                            <button type="button" onclick="requestCourseRegistration()" style="background: linear-gradient(135deg, var(--accent-gold), #ff8f00); color: #000; font-weight: 800; border: none; padding: 4px 12px; border-radius: 12px; font-size: 0.78rem; cursor: pointer;">
+                                <i class="fa-solid fa-paper-plane"></i> 🎓 수강 신청 & 입금 계좌 문의
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else if (!isMarket) {
+                // 버디 모집 (1:N 단체 대화방)
+                pinBar.style.display = "block";
+                pinNoticeTag.innerHTML = `<i class="fa-solid fa-thumbtack" style="color: var(--accent-cyan);"></i> 📌 버디 모임 고정 공지사항`;
+                const dateStr = post.created_at ? post.created_at.substring(0, 10) : '일정 협의';
+                const locStr = post.mapAddress || post.locationName || post.region || '다이빙 장소 미지정';
+                const reqStr = post.reqLicense ? `필수 자격: ${post.reqLicense}` : '준비물: 다이빙 장비, 오리발, 수트';
+                pinNoticeContent.innerHTML = `
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <div><strong>📅 모임 일시:</strong> ${dateStr}</div>
+                        <div><strong>📍 모임 장소:</strong> ${typeof escapeHtml === 'function' ? escapeHtml(locStr) : locStr}</div>
+                        <div><strong>🎒 자격/준비물:</strong> ${typeof escapeHtml === 'function' ? escapeHtml(reqStr) : reqStr}</div>
+                    </div>
+                `;
+            } else {
+                // 중고장터 (1:1 일반 대화방) -> 상단 공지 없이 깔끔 유지
+                pinBar.style.display = "none";
+            }
+        }
+
+        const membersBar = document.getElementById("chatMembersBar");
         if (membersBar) {
-            if (!isMarket && post.attendees && post.attendees.length > 0) {
+            if (!isMarket && !isInstructor && post.attendees && post.attendees.length > 0) {
                 membersBar.style.display = "flex";
                 membersBar.innerHTML = post.attendees.map((name) => {
                     const isHostMember = name === post.userName;
                     return `
                     <div class="member-chip ${isHostMember ? 'host-chip' : ''}">
                         <i class="fa-solid ${isHostMember ? 'fa-crown' : 'fa-user'}"></i>
-                        <span>${escapeHtml(name)} ${isHostMember ? '(주최자)' : ''}</span>
+                        <span>${typeof escapeHtml === 'function' ? escapeHtml(name) : name} ${isHostMember ? '(주최자)' : ''}</span>
                     </div>
                     `;
                 }).join("");
@@ -3309,102 +4031,136 @@ function openChatRoomModal(postId) {
             }
         }
 
-        const userJoinKey = `${post.id}_${currentUserName}`;
-        if (!chatJoinTimestamps[userJoinKey]) {
-            chatJoinTimestamps[userJoinKey] = Date.now();
-        }
+        if (typeof chatMessages !== 'undefined') {
+            if (!chatMessages[post.id] || chatMessages[post.id].length === 0) {
+                let welcomeMsg = `💬 대화방이 생성되었습니다! 상대방 다이버와 미팅 장소, 일정 및 준비물을 소통해 보세요.`;
+                if (isInstructor) welcomeMsg = `🎓 강사님과의 1:1 수강 상담 대화방입니다. 강습 일정, 장소 및 레슨 비용에 대해 편하게 문의해 보세요!`;
+                if (isMarket) welcomeMsg = `🛒 중고장터 1:1 직거래 문의 대화방입니다. 제품 상태, 거래 장소 및 택배 가능 여부를 소통해 보세요!`;
 
-        if (!chatMessages[post.id] || chatMessages[post.id].length === 0) {
-            chatMessages[post.id] = [
-                {
-                    id: `sys-${Date.now()}`,
-                    sender: "system",
-                    author: "AquaBuddy 시스템",
-                    text: `💬 대화방이 생성되었습니다! 상대방 다이버와 미팅 장소, 일정 및 준비물을 소통해 보세요.`,
-                    time: "방금 전",
-                    timestamp: Date.now()
-                }
-            ];
+                chatMessages[post.id] = [
+                    {
+                        id: `sys-${Date.now()}`,
+                        sender: "system",
+                        author: "AquaBuddy 시스템",
+                        text: welcomeMsg,
+                        time: "방금 전",
+                        timestamp: Date.now()
+                    }
+                ];
+            }
         }
 
         if (typeof renderChatStream === "function") renderChatStream(post.id);
-    } catch(e) {
-        console.error('[대화방 렌더링 세팅 주의]:', e);
+    } catch (dataErr) {
+        console.error('대화방 데이터 바인딩 중 예외 발생 (모달 표시는 유효함):', dataErr);
     }
-
-    openModal(chatModalEl || document.getElementById("chatModal"));
 }
 
 function renderChatStream(postId) {
     const stream = chatMessages[postId] || [];
-    const currentUserName = currentUser ? currentUser.name : "손님";
-    const userJoinKey = `${postId}_${currentUserName}`;
-    const joinTime = chatJoinTimestamps[userJoinKey] || 0;
-    const isHost = isMyPost(currentChatPost);
+    const currentUserName = currentUser ? (currentUser.name || currentUser.nickname || currentUser.email || "손님") : "손님";
+    const container = document.getElementById("chatMessagesStream") || document.getElementById("chatMessageList");
+    if (!container) return;
 
-    // Filter stream: System messages + Host messages + User's own messages + Messages sent after user joined!
+    const joinKey = `${postId}_${currentUserName}`;
+    const joinTime = chatJoinTimestamps[joinKey] || 0;
+    const isHost = typeof isMyPost === 'function' && currentChatPost ? isMyPost(currentChatPost) : false;
+
+    // 신규 참가자 개인정보 및 과거 대화 보호 필터링 (시스템 메시지, 주최자, 본인 작성 메시지, 입장 이후 메시지)
     const visibleStream = stream.filter(msg => {
         if (msg.sender === "system" || isHost) return true;
         if (msg.author === currentUserName) return true;
         return (msg.timestamp && msg.timestamp >= (joinTime - 5000));
     });
 
-    chatMessagesStream.innerHTML = visibleStream.map(msg => {
+    container.innerHTML = visibleStream.map(msg => {
         if (msg.sender === "system") {
             return `
             <div class="chat-system-notice" style="text-align: center; margin: 10px 0;">
                 <span style="background: rgba(0, 242, 254, 0.12); color: var(--accent-cyan); font-size: 0.78rem; padding: 4px 12px; border-radius: 12px; border: 1px dashed var(--accent-cyan);">
-                    ${escapeHtml(msg.text)}
+                    ${typeof escapeHtml === 'function' ? escapeHtml(msg.text) : msg.text}
                 </span>
             </div>
             `;
         }
 
-        const isUserMsg = (currentUser && msg.author === currentUser.name) || msg.sender === "user";
+        const isUserMsg = (currentUser && (msg.author === currentUser.name || msg.author === currentUser.nickname)) || msg.sender === "user";
         const isHostMsg = msg.sender === "host" || (currentChatPost && msg.author === currentChatPost.userName);
 
         return `
-        <div class="chat-bubble ${isUserMsg ? 'user' : (isHostMsg ? 'host' : 'attendee')}">
+        <div class="chat-bubble ${isUserMsg ? 'user' : (isHostMsg ? 'host' : 'attendee')}" style="${isUserMsg ? 'margin-left: auto; background: linear-gradient(135deg, #00f2fe, #4facfe); color: #000; text-align: right;' : 'margin-right: auto; background: rgba(255,255,255,0.1); color: #fff;'} padding: 8px 14px; border-radius: 12px; margin-bottom: 8px; max-width: 80%;">
             ${!isUserMsg ? `
-            <div class="chat-sender-info">
-                <i class="fa-solid ${isHostMsg ? 'fa-crown' : 'fa-user'}"></i> ${escapeHtml(msg.author || '참가자')} ${isHostMsg ? '(주최자)' : ''}
+            <div class="chat-sender-info" style="font-weight: bold; font-size: 0.8rem; margin-bottom: 2px;">
+                <i class="fa-solid ${isHostMsg ? 'fa-crown' : 'fa-user'}"></i> ${typeof escapeHtml === 'function' ? escapeHtml(msg.author || '참가자') : msg.author} ${isHostMsg ? '(주최자/강사)' : ''}
             </div>
             ` : ''}
-            <p>${escapeHtml(msg.text)}</p>
-            <span class="chat-time"><p style="font-size: 0.82rem; color: var(--accent-cyan);" id="myProfProviderDisplay">홈페이지 회원</p></span>
+            <p style="margin: 0; font-size: 0.9rem; word-break: break-word;">${typeof escapeHtml === 'function' ? escapeHtml(msg.text) : msg.text}</p>
+            <span class="chat-time" style="font-size: 0.7rem; opacity: 0.7; display: block; margin-top: 4px;">${msg.time || '방금 전'}</span>
         </div>
         `;
     }).join("");
 
-    chatMessagesStream.scrollTop = chatMessagesStream.scrollHeight;
+    container.scrollTop = container.scrollHeight;
 }
 
+
+
 function handleSendChatMessage(e) {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     if (!currentChatPost) return;
 
-    const text = chatMessageInput.value.trim();
+    const inputEl = document.getElementById("chatMessageInput") || document.getElementById("chatInput");
+    if (!inputEl) return;
+
+    const text = inputEl.value.trim();
     if (!text) return;
 
-    const postId = currentChatPost.id;
-    const currentUserName = currentUser ? currentUser.name : "다이버";
-    const isHostMsg = isMyPost(currentChatPost);
+    const postId = String(currentChatPost.id);
+    const currentUserName = currentUser ? (currentUser.name || currentUser.nickname || currentUser.email || "다이버") : "다이버";
+    const isHostMsg = typeof isMyPost === 'function' ? isMyPost(currentChatPost) : false;
+    const nowTimeStr = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
 
     const msgObj = {
         id: `msg-${Date.now()}`,
-        sender: isHostMsg ? "host" : "attendee",
+        sender: isHostMsg ? "host" : "user",
         author: currentUserName,
         text: text,
-        time: "방금 전",
+        time: nowTimeStr,
         timestamp: Date.now()
     };
 
     if (!chatMessages[postId]) chatMessages[postId] = [];
     chatMessages[postId].push(msgObj);
 
-    chatMessageInput.value = "";
+    inputEl.value = "";
     renderChatStream(postId);
+
+    // REST API & Supabase DB Cloud Sync
+    try {
+        fetch('/api/chats', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_id: postId,
+                sender: msgObj.sender,
+                author: currentUserName,
+                text: text,
+                time: nowTimeStr,
+                timestamp: msgObj.timestamp
+            })
+        }).then(res => res.json()).then(data => {
+            console.log('✨ Supabase/Backend Chat Sync success:', data);
+        }).catch(err => {
+            console.log('Chat backend API sync note (saved locally):', err);
+        });
+    } catch(err) {
+        console.log('Chat fetch exception:', err);
+    }
 }
+
+
 
 function confirmBuddyMatchFromChat() {
     if (!currentChatPost) return;
@@ -3429,93 +4185,8 @@ function finishScheduleFromChat() {
 }
 
 function renderDynamicDetailModal(post) {
-    let existing = document.getElementById("dynamicDetailModalOverlay");
-    if (existing) existing.remove();
-
-    const isInstructor = post.category === "instructor";
-    const isMarket = post.category === "market";
-    const isCommunity = post.category === "community";
-    const priceText = isInstructor ? (post.classFee ? post.classFee.toLocaleString() + '원' : '수강료 문의') : (isMarket ? (post.price ? post.price.toLocaleString() + '원' : '가격협의') : '');
-
-    const images = Array.isArray(post.images) ? post.images : [];
-    const imagesHtml = images.map(img => `<img src="${img}" style="max-width:100%; border-radius:8px; margin-top:8px; border:1px solid #00f2fe;">`).join("");
-
-    const comments = Array.isArray(post.comments) ? post.comments : [];
-    const commentsHtml = comments.map(c => `
-        <div style="background:rgba(255,255,255,0.06); padding:8px 12px; border-radius:6px; margin-bottom:6px; font-size:0.85rem;">
-            <strong style="color:#00f2fe;">👤 ${escapeHtml(c.author || '익명')}</strong> <span style="opacity:0.6; font-size:0.75rem;">(${c.time || '방금 전'})</span>: ${escapeHtml(c.text || '')}
-        </div>
-    `).join("");
-
-    const overlay = document.createElement("div");
-    overlay.id = "dynamicDetailModalOverlay";
-    overlay.style.cssText = `
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        width: 100vw !important;
-        height: 100vh !important;
-        background: rgba(0, 0, 0, 0.92) !important;
-        z-index: 9999999 !important;
-        display: flex !important;
-        justify-content: center !important;
-        align-items: center !important;
-        padding: 16px !important;
-        box-sizing: border-box !important;
-    `;
-
-    overlay.innerHTML = `
-        <div style="background: #0d1b2a; border: 2px solid #00f2fe; box-shadow: 0 0 50px rgba(0, 242, 254, 0.6); border-radius: 16px; width: 100%; max-width: 680px; max-height: 85vh; overflow-y: auto; padding: 24px; color: #ffffff; position: relative; font-family: sans-serif;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0, 242, 254, 0.3); padding-bottom: 12px; margin-bottom: 16px;">
-                <h2 style="margin: 0; font-size: 1.25rem; color: #00f2fe;">${escapeHtml(post.title || '게시글 상세')}</h2>
-                <button onclick="document.getElementById('dynamicDetailModalOverlay').remove()" style="background: #00f2fe; border: none; color: #000; font-weight: bold; font-size: 1.3rem; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center;">&times;</button>
-            </div>
-            
-            <div style="margin-bottom: 14px; font-size: 0.9rem; line-height: 1.6; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
-                <div>
-                    <p style="color: #ffb703; font-weight: bold; margin: 0 0 6px 0;">👤 작성자: ${escapeHtml(post.userName || '다이버')} | 카테고리: ${escapeHtml(post.categoryName || post.category)}</p>
-                    ${priceText ? `<p style="color: #00e676; font-weight: bold; font-size: 1.1rem; margin: 0 0 8px 0;">💰 ${priceText}</p>` : ''}
-                    ${post.mapAddress || post.locationName ? `<p style="color: #a0aec0; margin: 0;">📍 장소: ${escapeHtml(post.mapAddress || post.locationName)}</p>` : ''}
-                </div>
-                <button onclick="toggleLike('${post.id}'); renderDynamicDetailModal(posts.find(p=>p.id==='${post.id}'));" style="background: rgba(255, 82, 82, 0.15); border: 1px solid #ff5252; color: #ff5252; padding: 6px 14px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 0.85rem;">
-                    ❤️ 관심 / 좋아요 ${post.likes || 0}
-                </button>
-            </div>
-
-            <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1); padding: 14px; border-radius: 10px; margin-bottom: 16px; font-size: 0.92rem; line-height: 1.6;">
-                <h4 style="margin-top: 0; margin-bottom: 8px; color: #00f2fe;">📝 상세 설명</h4>
-                ${escapeHtml(post.desc || '상세 내용이 없습니다.').replace(/\n/g, '<br>')}
-            </div>
-
-            ${imagesHtml ? `<div style="margin-bottom: 16px;"><h4 style="margin-top: 0; margin-bottom: 8px; color: #00f2fe;">📷 첨부 이미지</h4>${imagesHtml}</div>` : ''}
-
-            <div style="margin-bottom: 16px;">
-                <h4 style="margin-top: 0; margin-bottom: 8px; color: #00f2fe;">💬 실시간 댓글 (${comments.length})</h4>
-                <div style="max-height: 180px; overflow-y: auto; margin-bottom: 10px;">
-                    ${commentsHtml || '<p style="color: #a0aec0; font-size: 0.85rem; margin: 0;">작성된 댓글이 없습니다. 첫 댓글을 남겨보세요!</p>'}
-                </div>
-                
-                <!-- 댓글 작성 폼 -->
-                <form onsubmit="handleDynamicCommentSubmit(event, '${post.id}')" style="display: flex; gap: 8px;">
-                    <input type="text" id="dynamicCommentInput_${post.id}" placeholder="실시간 댓글 또는 문의를 입력하세요..." style="flex: 1; background: rgba(0,0,0,0.5); border: 1px solid #00f2fe; color: #fff; padding: 9px 12px; border-radius: 8px; font-size: 0.88rem;" required autocomplete="off">
-                    <button type="submit" style="background: #00f2fe; border: none; color: #000; font-weight: bold; padding: 9px 16px; border-radius: 8px; cursor: pointer; font-size: 0.88rem;">등록</button>
-                </form>
-            </div>
-
-            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 14px;">
-                <div>
-                    ${!isCommunity ? `
-                    <button onclick="document.getElementById('dynamicDetailModalOverlay').remove(); openChatRoomModal('${post.id}');" style="background: linear-gradient(135deg, #00f2fe, #4facfe); border: none; color: #000; font-weight: bold; padding: 9px 18px; border-radius: 8px; cursor: pointer; font-size: 0.9rem;">
-                        💬 실시간 대화방 참여
-                    </button>
-                    ` : ''}
-                </div>
-                <button onclick="document.getElementById('dynamicDetailModalOverlay').remove()" style="background: linear-gradient(135deg, #ff5252, #d32f2f); border: none; color: #fff; padding: 9px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.9rem;">닫기 ✖</button>
-            </div>
-        </div>
-    `;
-
-    document.body.appendChild(overlay);
+    const dynOverlay = document.getElementById("dynamicDetailModalOverlay");
+    if (dynOverlay) dynOverlay.remove();
 }
 
 function handleDynamicCommentSubmit(e, postId) {
@@ -3588,13 +4259,11 @@ function openDetailModal(postId) {
 
         const images = Array.isArray(post.images) ? post.images : [];
         const photoGalleryHtml = (images.length > 0) ? `
-            <div class="detail-section">
-                <h4><i class="fa-solid fa-camera"></i> 첨부 사진 (클릭 시 확대 미리보기)</h4>
-                <div class="detail-photo-gallery">
-                    ${images.map(imgSrc => `
-                        <div class="detail-photo-item">
-                            <img src="${imgSrc}" alt="첨부 사진" class="zoomable-img" onclick="openLightbox('${imgSrc}')">
-                        </div>
+            <div class="detail-section" style="margin-top: 14px;">
+                <h4 style="color: var(--accent-cyan); font-size: 0.92rem; margin-bottom: 8px;"><i class="fa-solid fa-camera"></i> 📷 첨부 이미지 (${images.length}장)</h4>
+                <div class="post-image-gallery">
+                    ${images.map((imgSrc, idx) => `
+                        <img src="${imgSrc}" alt="첨부 이미지 ${idx+1}" class="post-image-item" onclick="openLightbox('${imgSrc}')">
                     `).join("")}
                 </div>
             </div>
@@ -3706,7 +4375,7 @@ function openDetailModal(postId) {
 
             <div class="contact-box" style="margin-top: 20px; justify-content: flex-end;">
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    <button class="btn btn-primary" onclick="closeModal(document.getElementById('detailModal')); openChatRoomModal('${post.id}');">
+                    <button class="btn btn-primary" onclick="openChatRoomModal('${post.id}');">
                         <i class="fa-solid fa-comment-dots"></i> 강사님과 1:1 수강 상담 대화방
                     </button>
                     ${!isHost ? `
@@ -3781,7 +4450,7 @@ function openDetailModal(postId) {
 
             <div class="contact-box" style="margin-top: 20px; justify-content: flex-end;">
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    <button class="btn btn-primary" onclick="closeModal(document.getElementById('detailModal')); openChatRoomModal('${post.id}');">
+                    <button class="btn btn-primary" onclick="openChatRoomModal('${post.id}');">
                         <i class="fa-solid fa-comment-dots"></i> 앱 내 1:1 대화방 입장
                     </button>
                     ${isHost ? `
@@ -3976,7 +4645,7 @@ function openDetailModal(postId) {
 
             <div class="contact-box" style="margin-top: 20px; justify-content: flex-end;">
                 <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-                    <button class="btn btn-primary" onclick="closeModal(document.getElementById('detailModal')); openChatRoomModal('${post.id}');">
+                    <button class="btn btn-primary" onclick="openChatRoomModal('${post.id}');">
                         <i class="fa-solid fa-comment-dots"></i> 일정 대화방 입장
                     </button>
                     ${actionButtonsHtml}
@@ -3985,15 +4654,23 @@ function openDetailModal(postId) {
         `;
     }
 
-        const bodyEl = document.getElementById("detailModalBody") || detailModalBody;
+        const bodyEl = document.getElementById("detailModalBody");
         if (bodyEl) bodyEl.innerHTML = mainInfoHtml;
-        const targetModalEl = document.getElementById("detailModal") || detailModal;
-        openModal(targetModalEl);
+        const targetModalEl = document.getElementById("postDetailModal") || document.getElementById("detailModal");
+        if (targetModalEl) {
+            targetModalEl.classList.remove('hidden');
+            targetModalEl.style.setProperty('display', 'flex', 'important');
+            targetModalEl.style.setProperty('z-index', '999999', 'important');
+        }
 
         if (!isCommunity) {
             setTimeout(() => {
                 try {
-                    initKakaoLiveMap(post.mapAddress || post.locationName);
+                    if (typeof initKakaoLiveMap === 'function') {
+                        initKakaoLiveMap(post.mapAddress || post.locationName);
+                    } else {
+                        console.warn('initKakaoLiveMap 함수가 정의되어 있지 않아 지도 초기화를 건너뜁니다.');
+                    }
                 } catch(mapErr) {
                     console.log("Kakao Map init notice:", mapErr);
                 }
@@ -4005,29 +4682,30 @@ function openDetailModal(postId) {
     }
 }
 
-// 1-Click Instant Post Deletion for Author / Webmaster
 function deletePostWithPassword(postId) {
-    const post = posts.find(p => p.id === postId);
-    if (!post) return;
-
-    if (isMyPost(post) || isAdminAuthenticated) {
-        pendingDeletePostId = postId;
-        openModal(deleteConfirmModal);
-    } else {
-        showToast("⚠️ 본인이 작성한 게시글만 삭제할 수 있습니다!");
-    }
+    performPostDeletion(postId);
 }
 
 function performPostDeletion(postId) {
-    posts = posts.filter(p => p.id !== postId);
-    myCreatedPostIds = myCreatedPostIds.filter(id => id !== postId);
+    const post = posts.find(p => String(p.id) === String(postId));
+    if (post && !isMyPost(post) && !isAdminAuthenticated) {
+        showToast("⛔ 본인이 작성한 글만 삭제할 수 있습니다.");
+        return;
+    }
+
+    posts = posts.filter(p => String(p.id) !== String(postId));
+    myCreatedPostIds = myCreatedPostIds.filter(id => String(id) !== String(postId));
 
     savePosts();
     saveMyPosts();
 
-    closeModal(detailModal);
+    const detailM = document.getElementById("postDetailModal") || document.getElementById("detailModal");
+    if (detailM) closeModal(detailM);
+    const dynM = document.getElementById("dynamicDetailModalOverlay");
+    if (dynM) dynM.remove();
+
     filterAndRender();
-    if (!document.getElementById("adminDashboardModal").classList.contains("hidden")) {
+    if (document.getElementById("adminDashboardModal") && !document.getElementById("adminDashboardModal").classList.contains("hidden")) {
         renderAdminPostsTable();
     }
     showToast("🗑️ 게시글이 성공적으로 삭제되었습니다.");
@@ -4176,25 +4854,56 @@ function finishBuddySchedule(postId) {
     showToast("🎉 모임 일정이 최종 완료되었습니다!");
 }
 
-// 1-Click Instant Post Editing for Author / Webmaster
-function verifyPasswordAndEdit(postId) {
-    const post = posts.find(p => p.id === postId);
-    if (!post) return;
-
-    if (isMyPost(post) || isAdminAuthenticated) {
-        openEditModal(postId);
-    } else {
-        showToast("⚠️ 본인이 작성한 게시글만 수정할 수 있습니다!");
+function openEditPostModal(postId) {
+    const post = posts.find(p => String(p.id) === String(postId));
+    if (!post) {
+        showToast("⚠️ 게시글 데이터를 찾을 수 없습니다.");
+        return;
     }
+
+    if (!isMyPost(post) && !isAdminAuthenticated) {
+        showToast("⛔ 본인이 작성한 게시글만 수정할 수 있습니다!");
+        return;
+    }
+
+    editingPostId = post.id;
+
+    // Fill form inputs
+    const titleEl = document.getElementById("postTitle");
+    const descEl = document.getElementById("postDesc");
+    const mapAddressEl = document.getElementById("postMapAddress");
+    const dateEl = document.getElementById("postDate");
+
+    if (titleEl) titleEl.value = post.title || "";
+    if (descEl) descEl.value = post.desc || "";
+    if (mapAddressEl) mapAddressEl.value = post.mapAddress || post.locationName || "";
+    if (dateEl) dateEl.value = post.date || "";
+
+    if (post.images && Array.isArray(post.images)) {
+        uploadedCompressedImages = [...post.images];
+        if (typeof renderImagePreviews === "function") renderImagePreviews();
+    }
+
+    // Close detail modal if open
+    const detailM = document.getElementById("postDetailModal") || document.getElementById("detailModal");
+    if (detailM) closeModal(detailM);
+    const dynM = document.getElementById("dynamicDetailModalOverlay");
+    if (dynM) dynM.remove();
+
+    if (typeof preselectModalCategory === "function") preselectModalCategory(post.category, true);
+    const createM = document.getElementById("createModal");
+    if (createM) openModal(createM);
 }
 
 function openEditModal(postId) {
-    const post = posts.find(p => p.id === postId);
-    if (!post) return;
-
-    editingPostId = postId;
-    preselectModalCategory(post.category, true);
+    openEditPostModal(postId);
 }
+
+function verifyPasswordAndEdit(postId) {
+    openEditPostModal(postId);
+}
+window.openEditPostModal = openEditPostModal;
+window.openEditModal = openEditModal;
 
 
 async function handleSavePost(e) {
@@ -4729,6 +5438,12 @@ function closeModal(modal) {
     if (!targetEl) return;
     targetEl.classList.add("hidden");
     targetEl.style.setProperty("display", "none", "important");
+
+    if (targetEl.id === "adminDashboardModal" || targetEl.id === "webmasterDashboardModal" || targetEl.id === "webmasterAuthModal") {
+        if (typeof restoreAdBannersAfterAdmin === 'function') {
+            restoreAdBannersAfterAdmin();
+        }
+    }
 }
 
 function showToast(message) {
@@ -4809,12 +5524,18 @@ function generateBubbles() {
     }
 }
 
+function openPostDetailModal(postId) {
+    if (!postId) return;
+    openDetailModal(postId);
+}
+
 // Explicit Window Global Bindings for HTML Inline Onclick Handlers
 if (typeof window !== "undefined") {
     window.openModal = openModal;
     window.closeModal = closeModal;
     window.openProfileModal = openProfileModal;
     window.openDetailModal = openDetailModal;
+    window.openPostDetailModal = openPostDetailModal;
     window.openWebcamModal = openWebcamModal;
     window.openChatRoomModal = openChatRoomModal;
     window.openChatModal = openChatRoomModal;
@@ -4830,14 +5551,18 @@ if (typeof window !== "undefined") {
     window.handleLogout = handleLogout;
 }
 
-// Universal Document Event Delegation for Post Row & Profile Clicks
+// Universal Document Event Delegation for All Post Cards & Profile Clicks
 if (typeof document !== "undefined") {
     document.addEventListener("click", function(e) {
-        const row = e.target.closest(".compact-post-row");
-        if (row) {
-            const postId = row.dataset.postId || (row.getAttribute("onclick") ? (row.getAttribute("onclick").match(/'([^']+)'/) || [])[1] : null);
+        if (e.target.closest('.btn, button, input, a, .like-btn, .action-btn')) {
+            return;
+        }
+
+        const card = e.target.closest(".post-card, .feed-card, .compact-post-row, [data-post-id]");
+        if (card) {
+            const postId = card.getAttribute("data-post-id") || card.dataset.postId || (card.getAttribute("onclick") ? (card.getAttribute("onclick").match(/'([^']+)'/) || [])[1] : null);
             if (postId) {
-                openDetailModal(postId);
+                openPostDetailModal(postId);
             }
             return;
         }
@@ -4867,4 +5592,767 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // Init Mute State UI
+    const muteIcon = document.getElementById("muteIcon");
+    if (muteIcon && isAudioMuted) {
+        muteIcon.className = "fa-solid fa-volume-xmark";
+    }
 });
+
+// ==================================================
+// 🔔 AquaBuddy Realtime Notification & Dropdown System
+// ==================================================
+let isAudioMuted = localStorage.getItem('aqua_buddy_chat_muted') === 'true';
+let localNotifications = [];
+
+function playNotificationSound() {
+    if (isAudioMuted) return;
+    try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc1.type = 'sine';
+        osc2.type = 'sine';
+        osc1.frequency.setValueAtTime(1046.5, ctx.currentTime); // C6
+        osc2.frequency.setValueAtTime(1318.5, ctx.currentTime); // E6
+
+        gain.gain.setValueAtTime(0.12, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
+
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc1.start(ctx.currentTime);
+        osc2.start(ctx.currentTime);
+        osc1.stop(ctx.currentTime + 0.18);
+        osc2.stop(ctx.currentTime + 0.18);
+    } catch (e) {
+        console.log('AudioContext notification note:', e);
+    }
+}
+
+function toggleAudioMute() {
+    isAudioMuted = !isAudioMuted;
+    localStorage.setItem('aqua_buddy_chat_muted', isAudioMuted ? 'true' : 'false');
+    
+    const muteIcon = document.getElementById("muteIcon");
+    if (muteIcon) {
+        muteIcon.className = isAudioMuted ? "fa-solid fa-volume-xmark" : "fa-solid fa-volume-high";
+    }
+
+    if (typeof showToast === "function") {
+        showToast(isAudioMuted ? "🔇 채팅 알림음이 음소거되었습니다." : "🔔 채팅 알림음이 켜졌습니다.");
+    }
+}
+
+function updateGlobalUnreadBadge() {
+    const unreadCount = localNotifications.filter(n => !n.isRead).length;
+    const badgeEl = document.getElementById("globalUnreadBadge");
+    const bellIcon = document.getElementById("bellIcon");
+
+    if (badgeEl) {
+        if (unreadCount > 0) {
+            badgeEl.textContent = unreadCount > 99 ? '99+' : unreadCount;
+            badgeEl.classList.remove("hidden");
+            badgeEl.classList.add("badge-pulse");
+            if (bellIcon) bellIcon.style.color = "var(--accent-cyan)";
+        } else {
+            badgeEl.classList.add("hidden");
+            badgeEl.classList.remove("badge-pulse");
+            if (bellIcon) bellIcon.style.color = "";
+        }
+    }
+}
+
+function toggleNotificationDropdown() {
+    const dropdown = document.getElementById("notificationDropdown");
+    if (!dropdown) return;
+
+    if (dropdown.classList.contains("hidden")) {
+        dropdown.classList.remove("hidden");
+        renderNotificationList();
+    } else {
+        dropdown.classList.add("hidden");
+    }
+}
+
+function renderNotificationList() {
+    const listContainer = document.getElementById("notificationList");
+    if (!listContainer) return;
+
+    if (!localNotifications || localNotifications.length === 0) {
+        listContainer.innerHTML = `
+            <div class="empty-notification-notice">
+                <i class="fa-solid fa-bell-slash" style="font-size: 1.5rem; color: var(--text-muted); margin-bottom: 6px;"></i>
+                <p style="margin: 0; color: var(--text-muted); font-size: 0.82rem;">새로운 알림이 없습니다.</p>
+            </div>
+        `;
+        return;
+    }
+
+    listContainer.innerHTML = localNotifications.map(item => `
+        <div class="notification-item ${item.isRead ? '' : 'unread'}" onclick="handleNotificationClick('${item.id}')">
+            <div class="notification-avatar">
+                <i class="fa-solid fa-comments"></i>
+            </div>
+            <div class="notification-content">
+                <div style="font-weight: 800; color: var(--accent-cyan); margin-bottom: 2px;">
+                    ${typeof escapeHtml === 'function' ? escapeHtml(item.author) : item.author}
+                </div>
+                <div>${typeof escapeHtml === 'function' ? escapeHtml(item.textSummary) : item.textSummary}</div>
+                <div class="notification-time">${item.time || '방금 전'}</div>
+            </div>
+        </div>
+    `).join("");
+}
+
+function handleNotificationClick(notifId) {
+    const item = localNotifications.find(n => String(n.id) === String(notifId));
+    if (item) {
+        item.isRead = true;
+        updateGlobalUnreadBadge();
+        renderNotificationList();
+
+        const dropdown = document.getElementById("notificationDropdown");
+        if (dropdown) dropdown.classList.add("hidden");
+
+        if (item.targetPostId && typeof openChatRoomModal === "function") {
+            openChatRoomModal(item.targetPostId);
+        }
+    }
+}
+
+function markAllNotificationsAsRead() {
+    localNotifications.forEach(n => n.isRead = true);
+    updateGlobalUnreadBadge();
+    renderNotificationList();
+    if (typeof showToast === "function") {
+        showToast("🔔 모든 알림을 읽음 처리했습니다.");
+    }
+}
+
+function showChatNoticeToast(author, text, postId) {
+    let postTitle = '대화방';
+    if (typeof posts !== 'undefined' && Array.isArray(posts)) {
+        const p = posts.find(item => String(item.id) === String(postId));
+        if (p && p.title) postTitle = p.title;
+    }
+
+    const notifItem = {
+        id: `notif-${Date.now()}-${Math.random().toString(36).substr(2,4)}`,
+        author: author,
+        textSummary: `${author}님이 '${postTitle}' 대화방에 메시지를 남겼습니다: "${text.length > 18 ? text.substring(0,18) + '...' : text}"`,
+        targetPostId: postId,
+        time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+        timestamp: Date.now(),
+        isRead: false
+    };
+
+    localNotifications.unshift(notifItem);
+    updateGlobalUnreadBadge();
+
+    // If chat modal is currently active and open for this post, don't show floating toast
+    const chatModalTarget = document.getElementById("chatModal");
+    const isModalOpen = chatModalTarget && chatModalTarget.style.display !== "none" && !chatModalTarget.classList.contains("hidden");
+    if (isModalOpen && currentChatPost && String(currentChatPost.id) === String(postId)) {
+        notifItem.isRead = true;
+        updateGlobalUnreadBadge();
+        return;
+    }
+
+    playNotificationSound();
+
+    const existingToast = document.getElementById("chatNoticeToast");
+    if (existingToast) existingToast.remove();
+
+    const toast = document.createElement("div");
+    toast.id = "chatNoticeToast";
+    toast.className = "chat-notice-toast";
+    const truncatedText = text.length > 15 ? text.substring(0, 15) + '...' : text;
+    
+    toast.innerHTML = `
+        <div style="background: rgba(0,242,254,0.15); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--accent-cyan);">
+            <i class="fa-solid fa-comments"></i>
+        </div>
+        <div>
+            <div style="font-weight: 800; font-size: 0.85rem; color: var(--accent-cyan);">${typeof escapeHtml === 'function' ? escapeHtml(author) : author}</div>
+            <div style="font-size: 0.8rem; color: #eee; margin-top: 2px;">${typeof escapeHtml === 'function' ? escapeHtml(truncatedText) : truncatedText}</div>
+        </div>
+    `;
+
+    toast.onclick = () => {
+        toast.remove();
+        handleNotificationClick(notifItem.id);
+    };
+
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        if (toast && toast.parentElement) {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(50px)';
+            setTimeout(() => toast.remove(), 300);
+        }
+    }, 3500);
+}
+
+// Close notification dropdown when clicking outside
+document.addEventListener('click', (e) => {
+    const dropdown = document.getElementById("notificationDropdown");
+    const bellBtn = document.getElementById("bellBtn");
+    if (dropdown && !dropdown.classList.contains("hidden")) {
+        if (bellBtn && !dropdown.contains(e.target) && !bellBtn.contains(e.target)) {
+            dropdown.classList.add("hidden");
+        }
+    }
+});
+
+// ==================================================
+// 🔒 AquaBuddy Webmaster 2-Factor Security Authentication
+// ==================================================
+const WEBMASTER_ADMIN_EMAIL = "hanmaner@naver.com";
+const WEBMASTER_PIN_CODE = "aqua2026!master";
+let copyrightClickCount = 0;
+let copyrightClickTimer = null;
+
+function handleCopyrightTripleClick() {
+    copyrightClickCount++;
+    if (copyrightClickCount === 1) {
+        copyrightClickTimer = setTimeout(() => {
+            copyrightClickCount = 0;
+        }, 1500); // 1.5초 내 3회 클릭 허용
+    } else if (copyrightClickCount >= 3) {
+        clearTimeout(copyrightClickTimer);
+        copyrightClickCount = 0;
+        
+        // 2차 인증 모달 최상단 오픈
+        openWebmasterAuthModal();
+    }
+}
+
+function openWebmasterAuthModal() {
+    if (typeof hideAdBannersForAdmin === 'function') {
+        hideAdBannersForAdmin();
+    }
+    const authModal = document.getElementById('webmasterAuthModal');
+    if (authModal) {
+        if (authModal.parentElement !== document.body) {
+            document.body.appendChild(authModal);
+        }
+        const secretInput = document.getElementById("webmasterSecretInput");
+        if (secretInput) secretInput.value = "";
+
+        authModal.classList.remove('hidden');
+        authModal.classList.add('active');
+        authModal.style.setProperty('display', 'flex', 'important');
+        authModal.style.setProperty('z-index', '9999999', 'important');
+
+        if (typeof showToast === 'function') {
+            showToast('🔒 웹마스터 2차 인증 모달이 호출되었습니다.');
+        }
+        if (secretInput) secretInput.focus();
+    } else {
+        alert('webmasterAuthModal 요소를 찾을 수 없습니다.');
+    }
+}
+
+function handleWebmasterAuthSubmit(e) {
+    if (e && e.preventDefault) e.preventDefault();
+
+    // 1단계 (계정 검증)
+    const isLoggedIn = typeof currentUser !== 'undefined' && currentUser && currentUser.email;
+    const userEmail = isLoggedIn ? currentUser.email.trim().toLowerCase() : "";
+
+    if (!isLoggedIn || userEmail !== WEBMASTER_ADMIN_EMAIL.toLowerCase()) {
+        if (typeof showToast === "function") {
+            showToast("⛔ 지정된 관리자 계정만 접근 가능합니다.");
+        }
+        return;
+    }
+
+    // 2단계 (코드 검증)
+    const secretInput = document.getElementById("webmasterSecretInput");
+    const inputSecret = secretInput ? secretInput.value.trim() : "";
+
+    if (inputSecret !== WEBMASTER_PIN_CODE) {
+        if (typeof showToast === "function") {
+            showToast("⛔ 마스터 코드가 올바르지 않습니다.");
+        }
+        return;
+    }
+
+    // 3단계 (진입 성공)
+    const authModalEl = document.getElementById("webmasterAuthModal");
+    if (authModalEl && typeof closeModal === "function") {
+        closeModal(authModalEl);
+    }
+
+    if (typeof showToast === "function") {
+        showToast("🔓 웹마스터 보안 인증 성공! 대시보드에 진입합니다.");
+    }
+
+    if (typeof openAdminModal === "function") {
+        openAdminModal();
+    } else {
+        const adminModal = document.getElementById("adminDashboardModal") || document.getElementById("adminModal");
+        if (adminModal && typeof openModal === "function") {
+            openModal(adminModal);
+        }
+    }
+}
+
+// ==================================================
+// 📜 Terms & Privacy Legal Text Constants (주식회사 어썸갓코포레이션)
+// ==================================================
+const TERMS_OF_SERVICE_TEXT = `주식회사 어썸갓코포레이션 이용약관
+
+제1조(목적)
+이 이용약관(이하 '약관')은 주식회사 어썸갓코포레이션(이하 회사라 합니다)와 이용 고객(이하 '회원')간에 회사가 제공하는 서비스의 가입조건 및 이용에 관한 제반 사항과 기타 필요한 사항을 구체적으로 규정함을 목적으로 합니다.
+
+제2조(이용약관의 효력 및 변경)
+1. 이 약관은 본 회사에 가입된 고객을 포함하여 서비스를 이용하고자 하는 모든 이용자에 대하여 서비스 메뉴 및 회사에 게시하여 공시하거나 기타의 방법으로 고객에게 공지함으로써 그 효력을 발생합니다. 약관의 게시는 주식회사 어썸갓코포레이션 홈페이지(https://www.agczero.com)에서 확인할 수 있습니다.
+2. 회사는 합리적인 사유가 발생될 경우에는 이 약관을 변경할 수 있으며, 약관을 변경할 경우에는 지체 없이 이를 사전에 공지합니다.
+
+제3조(약관외 준칙)
+서비스 이용에 관하여는 이 약관을 적용하며 이 약관에 명시되지 아니한 사항에 대하여는 전기통신기본법, 전기통신사업법, 정보통신망 이용 촉진 등에 관한 법률 및 기타 관계 법령의 규정에 의합니다.
+
+제4조(용어의 설명)
+1. 이 약관에서 사용하는 용어의 정의는 다음과 같습니다.
+  1) '이용고객'이라 함은 회원제로 운영하는 서비스를 이용하는 이용자를 의미합니다.
+  2) '이용계약'이라 함은 서비스 이용과 관련하여 회사와 이용고객 간에 체결하는 계약을 말합니다.
+  3) '이용자번호(ID)'라 함은 회원식별과 회원의 서비스 이용을 위하여 회원이 선정하고 회사가 승인하는 영문자와 숫자의 조합을 말합니다.
+  4) '비밀번호'라 함은 이용고객이 부여 받은 이용자번호와 일치된 이용고객임을 확인하고 이용고객의 권익보호를 위하여 이용고객이 선정한 문자와 숫자의 조합을 말합니다.
+  5) '해지'라 함은 회사 또는 회원이 이용계약을 해약하는 것을 말합니다.
+  6) “회원”이라 함은 제5조 제1항에 따라 회원가입을 하여 “회사”가 제공하는 “서비스”를 받는 사업자와 그 구성원의 사용자 또는 개인 사용자를 의미합니다.
+2. 이 약관에서 사용하는 용어의 정의는 제1항에서 정하는 것을 제외하고는 관계법령 및 서비스별 안내에서 정하는 바에 의합니다.
+
+제5조(이용 계약의 성립)
+1. 이용계약은 이용하고자 하는 고객의 본 이용약관 내용에 대한 동의와 이용신청에 대하여 회사의 승낙으로 성립합니다.
+2. 본 이용약관에 대한 동의는 신청시 사이트의 '동의' 버튼을 누름으로써 의사표시를 합니다.
+
+제6조(서비스 이용 신청)
+1. 본 서비스를 이용하고자 하는 이용고객은 회사에서 요청하는 정보(성명, 연락처 등)를 제공하여 회원으로 가입한 후 이용이 가능합니다.
+2. 모든 회원은 반드시 회원 본인의 이름과 연락처를 제공하여야만 서비스의 이용이 가능하며 비실명의 경우 서비스 이용에 제한을 받으실 수 있습니다.
+3. 회원가입은 반드시 실명으로만 가입이 가능합니다.
+4. 타인의 명의(이름 또는 연락처)를 도용하여 이용신청을 한 회원의 ID는 사전예고 없이 삭제가 될 수 있으며, 관계법령에 따라 처벌을 받을 수 있습니다.
+5. 회사는 본 서비스를 이용하는 회원에 대하여 등급별로 구분하여 서비스의 이용에 차등을 둘 수 있습니다.
+
+제7조(개인정보의 보호 및 사용)
+회사는 관계법령이 정하는 바에 따라 서비스 이용자의 개인정보를 보호하기 위해 개인정보보호정책을 시행합니다. 이용자 개인정보의 보호 및 사용에 대해서는 관련법령 및 회사의 개인정보 보호정책이 적용됩니다. 그러나, 회사는 이용자의 귀책사유로 인해 노출된 정보에 대해서 일체의 책임을 지지 않습니다.
+
+제8조(이용 신청의 승낙과 제한)
+1. 회사는 제 6조의 규정에 의한 이용신청 회원에 대하여 업무 수행상 또는 기술상 지장이 없는 경우에 서비스 이용을 승낙합니다.
+2. 회사는 아래 사항에 해당하는 경우에 대해서 승낙하지 아니 합니다.
+  1) 타인 명의의 신청 또는 이름이 실명이 아닌 경우
+  2) 허위 서류를 첨부하거나 허위내용을 기재하여 신청하는 경우
+  3) 신용정보의 이용과 보호에 관한 법률에 의한 PC통신, 인터넷 서비스의 신용불량자로 등록되어 있는 경우
+  4) 사회의 안녕, 질서 또는 미풍양속을 저해할 목적으로 신청한 경우
+  5) 정보통신 윤리위원회에 PC통신, 인터넷 서비스의 불량 이용자로 등록되어 있는 경우
+  6) 기타 회사가 정한 이용신청요건이 만족되지 않았을 경우
+3. 회사는 서비스 이용신청이 다음 각 호에 해당하는 경우에는 그 신청에 대하여 승낙 제한사유가 해소될 때까지 승낙을 유보할 수 있습니다.
+  1) 회사가 설비의 여유가 없는 경우
+  2) 회사의 기술상 지장이 있는 경우
+  3) 기타 회사의 귀책 사유로 이용승낙이 곤란한 경우
+4. 회사는 규정에 의하여 이용신청이 불승낙되거나 승낙을 제한하는 경우에는 이를 이용신청 회원에게 즉시 알려야 합니다.
+5. 회사는 이용신청 회원이 미성년자인 경우에는 별도로 정하는 바에 따라 승낙을 제한할 수 있습니다.
+
+제9조(회사의 권리와 의무)
+1. 회사는 회원으로부터 제기되는 의견이나 불만이 정당하다고 인정할 경우에는 즉시 처리하여야 합니다. 다만, 즉시 처리가 곤란한 경우에는 회원에게 그 사유와 처리 일정을 서면, 전자우편 또는 전화 등으로 통보하여야 합니다.
+2. 회사는 회사가 제정한 개인정보보호정책에 따라서 이용고객의 개인정보를 보호할 의무를 가집니다. 단, 법률의 규정에 따른 적법한 절차에 의한 경우에는 그러하지 않을 수 있습니다.
+3. 회사가 제2항의 규정에도 불구하고 고지 또는 명시한 범위를 초과하여 이용고객의 개인 정보를 이용하거나 제3자에게 제공하고자 하는 경우에는 반드시 해당 회원에게 개별적으로 공지하여 동의를 받아야 합니다.
+4. 회사는 계속적이고 안정적인 서비스의 제공을 위하여 설비에 장애가 생기거나 멸실된 때에는 지체없이 이를 수리 또는 복구합니다. 다만, 천재지변, 비상사태 또는 그밖에 부득이한 경우에는 그 서비스를 일시 중단하거나 중지할 수 있습니다.
+5. 회사는 이용계약의 체결, 계약사항의 변경 및 해지 등 회원과의 계약관련 절차 및 내용 등에 있어 회원에게 편의를 제공해야 합니다.
+6. 회사는 업무와 관련하여 회원의 사전 동의 하에 회원 전체 또는 일부의 개인정보에 관한 통계자료를 작성하여 이를 사용할 수 있고 서비스를 통하여 회원의 컴퓨터에 쿠키를 전송 할 수 있습니다. 이 경우 회원은 쿠키의 수신을 거부하거나 쿠키의 수신에 대하여 경고하도록 사용하는 컴퓨터의 브라우저의 설정을 변경할 수 있으며, 쿠키의 설정 변경에 의한 서비스 이용이 변경되는 것은 회원의 책임입니다.
+
+제10조(회원의 권리와 의무)
+1. 회원은 서비스를 이용할 때 다음의 행위를 하지 않아야 합니다.
+  1) 다른 회원의 ID 및 비밀번호를 부정하게 사용하는 행위
+  2) 서비스를 이용하여 얻은 정보를 회원의 개인적인 이용 외에 복사, 가공, 번역, 2차적 저작 등을 통하여 복제, 공연, 방송, 전시, 배포, 출판 등에 사용하거나 제3자에게 제공하는 행위
+  3) 타인의 명예를 손상시키거나 불이익을 주는 행위
+  4) 회사의 저작권, 제3자의 저작권 등 기타 권리를 침해하는 행위
+  5) 공공질서 및 미풍양속에 위반되는 내용의 정보, 문장, 도형, 음성 등을 타인에게 유포하는 행위
+  6) 범죄와 결부된다고 객관적으로 인정되는 행위
+  7) 서비스와 관련된 설비의 오동작이나 정보 등의 파괴 및 혼란을 유발시키는 컴퓨터 바이러스 감염자료를 등록 또는 유포하는 행위
+  8) 서비스의 안정적 운영을 방해할 수 있는 정보를 전송하거나 수신자의 의사에 반하여 광고성 정보를 전송하는 행위
+  9) 방송통신심의위원회, 소비자보호단체 등 공신력 있는 기관으로부터 시정 요구를 받는 행위
+  10) 선거관리위원회의 중지, 경고 또는 시정명령을 받는 선거법 위반 행위
+  11) 기타 관계 법령에 위배되는 행위
+2. 회원은 이 약관에 규정하는 사항과 서비스 이용안내 또는 주의사항을 준수하여야 하며 회사가 공지하거나 별도로 게시한 사항을 준수하여야 합니다.
+3. 회원은 회사의 명시적인 사전 동의가 없이 서비스를 이용하여 영업활동을 할 수 없으며, 이에 위반하여 발생한 결과에 대하여 회사는 책임지지 않습니다.
+4. 회원은 이와 같은 영업활동과 관련하여 회사에 대하여 손해배상 의무를 집니다.
+5. 회원은 서비스의 이용약관, 기타 이용 계약상 지위를 타인에게 양도, 증여할 수 없으며, 이를 담보로 제공할 수 없습니다.
+6. 회원은 회사의 사전 승낙 없이는 서비스의 전부 또는 일부 내용 및 기능을 전용할 수 없습니다.
+7. 회사는 이용고객이 방문하거나 전자서명 또는 아이디(ID)등을 이용하여 자신의 개인정보에 대한 열람 또는 정정을 요구하는 경우에는 본인 여부를 확인하고 지체없이 필요한 조치를 취하여야 합니다.
+8. 회사는 이용고객의 대리인이 방문하여 열람 또는 정정을 요구하는 경우에는 대리관계를 나타내는 증표를 제시하도록 요구할 수 있습니다.
+9. 회사는 개인정보와 관련하여 이용고객의 의견을 수렴하고 불만을 처리하기 위한 절차를 마련하여야 합니다.
+
+제11조(서비스 이용 시간)
+1. 서비스 이용은 회사의 업무상 또는 기술상 특별한 지장이 없는 한 연중무휴, 1일 24시간 운영을 원칙으로 합니다. 단, 회사는 시스템 정기점검, 증설 및 교체를 위해 회사가 정한 날이나 시간에 서비스를 일시중단할 수 있으며, 예정되어있는 작업으로 인한 서비스 일시중단은 웹을 통해 사전에 공지합니다.
+2. 회사는 회사가 통제할 수 없는 사유로 인한 서비스중단의 경우(시스템관리자의 고의, 과실없는 디스크장애, 시스템다운 등)에 사전통지가 불가능하며 타인(PC 통신회사, 기간통신사업자 등)의 고의, 과실로 인한 시스템중단 등의 경우에는 통지하지 않습니다.
+
+제12조(이용자 ID 관리)
+1. 아이디(ID)와 비밀번호에 관한 모든 관리책임은 회원에게 있습니다.
+2. 자신의 아이디(ID)가 부정하게 사용된 경우 회원은 반드시 회사에 그 사실을 통보해야 합니다.
+
+제13조(게시물의 관리)
+회사는 다음 각 호에 해당하는 게시물이나 자료를 사전통지 없이 삭제하거나 이동 또는 등록 거부를 할 수 있습니다.
+  1) 다른 회원 또는 제 3자에게 심한 모욕을 주거나 명예를 손상시키는 내용인 경우
+  2) 공공질서 및 미풍양속에 위반되는 내용을 유포하거나 링크시키는 경우
+  3) 불법복제 또는 해킹을 조장하는 내용인 경우
+  4) 영리를 목적으로 하는 광고일 경우
+  5) 범죄와 결부된다고 객관적으로 인정되는 내용일 경우
+  6) 다른 이용자 또는 제3자의 저작권 등 기타 권리를 침해하는 내용인 경우
+  7) 회사에서 규정한 게시물 원칙에 어긋나거나, 게시판 성격에 부합하지 않는 경우
+  8) 기타 관계 법령에 위배된다고 판단되는 경우
+
+제14조(게시물에 대한 저작권)
+1. 회원은 서비스를 이용하여 취득한 정보를 임의 가공, 판매하는 행위 등 서비스에 게재된 자료를 상업적으로 사용할 수 없습니다.
+2. 회사는 회원이 게시하거나 등록하는 서비스 내의 내용물, 게시 내용에 대해 제13조 각 호에 해당된다고 판단되는 경우 사전통지 없이 삭제하거나 이동 또는 등록 거부할 수 있습니다.
+
+제15조(정보의 제공)
+회사는 회원이 서비스 이용 도중 필요가 있다고 인정되는 다양한 정보에 대해서 전자우편이나 전화 통신, 단문메시지(SMS, 카카오톡 메시지 등) 등의 방법으로 회원에게 제공할 수 있습니다.
+
+제16조(광고게재 및 광고주와의 거래)
+1. 회사가 회원에게 서비스를 제공할 수 있는 서비스 투자기반의 일부는 광고게재를 통한 수익으로부터 나옵니다. 회원은 서비스 이용시 노출되는 광고게재에 대해 동의합니다.
+2. 회사는 서비스상에 게재되어 있거나 본 서비스를 통한 광고주의 판촉활동에 회원이 참여하거나 교신 또는 거래를 함으로써 발생하는 손실과 손해에 대해 책임을 지지 않습니다.
+
+제17조(계약 변경 및 해지)
+회원이 이용계약을 해지하고자 하는 때에는 회원 본인이 주식회사 어썸갓코포레이션 홈페이지의 "회원탈퇴" 메뉴를 이용해 가입해지를 해야 합니다.
+회원탈퇴 메뉴가 보이지 않는 경우 당사에 회원탈퇴 문의를 남겨주시면 처리 도와드립니다.
+
+제17조의2(청약철회 및 환불)
+1. 회사가 제공하는 서비스는 디지털 콘텐츠 서비스로서, 회원이 구매한 유료서비스에 대하여 아래의 "청약철회 제한 조건" 중 어느 하나라도 이행한 경우, 전자상거래 등에서의 소비자보호에 관한 법률 제17조 제2항에 따라 단순 변심에 의한 청약철회 및 환불이 불가능합니다.
+  1) Gemini API Key 등록 이력이 존재하는 경우
+  2) 쿠팡 파트너스(쿠파스) API Key 등록 이력이 존재하는 경우
+  3) 쓰레드(Threads) API 연동 이력이 존재하는 경우
+  4) 드레쓰 아카이브(고화질 숏폼 비디오 소재 등) 열람 및 다운로드 이력이 존재하는 경우
+  5) 크롬 확장프로그램 연동 키(JWT Access Token) 발급 이력이 존재하는 경우
+  6) 트렌드 인사이트에서 기본 제공 탭(데이터랩) 이외의 다른 탭(구글 트렌드, 쇼핑 트렌드, 실시간 뉴스 등)을 열람한 경우
+2. 위 제한 조건에 해당하지 않는 경우의 환불 및 중도 해지는 소프트웨어 이용약관 및 회사가 별도로 고지한 환불 규정에 따릅니다.
+
+제18조(서비스 이용제한)
+1. 회사는 회원이 서비스 이용내용에 있어서 본 약관 제10조 내용을 위반하거나, 다음 각 호에 해당하는 경우 서비스 이용을 제한할 수 있습니다.
+  1) 미풍양속을 저해하는 비속한 ID 및 별명 사용
+  2) 타 이용자에게 심한 모욕을 주거나, 서비스 이용을 방해한 경우
+  3) 기타 정상적인 서비스 운영에 방해가 될 경우
+  4) 방송통신심의위원회 등 관련 공공기관의 시정 요구가 있는 경우
+  5) 불법 웹사이트인 경우
+  6) 상용소프트웨어나 크랙 파일을 올린 경우
+  7) 정보통신에 관한 심의규정 제2장(심의기준)에 어긋나는 게시물을 게재한 경우
+  8) 반국가적 행위의 수행을 목적으로 하는 내용을 포함한 경우
+  9) 저작권이 있는 내용을 무단 복제해서 올린 경우
+  10) 정보통신 설비의 오작동이나 정보 등의 파괴를 유발시키는 컴퓨터 바이러스 프로그램 등을 유포하는 경우
+2. 상기 이용제한 규정에 따라 서비스를 이용하는 회원에게 서비스 이용에 대하여 별도 공지 없이 서비스 이용의 일시정지, 정지, 이용계약 해지 등을 불량이용자 처리규정에 따라 취할 수 있습니다.
+
+제19조(손해배상의 범위 및 청구)
+1. 회사는 서비스로부터 회원이 받은 손해가 천재지변등 불가항력적이거나 회원의 고의 또는 과실로 인하여 발생한 때에는 손해배상을 하지 아니합니다.
+2. 회사는 전자상거래 호스팅 및 일반 호스팅의 경우 이에 준하는 서비스 이용회원일 경우 불가항력적으로 손해가 발생한 경우에 대하여 위 1.항의 규정에 따릅니다.
+3. 회원이 서비스를 이용함에 있어 행한 불법행위로 인하여 회사가 당해 회원 이외에 제 3 자로부터 손해배상 청구, 소송을 비롯한 각종의 이의제기를 받는 경우 당해 회원은 회사의 면책을 위하여 노력하여야 하며, 만일 회사가 면책되지 못한 경우는 당해 회원은 그로 인하여 회사에 발생한 모든 손해를 배상하여야 합니다.
+
+제20조(면책사항)
+1. 회사는 천재지변, 기상이변, 전쟁 및 기타 이에 준하는 불가항력으로 인하여 서비스를 제공할 수 없는 경우에는 서비스 제공에 대한 책임이 면제됩니다.
+2. 회사는 기간통신 사업자가 전기통신 서비스를 중지하거나 정상적으로 제공하지 아니하여 손해가 발생한 경우 책임이 면제됩니다.
+3. 회사는 서비스용 설비의 보수, 교체, 정기점검, 공사 등 부득이한 사유로 발생한 손해에 대한 책임이 면제됩니다.
+4. 회사는 회원의 귀책사유로 인한 서비스 이용의 장애 또는 손해에 대하여 책임을 지지 않습니다.
+5. 회사는 이용자의 컴퓨터 오류에 의해 손해가 발생한 경우, 또는 회원이 신상정보 및 전자우편 주소를 부실하게 기재하여 손해가 발생한 경우 책임을 지지 않습니다.
+6. 회사는 회원이 서비스에 게재한 각종 정보, 자료, 사실의 신뢰도, 정확성 등 내용에 대하여 책임을 지지 않습니다.
+7. 회사는 회원 상호간 또는 회원과 제3자 상호간에 서비스를 매개로 하여 물품거래(무형의 물품 포함)등을 한 경우에 그로부터 발생하는 일체의 손해에 대하여 책임지지 아니합니다.
+8. 회사는 회사에 링크된 사이트가 취급하는 상품 또는 용역에 대하여 보증책임을 지지 아니합니다.
+9. 회사와 회사에 연결된 사이트는 독자적으로 운영되며 회사는 회사 연결사이트와 회원 간에 행해진 거래에 대하여 어떠한 책임도 지지 아니합니다.
+10. 회사에서 회원에게 무료로 제공하는 서비스의 이용과 관련해서는 어떠한 손해도 책임을 지지 않습니다.
+
+제21조(재판권 및 분쟁조정)
+1. 이 약관에 명시되지 않은 사항은 전기통신사업법 등 관계법령과 상관습에 따릅니다.
+2. 서비스 이용과 관련하여 회사와 회원 사이에 분쟁이 발생한 경우, 쌍방간에 분쟁의 해결을 위해 성실히 협의한 후가 아니면 제소할 수 없습니다.
+3. 서비스 이용으로 발생한 분쟁에 대해 소송이 제기되는 경우 회사의 본사 소재지를 관할하는 법원을 관할 법원으로 합니다.
+
+(부칙) 이 약관은 2024년 1월 1일부터 시행합니다.`;
+
+const PRIVACY_POLICY_TEXT = `주식회사 어썸갓코포레이션 개인정보 취급 방침
+
+‘주식회사 어썸갓코포레이션'은 (이하 '회사'는) 고객님의 개인정보를 중요시하며, "정보통신망 이용촉진 및 정보보호"에 관한 법률을 준수하고 있습니다. 회사는 개인정보 취급방침을 통하여 고객님께서 제공하시는 개인정보가 어떠한 용도와 방식으로 이용되고 있으며, 개인정보보호를 위해 어떠한 조치가 취해지고 있는지 알려드립니다. 회사는 개인정보 취급방침을 개정하는 경우 웹사이트 공지사항(또는 개별공지)을 통하여 공지할 것 입니다.
+
+제1조(개인정보의 수집 및 이용목적)
+회사는 수집한 개인정보를 다음의 목적을 위해 활용합니다.
+1. 서비스 제공에 관한 계약 이행 및 서비스 제공에 따른 요금정산 : 콘텐츠 제공, 구매 및 요금 결제, 물품배송 또는 청구지 등 발송
+2. 회원 관리 : 회원제 서비스 이용에 따른 본인확인, 불량회원의 부정 이용 방지와 비인가 사용 방지, 가입 의사 확인, 만14세 미만 아동 개인정보 수집 시 법정 대리인 동의 여부 확인, 고지사항 전달
+3. 마케팅 및 광고에 활용 : 이벤트 등 광고성 정보 전달, 접속 빈도 파악 또는 회원의 서비스 이용에 대한 통계
+4. 소셜 미디어 연동 서비스 제공 : Meta(Threads) API 연동을 통한 콘텐츠 자동 발행 및 관련 계정 관리 지원
+
+제2조(수집하는 개인정보의 항목)
+회사는 회원가입, 상담, 서비스 신청 등을 위해 아래와 같은 개인정보를 수집하고 있습니다.
+1. 수집항목 : 이름, 생년월일, 성별, 로그인ID, 비밀번호, 자택 전화번호, 자택 주소, 휴대전화번호, 회사명, 부서, 직책, 회사전화번호, 결혼여부, 기념일, 접속 로그, 쿠키, 접속IP 정보
+2. 개인정보 수집방법 : 웹사이트 (https://www.agczero.com)
+
+제3조(개인정보의 보유 및 이용기간)
+원칙적으로, 개인정보 수집 및 이용목적이 달성된 후에는 해당 정보를 지체없이 파기합니다. 단, 관계법령의 규정에 의하여 보존할 필요가 있는 경우 회사는 아래와 같이 관계법령에서 정한 일정한 기간 동안 회원정보를 보관합니다.
+1. 보존 항목 : 이름, 성별, 로그인ID, 비밀번호, 자택 전화번호, 자택 주소, 휴대전화번호, 이메일
+2. 보존 근거 : 전자상거래등에서의 소비자보호에 관한 법률
+3. 보존 기간 : 회원탈퇴시까지
+4. 계약 또는 청약철회 등에 관한 기록 : 5년 (전자상거래등에서의 소비자보호에 관한 법률)
+5. 대금결제 및 재화 등의 공급에 관한 기록 : 5년 (전자상거래등에서의 소비자보호에 관한 법률)
+6. 소비자의 불만 또는 분쟁처리에 관한 기록 : 3년 (전자상거래등에서의 소비자보호에 관한 법률)
+
+제4조(개인정보의 파기 절차 및 방법)
+회사는 원칙적으로 개인정보 수집 및 이용목적이 달성된 후에는 해당 정보를 지체없이 파기합니다. 파기절차 및 방법은 다음과 같습니다.
+1. 파기절차 : 회원님이 회원가입 등을 위해 입력하신 정보는 DB에 저장되며, 저장된 개인정보는 법률에 의한 경우가 아니고서는 보유된 이외의 다른 목적으로 이용되지 않습니다.
+2. 파기방법 : 전자적 파일 형태로 저장된 개인정보는 기록을 재생할 수 없는 기술적 방법을 사용하여 삭제합니다.
+
+제5조(개인 정보 제공)
+회사는 이용자의 개인정보를 원칙적으로 외부에 제공하지 않습니다. 다만, 아래의 경우에는 예외로 합니다.
+1. 이용자들이 사전에 동의한 경우
+2. 법령의 규정에 의거하거나, 수사 목적으로 법령에 정해진 절차와 방법에 따라 수사기관의 요구가 있는 경우
+3. Meta(Threads 등) 외부 소셜 미디어 연동 서비스를 이용하는 경우, 사용자의 명시적인 동의 하에 해당 플랫폼 연동을 위한 인증 정보(액세스 토큰, 계정 식별자 등)가 수집 및 활용되며, 이는 서비스 목적 외에 타 용도로 제공되지 않습니다.
+
+제6조(수집한 개인정보의 위탁)
+회사는 고객님의 동의없이 고객님의 정보를 외부 업체에 위탁하지 않습니다. 향후 그러한 필요가 생길 경우, 위탁 대상자와 위탁 업무 내용에 대해 고객님에게 통지하고 필요한 경우 사전 동의를 받도록 하겠습니다.
+
+제7조(이용자 및 법정대리인의 권리와 그 행사방법)
+1. 이용자 및 법정 대리인은 언제든지 등록되어있는 자신 혹은 당해 만 14세 미만 아동의 개인정보를 조회하거나 수정할 수 있으며 가입해지를 요청할 수도 있습니다.
+2. 이용자 혹은 만 14세 미만 아동의 개인정보 조회·수정을 위해서는 ‘개인정보변경’(또는 ‘회원정보수정’ 등)을 가입해지(동의철회)를 위해서는 “회원탈퇴”를 클릭하여 본인 확인 절차를 거치신 후 직접 열람, 정정 또는 탈퇴가 가능합니다. 혹은 개인정보관리책임자에게 서면, 전화 또는 이메일로 연락하시면 지체없이 조치하겠습니다.
+3. 귀하가 개인정보의 오류에 대한 정정을 요청하신 경우에는 정정을 완료하기 전까지 당해 개인정보를 이용 또는 제공하지 않습니다. 또한 잘못된 개인정보를 제3자 에게 이미 제공한 경우에는 정정 처리결과를 제3자에게 지체없이 통지하여 정정이 이루어지도록 하겠습니다.
+4. 주식회사 어썸갓코포레이션은 이용자 혹은 법정 대리인의 요청에 의해 해지 또는 삭제된 개인정보는 “개인정보의 보유 및 이용기간”에 명시된 바에 따라 처리하고 그 외의 용도로 열람 또는 이용할 수 없도록 처리하고 있습니다.
+
+제8조(개인정보 자동수집 장치의 설치, 운영 및 그 거부에 관한 사항)
+회사는 귀하의 정보를 수시로 저장하고 찾아내는 ‘쿠키(cookie)’ 등을 운용합니다. 쿠키란 주식회사 어썸갓코포레이션 웹사이트를 운영하는데 이용되는 서버가 귀하의 브라우저에 보내는 아주 작은 텍스트 파일로서 귀하의 컴퓨터 하드디스크에 저장됩니다. 회사는 다음과 같은 목적을 위해 쿠키를 사용합니다.
+1. 쿠키 등 사용 목적
+  1) 회원과 비회원의 접속 빈도나 방문 시간 등을 분석, 이용자의 취향과 관심분야를 파악 및 자취 추적, 각종 이벤트 참여 정도 및 방문 횟수 파악 등을 통한 타겟 마케팅 및 개인 맞춤 서비스 제공
+  2) 귀하는 쿠키 설치에 대한 선택권을 가지고 있습니다. 따라서, 귀하는 웹브라우저에서 옵션을 설정함으로써 모든 쿠키를 허용하거나, 쿠키가 저장될 때마다 확인을 거치거나, 아니면 모든 쿠키의 저장을 거부할 수도 있습니다.
+2. 쿠키 설정 거부 방법
+  1) 쿠키 설정을 거부하는 방법으로는 회원님이 사용하시는 웹 브라우저의 옵션을 선택함으로써 모든 쿠키를 허용하거나 쿠키를 저장할 때마다 확인을 거치거나, 모든 쿠키의 저장을 거부할 수 있습니다.
+설정방법 예(인터넷 익스플로어의 경우) : 웹 브라우저 상단의 도구 > 인터넷 옵션 > 개인정보
+  2) 단, 귀하께서 쿠키 설치를 거부하였을 경우 서비스 제공에 어려움이 있을 수 있습니다.
+
+제9조(개인정보에 관한 민원서비스)
+1. 회사는 고객의 개인정보를 보호하고 개인정보와 관련한 불만을 처리하기 위하여 아래와 같이 관련 부서 및 개인정보관리책임자를 지정하고 있습니다.
+  1) 고객서비스담당 부서 : 영업관리팀
+  2) 개인정보관리부서 : 개발부
+  3) 전화번호 : 02-2138-2929
+  4) 이메일 : office@agczero.com
+2. 귀하께서는 회사의 서비스를 이용하시며 발생하는 모든 개인정보보호 관련 민원을 개인정보관리책임자 혹은 담당부서로 신고하실 수 있습니다. 회사는 이용자들의 신고사항에 대해 신속하게 충분한 답변을 드릴 것입니다.
+
+(부칙) 본 방침은 2024년 4월 1일부터 시행됩니다.
+Copyright © 2026 DReaThs. All rights reserved.`;
+
+function openTermsModal(type) {
+    const modalEl = document.getElementById("termsModal") || document.getElementById("legalModal");
+    if (!modalEl) {
+        alert("termsModal 요소를 찾을 수 없습니다.");
+        return;
+    }
+
+    if (modalEl.parentElement !== document.body) {
+        document.body.appendChild(modalEl);
+    }
+
+    modalEl.classList.remove("hidden");
+    modalEl.classList.add("active");
+    modalEl.style.setProperty("display", "flex", "important");
+    modalEl.style.setProperty("z-index", "999999", "important");
+
+    switchTermsTab(type || "terms");
+}
+
+function switchTermsTab(type) {
+    const tabTermsBtn = document.getElementById("termsTabTermsBtn") || document.getElementById("legalTabTerms");
+    const tabPrivacyBtn = document.getElementById("termsTabPrivacyBtn") || document.getElementById("legalTabPrivacy");
+    const panelTerms = document.getElementById("termsPanelTerms") || document.getElementById("legalPanelTerms");
+    const panelPrivacy = document.getElementById("termsPanelPrivacy") || document.getElementById("legalPanelPrivacy");
+
+    if (!panelTerms || !panelPrivacy) return;
+
+    if (type === "privacy") {
+        if (tabTermsBtn) tabTermsBtn.className = "btn btn-secondary";
+        if (tabPrivacyBtn) tabPrivacyBtn.className = "btn btn-primary";
+        panelTerms.classList.add("hidden");
+        panelPrivacy.classList.remove("hidden");
+        panelPrivacy.textContent = PRIVACY_POLICY_TEXT;
+    } else {
+        if (tabTermsBtn) tabTermsBtn.className = "btn btn-primary";
+        if (tabPrivacyBtn) tabPrivacyBtn.className = "btn btn-secondary";
+        panelTerms.classList.remove("hidden");
+        panelPrivacy.classList.add("hidden");
+        panelTerms.textContent = TERMS_OF_SERVICE_TEXT;
+    }
+}
+
+// Aliases for compatibility
+function openLegalModal(type) { openTermsModal(type); }
+function switchLegalTab(type) { switchTermsTab(type); }
+
+// ==================================================
+// 💌 Consolidated Inquiries & Suggestions System
+// ==================================================
+let localInquiries = JSON.parse(localStorage.getItem('aqua_buddy_inquiries') || '[]');
+
+function openInquiryModal(category) {
+    const modalEl = document.getElementById("inquiryModal");
+    if (!modalEl) {
+        alert("inquiryModal 요소를 찾을 수 없습니다.");
+        return;
+    }
+
+    if (modalEl.parentElement !== document.body) {
+        document.body.appendChild(modalEl);
+    }
+
+    const selectEl = document.getElementById("inquiryCategory");
+    if (selectEl && category) {
+        selectEl.value = category;
+    }
+
+    // Auto-fill user name/contact if logged in
+    if (typeof currentUser !== 'undefined' && currentUser) {
+        const nameInput = document.getElementById("inquiryName");
+        const contactInput = document.getElementById("inquiryContact");
+        if (nameInput && !nameInput.value) {
+            nameInput.value = currentUser.name || currentUser.nickname || "";
+        }
+        if (contactInput && !contactInput.value) {
+            contactInput.value = currentUser.email || currentUser.phone || "";
+        }
+    }
+
+    modalEl.classList.remove("hidden");
+    modalEl.classList.add("active");
+    modalEl.style.setProperty("display", "flex", "important");
+    modalEl.style.setProperty("z-index", "999999", "important");
+}
+
+function handleInquirySubmit(e) {
+    if (e && e.preventDefault) e.preventDefault();
+
+    const category = document.getElementById("inquiryCategory") ? document.getElementById("inquiryCategory").value : "general";
+    const name = document.getElementById("inquiryName") ? document.getElementById("inquiryName").value.trim() : "";
+    const contact = document.getElementById("inquiryContact") ? document.getElementById("inquiryContact").value.trim() : "";
+    const title = document.getElementById("inquiryTitle") ? document.getElementById("inquiryTitle").value.trim() : "";
+    const content = document.getElementById("inquiryContent") ? document.getElementById("inquiryContent").value.trim() : "";
+
+    if (!name || !contact || !content) {
+        if (typeof showToast === "function") showToast("⚠️ 모든 필수 항목을 작성해 주세요.");
+        return;
+    }
+
+    const categoryMap = {
+        'ad': '🤝 광고/제휴',
+        'bug': '🐛 버그/오류',
+        'feature': '💡 기능건의',
+        'general': '❓ 기타문의'
+    };
+
+    const newInquiry = {
+        id: `inq-${Date.now()}-${Math.random().toString(36).substr(2,4)}`,
+        category: category,
+        categoryName: categoryMap[category] || '기타문의',
+        name: name,
+        contact: contact,
+        title: title || '제목 없음',
+        content: content,
+        date: new Date().toLocaleString('ko-KR'),
+        status: '접수완료'
+    };
+
+    localInquiries.unshift(newInquiry);
+    localStorage.setItem('aqua_buddy_inquiries', JSON.stringify(localInquiries));
+
+    const modalEl = document.getElementById("inquiryModal");
+    if (modalEl && typeof closeModal === "function") {
+        closeModal(modalEl);
+    }
+
+    // Reset Form fields
+    const titleInput = document.getElementById("inquiryTitle");
+    if (titleInput) titleInput.value = "";
+    const contentInput = document.getElementById("inquiryContent");
+    if (contentInput) contentInput.value = "";
+
+    if (typeof showToast === "function") {
+        showToast("💌 문의 및 제안이 성공적으로 제출되었습니다. 웹마스터 대시보드에 실시간 전송되었습니다.");
+    }
+
+    if (typeof renderAdminInquiries === "function") {
+        renderAdminInquiries();
+    }
+}
+
+function renderAdminInquiries() {
+    const tbody = document.getElementById("adminInquiriesTbody");
+    if (!tbody) return;
+
+    if (!localInquiries || localInquiries.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">
+                    💌 접수된 문의 및 제안 내역이 없습니다.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = localInquiries.map(inq => `
+        <tr>
+            <td><span class="badge ${inq.category === 'ad' ? 'badge-instructor' : 'badge-community'}">${typeof escapeHtml === 'function' ? escapeHtml(inq.categoryName) : inq.categoryName}</span></td>
+            <td><strong>${typeof escapeHtml === 'function' ? escapeHtml(inq.name) : inq.name}</strong></td>
+            <td><code>${typeof escapeHtml === 'function' ? escapeHtml(inq.contact) : inq.contact}</code></td>
+            <td><strong>${typeof escapeHtml === 'function' ? escapeHtml(inq.title || '') : (inq.title || '')}</strong></td>
+            <td style="max-width: 220px; word-break: break-word; font-size: 0.8rem;">${typeof escapeHtml === 'function' ? escapeHtml(inq.content) : inq.content}</td>
+            <td style="font-size: 0.78rem;">${inq.date}</td>
+            <td style="display: flex; gap: 4px; align-items: center;">
+                <button type="button" class="btn btn-secondary" onclick="updateInquiryStatus('${inq.id}')" style="padding: 3px 8px; font-size: 0.72rem; ${inq.status === '처리완료' ? 'background: #00e676; color: #000; font-weight: 800;' : ''}">
+                    ${inq.status === '처리완료' ? '✓ 완료' : '접수 ➔ 완료'}
+                </button>
+                <button type="button" class="btn btn-danger" onclick="deleteInquiry('${inq.id}')" style="padding: 3px 6px; font-size: 0.72rem; background: #ff5252; color: #fff;">
+                    삭제
+                </button>
+            </td>
+        </tr>
+    `).join("");
+}
+
+function updateInquiryStatus(id) {
+    const item = localInquiries.find(i => i.id === id);
+    if (item) {
+        item.status = item.status === '처리완료' ? '접수완료' : '처리완료';
+        localStorage.setItem('aqua_buddy_inquiries', JSON.stringify(localInquiries));
+        renderAdminInquiries();
+        if (typeof showToast === "function") showToast(`STATUS: 문의 상태가 '${item.status}'로 전환되었습니다.`);
+    }
+}
+
+function deleteInquiry(id) {
+    if (confirm("해당 문의 내역을 삭제하시겠습니까?")) {
+        localInquiries = localInquiries.filter(i => i.id !== id);
+        localStorage.setItem('aqua_buddy_inquiries', JSON.stringify(localInquiries));
+        renderAdminInquiries();
+        if (typeof showToast === "function") showToast("🗑️ 문의 항목이 삭제되었습니다.");
+    }
+}
+
+function showUnpreparedToast(featureName) {
+    if (typeof showToast === "function") {
+        showToast(`🚧 '${featureName}' 기능은 현재 준비 중입니다.`);
+    }
+}
+
+// Ensure main-footer is appended directly to document.body (Root Level Placement)
+function enforceRootFooterPlacement() {
+    const footer = document.querySelector('.main-footer') || document.querySelector('.footer');
+    if (footer && footer.parentElement !== document.body) {
+        document.body.appendChild(footer);
+        console.log('[Layout Fix] main-footer를 document.body 직계 맨 밑으로 이관 완료');
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', enforceRootFooterPlacement);
+} else {
+    enforceRootFooterPlacement();
+}

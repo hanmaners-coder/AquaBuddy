@@ -24,7 +24,7 @@
     <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=7c316726691ea5e02f234a85f5a20bab&libraries=services,clusterer"></script>
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="styles.css?v=45.0">
+    <link rel="stylesheet" href="styles.css?v=3000">
 </head>
 <body>
     <!-- Background Bubbles Animation Container -->
@@ -73,7 +73,36 @@
             </a>
 
             <!-- Right Quick Actions (Guaranteed Mobile Fit for '+ 버디모집하기') -->
-            <div class="nav-actions">
+            <div class="nav-actions" style="position: relative;">
+                <!-- Realtime Message Notification Bell Icon & Badge -->
+                <button type="button" class="header-bell-btn" id="bellBtn" onclick="toggleNotificationDropdown()" title="알림 센터 (클릭 시 알림 목록 토글)">
+                    <i id="bellIcon" class="fa-solid fa-bell"></i>
+                    <span id="globalUnreadBadge" class="global-unread-badge hidden">0</span>
+                </button>
+
+                <!-- Notification Dropdown Menu (Glassmorphism Notification Center Layer) -->
+                <div id="notificationDropdown" class="notification-dropdown hidden">
+                    <div class="notification-dropdown-header">
+                        <div style="display: flex; align-items: center; gap: 8px; font-weight: 800; color: var(--accent-cyan); font-size: 0.9rem;">
+                            <i class="fa-solid fa-bell"></i> 🔔 알림 센터
+                        </div>
+                        <button type="button" onclick="markAllNotificationsAsRead()" class="btn-mark-all-read">
+                            모두 읽음 처리
+                        </button>
+                    </div>
+                    <div id="notificationList" class="notification-list">
+                        <div class="empty-notification-notice">
+                            <i class="fa-solid fa-bell-slash" style="font-size: 1.5rem; color: var(--text-muted); margin-bottom: 6px;"></i>
+                            <p style="margin: 0; color: var(--text-muted); font-size: 0.82rem;">새로운 알림이 없습니다.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sound Mute Toggle Button -->
+                <button type="button" class="header-bell-btn" id="muteToggleBtn" onclick="toggleAudioMute()" title="알림음 소리 토글" style="font-size: 0.95rem;">
+                    <i id="muteIcon" class="fa-solid fa-volume-high"></i>
+                </button>
+
                 <!-- Dedicated Instructor Certification Button -->
                 <button type="button" class="btn btn-secondary nav-inst-btn" onclick="openInstructorAuthModal()" title="강사이신가요? 1초 강사 인증 신청">
                     <i class="fa-solid fa-graduation-cap"></i> 강사인증
@@ -932,8 +961,8 @@
                 <button class="close-btn" onclick="closeModal(document.getElementById('adminDashboardModal'))">&times;</button>
             </div>
 
-            <div style="padding: 10px 0;">
-                <div class="admin-tabs">
+            <div class="admin-modal-body" style="min-height: 480px; max-height: 75vh; overflow-y: auto; padding: 20px 10px;">
+                <div class="admin-tabs admin-tab-nav" style="display: flex; gap: 10px; overflow-x: auto; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 10px; margin-bottom: 20px;">
                     <button class="admin-tab-btn active" id="adminTabStats" onclick="switchAdminTab('stats')">
                         📊 통계 현황
                     </button>
@@ -961,23 +990,23 @@
                     <div class="admin-stats-grid">
                         <div class="admin-stat-card">
                             <span class="stat-title"><i class="fa-solid fa-users"></i> 총 가입 다이버</span>
-                            <span class="stat-value">1,248 명</span>
-                            <span class="stat-sub" style="color: #00e676;">오늘 +14명 신규</span>
+                            <span class="stat-value" id="adminStatTotalUsers">0 명</span>
+                            <span class="stat-sub" style="color: #00e676;" id="adminStatTodayUsers">실시간 Supabase DB 연동</span>
                         </div>
                         <div class="admin-stat-card">
-                            <span class="stat-title"><i class="fa-solid fa-paper-plane"></i> 접수된 문의/건의</span>
-                            <span class="stat-value" style="color: var(--accent-gold);" id="adminStatInquiryCount">1 건</span>
-                            <span class="stat-sub">광고/오류/제안 수집</span>
+                            <span class="stat-title"><i class="fa-solid fa-paper-plane"></i> 접수된 미처리 문의/건의</span>
+                            <span class="stat-value" style="color: var(--accent-gold);" id="adminStatPendingInquiries">0 건</span>
+                            <span class="stat-sub" id="adminStatTotalInquiries">광고/오류/제안 실시간</span>
                         </div>
                         <div class="admin-stat-card">
                             <span class="stat-title"><i class="fa-solid fa-graduation-cap"></i> 공인 인증 강사</span>
-                            <span class="stat-value" style="color: var(--accent-cyan);">42 명</span>
-                            <span class="stat-sub">승인 대기중 1건</span>
+                            <span class="stat-value" style="color: var(--accent-cyan);" id="adminStatInstructors">0 명</span>
+                            <span class="stat-sub" id="adminStatPendingCertQueue">승인 대기중 0건</span>
                         </div>
                         <div class="admin-stat-card">
-                            <span class="stat-title"><i class="fa-solid fa-mouse-pointer"></i> 제휴 배너 클릭</span>
-                            <span class="stat-value">3,120 회</span>
-                            <span class="stat-sub">CTR 4.8%</span>
+                            <span class="stat-title"><i class="fa-solid fa-layer-group"></i> 전체 등록 게시글</span>
+                            <span class="stat-value" id="adminStatTotalPosts">0 개</span>
+                            <span class="stat-sub" id="adminStatPostsBreakdown">버디/클래스/수다/장터</span>
                         </div>
                     </div>
                 </div>
@@ -1002,6 +1031,7 @@
                             </tbody>
                         </table>
                     </div>
+                </div>
                 <div id="adminPanelUsers" class="hidden">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
                         <h3 style="font-size: 1rem; color: #00e676; margin: 0;">
@@ -1058,9 +1088,14 @@
                                     </td>
                                     <td>2026-07-28 17:20</td>
                                     <td>
-                                        <button class="btn btn-primary" onclick="approveInstructorCertDemo('해양마스터강사')" style="padding: 4px 10px; font-size: 0.75rem; background: #00e676; color:#000;">
-                                            ✓ 승인 (인장 부여)
-                                        </button>
+                                        <div style="display:flex; gap:6px;">
+                                            <button class="btn btn-primary" onclick="approveInstructorCertDemo('해양마스터강사')" style="padding: 4px 10px; font-size: 0.75rem; background: #00e676; color:#000; font-weight:bold;">
+                                                ✓ 승인 (인장 부여)
+                                            </button>
+                                            <button class="btn btn-secondary" onclick="rejectInstructorCertDemo('해양마스터강사')" style="padding: 4px 10px; font-size: 0.75rem; background: #ff5252; color:#fff; font-weight:bold; border:none;">
+                                                ❌ 심사 반려
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             </tbody>
@@ -1166,13 +1201,14 @@
                     <div>
                         <h3 id="myProfNameDisplay">다이버</h3>
                         <p style="font-size: 0.82rem; color: var(--accent-cyan);" id="myProfProviderDisplay">카카오톡 인증 회원</p>
+                        <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;" id="myProfPhoneDisplay">📞 연락처: 미등록</p>
                     </div>
                 </div>
 
-                <div id="myProfReviewsContainer" style="background: rgba(0, 242, 254, 0.06); border: 1px border var(--glass-border); padding: 12px; border-radius: 10px; margin-bottom: 16px;">
+                <div id="myProfReviewsContainer" style="background: rgba(0, 242, 254, 0.06); border: 1px solid var(--glass-border); padding: 12px; border-radius: 10px; margin-bottom: 16px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <span style="font-size: 0.88rem; font-weight: 800; color: var(--accent-gold);"><i class="fa-solid fa-star"></i> 내 매너 평점: <strong id="myProfAvgScore">5.0 / 5.0</strong></span>
-                        <span style="font-size: 0.78rem; color: var(--text-muted);" id="myProfMeetingCount">모임 12회 완료</span>
+                        <span style="font-size: 0.88rem; font-weight: 800; color: var(--accent-gold);"><i class="fa-solid fa-star"></i> 내 매너 평점: <strong id="myProfAvgScore" style="color: #00e676;">신규 다이버 (평가 대기 중)</strong></span>
+                        <span style="font-size: 0.78rem; color: var(--text-muted);" id="myProfMeetingCount">모임 0회 완료</span>
                     </div>
                     <h4 style="font-size: 0.82rem; color: var(--text-main); margin-bottom: 6px;"><i class="fa-solid fa-comments"></i> 최근 받은 한줄평 (최신 3개)</h4>
                     <div id="myProfReviewsList" style="display: flex; flex-direction: column; gap: 6px;">
@@ -1194,12 +1230,47 @@
                         <button type="button" class="btn btn-secondary" onclick="handleLogout()" style="flex: 1; background: rgba(255, 82, 82, 0.15); color: #ff5252; border-color: rgba(255, 82, 82, 0.4);">
                             <i class="fa-solid fa-right-from-bracket"></i> 로그아웃
                         </button>
-                        <button type="submit" class="btn btn-primary" style="flex: 2;">
-                            <i class="fa-solid fa-check"></i> 프로필 저장
+                        <button type="button" class="btn btn-secondary" onclick="openEditProfileModal()" style="flex: 1.5; background: rgba(0, 242, 254, 0.15); color: var(--accent-cyan); border-color: rgba(0, 242, 254, 0.4); font-weight: 800;">
+                            <i class="fa-solid fa-pen-to-square"></i> ✏️ 프로필 정보 수정
+                        </button>
+                        <button type="submit" class="btn btn-primary" style="flex: 1.5;">
+                            <i class="fa-solid fa-check"></i> 저장
                         </button>
                     </div>
                 </form>
             </div>
+        </div>
+    </div>
+
+    <!-- Modal: Edit Profile Modal (#editProfileModal) -->
+    <div class="modal-overlay hidden" id="editProfileModal" style="z-index: 9999999;">
+        <div class="modal-container glass-panel" style="max-width: 480px;">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-user-pen" style="color: var(--accent-cyan);"></i> 프로필 정보 수정</h2>
+                <button type="button" class="close-btn" onclick="closeModal(document.getElementById('editProfileModal'))">&times;</button>
+            </div>
+            <form onsubmit="handleSaveProfileEdit(event)">
+                <div class="form-group">
+                    <label for="editNickInput"><i class="fa-solid fa-user"></i> AquaBuddy 닉네임 *</label>
+                    <input type="text" id="editNickInput" placeholder="닉네임을 입력하세요" required>
+                </div>
+                <div class="form-group">
+                    <label for="editPhoneInput"><i class="fa-solid fa-phone"></i> 휴대폰 번호 *</label>
+                    <input type="tel" id="editPhoneInput" placeholder="010-0000-0000" required>
+                </div>
+                <div class="form-group">
+                    <label for="editLicenseInput"><i class="fa-solid fa-certificate"></i> 보유 자격증 / 라이선스 정보 *</label>
+                    <input type="text" id="editLicenseInput" placeholder="예: PADI Open Water, AIDA2, Freediver Master 등" required>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal(document.getElementById('editProfileModal'))" style="flex: 1;">
+                        취소
+                    </button>
+                    <button type="submit" class="btn btn-primary" style="flex: 2; background: linear-gradient(135deg, #00f2fe, #4facfe); color: #000; font-weight: 800;">
+                        <i class="fa-solid fa-floppy-disk"></i> 프로필 저장
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -1223,6 +1294,19 @@
             </div>
 
             <div class="chat-members-bar" id="chatMembersBar"></div>
+
+            <!-- 상단 고정 공지사항 (Pin Notice Bar) -->
+            <div id="chatPinNoticeBar" class="chat-pin-notice-bar" style="display: none; background: rgba(0, 242, 254, 0.08); border: 1px dashed var(--accent-cyan); border-radius: 10px; padding: 10px 14px; margin: 8px 0; font-size: 0.82rem; position: relative;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                    <span id="chatNoticeTag" style="font-weight: 800; color: var(--accent-cyan);"><i class="fa-solid fa-thumbtack"></i> 모임 고정 공지</span>
+                    <button type="button" onclick="togglePinNotice()" style="background: none; border: none; color: var(--accent-cyan); cursor: pointer; font-size: 0.78rem; font-weight: bold;">
+                        <span id="pinNoticeToggleText">접기 ▲</span>
+                    </button>
+                </div>
+                <div id="chatPinNoticeContent" style="color: #e0e0e0; line-height: 1.4;">
+                    <!-- Dynamic Content -->
+                </div>
+            </div>
 
             <div class="chat-quick-toolbar" id="chatHostQuickToolbar" style="display: none;">
                 <span style="font-size: 0.78rem; color: var(--accent-gold); font-weight: 700;">주최자 대화방 관리:</span>
@@ -1277,23 +1361,27 @@
         </div>
     </div>
 
-    <!-- Modal 6: Post Detail View (Redesigned Modern Glass Comment Form) -->
-    <div class="modal-overlay hidden" id="detailModal">
+    <!-- Modal 6: Post Detail View (#postDetailModal & #detailModal) -->
+    <div class="modal-overlay hidden" id="postDetailModal" style="z-index: 999998;">
         <div class="modal-container glass-panel modal-lg">
             <div class="modal-header">
                 <h2><span id="detailModalTitle">게시글 상세</span></h2>
-                <button class="close-btn" id="closeDetailModalBtn">&times;</button>
+                <button class="close-btn" id="closeDetailModalBtn" onclick="closeModal(document.getElementById('postDetailModal') || document.getElementById('detailModal'))">&times;</button>
             </div>
             
             <div class="modal-body" id="detailModalBody"></div>
         </div>
     </div>
 
-    <!-- Image Lightbox Modal -->
-    <div class="modal-overlay hidden" id="imageLightboxModal" style="z-index: 3000;">
-        <div class="lightbox-content">
-            <button class="close-btn lightbox-close" onclick="closeModal(document.getElementById('imageLightboxModal'))">&times;</button>
-            <img id="lightboxImage" src="" alt="대형 이미지 미리보기">
+    <!-- Image Lightbox Modal (#imageLightboxModal) -->
+    <div class="modal-overlay hidden" id="imageLightboxModal" style="z-index: 9999999 !important; background: rgba(0, 0, 0, 0.94);" onclick="if(event.target === this || event.target.id === 'lightboxBackdrop' || event.target.classList.contains('lightbox-wrapper')) closeModal(this);">
+        <div class="lightbox-wrapper" id="lightboxBackdrop" style="position: relative; width: 100vw; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box;">
+            <button type="button" class="lightbox-btn-close" onclick="closeModal(document.getElementById('imageLightboxModal'))" title="닫기 (Esc 또는 배경 클릭)">
+                <i class="fa-solid fa-xmark"></i> ✕ 닫기
+            </button>
+            <div class="lightbox-content" style="position: relative; max-width: 90vw; max-height: 85vh; display: flex; align-items: center; justify-content: center;">
+                <img id="lightboxImage" src="" alt="대형 원본 이미지 미리보기" style="max-width: 100%; max-height: 82vh; object-fit: contain; border-radius: 12px; border: 2px solid var(--accent-cyan); box-shadow: 0 0 50px rgba(0, 242, 254, 0.5);">
+            </div>
         </div>
     </div>
 
@@ -1406,8 +1494,8 @@
     <div class="toast-container" id="toastContainer"></div>
 
     <!-- Bottom Footer Visual Image Ad Banner -->
-    <section class="bottom-footer-ad container">
-        <div class="glass-panel bottom-ad-content">
+    <section class="bottom-footer-ad container ad-banner-container" style="width: 100%; max-width: 1200px; margin: 20px auto; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; z-index: 10;">
+        <div class="glass-panel bottom-ad-content" style="width: 100%;">
             <a href="https://link.coupang.com/a/fKq8aVxMvA" target="_blank" class="bottom-ad-visual-card" onclick="showToast('오픈워터 바다수영 장비 기획전으로 이동합니다!')">
                 <img src="bottom_ad_openwater.jpg" alt="바다수영 수평선 배경" class="bottom-ad-bg-img">
                 <div class="bottom-ad-overlay-content">
@@ -1421,37 +1509,163 @@
                 </div>
             </a>
         </div>
-        <div class="ftc-legal-footer">
+        <div class="ftc-legal-footer" style="text-align: center; margin-top: 8px;">
             <i class="fa-solid fa-scale-balanced"></i> ※ 본 배너는 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.
         </div>
     </section>
 
-    <!-- Footer with Streamlined Single Unified Inquiry Button -->
-    <footer class="footer">
-        <div class="container footer-content">
-            <div class="footer-brand">
-                <h3><i class="fa-solid fa-water-ladder"></i> AquaBuddy Platform Open Beta v45.0</h3>
-                <p>수영 · 다이빙 · 바다수영 · 라이선스 인증 강사 클래스 · 전국 46개 입수 스팟 실시간 물때표 · 부산/제주/경북/전남/서해 44개 해양 CCTV</p>
-            </div>
-            <div class="footer-links" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
-                <p style="margin:0;">&copy; 2026 AquaBuddy Platform. All rights reserved. Always Swim & Dive With A Buddy!</p>
-                
-                <div style="display: flex; gap: 14px; align-items: center;">
-                    <!-- Single Consolidated Customer Center Button -->
-                    <a href="#" onclick="openInquiryModal('general'); return false;" style="color: var(--accent-gold); text-decoration: none; font-weight: 800; background: rgba(255, 183, 3, 0.12); padding: 4px 12px; border-radius: 14px; border: 1px dashed var(--accent-gold); font-size: 0.8rem;">
-                        💌 통합 고객센터 / 제휴·건의 문의 ➔
-                    </a>
+    <!-- 정식 푸터(Footer) 복원 및 시크릿 3회 클릭 매립 -->
+    <footer class="main-footer" style="background: #0f172a; color: #94a3b8; padding: 40px 20px 30px; font-size: 0.88rem; border-top: 1px solid #1e293b; margin-top: 40px; position: relative; z-index: 10;">
+      <div class="footer-container" style="max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; text-align: center;">
+        
+        <!-- 상단 링크 (약관 및 제휴 문의) -->
+        <div class="footer-links" style="display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; font-weight: 500;">
+          <a href="#" onclick="openTermsModal('terms'); return false;" style="color: #cbd5e1; text-decoration: none;">이용약관</a>
+          <span style="color: #334155;">|</span>
+          <a href="#" onclick="openTermsModal('privacy'); return false;" style="color: #cbd5e1; text-decoration: none; font-weight: 700;">개인정보처리방침</a>
+          <span style="color: #334155;">|</span>
+          <a href="#" onclick="showToast('ℹ️ 도움말 및 FAQ 서비스는 준비 중입니다.'); return false;" style="color: #cbd5e1; text-decoration: none;">도움말 및 지원</a>
+          <span style="color: #334155;">|</span>
+          <a href="#" onclick="openInquiryModal(); return false;" style="color: #00f2fe; text-decoration: none; font-weight: 600;">✉️ 각종 문의 및 제안 (광고/버그/건의)</a>
+        </div>
 
-                    <a href="#" onclick="openAdminSecurityCheck(); return false;" style="color: var(--text-dim); text-decoration: none; opacity: 0.6; font-size: 0.75rem;">
-                        <i class="fa-solid fa-lock"></i> Webmaster Access
-                    </a>
+        <!-- 하단 카피라이트 & 웹마스터 3회 클릭 시크릿 트리거 -->
+        <div class="footer-copyright" style="margin-top: 10px; color: #64748b; font-size: 0.82rem;">
+          <p id="footerCopyright" onclick="handleCopyrightTripleClick()" style="display: inline-block; margin: 0; cursor: pointer; user-select: none; padding: 4px 8px; border-radius: 4px;" title="AquaBuddy Platform">
+            &copy; 2026 AquaBuddy Platform. All rights reserved.
+          </p>
+          <p style="margin-top: 6px; font-size: 0.78rem; color: #475569;">
+            본 시스템은 허가된 사용자만 접근할 수 있으며, 불법적인 접근 및 스크래핑을 금지합니다.
+          </p>
+        </div>
+
+      </div>
+    </footer>
+
+    <!-- Modal: Terms & Privacy Policy Modal (#termsModal) -->
+    <div class="modal-overlay hidden" id="termsModal" style="z-index: 999999;">
+        <div class="modal-container glass-panel modal-lg" style="max-width: 800px; max-height: 85vh; display: flex; flex-direction: column; position: relative;">
+            <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--glass-border); padding-bottom: 12px; margin-bottom: 12px;">
+                <div style="display: flex; gap: 8px;">
+                    <button type="button" id="termsTabTermsBtn" class="btn btn-primary" onclick="switchTermsTab('terms')" style="padding: 6px 16px; font-weight: 800; font-size: 0.85rem;">
+                        📄 이용약관 (주식회사 어썸갓코포레이션)
+                    </button>
+                    <button type="button" id="termsTabPrivacyBtn" class="btn btn-secondary" onclick="switchTermsTab('privacy')" style="padding: 6px 16px; font-weight: 800; font-size: 0.85rem;">
+                        🔒 개인정보 취급방침
+                    </button>
                 </div>
+                <button type="button" class="close-btn" onclick="closeModal(document.getElementById('termsModal'))" style="background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer;">&times;</button>
+            </div>
+
+            <!-- Terms Content Panel -->
+            <div id="termsPanelTerms" style="overflow-y: auto; flex: 1; font-size: 0.82rem; color: #ddd; line-height: 1.6; padding-right: 8px; white-space: pre-wrap; background: rgba(0,0,0,0.4); padding: 14px; border-radius: 8px; border: 1px solid var(--glass-border);">
+            </div>
+
+            <!-- Privacy Content Panel -->
+            <div id="termsPanelPrivacy" class="hidden" style="overflow-y: auto; flex: 1; font-size: 0.82rem; color: #ddd; line-height: 1.6; padding-right: 8px; white-space: pre-wrap; background: rgba(0,0,0,0.4); padding: 14px; border-radius: 8px; border: 1px solid var(--glass-border);">
             </div>
         </div>
-    </footer>
+    </div>
+
+    <!-- Modal: Consolidated Inquiries & Suggestions Modal (#inquiryModal) -->
+    <div class="modal-overlay hidden" id="inquiryModal" style="z-index: 999999;">
+        <div class="modal-container glass-panel modal-md" style="max-width: 540px; position: relative;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px;">
+                <h3 style="margin: 0; color: var(--accent-gold); font-size: 1.1rem; font-weight: 800;">
+                    ✉️ 각종 문의 및 제안 (광고/버그/건의)
+                </h3>
+                <button type="button" class="close-btn" onclick="closeModal(document.getElementById('inquiryModal'))" style="background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer;">&times;</button>
+            </div>
+
+            <form onsubmit="handleInquirySubmit(event)">
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; font-size: 0.8rem; color: var(--accent-gold); font-weight: bold; margin-bottom: 6px;">문의 상세 카테고리</label>
+                    <select id="inquiryCategory" required style="width: 100%; padding: 10px 14px; background: rgba(0,0,0,0.5); border: 1px solid var(--accent-gold); border-radius: 8px; color: #fff; font-size: 0.9rem;">
+                        <option value="ad">🤝 광고 / 제휴 문의</option>
+                        <option value="bug">🐛 버그 / 오류 신고</option>
+                        <option value="feature">💡 기능 건의사항</option>
+                        <option value="general">❓ 기타 문의</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; font-size: 0.8rem; color: #ccc; font-weight: bold; margin-bottom: 6px;">작성자 이름 / 닉네임</label>
+                    <input type="text" id="inquiryName" placeholder="성함 또는 닉네임을 입력하세요" required style="width: 100%; padding: 10px 14px; background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); border-radius: 8px; color: #fff; font-size: 0.9rem;">
+                </div>
+
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; font-size: 0.8rem; color: #ccc; font-weight: bold; margin-bottom: 6px;">연락처 / 이메일</label>
+                    <input type="text" id="inquiryContact" placeholder="010-0000-0000 또는 email@domain.com" required style="width: 100%; padding: 10px 14px; background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); border-radius: 8px; color: #fff; font-size: 0.9rem;">
+                </div>
+
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; font-size: 0.8rem; color: #ccc; font-weight: bold; margin-bottom: 6px;">문의 제목</label>
+                    <input type="text" id="inquiryTitle" placeholder="문의 및 제안 제목을 입력하세요" required style="width: 100%; padding: 10px 14px; background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); border-radius: 8px; color: #fff; font-size: 0.9rem;">
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; font-size: 0.8rem; color: #ccc; font-weight: bold; margin-bottom: 6px;">상세 문의 내용</label>
+                    <textarea id="inquiryContent" rows="4" placeholder="상세 문의 내용이나 제안 사항을 입력해 주세요. (웹마스터 대시보드로 실시간 전달됩니다)" required style="width: 100%; padding: 10px 14px; background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); border-radius: 8px; color: #fff; font-size: 0.9rem; resize: vertical;"></textarea>
+                </div>
+
+                <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal(document.getElementById('inquiryModal'))">취소</button>
+                    <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, var(--accent-gold), #ff8f00); color: #000; font-weight: 900;">
+                        <i class="fa-solid fa-paper-plane"></i> 문의 제출하기
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Webmaster 2-Factor Security Authentication Modal (#webmasterAuthModal) -->
+    <div class="modal-overlay hidden" id="webmasterAuthModal" style="z-index: 999999;">
+        <div class="modal-container glass-panel modal-sm" style="max-width: 420px; position: relative;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                <h3 style="margin: 0; color: var(--accent-cyan); font-size: 1.1rem; font-weight: 800;">
+                    <i class="fa-solid fa-lock"></i> 🔒 AquaBuddy 웹마스터 2차 인증
+                </h3>
+                <button type="button" class="close-btn" onclick="closeModal(document.getElementById('webmasterAuthModal'))" style="background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer;">&times;</button>
+            </div>
+            
+            <p style="font-size: 0.85rem; color: #ccc; margin-bottom: 16px; line-height: 1.4;">
+                관리자 계정 검증 및 마스터 코드를 입력해 주세요.
+            </p>
+
+            <form onsubmit="handleWebmasterAuthSubmit(event)">
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; font-size: 0.8rem; color: var(--accent-cyan); font-weight: bold; margin-bottom: 6px;">마스터 비밀코드</label>
+                    <input type="password" id="webmasterSecretInput" placeholder="마스터 코드를 입력하세요" required autocomplete="off" style="width: 100%; padding: 10px 14px; background: rgba(0, 0, 0, 0.5); border: 1px solid var(--accent-cyan); border-radius: 8px; color: #fff; font-size: 0.95rem; outline: none;">
+                </div>
+
+                <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal(document.getElementById('webmasterAuthModal'))">취소</button>
+                    <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); color: #000; font-weight: 900;">
+                        <i class="fa-solid fa-key"></i> 웹마스터 모드 진입
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Certificate Image Preview Modal (#certificateImageModal) -->
+    <div class="modal-overlay hidden" id="certificateImageModal" style="z-index: 9999999 !important;">
+        <div class="modal-container glass-panel" style="max-width: 720px; text-align: center; border: 1px solid var(--accent-gold);">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-graduation-cap" style="color: var(--accent-gold);"></i> 강사 실물 자격증 사본 확대 검토</h2>
+                <button class="close-btn" onclick="closeModal(document.getElementById('certificateImageModal'))">&times;</button>
+            </div>
+            <div style="padding: 20px 0;">
+                <img id="certPreviewImg" src="" alt="강사 자격증 실물 사본" style="max-width: 100%; max-height: 60vh; border-radius: var(--radius-sm); border: 2px solid var(--accent-cyan); box-shadow: 0 8px 32px rgba(0,0,0,0.5);">
+            </div>
+            <div style="display: flex; justify-content: center; gap: 12px; margin-top: 10px;">
+                <button class="btn btn-secondary" onclick="closeModal(document.getElementById('certificateImageModal'))">닫기</button>
+            </div>
+        </div>
+    </div>
 
     <!-- App Configuration & Main Logic Script -->
     <script src="config.js?v=45.0"></script>
-    <script src="app.js?v=20260803_500"></script>
+    <script src="app.js?v=20260804_3000"></script>
 </body>
 </html>
