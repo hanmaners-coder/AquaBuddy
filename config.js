@@ -30,5 +30,6 @@ window.AQUA_CONFIG = {
         
         // 4. Bottom Wide Banner (바다수영 / 오픈워터)
         openwaterUrl: "https://link.coupang.com/a/fKq8aVxMvA"
-    }
+    },
+    wsUrl: "ws://localhost:8082",
 };

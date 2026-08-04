@@ -3759,16 +3759,16 @@ function renderCompactPostRow(post) {
     const priceText = isInst ? (post.classFee ? post.classFee.toLocaleString() + '원' : '수강료 문의') : (isMarket ? (post.price ? post.price.toLocaleString() + '원' : '가격협의') : '');
     
     return `
-        <div class="compact-post-row post-card feed-card" data-post-id="${post.id}" onclick="openPostDetailModal('${post.id}')" style="cursor: pointer;">
-            <div class="compact-row-main">
-                <span class="badge badge-${post.category}">${post.categoryName || post.category}</span>
-                <span class="compact-post-title">${escapeHtml(post.title)}</span>
+        <div class="post-card feed-card feed-card-item compact-post-row" data-post-id="${post.id}" onclick="openPostDetailModal('${post.id}')" style="cursor: pointer;">
+            <div class="post-info-left compact-row-main">
+                <span class="badge badge-${post.category}">${escapeHtml(post.categoryName || post.category)}</span>
+                <span class="compact-post-title" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600;">${escapeHtml(post.title)}</span>
             </div>
-            <div class="compact-row-meta">
+            <div class="post-info-right compact-row-meta">
                 <span class="compact-author-name"><i class="fa-solid fa-user-circle"></i> ${escapeHtml(post.userName || '다이버')}</span>
-                <span class="compact-rating">★ ${post.hostRating || 5.0}</span>
+                <span class="compact-rating" style="color: #ffb703;">★ ${post.hostRating || 5.0}</span>
                 ${priceText ? `<span style="color: var(--accent-gold); font-weight: 700;">${priceText}</span>` : ''}
-                <span class="compact-action-link">상세 ➔</span>
+                <span class="compact-action-link" style="color: #38bdf8; font-weight: bold;">상세 ➔</span>
             </div>
         </div>
     `;
@@ -3776,11 +3776,11 @@ function renderCompactPostRow(post) {
 
 function bindPostCardClickListeners() {
     if (typeof document === "undefined") return;
-    document.querySelectorAll('.post-card, .feed-card, .compact-post-row, [data-post-id]').forEach(card => {
+    document.querySelectorAll('.post-card, .feed-card, .feed-card-item, .compact-post-row, [data-post-id]').forEach(card => {
         card.style.cursor = 'pointer';
         card.onclick = (e) => {
-            if (!e.target.closest('.btn, button, input, a, .like-btn, .action-btn')) {
-                const postId = card.getAttribute('data-post-id') || card.dataset.postId;
+            if (!e.target.closest('button, a, input, .btn, .like-btn, .action-btn')) {
+                const postId = card.getAttribute('data-post-id') || card.dataset.postId || card.dataset.id;
                 if (postId) {
                     openPostDetailModal(postId);
                 }
@@ -5558,7 +5558,7 @@ if (typeof document !== "undefined") {
             return;
         }
 
-        const card = e.target.closest(".post-card, .feed-card, .compact-post-row, [data-post-id]");
+        const card = e.target.closest(".post-card, .feed-card, .feed-card-item, .compact-post-row, [data-post-id]");
         if (card) {
             const postId = card.getAttribute("data-post-id") || card.dataset.postId || (card.getAttribute("onclick") ? (card.getAttribute("onclick").match(/'([^']+)'/) || [])[1] : null);
             if (postId) {
