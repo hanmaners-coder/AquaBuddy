@@ -3388,8 +3388,9 @@ function handleCctvSearch(keyword) {
     renderOceanWebcams(activeCctvRegion);
 }
 
-// 기상청 실시간 해양관측 API (수온, 파고, 풍속) 연동
-const KMA_SEA_OBS_API_URL = "https://apihub.kma.go.kr/api/typ01/url/sea_obs.php?authKey=D_fOhPMMRRe3zoTzDNUXKg&help=0";
+// 기상청 실시간 해양관측 API (수온, 파고, 풍속) 연동 (CORS 우회 프록시 적용)
+const KMA_SEA_OBS_TARGET = "https://apihub.kma.go.kr/api/typ01/url/sea_obs.php?authKey=D_fOhPMMRRe3zoTzDNUXKg";
+const KMA_SEA_OBS_API_URL = `https://api.allorigins.win/raw?url=${encodeURIComponent(KMA_SEA_OBS_TARGET)}`;
 
 let kmaSeaObsCache = null;
 let kmaSeaObsCacheTime = 0;
@@ -3400,7 +3401,11 @@ async function fetchKmaSeaObsData() {
     }
 
     try {
-        const res = await fetch(KMA_SEA_OBS_API_URL);
+        let res = await fetch(KMA_SEA_OBS_API_URL);
+        if (!res.ok) {
+            const fallbackProxy = `https://corsproxy.io/?${encodeURIComponent(KMA_SEA_OBS_TARGET)}`;
+            res = await fetch(fallbackProxy);
+        }
         if (!res.ok) throw new Error("HTTP " + res.status);
         const text = await res.text();
         const lines = text.split("\n");
