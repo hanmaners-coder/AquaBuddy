@@ -1550,12 +1550,14 @@ async function saveUserProfileToSupabase(userData, isExplicitEdit = false) {
         const userLicense = (userData.user_license !== undefined && userData.user_license !== null)
             ? userData.user_license
             : ((userData.license_info !== undefined && userData.license_info !== null) ? userData.license_info : (userData.license || ''));
+        const userPhone = (userData.phone && userData.phone !== "010-0000-0000") ? userData.phone : (userData.phone || '');
         const instCode = userData.instructorCode || userData.instructor_code || "";
 
         const payload = {
             email: userEmail,
             nickname: userNick,
-            user_license: userLicense
+            user_license: userLicense,
+            phone: userPhone
         };
 
         if (authUser && authUser.id) payload.id = authUser.id;
@@ -1594,6 +1596,7 @@ async function saveUserProfileToSupabase(userData, isExplicitEdit = false) {
                         ...currentUser,
                         name: latestDB.nickname || userNick,
                         nickname: latestDB.nickname || userNick,
+                        phone: (latestDB.phone && latestDB.phone !== "010-0000-0000") ? latestDB.phone : (currentUser.phone || ""),
                         license: (latestDB.user_license !== undefined && latestDB.user_license !== null) ? latestDB.user_license : userLicense,
                         license_info: (latestDB.user_license !== undefined && latestDB.user_license !== null) ? latestDB.user_license : userLicense,
                         user_license: (latestDB.user_license !== undefined && latestDB.user_license !== null) ? latestDB.user_license : userLicense
@@ -2229,7 +2232,13 @@ async function openProfileModal() {
     if (nameEl) nameEl.textContent = currentUser.name || currentUser.nickname || "다이버";
     if (nickTextEl) nickTextEl.textContent = currentUser.nickname || currentUser.name || "다이버";
     if (provEl) provEl.textContent = currentUser.provider || "가입 회원";
-    if (phoneEl) phoneEl.textContent = `📞 연락처: ${currentUser.phone && currentUser.phone !== "010-0000-0000" ? currentUser.phone : "미등록"}`;
+    if (phoneEl) {
+        if (currentUser.phone && currentUser.phone !== "010-0000-0000") {
+            phoneEl.textContent = `📱 휴대폰 번호: ${currentUser.phone}`;
+        } else {
+            phoneEl.textContent = `📞 휴대폰 번호: 연락처 미등록`;
+        }
+    }
     if (scoreEl) {
         const reviews = currentUser.reviews || [];
         if (reviews.length > 0) {
