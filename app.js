@@ -1172,12 +1172,15 @@ function switchMainView(viewName) {
 }
 
 // Initialize Application
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
     if ('scrollRestoration' in history) {
         history.scrollRestoration = 'manual';
     }
     initKakaoSdk();
     initUserIdentity();
+    if (typeof refreshCurrentUserFromCloud === 'function') {
+        await refreshCurrentUserFromCloud();
+    }
     loadPosts();
     loadMyPosts();
     loadInquiries();
@@ -1415,16 +1418,24 @@ function safeLocalStorageSet(key, value) {
     }
 }
 
-async function syncUserProfileWithSupabase(email) {
-    if (!email) return null;
-    const userKey = email.toLowerCase();
+async function refreshCurrentUserFromCloud() {
+    const rawSaved = localStorage.getItem('currentUser') || localStorage.getItem('aqua_buddy_user_identity') || 'null';
+    let savedUser = null;
     try {
+        savedUser = JSON.parse(rawSaved);
+    } catch (e) {
+        savedUser = null;
+    }
+    if (!savedUser || !savedUser.email) return null;
+
+    try {
+        const userEmail = savedUser.email.toLowerCase();
         let dbUser = null;
         if (supabaseClient) {
             const { data, error } = await supabaseClient
                 .from('users')
                 .select('*')
-                .eq('email', userKey)
+                .eq('email', userEmail)
                 .maybeSingle();
 
             if (!error && data) {
@@ -1433,42 +1444,50 @@ async function syncUserProfileWithSupabase(email) {
                 const { data: profData } = await supabaseClient
                     .from('profiles')
                     .select('*')
-                    .eq('email', userKey)
+                    .eq('email', userEmail)
                     .maybeSingle();
                 if (profData) dbUser = profData;
             }
         }
 
         if (dbUser) {
-            currentUser = {
-                ...currentUser,
-                email: userKey,
-                realName: dbUser.real_name || dbUser.realName || currentUser?.realName || dbUser.nickname || "다이버",
-                real_name: dbUser.real_name || dbUser.realName || currentUser?.real_name || "다이버",
-                name: dbUser.nickname || dbUser.name || currentUser?.name || "다이버",
-                nickname: dbUser.nickname || dbUser.name || currentUser?.nickname || "다이버",
-                phone: (dbUser.phone && dbUser.phone !== "010-0000-0000") ? dbUser.phone : (currentUser?.phone || ""),
-                license: dbUser.license_info || dbUser.license || currentUser?.license || "자유다이버",
-                license_info: dbUser.license_info || dbUser.license || currentUser?.license_info || "자유다이버",
-                instructorStatus: dbUser.instructor_status || dbUser.instructorStatus || currentUser?.instructorStatus || "none",
-                rejectionReason: dbUser.rejection_reason || dbUser.rejectionReason || currentUser?.rejectionReason || "",
-                provider: dbUser.provider || currentUser?.provider || "홈페이지 회원"
+            const updatedUser = {
+                ...savedUser,
+                email: userEmail,
+                realName: dbUser.real_name || dbUser.realName || savedUser.realName || dbUser.nickname || "다이버",
+                real_name: dbUser.real_name || dbUser.realName || savedUser.real_name || "다이버",
+                name: dbUser.nickname || dbUser.name || savedUser.name || "다이버",
+                nickname: dbUser.nickname || dbUser.name || savedUser.nickname || "다이버",
+                phone: (dbUser.phone && dbUser.phone !== "010-0000-0000") ? dbUser.phone : (savedUser.phone || ""),
+                license: dbUser.license_info || dbUser.license || savedUser.license || "자유다이버",
+                license_info: dbUser.license_info || dbUser.license || savedUser.license_info || "자유다이버",
+                instructorStatus: dbUser.instructor_status || dbUser.instructorStatus || savedUser.instructorStatus || "none",
+                instructor_status: dbUser.instructor_status || dbUser.instructorStatus || savedUser.instructor_status || "none",
+                rejectionReason: dbUser.rejection_reason || dbUser.rejectionReason || savedUser.rejectionReason || "",
+                provider: dbUser.provider || savedUser.provider || "홈페이지 회원"
             };
 
-            safeLocalStorageSet("aqua_buddy_user_identity", JSON.stringify(currentUser));
-            localStorage.setItem("currentUser", JSON.stringify(currentUser));
-            saveRegisteredUser(currentUser);
-            if (typeof updateNavbarUserUI === "function") updateNavbarUserUI();
+            currentUser = updatedUser;
+            safeLocalStorageSet('currentUser', JSON.stringify(updatedUser));
+            safeLocalStorageSet('aqua_buddy_user_identity', JSON.stringify(updatedUser));
+            saveRegisteredUser(updatedUser);
+            if (typeof updateNavbarUserUI === 'function') updateNavbarUserUI();
         }
-    } catch (e) {
-        console.error("프로필 Cloud Sync 실패:", e);
+    } catch (err) {
+        console.error("앱 초기화 시 Cloud DB 동기화 실패:", err);
     }
     return currentUser;
+}
+window.refreshCurrentUserFromCloud = refreshCurrentUserFromCloud;
+
+async function syncUserProfileWithSupabase(email) {
+    if (!email) return null;
+    return await refreshCurrentUserFromCloud();
 }
 window.syncUserProfileWithSupabase = syncUserProfileWithSupabase;
 
 async function restoreUserFromSupabaseCloud(email) {
-    return await syncUserProfileWithSupabase(email);
+    return await refreshCurrentUserFromCloud();
 }
 
 async function syncUserToSupabaseCloud(userData) {
