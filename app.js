@@ -2309,8 +2309,17 @@ function handleSendInstructorInquiry(e) {
 let pendingHostSubmitEvent = null;
 
 function interceptHostSubmit(e) {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     pendingHostSubmitEvent = e;
+
+    const inlineCheck = document.getElementById("inlineLiabilityCheck");
+    if (inlineCheck && inlineCheck.checked) {
+        if (typeof handleSavePost === "function") {
+            handleSavePost(e);
+        }
+        return;
+    }
+
     const checkEl = document.getElementById("hostDisclaimerCheck");
     if (checkEl) checkEl.checked = false;
     openModal(document.getElementById("hostDisclaimerModal"));
@@ -2322,6 +2331,9 @@ function confirmHostDisclaimerSubmit() {
         showToast("⚠️ 해양 안전 수칙 및 플랫폼 면책 방침에 동의해 주세요.");
         return;
     }
+
+    const inlineCheck = document.getElementById("inlineLiabilityCheck");
+    if (inlineCheck) inlineCheck.checked = true;
 
     closeModal(document.getElementById("hostDisclaimerModal"));
     if (typeof handleSavePost === "function") {
@@ -5041,16 +5053,153 @@ function confirmBuddyMatch(postId) {
 }
 
 function finishBuddySchedule(postId) {
-    const post = posts.find(p => p.id === postId);
+    const post = posts.find(p => String(p.id) === String(postId));
     if (!post) return;
 
     post.status = "completed";
     post.statusText = "일정 완료";
     savePosts();
+
+    if (supabaseClient) {
+        try {
+            supabaseClient.from('posts').update({ status: 'completed', statusText: '일정 완료' }).eq('id', postId);
+        } catch(e) {}
+    }
+
     filterAndRender();
     openDetailModal(postId);
     showToast("🎉 모임 일정이 최종 완료되었습니다!");
 }
+
+async function reopenBuddySchedule(postId) {
+    const post = posts.find(p => String(p.id) === String(postId));
+    if (!post) return;
+
+    post.status = "recruiting";
+    post.statusText = "모집 중";
+    savePosts();
+
+    if (supabaseClient) {
+        try {
+            await supabaseClient.from('posts').update({ status: 'recruiting', statusText: '모집 중' }).eq('id', postId);
+        } catch(e) {
+            console.warn("Supabase posts status update notice:", e);
+        }
+    }
+
+    filterAndRender();
+    openDetailModal(postId);
+    showToast("🔄 모집 상태가 '모집 중'으로 다시 변경되었습니다!");
+}
+window.reopenBuddySchedule = reopenBuddySchedule;
+window.reopenBuddyPost = reopenBuddySchedule;
+
+let currentRatingPost = null;
+let currentRatingScore = 5;
+
+function openHostRatingModal(postId) {
+    if (!currentUser) {
+        showToast("🔑 로그인 후 평가를 작성하실 수 있습니다!");
+        openModal(authModal);
+        return;
+    }
+    const post = posts.find(p => String(p.id) === String(postId));
+    if (!post) {
+        showToast("⚠️ 게시글 데이터를 찾을 수 없습니다.");
+        return;
+    }
+
+    currentRatingPost = post;
+    currentRatingScore = 5;
+
+    const targetEl = document.getElementById("ratingHostTarget");
+    if (targetEl) {
+        targetEl.textContent = `[${post.title}] 모임의 상대 다이버(${post.userName || '주최자'}) 매너를 평가해 주세요.`;
+    }
+
+    const inputEl = document.getElementById("ratingReviewInput");
+    if (inputEl) inputEl.value = "";
+
+    setRatingScore(5);
+    openModal(document.getElementById("ratingModal"));
+}
+window.openHostRatingModal = openHostRatingModal;
+
+function setRatingScore(score) {
+    currentRatingScore = score;
+    const scoreTextEl = document.getElementById("starScoreText");
+    if (scoreTextEl) {
+        let label = "무난해요";
+        if (score === 4) label = "좋아요";
+        if (score === 5) label = "최고의 버디! 완벽해요";
+        scoreTextEl.textContent = `${score}.0 / 5.0 (${label})`;
+    }
+
+    document.querySelectorAll("#starRatingSelect .star-btn").forEach(btn => {
+        const btnScore = parseInt(btn.dataset.score);
+        if (btnScore === score) {
+            btn.classList.add("btn-primary", "active");
+            btn.classList.remove("btn-secondary");
+        } else {
+            btn.classList.add("btn-secondary");
+            btn.classList.remove("btn-primary", "active");
+        }
+    });
+}
+window.setRatingScore = setRatingScore;
+
+async function submitHostRating() {
+    if (!currentRatingPost) return;
+    const reviewInp = document.getElementById("ratingReviewInput");
+    const reviewText = reviewInp ? reviewInp.value.trim() : "";
+
+    if (!reviewText) {
+        showToast("⚠️ 한 줄 후기를 작성해 주세요!");
+        return;
+    }
+
+    const targetEmail = currentRatingPost.email || currentRatingPost.userEmail || "";
+    const targetName = currentRatingPost.userName || currentRatingPost.author || "상대방 다이버";
+
+    const reviewPayload = {
+        post_id: currentRatingPost.id,
+        post_title: currentRatingPost.title,
+        reviewer_email: currentUser ? currentUser.email : "",
+        reviewer_name: currentUser ? (currentUser.nickname || currentUser.name) : "다이버",
+        target_email: targetEmail,
+        target_name: targetName,
+        score: currentRatingScore,
+        content: reviewText,
+        created_at: new Date().toISOString()
+    };
+
+    if (supabaseClient) {
+        try {
+            const { error } = await supabaseClient.from('reviews').insert([reviewPayload]);
+            if (error) console.warn("Supabase reviews insert notice:", error);
+            else console.log("Supabase reviews DB Insert Success:", reviewPayload);
+        } catch(e) {
+            console.warn("reviews DB insert exception:", e);
+        }
+
+        try {
+            await supabaseClient.from('user_evaluations').insert([{
+                post_id: currentRatingPost.id,
+                evaluator_email: currentUser ? currentUser.email : "",
+                target_email: targetEmail,
+                score: currentRatingScore,
+                comment: reviewText,
+                created_at: new Date().toISOString()
+            }]);
+        } catch(e) {
+            // Optional fallback
+        }
+    }
+
+    closeModal(document.getElementById("ratingModal"));
+    showToast(`⭐ [${targetName}] 님에 대한 매너 평점이 성공적으로 등록되었습니다!`);
+}
+window.submitHostRating = submitHostRating;
 
 function openEditPostModal(postId) {
     const post = posts.find(p => String(p.id) === String(postId));

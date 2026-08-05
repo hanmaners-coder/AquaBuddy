@@ -24,7 +24,7 @@
     <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=7c316726691ea5e02f234a85f5a20bab&libraries=services,clusterer"></script>
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="styles.css?v=4900">
+    <link rel="stylesheet" href="styles.css?v=5100">
 </head>
 <body>
     <!-- Background Bubbles Animation Container -->
@@ -586,7 +586,7 @@
                 <h2><i class="fa-solid fa-pen-to-square"></i> <span id="modalFormTitle">새 글 작성</span></h2>
                 <button class="close-btn" id="closeCreateModalBtn">&times;</button>
             </div>
-            <form id="createPostForm" onsubmit="handleSavePost(event); return false;">
+            <form id="createPostForm" onsubmit="interceptHostSubmit(event); return false;">
                 <div class="form-group" id="postCategoryGroup" style="display: none;">
                     <label for="postCategory">작성 카테고리 *</label>
                     <select id="postCategory">
@@ -705,9 +705,16 @@
                     <textarea id="postDesc" rows="4" placeholder="상세 내용 및 커리큘럼을 작성해 주세요!" required></textarea>
                 </div>
 
+                <div style="display: flex; align-items: center; gap: 8px; margin: 16px 0; background: rgba(255, 183, 3, 0.08); padding: 10px 14px; border-radius: 8px; border: 1px dashed var(--accent-gold);">
+                    <input type="checkbox" id="inlineLiabilityCheck" style="width: 18px; height: 18px; accent-color: var(--accent-gold); cursor: pointer;">
+                    <label for="inlineLiabilityCheck" style="font-size: 0.85rem; font-weight: 800; color: #fff; cursor: pointer;">
+                        [필수] 해양 입수 안전 수칙 및 플랫폼 면책 방침에 동의합니다.
+                    </label>
+                </div>
+
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" id="cancelCreateBtn">취소</button>
-                    <button type="button" class="btn btn-primary" onclick="handleSavePost(event)"><i class="fa-solid fa-paper-plane"></i> <span id="submitBtnText">등록하기</span></button>
+                    <button type="button" class="btn btn-primary" onclick="interceptHostSubmit(event)"><i class="fa-solid fa-paper-plane"></i> <span id="submitBtnText">등록하기</span></button>
                 </div>
             </form>
         </div>
@@ -1666,6 +1673,6 @@
 
     <!-- App Configuration & Main Logic Script -->
     <script src="config.js?v=45.0"></script>
-    <script src="app.js?v=20260805_4900"></script>
+    <script src="app.js?v=20260805_5100"></script>
 </body>
 </html>
