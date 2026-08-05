@@ -1501,8 +1501,8 @@ async function saveUserProfileToSupabase(userData) {
         }
 
         const userEmail = (userData.email || "").toLowerCase();
-        const userNick = userData.nickname || userData.name || '마스터아쿠아버디';
-        const userLicense = userData.license_info || userData.user_license || userData.license || 'SSI MASTER DIVER/ AIDA 3/수상구조사2급/ 바다수영7년';
+        const userNick = userData.nickname || userData.name || (userEmail.includes('@') ? userEmail.split('@')[0] : '다이버');
+        const userLicense = userData.license_info || userData.user_license || userData.license || '';
         const instCode = userData.instructorCode || userData.instructor_code || "";
 
         // DB 실제 컬럼만 매핑 (id, email, nickname, user_license, instructor_code)
@@ -2176,7 +2176,7 @@ async function openProfileModal() {
     const licInp = document.getElementById("myProfLicenseInput");
 
     if (nameEl) nameEl.textContent = currentUser.name || currentUser.nickname || "다이버";
-    if (nickTextEl) nickTextEl.textContent = currentUser.nickname || currentUser.name || "마스터아쿠아버디";
+    if (nickTextEl) nickTextEl.textContent = currentUser.nickname || currentUser.name || "다이버";
     if (provEl) provEl.textContent = currentUser.provider || "가입 회원";
     if (phoneEl) phoneEl.textContent = `📞 연락처: ${currentUser.phone && currentUser.phone !== "010-0000-0000" ? currentUser.phone : "미등록"}`;
     if (scoreEl) {
