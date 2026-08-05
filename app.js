@@ -1497,9 +1497,9 @@ async function saveUserProfileToSupabase(userData) {
         let authUid = undefined;
         try {
             if (supabaseClient.auth && typeof supabaseClient.auth.getUser === "function") {
-                const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-                if (!authError && user && user.id) {
-                    authUid = user.id;
+                const { data: authRes } = await supabaseClient.auth.getUser();
+                if (authRes && authRes.user && authRes.user.id) {
+                    authUid = authRes.user.id;
                 }
             }
         } catch (authErr) {
@@ -1511,8 +1511,20 @@ async function saveUserProfileToSupabase(userData) {
         const userPhone = (userData.phone && userData.phone !== "010-0000-0000") ? userData.phone : (userData.phone || '01048548777');
         const userLicense = userData.license_info || userData.user_license || userData.license || 'SSI MASTER DIVER/ AIDA 3/수상구조사2급/ 바다수영7년';
 
+        // 1. 기존 유저 존재 여부 확인
+        let existingUser = null;
+        try {
+            const { data } = await supabaseClient
+                .from('users')
+                .select('id, email')
+                .eq('email', userEmail)
+                .maybeSingle();
+            existingUser = data;
+        } catch (selErr) {
+            console.warn("users 테이블 조회 예외:", selErr);
+        }
+
         const payload = {
-            ...(authUid ? { id: authUid } : {}),
             email: userEmail,
             nickname: userNick,
             phone: userPhone,
@@ -1527,18 +1539,28 @@ async function saveUserProfileToSupabase(userData) {
             provider: userData.provider || "홈페이지 회원",
             updated_at: new Date().toISOString()
         };
+        if (authUid) payload.id = authUid;
 
-        console.log("DB에 Upsert 시도하는 데이터:", payload);
+        console.log("DB 연동 시도 페이로드:", payload);
 
-        const { data, error: upsertError } = await supabaseClient
-            .from('users')
-            .upsert(payload, { onConflict: 'email' });
-
-        if (upsertError) {
-            console.error("users DB 저장 최종 실패 에러:", upsertError);
-            alert("DB 저장에 실패했습니다. (RLS 또는 컬럼명 확인 필요)");
+        if (existingUser) {
+            // 이미 있으면 UPDATE
+            const { error: updateErr } = await supabaseClient.from('users').update(payload).eq('email', userEmail);
+            if (updateErr) {
+                console.warn("users update 시도 중 공지:", updateErr);
+                await supabaseClient.from('users').upsert(payload, { onConflict: 'email' });
+            } else {
+                console.log("Supabase DB (update) 연동 성공!");
+            }
         } else {
-            console.log("users DB 저장 성공!", data);
+            // 없으면 INSERT
+            const { error: insertErr } = await supabaseClient.from('users').insert([payload]);
+            if (insertErr) {
+                console.warn("users insert 시도 중 공지:", insertErr);
+                await supabaseClient.from('users').upsert(payload, { onConflict: 'email' });
+            } else {
+                console.log("Supabase DB (insert) 연동 성공!");
+            }
         }
 
         try {
@@ -1550,10 +1572,10 @@ async function saveUserProfileToSupabase(userData) {
                 updated_at: new Date().toISOString()
             }], { onConflict: 'email' });
         } catch (e) {
-            // Silently handle if profiles table is not used
+            // Profiles 테이블 예외 무시
         }
     } catch (e) {
-        console.error("DB Upsert 과정 중 예외 발생:", e);
+        console.warn("DB 연동 예외 처리 (로그인 진행 유지):", e);
     }
 }
 window.saveUserProfileToSupabase = saveUserProfileToSupabase;
