@@ -1483,9 +1483,9 @@ async function restoreUserFromSupabaseCloud(email) {
     return await refreshCurrentUserFromCloud();
 }
 
-async function saveUserProfileToSupabase(userData) {
-    if (!userData || !userData.email) return;
-    if (!supabaseClient) return;
+async function saveUserProfileToSupabase(userData, isExplicitEdit = false) {
+    if (!userData || !userData.email) return null;
+    if (!supabaseClient) return null;
 
     try {
         let authUser = null;
@@ -1501,32 +1501,13 @@ async function saveUserProfileToSupabase(userData) {
         }
 
         const userEmail = (userData.email || "").toLowerCase();
-        const userNick = userData.nickname || userData.name || (userEmail.includes('@') ? userEmail.split('@')[0] : '다이버');
-        const userLicense = userData.license_info || userData.user_license || userData.license || '';
-        const instCode = userData.instructorCode || userData.instructor_code || "";
 
-        // DB 실제 컬럼만 매핑 (id, email, nickname, user_license, instructor_code)
-        const payload = {
-            email: userEmail,
-            nickname: userNick,
-            user_license: userLicense
-        };
-
-        if (authUser && authUser.id) {
-            payload.id = authUser.id;
-        }
-        if (instCode) {
-            payload.instructor_code = instCode;
-        }
-
-        console.log("DB 연동 시도 페이로드:", payload);
-
-        // 1. 기존 유저 존재 여부 확인
+        // 1. 기존 유저 존재 여부 확인 및 최신 DB 데이터 조회
         let existingUser = null;
         try {
             const { data } = await supabaseClient
                 .from('users')
-                .select('id, email')
+                .select('*')
                 .eq('email', userEmail)
                 .maybeSingle();
             existingUser = data;
@@ -1534,16 +1515,58 @@ async function saveUserProfileToSupabase(userData) {
             console.warn("users 테이블 조회 예외:", selErr);
         }
 
+        // 로그인/세션조회 시 (isExplicitEdit = false):
+        // 이미 DB에 유저가 존재하면 DB의 nickname과 user_license를 절대 덮어씌우지 않고, DB에서 읽어온 값으로 currentUser 및 localStorage만 최신화!
+        if (existingUser && !isExplicitEdit) {
+            console.log("로그인/세션 체크: 기존 DB 유저 프로필 유지 및 복원 ->", existingUser.email);
+            const restoredUser = {
+                ...userData,
+                email: userEmail,
+                name: existingUser.nickname || existingUser.name || userData.name || userData.nickname || userEmail.split('@')[0],
+                nickname: existingUser.nickname || existingUser.name || userData.nickname || userData.name || userEmail.split('@')[0],
+                license: (existingUser.user_license !== undefined && existingUser.user_license !== null) ? existingUser.user_license : (userData.license || ""),
+                license_info: (existingUser.user_license !== undefined && existingUser.user_license !== null) ? existingUser.user_license : (userData.license_info || ""),
+                user_license: (existingUser.user_license !== undefined && existingUser.user_license !== null) ? existingUser.user_license : (userData.user_license || ""),
+                instructor_code: existingUser.instructor_code || userData.instructor_code || ""
+            };
+
+            currentUser = restoredUser;
+            safeLocalStorageSet("aqua_buddy_user_identity", JSON.stringify(currentUser));
+            localStorage.setItem("currentUser", JSON.stringify(currentUser));
+            saveRegisteredUser(currentUser);
+            if (typeof updateNavbarUserUI === "function") updateNavbarUserUI();
+            return currentUser;
+        }
+
+        // 명시적 프로필 수정 모달 [저장] (isExplicitEdit = true) 또는 신규 회원(insert)인 경우에만 DB UPDATE/INSERT 수행
+        const userNick = userData.nickname || userData.name || (userEmail.includes('@') ? userEmail.split('@')[0] : '다이버');
+        const userLicense = (userData.user_license !== undefined && userData.user_license !== null)
+            ? userData.user_license
+            : ((userData.license_info !== undefined && userData.license_info !== null) ? userData.license_info : (userData.license || ''));
+        const instCode = userData.instructorCode || userData.instructor_code || "";
+
+        const payload = {
+            email: userEmail,
+            nickname: userNick,
+            user_license: userLicense
+        };
+
+        if (authUser && authUser.id) payload.id = authUser.id;
+        else if (existingUser && existingUser.id) payload.id = existingUser.id;
+        if (instCode) payload.instructor_code = instCode;
+
+        console.log("DB 연동 시도 페이로드 (isExplicitEdit=", isExplicitEdit, "):", payload);
+
         let res;
         if (existingUser) {
-            // 이미 있으면 UPDATE
+            // 이미 있으면 UPDATE (사용자가 직접 프로필 수정을 눌렀을 때만 실행)
             res = await supabaseClient.from('users').update(payload).eq('email', userEmail);
             if (res.error) {
                 console.warn("Update 시도 실패, Upsert 재시도:", res.error);
                 res = await supabaseClient.from('users').upsert(payload, { onConflict: 'email' });
             }
         } else {
-            // 없으면 INSERT
+            // 없으면 INSERT (신규 가입 유저)
             res = await supabaseClient.from('users').insert([payload]);
             if (res.error) {
                 console.warn("Insert 시도 실패, Upsert 재시도:", res.error);
@@ -1556,16 +1579,37 @@ async function saveUserProfileToSupabase(userData) {
             alert("DB 저장 거부됨: " + (res.error.message || JSON.stringify(res.error)));
         } else {
             console.log("Supabase DB 연동 성공!", res ? res.data : "");
+            // DB 저장 성공 후 최신 데이터를 읽어와 currentUser 및 UI 즉시 갱신
+            try {
+                const { data: latestDB } = await supabaseClient.from('users').select('*').eq('email', userEmail).maybeSingle();
+                if (latestDB) {
+                    currentUser = {
+                        ...currentUser,
+                        name: latestDB.nickname || userNick,
+                        nickname: latestDB.nickname || userNick,
+                        license: (latestDB.user_license !== undefined && latestDB.user_license !== null) ? latestDB.user_license : userLicense,
+                        license_info: (latestDB.user_license !== undefined && latestDB.user_license !== null) ? latestDB.user_license : userLicense,
+                        user_license: (latestDB.user_license !== undefined && latestDB.user_license !== null) ? latestDB.user_license : userLicense
+                    };
+                    safeLocalStorageSet("aqua_buddy_user_identity", JSON.stringify(currentUser));
+                    localStorage.setItem("currentUser", JSON.stringify(currentUser));
+                    saveRegisteredUser(currentUser);
+                    if (typeof updateNavbarUserUI === "function") updateNavbarUserUI();
+                }
+            } catch (rErr) {
+                console.warn("최신 DB 재조회 예외:", rErr);
+            }
         }
     } catch (e) {
         console.error("코드 실행 에러:", e);
         alert("코드 실행 에러: " + (e.message || e));
     }
+    return currentUser;
 }
 window.saveUserProfileToSupabase = saveUserProfileToSupabase;
 
 async function syncUserToSupabaseCloud(userData) {
-    return await saveUserProfileToSupabase(userData);
+    return await saveUserProfileToSupabase(userData, false);
 }
 
 function handleInstructorAuthSubmit(e) {
@@ -2358,10 +2402,10 @@ async function handleSaveProfileEdit(e) {
             instructorStatus: currentUser.instructorStatus || "none"
         };
         safeLocalStorageSet("aqua_buddy_registered_users", JSON.stringify(users));
-        await saveUserProfileToSupabase(users[key]);
+        await saveUserProfileToSupabase(users[key], true);
     } else {
         saveRegisteredUser(currentUser);
-        await saveUserProfileToSupabase(currentUser);
+        await saveUserProfileToSupabase(currentUser, true);
     }
 
     updateNavbarUserUI();
@@ -2393,7 +2437,7 @@ async function handleUpdateProfile(e) {
     localStorage.setItem("currentUser", JSON.stringify(currentUser));
     if (currentUser.email) {
         saveRegisteredUser(currentUser);
-        await saveUserProfileToSupabase(currentUser);
+        await saveUserProfileToSupabase(currentUser, true);
     }
 
     updateNavbarUserUI();
