@@ -1490,54 +1490,72 @@ async function restoreUserFromSupabaseCloud(email) {
     return await refreshCurrentUserFromCloud();
 }
 
-async function syncUserToSupabaseCloud(userData) {
+async function saveUserProfileToSupabase(userData) {
     if (!userData || !userData.email) return;
     if (!supabaseClient) return;
     try {
+        let authUid = undefined;
+        try {
+            if (supabaseClient.auth && typeof supabaseClient.auth.getUser === "function") {
+                const { data: { user } } = await supabaseClient.auth.getUser();
+                if (user && user.id) authUid = user.id;
+            }
+        } catch (authErr) {
+            console.warn("Supabase auth.getUser notice:", authErr);
+        }
+
         const userEmail = (userData.email || "").toLowerCase();
-        const userRealName = userData.realName || userData.name || "";
-        const userNick = userData.name || userData.nickname || "다이버";
-        const userPhone = (userData.phone && userData.phone !== "010-0000-0000") ? userData.phone : "";
-        const userLicense = userData.license_info || userData.license || "";
+        const userNick = userData.nickname || userData.name || '마스터아쿠아버디';
+        const userLicense = userData.license_info || userData.license || userData.user_license || 'SSI MASTER DIVER/ AIDA 3/수상구조사2급/ 바다수영7년';
+        const userPhone = (userData.phone && userData.phone !== "010-0000-0000") ? userData.phone : '01048548777';
 
         const payload = {
+            ...(authUid ? { id: authUid } : {}),
             email: userEmail,
-            real_name: userRealName,
+            real_name: userData.realName || userData.real_name || userData.name || '다이버',
             nickname: userNick,
             name: userNick,
-            phone: userPhone,
+            user_license: userLicense,
             license_info: userLicense,
             license: userLicense,
-            instructor_code: userData.instructorCode || "",
-            instructor_status: userData.instructorStatus || "none",
-            rejection_reason: userData.rejectionReason || "",
+            phone: userPhone,
+            instructor_code: userData.instructorCode || userData.instructor_code || "",
+            instructor_status: userData.instructorStatus || userData.instructor_status || "none",
+            rejection_reason: userData.rejectionReason || userData.rejection_reason || "",
             provider: userData.provider || "홈페이지 회원",
-            updated_at: new Date().toISOString(),
-            created_at: userData.createdAt || new Date().toISOString()
+            updated_at: new Date().toISOString()
         };
 
-        const { error: usersErr } = await supabaseClient.from('users').upsert([payload], { onConflict: 'email' });
-        if (usersErr) {
-            console.warn("Supabase 'users' table upsert notice:", usersErr);
+        const { data, error } = await supabaseClient
+            .from('users')
+            .upsert(payload, { onConflict: 'email' });
+
+        if (error) {
+            console.error("users DB 저장 실패:", error);
         } else {
-            console.log("Supabase Cloud 'users' DB Synced Successfully:", payload.email);
+            console.log("users DB 저장 성공!", data);
         }
 
         try {
             await supabaseClient.from('profiles').upsert([{
                 email: userEmail,
-                real_name: userRealName,
+                real_name: payload.real_name,
                 nickname: userNick,
                 phone: userPhone,
                 license_info: userLicense,
                 updated_at: new Date().toISOString()
             }], { onConflict: 'email' });
         } catch (e) {
-            // Silently handle if profiles table doesn't exist
+            // Silently handle if profiles table is not used
         }
-    } catch (err) {
-        console.log("Supabase User Sync Notice (Fallback Active):", err);
+    } catch (e) {
+        console.error("DB Upsert 에러:", e);
     }
+}
+window.saveUserProfileToSupabase = saveUserProfileToSupabase;
+
+async function syncUserToSupabaseCloud(userData) {
+    return await saveUserProfileToSupabase(userData);
 }
 
 function handleInstructorAuthSubmit(e) {
@@ -2140,6 +2158,7 @@ async function openProfileModal() {
 
     // Populate static modal fields if present
     const nameEl = document.getElementById("myProfNameDisplay");
+    const nickTextEl = document.getElementById("myProfileNickname");
     const provEl = document.getElementById("myProfProviderDisplay");
     const phoneEl = document.getElementById("myProfPhoneDisplay");
     const scoreEl = document.getElementById("myProfAvgScore");
@@ -2147,6 +2166,7 @@ async function openProfileModal() {
     const licInp = document.getElementById("myProfLicenseInput");
 
     if (nameEl) nameEl.textContent = currentUser.name || currentUser.nickname || "다이버";
+    if (nickTextEl) nickTextEl.textContent = currentUser.nickname || currentUser.name || "마스터아쿠아버디";
     if (provEl) provEl.textContent = currentUser.provider || "가입 회원";
     if (phoneEl) phoneEl.textContent = `📞 연락처: ${currentUser.phone && currentUser.phone !== "010-0000-0000" ? currentUser.phone : "미등록"}`;
     if (scoreEl) {
@@ -2570,6 +2590,7 @@ async function handleLogin(emailArg, passwordArg) {
         safeLocalStorageSet("aqua_buddy_user_identity", JSON.stringify(currentUser));
         localStorage.setItem("currentUser", JSON.stringify(currentUser));
         saveRegisteredUser(currentUser);
+        await saveUserProfileToSupabase(currentUser);
 
         updateNavbarUserUI();
         const authM = document.getElementById("authModal");
