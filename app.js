@@ -5094,9 +5094,6 @@ async function reopenBuddySchedule(postId) {
 window.reopenBuddySchedule = reopenBuddySchedule;
 window.reopenBuddyPost = reopenBuddySchedule;
 
-let currentRatingPost = null;
-let currentRatingScore = 5;
-
 function openHostRatingModal(postId) {
     if (!currentUser) {
         showToast("🔑 로그인 후 평가를 작성하실 수 있습니다!");
@@ -5880,7 +5877,9 @@ function openPostDetailModal(postId) {
 if (typeof window !== "undefined") {
     window.openModal = openModal;
     window.closeModal = closeModal;
+    window.showToast = showToast;
     window.openProfileModal = openProfileModal;
+    window.openMyProfileModal = openProfileModal;
     window.openDetailModal = openDetailModal;
     window.openPostDetailModal = openPostDetailModal;
     window.openWebcamModal = openWebcamModal;
@@ -5889,6 +5888,9 @@ if (typeof window !== "undefined") {
     window.openInstructorAuthModal = openInstructorAuthModal;
     window.openAdminSecurityCheck = openAdminSecurityCheck;
     window.openInquiryModal = openInquiryModal;
+    window.openTermsModal = openTermsModal;
+    window.openLegalModal = openLegalModal;
+    window.handleCopyrightTripleClick = handleCopyrightTripleClick;
     window.filterByCategory = filterByCategory;
     window.switchMainView = switchMainView;
     window.filterInstructorSub = filterInstructorSub;
@@ -5896,6 +5898,16 @@ if (typeof window !== "undefined") {
     window.filterTideRegion = filterTideRegion;
     window.filterCctvRegion = filterCctvRegion;
     window.handleLogout = handleLogout;
+    
+    try {
+        Object.defineProperty(window, 'currentUser', {
+            get: () => currentUser,
+            set: (v) => { currentUser = v; },
+            configurable: true
+        });
+    } catch(e) {
+        window.currentUser = currentUser;
+    }
 }
 
 // Universal Document Event Delegation for All Post Cards & Profile Clicks
