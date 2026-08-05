@@ -1486,13 +1486,14 @@ async function restoreUserFromSupabaseCloud(email) {
 async function saveUserProfileToSupabase(userData) {
     if (!userData || !userData.email) return;
     if (!supabaseClient) return;
+
     try {
-        let authUid = undefined;
+        let authUser = null;
         try {
             if (supabaseClient.auth && typeof supabaseClient.auth.getUser === "function") {
                 const { data: authRes } = await supabaseClient.auth.getUser();
-                if (authRes && authRes.user && authRes.user.id) {
-                    authUid = authRes.user.id;
+                if (authRes && authRes.user) {
+                    authUser = authRes.user;
                 }
             }
         } catch (authErr) {
@@ -1501,8 +1502,24 @@ async function saveUserProfileToSupabase(userData) {
 
         const userEmail = (userData.email || "").toLowerCase();
         const userNick = userData.nickname || userData.name || '마스터아쿠아버디';
-        const userPhone = (userData.phone && userData.phone !== "010-0000-0000") ? userData.phone : (userData.phone || '01048548777');
         const userLicense = userData.license_info || userData.user_license || userData.license || 'SSI MASTER DIVER/ AIDA 3/수상구조사2급/ 바다수영7년';
+        const instCode = userData.instructorCode || userData.instructor_code || "";
+
+        // DB 실제 컬럼만 매핑 (id, email, nickname, user_license, instructor_code)
+        const payload = {
+            email: userEmail,
+            nickname: userNick,
+            user_license: userLicense
+        };
+
+        if (authUser && authUser.id) {
+            payload.id = authUser.id;
+        }
+        if (instCode) {
+            payload.instructor_code = instCode;
+        }
+
+        console.log("DB 연동 시도 페이로드:", payload);
 
         // 1. 기존 유저 존재 여부 확인
         let existingUser = null;
@@ -1517,46 +1534,32 @@ async function saveUserProfileToSupabase(userData) {
             console.warn("users 테이블 조회 예외:", selErr);
         }
 
-        const payload = {
-            email: userEmail,
-            nickname: userNick,
-            phone: userPhone,
-            user_license: userLicense,
-            license_info: userLicense,
-            license: userLicense,
-            real_name: userData.realName || userData.real_name || userData.name || userNick,
-            name: userNick,
-            instructor_code: userData.instructorCode || userData.instructor_code || "",
-            instructor_status: userData.instructorStatus || userData.instructor_status || "none",
-            rejection_reason: userData.rejectionReason || userData.rejection_reason || "",
-            provider: userData.provider || "홈페이지 회원",
-            updated_at: new Date().toISOString()
-        };
-        if (authUid) payload.id = authUid;
-
-        console.log("DB 연동 시도 페이로드:", payload);
-
+        let res;
         if (existingUser) {
             // 이미 있으면 UPDATE
-            const { error: updateErr } = await supabaseClient.from('users').update(payload).eq('email', userEmail);
-            if (updateErr) {
-                console.warn("users update 시도 중 공지:", updateErr);
-                await supabaseClient.from('users').upsert(payload, { onConflict: 'email' });
-            } else {
-                console.log("Supabase DB (update) 연동 성공!");
+            res = await supabaseClient.from('users').update(payload).eq('email', userEmail);
+            if (res.error) {
+                console.warn("Update 시도 실패, Upsert 재시도:", res.error);
+                res = await supabaseClient.from('users').upsert(payload, { onConflict: 'email' });
             }
         } else {
             // 없으면 INSERT
-            const { error: insertErr } = await supabaseClient.from('users').insert([payload]);
-            if (insertErr) {
-                console.warn("users insert 시도 중 공지:", insertErr);
-                await supabaseClient.from('users').upsert(payload, { onConflict: 'email' });
-            } else {
-                console.log("Supabase DB (insert) 연동 성공!");
+            res = await supabaseClient.from('users').insert([payload]);
+            if (res.error) {
+                console.warn("Insert 시도 실패, Upsert 재시도:", res.error);
+                res = await supabaseClient.from('users').upsert(payload, { onConflict: 'email' });
             }
         }
+
+        if (res && res.error) {
+            console.error("DB 저장 실패 세부원인:", res.error);
+            alert("DB 저장 거부됨: " + (res.error.message || JSON.stringify(res.error)));
+        } else {
+            console.log("Supabase DB 연동 성공!", res ? res.data : "");
+        }
     } catch (e) {
-        console.warn("DB 연동 예외 처리 (로그인 진행 유지):", e);
+        console.error("코드 실행 에러:", e);
+        alert("코드 실행 에러: " + (e.message || e));
     }
 }
 window.saveUserProfileToSupabase = saveUserProfileToSupabase;
