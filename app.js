@@ -1440,13 +1440,6 @@ async function refreshCurrentUserFromCloud() {
 
             if (!error && data) {
                 dbUser = data;
-            } else {
-                const { data: profData } = await supabaseClient
-                    .from('profiles')
-                    .select('*')
-                    .eq('email', userEmail)
-                    .maybeSingle();
-                if (profData) dbUser = profData;
             }
         }
 
@@ -1561,18 +1554,6 @@ async function saveUserProfileToSupabase(userData) {
             } else {
                 console.log("Supabase DB (insert) 연동 성공!");
             }
-        }
-
-        try {
-            await supabaseClient.from('profiles').upsert([{
-                email: userEmail,
-                nickname: userNick,
-                phone: userPhone,
-                license_info: userLicense,
-                updated_at: new Date().toISOString()
-            }], { onConflict: 'email' });
-        } catch (e) {
-            // Profiles 테이블 예외 무시
         }
     } catch (e) {
         console.warn("DB 연동 예외 처리 (로그인 진행 유지):", e);
