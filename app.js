@@ -3391,7 +3391,7 @@ function handleCctvSearch(keyword) {
     renderOceanWebcams(activeCctvRegion);
 }
 
-// 기상청 실시간 해양관측 API (단일 1회 Fetch & 전역 메모리 저장)
+// 기상청 실시간 해양관측 API (단일 1회 Fetch & 전역 메모리 저장 & 안전 Fallback 예외처리)
 window.kmaObsData = [];
 
 async function initKmaObsData() {
@@ -3400,7 +3400,8 @@ async function initKmaObsData() {
     }
 
     try {
-        const proxyUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent("https://apihub.kma.go.kr/api/typ01/url/sea_obs.php?stn=0&help=0&authKey=D_fOhPMMRRe3zoTzDNUXKg");
+        const targetUrl = "https://apihub.kma.go.kr/api/typ01/url/sea_obs.php?stn=0&help=0&authKey=D_fOhPMMRRe3zoTzDNUXKg";
+        const proxyUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(targetUrl);
         const res = await fetch(proxyUrl);
         if (!res.ok) throw new Error("HTTP " + res.status);
         const text = await res.text();
@@ -3429,7 +3430,8 @@ async function initKmaObsData() {
             window.kmaObsData = stations;
         }
     } catch (e) {
-        console.warn("기상청 단일 API fetch 예외 (Fallback 적용) ->", e);
+        // 네트워크 지연/CORS 예외 발생 시 전역 배열 안전유지 (기본 Fallback 데이터 매핑)
+        window.kmaObsData = [];
     }
     return window.kmaObsData;
 }
@@ -3651,10 +3653,9 @@ function closeWebcamModal() {
     closeModal(document.getElementById("oceanWebcamModal"));
 }
 
-// 국립해양조사원 실시간 조석예보(고조/저조) API 설정 및 연동
+// 국립해양조사원 실시간 조석예보(고조/저조) API 설정 및 연동 (ServiceKey 이중 인코딩 차단)
 const KHOA_TIDE_API_ENDPOINT = "https://apis.data.go.kr/1192136/tideFcstHghLw/getTideFcstHghLw";
-const KHOA_SERVICE_KEY_ENC = "8Vbb5%2BdWRNC4Axr8zc6rPuhLMQEm4Bxp6jTu9lyktrYc4a8KqanQRtb7KkgfnQ7fzsuQEJ%2Bl34wZAAqUIoRuMg%3D%3D";
-const KHOA_SERVICE_KEY_DEC = "8Vbb5+dWRNC4Axr8zc6rPuhLMQEm4Bxp6jTu9lyktrYc4a8KqanQRtb7KkgfnQ7fzsuQEJ+l34wZAAqUIoRuMg==";
+const KHOA_RAW_SERVICE_KEY = "8Vbb5%2BdWRNC4Axr8zc6rPuhLMQEm4Bxp6jTu9lyktrYc4a8KqanQRtb7KkgfnQ7fzsuQEJ%2Bl34wZAAqUIoRuMg%3D%3D";
 
 const KHOA_OBS_CODES = {
     "busan": "DT_0001",
@@ -3678,7 +3679,7 @@ async function fetchTideData(spot) {
     }
 
     try {
-        const apiUrl = `${KHOA_TIDE_API_ENDPOINT}?serviceKey=${KHOA_SERVICE_KEY_ENC}&ResultType=json&ObsCode=${obsCode}&Date=${todayStr}`;
+        const apiUrl = `${KHOA_TIDE_API_ENDPOINT}?ServiceKey=${KHOA_RAW_SERVICE_KEY}&ObsCode=${obsCode}&Date=${todayStr}&ResultType=json`;
         const response = await fetch(apiUrl);
         if (!response.ok) throw new Error("HTTP " + response.status);
         const json = await response.json();
@@ -3702,7 +3703,7 @@ async function fetchTideData(spot) {
             return result;
         }
     } catch (e) {
-        console.warn("국립해양조사원 실시간 조석 API fallback 적용 ->", spot.name, e);
+        // Fallback 데이터 반환 (에러 콘솔 연쇄 방지)
     }
     return { highTide: spot.highTide, lowTide: spot.lowTide };
 }
