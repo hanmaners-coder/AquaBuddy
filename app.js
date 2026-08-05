@@ -1181,6 +1181,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (typeof refreshCurrentUserFromCloud === 'function') {
         await refreshCurrentUserFromCloud();
     }
+    if (typeof initKmaObsData === 'function') {
+        await initKmaObsData();
+    }
     loadPosts();
     loadMyPosts();
     loadInquiries();
@@ -3388,24 +3391,17 @@ function handleCctvSearch(keyword) {
     renderOceanWebcams(activeCctvRegion);
 }
 
-// 기상청 실시간 해양관측 API (수온, 파고, 풍속) 연동 (stn=0, help=0 정제 파라미터 & CORS 우회 프록시 적용)
-const KMA_SEA_OBS_TARGET = "https://apihub.kma.go.kr/api/typ01/url/sea_obs.php?stn=0&help=0&authKey=D_fOhPMMRRe3zoTzDNUXKg";
-const KMA_SEA_OBS_API_URL = "https://api.allorigins.win/raw?url=" + encodeURIComponent(KMA_SEA_OBS_TARGET);
+// 기상청 실시간 해양관측 API (단일 1회 Fetch & 전역 메모리 저장)
+window.kmaObsData = [];
 
-let kmaSeaObsCache = null;
-let kmaSeaObsCacheTime = 0;
-
-async function fetchKmaSeaObsData() {
-    if (kmaSeaObsCache && (Date.now() - kmaSeaObsCacheTime < 300000)) {
-        return kmaSeaObsCache;
+async function initKmaObsData() {
+    if (window.kmaObsData && window.kmaObsData.length > 0) {
+        return window.kmaObsData;
     }
 
     try {
-        let res = await fetch(KMA_SEA_OBS_API_URL);
-        if (!res.ok) {
-            const fallbackProxy = `https://corsproxy.io/?${encodeURIComponent(KMA_SEA_OBS_TARGET)}`;
-            res = await fetch(fallbackProxy);
-        }
+        const proxyUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent("https://apihub.kma.go.kr/api/typ01/url/sea_obs.php?stn=0&help=0&authKey=D_fOhPMMRRe3zoTzDNUXKg");
+        const res = await fetch(proxyUrl);
         if (!res.ok) throw new Error("HTTP " + res.status);
         const text = await res.text();
         const lines = text.split("\n");
@@ -3430,16 +3426,24 @@ async function fetchKmaSeaObsData() {
         }
 
         if (stations.length > 0) {
-            kmaSeaObsCache = stations;
-            kmaSeaObsCacheTime = Date.now();
-            return stations;
+            window.kmaObsData = stations;
         }
     } catch (e) {
-        console.warn("기상청 실시간 해양관측 API fallback 유지 ->", e);
+        console.warn("기상청 단일 API fetch 예외 (Fallback 적용) ->", e);
     }
-    return null;
+    return window.kmaObsData;
 }
-window.fetchKmaSeaObsData = fetchKmaSeaObsData;
+window.initKmaObsData = initKmaObsData;
+
+// HTTP CCTV 재생용 Vercel Serverless Proxy 변환 함수
+function getCctvProxyUrl(url) {
+    if (!url) return "";
+    if (url.startsWith("http://")) {
+        return `/api/cctv-proxy?url=${encodeURIComponent(url)}`;
+    }
+    return url;
+}
+window.getCctvProxyUrl = getCctvProxyUrl;
 
 const REGION_LAT_LNG = {
     "busan": { lat: 35.1587, lng: 129.1604 },
@@ -3457,8 +3461,8 @@ const REGION_LAT_LNG = {
     "jeju": { lat: 33.4996, lng: 126.5312 }
 };
 
-async function getKmaObsMetricsForSpot(spotLat, spotLng) {
-    const stations = await fetchKmaSeaObsData();
+function getKmaObsMetricsForSpot(spotLat, spotLng) {
+    const stations = window.kmaObsData || [];
     if (!stations || stations.length === 0) return null;
 
     let nearest = null;
@@ -3475,6 +3479,7 @@ async function getKmaObsMetricsForSpot(spotLat, spotLng) {
 
     return nearest;
 }
+window.getKmaObsMetricsForSpot = getKmaObsMetricsForSpot;
 
 function renderOceanWebcams(regionCategoryKey = "all") {
     const grid = document.getElementById("webcamGrid");
@@ -3560,7 +3565,10 @@ function openWebcamModal(camId) {
     const iframe = document.getElementById("webcamLiveIframe");
     const video = document.getElementById("webcamHlsVideo");
 
-    if (cam.hlsUrl) {
+    const effectiveHlsUrl = getCctvProxyUrl(cam.hlsUrl);
+    const effectiveEmbedUrl = getCctvProxyUrl(cam.embedUrl);
+
+    if (effectiveHlsUrl) {
         if (iframe) iframe.style.display = "none";
         if (video) video.style.display = "block";
 
@@ -3573,9 +3581,9 @@ function openWebcamModal(camId) {
                 video.pause();
                 video.style.display = "none";
             }
-            if (iframe && cam.embedUrl) {
+            if (iframe && effectiveEmbedUrl) {
                 iframe.style.display = "block";
-                iframe.src = cam.embedUrl;
+                iframe.src = effectiveEmbedUrl;
             }
         };
 
@@ -3584,7 +3592,7 @@ function openWebcamModal(camId) {
                 activeHlsPlayer.destroy();
             }
             activeHlsPlayer = new Hls();
-            activeHlsPlayer.loadSource(cam.hlsUrl);
+            activeHlsPlayer.loadSource(effectiveHlsUrl);
             activeHlsPlayer.attachMedia(video);
             activeHlsPlayer.on(Hls.Events.MANIFEST_PARSED, function() {
                 video.play().catch(e => console.log("HLS Autoplay Notice:", e));
@@ -3596,7 +3604,7 @@ function openWebcamModal(camId) {
                 }
             });
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            video.src = cam.hlsUrl;
+            video.src = effectiveHlsUrl;
             video.onerror = fallbackToIframe;
             video.play().catch(e => console.log("Native HLS Autoplay Notice:", e));
         } else {
@@ -3609,7 +3617,7 @@ function openWebcamModal(camId) {
         }
         if (iframe) {
             iframe.style.display = "block";
-            iframe.src = cam.embedUrl;
+            iframe.src = effectiveEmbedUrl;
         }
     }
 
