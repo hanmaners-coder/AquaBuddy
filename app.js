@@ -1360,11 +1360,12 @@ function updateNavbarUserUI() {
     const navActivity = document.getElementById("navLinkActivity");
     const tabActivity = document.querySelector('.tab-btn[data-category="activity_log"]');
 
-    if (currentUser && currentUser.name) {
+    if (currentUser && (currentUser.nickname || currentUser.name || currentUser.email)) {
         if (userNav) userNav.classList.remove("hidden");
         const instBadge = isVerifiedInstructor() ? ` [공인강사]` : (isPendingInstructor() ? ` [심사대기중]` : '');
         const navName = document.getElementById("navUserName");
-        if (navName) navName.textContent = `${currentUser.name}${instBadge}`;
+        const displayName = currentUser.nickname || currentUser.name || (currentUser.email ? currentUser.email.split('@')[0] : "다이버");
+        if (navName) navName.textContent = `${displayName}${instBadge}`;
         if (openAuthBtn) openAuthBtn.classList.add("hidden");
 
         if (navActivity) navActivity.style.display = "inline-flex";
@@ -1444,16 +1445,22 @@ async function refreshCurrentUserFromCloud() {
         }
 
         if (dbUser) {
+            const finalNick = dbUser.nickname || dbUser.name || savedUser.nickname || savedUser.name || userEmail.split('@')[0];
+            const finalLicense = (dbUser.user_license !== undefined && dbUser.user_license !== null)
+                ? dbUser.user_license
+                : (dbUser.license_info || dbUser.license || savedUser.user_license || savedUser.license_info || savedUser.license || "");
+
             const updatedUser = {
                 ...savedUser,
                 email: userEmail,
-                realName: dbUser.real_name || dbUser.realName || savedUser.realName || dbUser.nickname || "다이버",
-                real_name: dbUser.real_name || dbUser.realName || savedUser.real_name || "다이버",
-                name: dbUser.nickname || dbUser.name || savedUser.name || "다이버",
-                nickname: dbUser.nickname || dbUser.name || savedUser.nickname || "다이버",
+                realName: dbUser.real_name || dbUser.realName || savedUser.realName || finalNick,
+                real_name: dbUser.real_name || dbUser.realName || savedUser.real_name || finalNick,
+                name: finalNick,
+                nickname: finalNick,
                 phone: (dbUser.phone && dbUser.phone !== "010-0000-0000") ? dbUser.phone : (savedUser.phone || ""),
-                license: dbUser.license_info || dbUser.license || savedUser.license || "자유다이버",
-                license_info: dbUser.license_info || dbUser.license || savedUser.license_info || "자유다이버",
+                license: finalLicense,
+                license_info: finalLicense,
+                user_license: finalLicense,
                 instructorStatus: dbUser.instructor_status || dbUser.instructorStatus || savedUser.instructorStatus || "none",
                 instructor_status: dbUser.instructor_status || dbUser.instructorStatus || savedUser.instructor_status || "none",
                 rejectionReason: dbUser.rejection_reason || dbUser.rejectionReason || savedUser.rejectionReason || "",
