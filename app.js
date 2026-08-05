@@ -3388,6 +3388,89 @@ function handleCctvSearch(keyword) {
     renderOceanWebcams(activeCctvRegion);
 }
 
+// 기상청 실시간 해양관측 API (수온, 파고, 풍속) 연동
+const KMA_SEA_OBS_API_URL = "https://apihub.kma.go.kr/api/typ01/url/sea_obs.php?authKey=D_fOhPMMRRe3zoTzDNUXKg&help=0";
+
+let kmaSeaObsCache = null;
+let kmaSeaObsCacheTime = 0;
+
+async function fetchKmaSeaObsData() {
+    if (kmaSeaObsCache && (Date.now() - kmaSeaObsCacheTime < 300000)) {
+        return kmaSeaObsCache;
+    }
+
+    try {
+        const res = await fetch(KMA_SEA_OBS_API_URL);
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const text = await res.text();
+        const lines = text.split("\n");
+
+        const stations = [];
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line || line.startsWith("#")) continue;
+
+            const parts = line.split(",").map(p => p.trim());
+            if (parts.length >= 11) {
+                const lon = parseFloat(parts[4]);
+                const lat = parseFloat(parts[5]);
+                if (!isNaN(lon) && !isNaN(lat)) {
+                    const wh = (parts[6] && parts[6] !== "-99" && parts[6] !== "-99.0") ? `${parts[6]}m` : null;
+                    const ws = (parts[8] && parts[8] !== "-99" && parts[8] !== "-99.0") ? `${parts[8]}m/s` : null;
+                    const tw = (parts[10] && parts[10] !== "-99" && parts[10] !== "-99.0") ? `${parts[10]}°C` : null;
+
+                    stations.push({ lon, lat, wh, ws, tw, name: parts[3] });
+                }
+            }
+        }
+
+        if (stations.length > 0) {
+            kmaSeaObsCache = stations;
+            kmaSeaObsCacheTime = Date.now();
+            return stations;
+        }
+    } catch (e) {
+        console.warn("기상청 실시간 해양관측 API fallback 유지 ->", e);
+    }
+    return null;
+}
+window.fetchKmaSeaObsData = fetchKmaSeaObsData;
+
+const REGION_LAT_LNG = {
+    "busan": { lat: 35.1587, lng: 129.1604 },
+    "busan_gijang": { lat: 35.2447, lng: 129.2223 },
+    "busan_haeundae": { lat: 35.1587, lng: 129.1604 },
+    "busan_suyeong": { lat: 35.1537, lng: 129.1184 },
+    "busan_namgu": { lat: 35.1366, lng: 129.0844 },
+    "busan_yeongdo": { lat: 35.0912, lng: 129.0678 },
+    "busan_seogu": { lat: 35.0976, lng: 129.0244 },
+    "busan_gangseo": { lat: 35.0834, lng: 128.8312 },
+    "ulsan": { lat: 35.5384, lng: 129.3114 },
+    "geoje": { lat: 34.8806, lng: 128.6211 },
+    "donghae": { lat: 36.0190, lng: 129.3435 },
+    "islands": { lat: 37.2429, lng: 131.8687 },
+    "jeju": { lat: 33.4996, lng: 126.5312 }
+};
+
+async function getKmaObsMetricsForSpot(spotLat, spotLng) {
+    const stations = await fetchKmaSeaObsData();
+    if (!stations || stations.length === 0) return null;
+
+    let nearest = null;
+    let minDist = Infinity;
+
+    for (let i = 0; i < stations.length; i++) {
+        const s = stations[i];
+        const dist = Math.hypot(s.lat - spotLat, s.lon - spotLng);
+        if (dist < minDist) {
+            minDist = dist;
+            nearest = s;
+        }
+    }
+
+    return nearest;
+}
+
 function renderOceanWebcams(regionCategoryKey = "all") {
     const grid = document.getElementById("webcamGrid");
     if (!grid) return;
@@ -3430,12 +3513,27 @@ function renderOceanWebcams(regionCategoryKey = "all") {
                 <p style="color: var(--accent-cyan); font-weight: 700; margin-top: 4px;">
                     <i class="fa-solid fa-water"></i> ${cam.status}
                 </p>
-                <p style="margin-top: 2px; font-size: 0.75rem; color: var(--text-dim);">
+                <p style="margin-top: 2px; font-size: 0.75rem; color: var(--text-dim);" id="cctvMetrics_${cam.id}">
                     수온: ${cam.waterTemp} | 풍속: ${cam.wind}
                 </p>
             </div>
         </div>
     `).join("");
+
+    // 비동기 기상청 실시간 관측 데이터 반영
+    filteredCctvs.forEach(async (cam) => {
+        const regCoords = REGION_LAT_LNG[cam.regionCategory] || REGION_LAT_LNG["busan"];
+        const liveMetrics = await getKmaObsMetricsForSpot(regCoords.lat, regCoords.lng);
+        if (liveMetrics) {
+            const metricsEl = document.getElementById(`cctvMetrics_${cam.id}`);
+            if (metricsEl) {
+                const tempStr = liveMetrics.tw || cam.waterTemp;
+                const windStr = liveMetrics.ws || cam.wind;
+                const waveStr = liveMetrics.wh ? ` | 파고: ${liveMetrics.wh}` : '';
+                metricsEl.innerHTML = `수온: <strong>${tempStr}</strong> | 풍속: <strong>${windStr}</strong>${waveStr}`;
+            }
+        }
+    });
 }
 
 function openWebcamModal(camId) {
@@ -3540,6 +3638,63 @@ function closeWebcamModal() {
     closeModal(document.getElementById("oceanWebcamModal"));
 }
 
+// 국립해양조사원 실시간 조석예보(고조/저조) API 설정 및 연동
+const KHOA_TIDE_API_ENDPOINT = "https://apis.data.go.kr/1192136/tideFcstHghLw/getTideFcstHghLw";
+const KHOA_SERVICE_KEY_ENC = "8Vbb5%2BdWRNC4Axr8zc6rPuhLMQEm4Bxp6jTu9lyktrYc4a8KqanQRtb7KkgfnQ7fzsuQEJ%2Bl34wZAAqUIoRuMg%3D%3D";
+const KHOA_SERVICE_KEY_DEC = "8Vbb5+dWRNC4Axr8zc6rPuhLMQEm4Bxp6jTu9lyktrYc4a8KqanQRtb7KkgfnQ7fzsuQEJ+l34wZAAqUIoRuMg==";
+
+const KHOA_OBS_CODES = {
+    "busan": "DT_0001",
+    "ulsan": "DT_0004",
+    "geoje": "DT_0008",
+    "donghae": "DT_0003",
+    "islands": "DT_0028",
+    "jeju": "DT_0006"
+};
+
+const tideApiCache = {};
+
+async function fetchTideData(spot) {
+    if (!spot) return null;
+    const obsCode = KHOA_OBS_CODES[spot.regionCat] || "DT_0001";
+    const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+
+    const cacheKey = `${obsCode}_${todayStr}`;
+    if (tideApiCache[cacheKey]) {
+        return tideApiCache[cacheKey];
+    }
+
+    try {
+        const apiUrl = `${KHOA_TIDE_API_ENDPOINT}?serviceKey=${KHOA_SERVICE_KEY_ENC}&ResultType=json&ObsCode=${obsCode}&Date=${todayStr}`;
+        const response = await fetch(apiUrl);
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        const json = await response.json();
+
+        let items = [];
+        if (json && json.result && json.result.data) {
+            items = json.result.data;
+        } else if (json && json.response && json.response.body && json.response.body.items) {
+            items = json.response.body.items.item || json.response.body.items;
+        }
+
+        if (Array.isArray(items) && items.length > 0) {
+            const highTides = items.filter(i => (i.tide_level_code || i.tideLevelCode || i.hl_code || "").includes("고조") || (i.tph_level || "").includes("고조"));
+            const lowTides = items.filter(i => (i.tide_level_code || i.tideLevelCode || i.hl_code || "").includes("저조") || (i.tph_level || "").includes("저조"));
+
+            const highText = highTides.map(h => `${(h.tide_time || h.tph_time || '').slice(-5)} (${h.tide_height || h.tph_level || ''}cm)`).join(" / ") || spot.highTide;
+            const lowText = lowTides.map(l => `${(l.tide_time || l.tph_time || '').slice(-5)} (${l.tide_height || l.tph_level || ''}cm)`).join(" / ") || spot.lowTide;
+
+            const result = { highTide: highText, lowTide: lowText };
+            tideApiCache[cacheKey] = result;
+            return result;
+        }
+    } catch (e) {
+        console.warn("국립해양조사원 실시간 조석 API fallback 적용 ->", spot.name, e);
+    }
+    return { highTide: spot.highTide, lowTide: spot.lowTide };
+}
+window.fetchTideData = fetchTideData;
+
 function renderWeatherGrid(regionKey = "all") {
     const grid = document.getElementById("weatherGrid");
     if (!grid) return;
@@ -3554,8 +3709,8 @@ function renderWeatherGrid(regionKey = "all") {
         );
     }
 
-    grid.innerHTML = filteredSpots.map(spot => `
-        <div class="weather-card">
+    grid.innerHTML = filteredSpots.map((spot, idx) => `
+        <div class="weather-card" id="weatherCard_${spot.id || idx}">
             <div class="weather-card-header">
                 <h3><i class="fa-solid fa-location-dot" style="color: var(--accent-cyan);"></i> ${spot.name}</h3>
                 <span class="tide-badge">${spot.tideName}</span>
@@ -3580,12 +3735,41 @@ function renderWeatherGrid(regionKey = "all") {
                 </div>
             </div>
 
-            <div class="tide-times">
+            <div class="tide-times" id="tideTime_${spot.id || idx}">
                 <span>🔺 만조: ${spot.highTide}</span>
                 <span>🔻 간조: ${spot.lowTide}</span>
             </div>
         </div>
     `).join("");
+
+    // 비동기 실시간 국립해양조사원 및 기상청 API 연동 및 데이터 반영
+    filteredSpots.forEach(async (spot, idx) => {
+        const liveData = await fetchTideData(spot);
+        if (liveData && (liveData.highTide !== spot.highTide || liveData.lowTide !== spot.lowTide)) {
+            const timeContainer = document.getElementById(`tideTime_${spot.id || idx}`);
+            if (timeContainer) {
+                timeContainer.innerHTML = `
+                    <span>🔺 만조: ${liveData.highTide}</span>
+                    <span>🔻 간조: ${liveData.lowTide}</span>
+                `;
+            }
+        }
+
+        const regCoords = REGION_LAT_LNG[spot.regionCat] || REGION_LAT_LNG["busan"];
+        const kmaLive = await getKmaObsMetricsForSpot(regCoords.lat, regCoords.lng);
+        if (kmaLive) {
+            const cardEl = document.getElementById(`weatherCard_${spot.id || idx}`);
+            if (cardEl) {
+                const tempEl = cardEl.querySelector(".metric-box:nth-child(1) .metric-val");
+                const waveEl = cardEl.querySelector(".metric-box:nth-child(2) .metric-val");
+                const windEl = cardEl.querySelector(".metric-box:nth-child(3) .metric-val");
+
+                if (tempEl && kmaLive.tw) tempEl.textContent = kmaLive.tw;
+                if (waveEl && kmaLive.wh) waveEl.textContent = kmaLive.wh;
+                if (windEl && kmaLive.ws) windEl.textContent = kmaLive.ws;
+            }
+        }
+    });
 }
 
 function updateCreateButtonText(cat) {
@@ -3966,20 +4150,58 @@ function renderDashboardBlocks() {
 function renderCompactPostRow(post) {
     const isInst = post.category === "instructor";
     const isMarket = post.category === "market";
+    const isCommunity = post.category === "community";
+    const isBuddy = !isInst && !isMarket && !isCommunity;
+
     const priceText = isInst ? (post.classFee ? post.classFee.toLocaleString() + '원' : '수강료 문의') : (isMarket ? (post.price ? post.price.toLocaleString() + '원' : '가격협의') : '');
-    
+
+    let metaLineHtml = "";
+    if (isBuddy || isInst) {
+        const scheduleText = formatDate(post.date || post.createdAt);
+        const locText = post.mapAddress || post.locationName || post.location || '장소 미지정';
+        const joined = post.joinedCount !== undefined ? post.joinedCount : (Array.isArray(post.attendees) ? post.attendees.length : 1);
+        const cap = post.capacity || 4;
+        const isDone = post.status === 'completed';
+        const statusLabel = isDone ? '완료' : '모집 중';
+        const statusColor = isDone ? '#00e676' : 'var(--accent-gold)';
+
+        metaLineHtml = `
+            <div class="post-submeta-line" style="font-size: 0.78rem; color: #94a3b8; margin-top: 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; text-align: left;">
+                <span>📅 ${scheduleText}</span>
+                <span style="opacity: 0.3;">|</span>
+                <span>📍 ${escapeHtml(locText.substring(0, 20))}</span>
+                <span style="opacity: 0.3;">|</span>
+                <span style="color: ${statusColor}; font-weight: 700;">👥 ${joined}/${cap}명 ${statusLabel}</span>
+            </div>
+        `;
+    } else {
+        const createdDateText = post.createdAt ? formatDate(post.createdAt).split(' ')[0] : '2026.08.05';
+        const commentCount = Array.isArray(post.comments) ? post.comments.length : (post.commentCount || 0);
+
+        metaLineHtml = `
+            <div class="post-submeta-line" style="font-size: 0.78rem; color: #94a3b8; margin-top: 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; text-align: left;">
+                <span>🕒 ${createdDateText}</span>
+                <span style="opacity: 0.3;">|</span>
+                <span>💬 댓글 ${commentCount}개</span>
+            </div>
+        `;
+    }
+
     return `
-        <div class="post-card feed-card feed-card-item compact-post-row" data-post-id="${post.id}" onclick="openPostDetailModal('${post.id}')" style="cursor: pointer;">
-            <div class="post-info-left compact-row-main">
-                <span class="badge badge-${post.category}">${escapeHtml(post.categoryName || post.category)}</span>
-                <span class="compact-post-title" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600;">${escapeHtml(post.title)}</span>
+        <div class="post-card feed-card feed-card-item compact-post-row" data-post-id="${post.id}" onclick="openPostDetailModal('${post.id}')" style="cursor: pointer; display: flex !important; flex-direction: column !important; align-items: stretch !important; padding: 12px 16px !important; margin-bottom: 8px !important;">
+            <div style="display: flex !important; flex-direction: row !important; justify-content: space-between !important; align-items: center !important; width: 100% !important;">
+                <div class="post-info-left compact-row-main" style="display: flex !important; align-items: center !important; gap: 10px !important; flex: 1 !important; min-width: 0 !important;">
+                    <span class="badge badge-${post.category}">${escapeHtml(post.categoryName || post.category)}</span>
+                    <span class="compact-post-title" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; color: #fff; font-size: 0.95rem;">${escapeHtml(post.title)}</span>
+                </div>
+                <div class="post-info-right compact-row-meta" style="display: flex !important; align-items: center !important; gap: 8px !important; flex-shrink: 0 !important;">
+                    <span class="compact-author-name" style="font-size: 0.85rem;"><i class="fa-solid fa-user-circle"></i> ${escapeHtml(post.userName || '다이버')}</span>
+                    <span class="compact-rating" style="color: #ffb703; font-size: 0.85rem;">★ ${post.hostRating || 5.0}</span>
+                    ${priceText ? `<span style="color: var(--accent-gold); font-weight: 700; font-size: 0.85rem;">${priceText}</span>` : ''}
+                    <span class="compact-action-link" style="color: #38bdf8; font-weight: bold; font-size: 0.85rem;">상세 ➔</span>
+                </div>
             </div>
-            <div class="post-info-right compact-row-meta">
-                <span class="compact-author-name"><i class="fa-solid fa-user-circle"></i> ${escapeHtml(post.userName || '다이버')}</span>
-                <span class="compact-rating" style="color: #ffb703;">★ ${post.hostRating || 5.0}</span>
-                ${priceText ? `<span style="color: var(--accent-gold); font-weight: 700;">${priceText}</span>` : ''}
-                <span class="compact-action-link" style="color: #38bdf8; font-weight: bold;">상세 ➔</span>
-            </div>
+            ${metaLineHtml}
         </div>
     `;
 }
@@ -5420,7 +5642,14 @@ function showMap(addressQuery) {
                 setTimeout(() => {
                     map.relayout();
                     map.setCenter(coords);
-                }, 120);
+                }, 200);
+
+                setTimeout(() => {
+                    if (map) {
+                        map.relayout();
+                        map.setCenter(coords);
+                    }
+                }, 350);
 
                 if (kakao.maps.services && kakao.maps.services.Geocoder && !matchedSpot) {
                     const geocoder = new kakao.maps.services.Geocoder();
