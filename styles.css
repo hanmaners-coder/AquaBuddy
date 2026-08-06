@@ -2275,3 +2275,30 @@ input[type="time"]::-webkit-calendar-picker-indicator {
     overflow: hidden !important;
     position: relative !important;
 }
+
+/* Responsive Unified Spot Dashboard Grid Layout */
+.spot-dashboard-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+@media (min-width: 1024px) {
+    .spot-dashboard-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+    
+    .dashboard-windy-section {
+        grid-column: 1 / -1;
+    }
+    
+    .dashboard-badatime-section {
+        grid-column: 1;
+    }
+    
+    .dashboard-cctv-section {
+        grid-column: 2;
+    }
+}

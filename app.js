@@ -3660,7 +3660,7 @@ function renderUnifiedSpotDashboard(spot) {
         const effectiveUrl = getCctvProxyUrl(rawUrl);
         cctvHtml = `
             <div class="dashboard-cctv-box" style="width: 100%; height: 380px; border-radius: 12px; overflow: hidden; background: #000; position: relative;">
-                <iframe src="${effectiveUrl}" style="width: 100%; height: 100%; border: none;" allowfullscreen></iframe>
+                <iframe src="${effectiveUrl}" style="width: 100%; height: 380px; border: none;" allowfullscreen></iframe>
                 <div style="position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.75); padding: 6px 12px; border-radius: 8px; color: #00e676; font-weight: 700; font-size: 0.82rem; backdrop-filter: blur(4px);">
                     🔴 24H LIVE CCTV 생중계 (${matchingCctv.name})
                 </div>
@@ -3668,15 +3668,15 @@ function renderUnifiedSpotDashboard(spot) {
         `;
     } else {
         cctvHtml = `
-            <div class="dashboard-cctv-none" style="width: 100%; padding: 35px 20px; border-radius: 12px; background: rgba(15, 23, 42, 0.7); border: 1px dashed rgba(255,255,255,0.2); text-align: center; color: var(--text-muted);">
-                <i class="fa-solid fa-video-slash" style="font-size: 2.5rem; margin-bottom: 10px; color: #ff9800;"></i>
-                <h4 style="color: #fff; font-size: 1.1rem; margin-bottom: 6px;">📷 CCTV 미설치 지역입니다</h4>
-                <p style="font-size: 0.85rem; color: #94a3b8; margin: 0;">아래 Windy 실시간 파도 지도 및 바다타임 물때표 정보를 참조하여 안전하게 입수하세요.</p>
+            <div class="dashboard-cctv-none" style="width: 100%; height: 380px; border-radius: 12px; background: rgba(15, 23, 42, 0.7); border: 1px dashed rgba(255,255,255,0.2); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: var(--text-muted); box-sizing: border-box; padding: 20px;">
+                <i class="fa-solid fa-video-slash" style="font-size: 3rem; margin-bottom: 12px; color: #ff9800;"></i>
+                <h4 style="color: #fff; font-size: 1.15rem; margin-bottom: 8px;">📷 CCTV 미설치 스팟입니다</h4>
+                <p style="font-size: 0.85rem; color: #94a3b8; margin: 0; max-width: 280px; line-height: 1.4;">상단 Windy 실시간 파도 지도 및 바다타임 물때표 정보를 참조하여 안전하게 입수하세요.</p>
             </div>
         `;
     }
 
-    const windyUrl = `https://embed.windy.com/embed2.html?lat=${coords.lat}&lon=${coords.lng}&detailLat=${coords.lat}&detailLon=${coords.lng}&width=100%25&height=400&zoom=10&level=surface&overlay=waves&product=ecmwf&menu=&message=&marker=true&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=m%2Fs&metricTemp=%C2%B0C&radarRange=-1`;
+    const windyUrl = `https://embed.windy.com/embed2.html?lat=${coords.lat}&lon=${coords.lng}&detailLat=${coords.lat}&detailLon=${coords.lng}&width=100%25&height=320&zoom=10&level=surface&overlay=waves&product=ecmwf&metricWind=m%2Fs&metricTemp=%C2%B0C`;
 
     container.innerHTML = `
         <div class="spot-dashboard-card glass-panel" style="padding: 20px; border-radius: 16px; margin-bottom: 30px; border: 1px solid rgba(0, 242, 254, 0.25); background: rgba(15, 23, 42, 0.85);">
@@ -3694,31 +3694,34 @@ function renderUnifiedSpotDashboard(spot) {
                 </div>
             </div>
 
-            <!-- ① CCTV 영역 -->
-            <div style="margin-bottom: 24px;">
-                <h3 style="color: var(--accent-cyan); font-size: 1.05rem; margin-bottom: 10px; font-weight: 700;">
-                    <i class="fa-solid fa-video" style="color:#ff5252;"></i> ① 스팟 실시간 CCTV 생중계
-                </h3>
-                ${cctvHtml}
-            </div>
-
-            <!-- ② Windy 파도 지도 (Height 400px) -->
-            <div style="margin-bottom: 24px;">
-                <h3 style="color: var(--accent-cyan); font-size: 1.05rem; margin-bottom: 10px; font-weight: 700;">
-                    <i class="fa-solid fa-wind"></i> ② Windy 좌표 파도 & 바람 실시간 지도 (${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)})
-                </h3>
-                <div style="width: 100%; height: 400px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
-                    <iframe src="${windyUrl}" style="width: 100%; height: 400px; border: none;"></iframe>
+            <!-- Responsive Grid Layout (PC: 윈디 상단 1열 + 바다타임/CCTV 하단 2열) -->
+            <div class="spot-dashboard-grid">
+                <!-- ① Windy 파도 지도 (Height 320px) -->
+                <div class="dashboard-windy-section">
+                    <h3 style="color: var(--accent-cyan); font-size: 1.05rem; margin-bottom: 10px; font-weight: 700;">
+                        <i class="fa-solid fa-wind"></i> ① Windy 좌표 파도 & 바람 실시간 지도 (${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)})
+                    </h3>
+                    <div style="width: 100%; height: 320px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
+                        <iframe src="${windyUrl}" style="width: 100%; height: 320px; border: none;"></iframe>
+                    </div>
                 </div>
-            </div>
 
-            <!-- ③ 바다타임 IFRAME (Height 500px) -->
-            <div>
-                <h3 style="color: var(--accent-cyan); font-size: 1.05rem; margin-bottom: 10px; font-weight: 700;">
-                    <i class="fa-solid fa-calendar-days"></i> ③ 바da 타임 (Badatime) 셀프 물때 검색
-                </h3>
-                <div style="width: 100%; height: 500px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); background: #fff;">
-                    <iframe src="https://www.badatime.com/" style="width: 100%; height: 500px; border: none;"></iframe>
+                <!-- ② 바다타임 IFRAME (Height 380px) -->
+                <div class="dashboard-badatime-section">
+                    <h3 style="color: var(--accent-cyan); font-size: 1.05rem; margin-bottom: 10px; font-weight: 700;">
+                        <i class="fa-solid fa-calendar-days"></i> ② 바다타임 (Badatime) 셀프 물때 검색
+                    </h3>
+                    <div style="width: 100%; height: 380px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); background: #fff;">
+                        <iframe src="https://www.badatime.com/" style="width: 100%; height: 380px; border: none;"></iframe>
+                    </div>
+                </div>
+
+                <!-- ③ CCTV 생중계 / 미설치 안내 (Height 380px) -->
+                <div class="dashboard-cctv-section">
+                    <h3 style="color: var(--accent-cyan); font-size: 1.05rem; margin-bottom: 10px; font-weight: 700;">
+                        <i class="fa-solid fa-video" style="color:#ff5252;"></i> ③ 스팟 실시간 CCTV 생중계
+                    </h3>
+                    ${cctvHtml}
                 </div>
             </div>
         </div>

@@ -24,7 +24,7 @@
     <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=7c316726691ea5e02f234a85f5a20bab&libraries=services,clusterer"></script>
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="styles.css?v=20260806_SHOW_DASHBOARD">
+    <link rel="stylesheet" href="styles.css?v=20260806_FINAL_TOP_SEARCH">
 </head>
 <body>
     <!-- Background Bubbles Animation Container -->
@@ -358,41 +358,27 @@
             </div>
 
             <section class="weather-section">
-                <div class="section-title">
-                    <h2><i class="fa-solid fa-water" style="color: var(--accent-cyan);"></i> 전국 46개 핵심 입수 포인트 실시간 물때표 (Tide Table)</h2>
-                    <p>부산(12개) · 울산(7개) · 거제(4개) · 포항/동해(12개) · 독도/울릉(2개) · 제주(9개) 입수 스팟 수온 및 만간조</p>
-                </div>
-
-                <!-- Region Filter Tabs for Tide Table -->
-                <div class="tide-region-tabs-bar" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;">
-                    <button class="sub-tab-btn active" data-tideregion="all" onclick="filterTideRegion('all')">🌐 전국 전체 (46개 포인트)</button>
-                    <button class="sub-tab-btn" data-tideregion="busan" onclick="filterTideRegion('busan')">부산 권역 (12개)</button>
-                    <button class="sub-tab-btn" data-tideregion="ulsan" onclick="filterTideRegion('ulsan')">울산 권역 (7개)</button>
-                    <button class="sub-tab-btn" data-tideregion="geoje" onclick="filterTideRegion('geoje')">거제/경남 권역 (4개)</button>
-                    <button class="sub-tab-btn" data-tideregion="donghae" onclick="filterTideRegion('donghae')">포항/동해/강원 (12개)</button>
-                    <button class="sub-tab-btn" data-tideregion="islands" onclick="filterTideRegion('islands')">독도 / 울릉도 (2개)</button>
-                    <button class="sub-tab-btn" data-tideregion="jeju" onclick="filterTideRegion('jeju')">제주도 권역 (9개)</button>
-                </div>
-
-                <!-- Spot Quick Search Box & CCTV Quick Tags Bar -->
-                <div style="background: rgba(15, 23, 42, 0.6); padding: 16px; border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.08);">
+            <section class="weather-section">
+                <!-- Top Spot Search Box & CCTV Quick Tags Bar -->
+                <div style="background: rgba(15, 23, 42, 0.75); padding: 18px; border-radius: 14px; margin-bottom: 20px; border: 1px solid rgba(0, 242, 254, 0.2); backdrop-filter: blur(8px);">
                     <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px;">
                         <div class="filter-item search-box" style="flex: 1; min-width: 260px; margin: 0;">
-                            <i class="fa-solid fa-magnifying-glass"></i>
-                            <input type="text" id="tideSearchInput" placeholder="입수 포인트 검색 (예: 송도, 임랑, 서귀포, 독도, 호미곶)..." oninput="handleTideSearch(this.value)">
+                            <i class="fa-solid fa-magnifying-glass" style="color: var(--accent-cyan);"></i>
+                            <input type="text" id="tideSearchInput" placeholder="입수 포인트 / 바다 이름 직접 검색 (예: 해운대, 송도, 임랑, 서귀포, 독도)..." oninput="handleTideSearch(this.value)">
                         </div>
                     </div>
 
-                    <!-- Quick CCTV Spot Tags -->
+                    <!-- Quick CCTV Spot Select Tags -->
                     <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-                        <span style="font-size: 0.8rem; color: var(--accent-gold); font-weight: 700;">📌 CCTV 퀵 선택:</span>
-                        <button type="button" class="btn btn-secondary" onclick="selectDashboardSpot('tide-songdo')" style="padding: 4px 10px; font-size: 0.8rem;">📍 부산 송도</button>
-                        <button type="button" class="btn btn-secondary" onclick="selectDashboardSpot('tide-imlang')" style="padding: 4px 10px; font-size: 0.8rem;">📍 부산 임랑</button>
-                        <button type="button" class="btn btn-secondary" onclick="selectDashboardSpot('tide-jinha')" style="padding: 4px 10px; font-size: 0.8rem;">📍 울산 진하</button>
-                        <button type="button" class="btn btn-secondary" onclick="selectDashboardSpot('tide-gujora')" style="padding: 4px 10px; font-size: 0.8rem;">📍 거제 구조라</button>
-                        <button type="button" class="btn btn-secondary" onclick="selectDashboardSpot('tide-yeongilman')" style="padding: 4px 10px; font-size: 0.8rem;">📍 포항 영일만</button>
-                        <button type="button" class="btn btn-secondary" onclick="selectDashboardSpot('tide-dokdo')" style="padding: 4px 10px; font-size: 0.8rem;">📍 독도 해역</button>
-                        <button type="button" class="btn btn-secondary" onclick="selectDashboardSpot('tide-jeju-seogwipo')" style="padding: 4px 10px; font-size: 0.8rem;">📍 제주 서귀포</button>
+                        <span style="font-size: 0.82rem; color: var(--accent-gold); font-weight: 800;">📌 CCTV 퀵선택:</span>
+                        <button type="button" class="btn btn-secondary" onclick="selectDashboardSpot('tide-songjeong')" style="padding: 5px 12px; font-size: 0.8rem; border-radius: 20px;">📍 부산 해운대/송정</button>
+                        <button type="button" class="btn btn-secondary" onclick="selectDashboardSpot('tide-songdo')" style="padding: 5px 12px; font-size: 0.8rem; border-radius: 20px;">📍 부산 송도</button>
+                        <button type="button" class="btn btn-secondary" onclick="selectDashboardSpot('tide-imlang')" style="padding: 5px 12px; font-size: 0.8rem; border-radius: 20px;">📍 부산 임랑</button>
+                        <button type="button" class="btn btn-secondary" onclick="selectDashboardSpot('tide-jinha')" style="padding: 5px 12px; font-size: 0.8rem; border-radius: 20px;">📍 울산 진하</button>
+                        <button type="button" class="btn btn-secondary" onclick="selectDashboardSpot('tide-gujora')" style="padding: 5px 12px; font-size: 0.8rem; border-radius: 20px;">📍 거제 구조라</button>
+                        <button type="button" class="btn btn-secondary" onclick="selectDashboardSpot('tide-yeongilman')" style="padding: 5px 12px; font-size: 0.8rem; border-radius: 20px;">📍 포항 영일만</button>
+                        <button type="button" class="btn btn-secondary" onclick="selectDashboardSpot('tide-dokdo')" style="padding: 5px 12px; font-size: 0.8rem; border-radius: 20px;">📍 독도 해역</button>
+                        <button type="button" class="btn btn-secondary" onclick="selectDashboardSpot('tide-jeju-seogwipo')" style="padding: 5px 12px; font-size: 0.8rem; border-radius: 20px;">📍 제주 서귀포</button>
                     </div>
                 </div>
 
@@ -1689,6 +1675,6 @@
 
     <!-- App Configuration & Main Logic Script -->
     <script src="config.js?v=45.0"></script>
-    <script src="app.js?v=20260806_SHOW_DASHBOARD"></script>
+    <script src="app.js?v=20260806_FINAL_TOP_SEARCH"></script>
 </body>
 </html>
