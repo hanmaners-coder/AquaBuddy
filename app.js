@@ -1148,20 +1148,20 @@ function switchMainView(viewName) {
 
         updateTopNavbarActive(activeCategory);
         filterAndRender();
-    } else if (viewName === "tide") {
+    } else if (viewName === "tide" || viewName === "cctv") {
         if (feedSec) feedSec.classList.add("hidden");
         if (tideSec) tideSec.classList.remove("hidden");
         if (cctvSec) cctvSec.classList.add("hidden");
         if (navTide) navTide.classList.add("active");
-        document.body.classList.add("category-view-active");
-        renderWeatherGrid(activeTideRegion);
-    } else if (viewName === "cctv") {
-        if (feedSec) feedSec.classList.add("hidden");
-        if (tideSec) tideSec.classList.add("hidden");
-        if (cctvSec) cctvSec.classList.remove("hidden");
         if (navCctv) navCctv.classList.add("active");
         document.body.classList.add("category-view-active");
-        renderOceanWebcams(activeCctvRegion);
+        if (!currentDashboardSpot && typeof OCEAN_WEATHER_DATA !== "undefined" && OCEAN_WEATHER_DATA.length > 0) {
+            currentDashboardSpot = OCEAN_WEATHER_DATA[0];
+        }
+        if (typeof renderUnifiedSpotDashboard === "function") {
+            renderUnifiedSpotDashboard(currentDashboardSpot);
+        }
+        renderWeatherGrid(activeTideRegion);
     }
 
     // Multi-stage Force Scroll-to-Top (Guarantees Photo 1 View across all devices!)
@@ -1189,6 +1189,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     loadInquiries();
     initEventListeners();
     switchMainView('home');
+    if (typeof OCEAN_WEATHER_DATA !== "undefined" && OCEAN_WEATHER_DATA.length > 0) {
+        currentDashboardSpot = OCEAN_WEATHER_DATA[0];
+        if (typeof renderUnifiedSpotDashboard === "function") {
+            renderUnifiedSpotDashboard(OCEAN_WEATHER_DATA[0]);
+        }
+    }
     renderWeatherGrid(activeTideRegion);
     renderOceanWebcams(activeCctvRegion);
     renderAdBanner();
