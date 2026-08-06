@@ -4305,7 +4305,11 @@ function handleSendChatMessage(e) {
         } catch(sbErr) {
             console.warn('Supabase messages INSERT exception:', sbErr);
         }
-    }t.querySelector('.modal-overlay#chatModal');
+    }
+}
+
+function openChatRoomModal(postId) {
+    const chatModalTarget = document.querySelector('.modal-overlay#chatModal');
     
     if (!chatModalTarget) {
         alert('대화방 모달 HTML 요소를 찾을 수 없습니다 (#chatModal).');
