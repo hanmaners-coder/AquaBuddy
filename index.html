@@ -24,7 +24,7 @@
     <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=7c316726691ea5e02f234a85f5a20bab&libraries=services,clusterer"></script>
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="styles.css?v=7000">
+    <link rel="stylesheet" href="styles.css?v=20260806_CLEAN_DASHBOARD">
 </head>
 <body>
     <!-- Background Bubbles Animation Container -->
@@ -377,11 +377,30 @@
                     <button class="sub-tab-btn" data-tideregion="jeju" onclick="filterTideRegion('jeju')">제주도 권역 (9개)</button>
                 </div>
 
-                <!-- Spot Quick Search Box for Tide Table -->
-                <div class="filter-item search-box" style="margin-bottom: 20px; max-width: 500px;">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" id="tideSearchInput" placeholder="입수 포인트 검색 (예: 진하, 감지해변, 임랑, 서귀포, 호미곶)..." oninput="handleTideSearch(this.value)">
+                <!-- Spot Quick Search Box & CCTV Quick Tags Bar -->
+                <div style="background: rgba(15, 23, 42, 0.6); padding: 16px; border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.08);">
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px;">
+                        <div class="filter-item search-box" style="flex: 1; min-width: 260px; margin: 0;">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="tideSearchInput" placeholder="입수 포인트 검색 (예: 송도, 임랑, 서귀포, 독도, 호미곶)..." oninput="handleTideSearch(this.value)">
+                        </div>
+                    </div>
+
+                    <!-- Quick CCTV Spot Tags -->
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                        <span style="font-size: 0.8rem; color: var(--accent-gold); font-weight: 700;">📌 CCTV 퀵 선택:</span>
+                        <button type="button" class="btn btn-secondary" onclick="selectDashboardSpot('tide-songdo')" style="padding: 4px 10px; font-size: 0.8rem;">📍 부산 송도</button>
+                        <button type="button" class="btn btn-secondary" onclick="selectDashboardSpot('tide-imlang')" style="padding: 4px 10px; font-size: 0.8rem;">📍 부산 임랑</button>
+                        <button type="button" class="btn btn-secondary" onclick="selectDashboardSpot('tide-jinha')" style="padding: 4px 10px; font-size: 0.8rem;">📍 울산 진하</button>
+                        <button type="button" class="btn btn-secondary" onclick="selectDashboardSpot('tide-gujora')" style="padding: 4px 10px; font-size: 0.8rem;">📍 거제 구조라</button>
+                        <button type="button" class="btn btn-secondary" onclick="selectDashboardSpot('tide-yeongilman')" style="padding: 4px 10px; font-size: 0.8rem;">📍 포항 영일만</button>
+                        <button type="button" class="btn btn-secondary" onclick="selectDashboardSpot('tide-dokdo')" style="padding: 4px 10px; font-size: 0.8rem;">📍 독도 해역</button>
+                        <button type="button" class="btn btn-secondary" onclick="selectDashboardSpot('tide-jeju-seogwipo')" style="padding: 4px 10px; font-size: 0.8rem;">📍 제주 서귀포</button>
+                    </div>
                 </div>
+
+                <!-- Unified Dashboard Container (#unifiedDashboardContainer) -->
+                <div id="unifiedDashboardContainer"></div>
 
                 <!-- Dynamically rendered 46 Tide Cards -->
                 <div class="weather-grid" id="weatherGrid">
@@ -1673,6 +1692,6 @@
 
     <!-- App Configuration & Main Logic Script -->
     <script src="config.js?v=45.0"></script>
-    <script src="app.js?v=20260806_7000"></script>
+    <script src="app.js?v=20260806_CLEAN_DASHBOARD"></script>
 </body>
 </html>
