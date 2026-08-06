@@ -38,6 +38,128 @@ if (typeof window !== "undefined" && window.supabase && window.supabase.createCl
     }
 }
 
+// Banner Click Logging Logic
+async function logBannerClick(bannerId, bannerName) {
+    if (!supabaseClient) return;
+    try {
+        const { error } = await supabaseClient
+            .from('banner_clicks')
+            .insert({
+                banner_id: bannerId,
+                banner_name: bannerName,
+                clicked_at: new Date().toISOString()
+            });
+        if (error) console.error('Banner click log error:', error);
+    } catch (e) {
+        console.error('Banner click exception:', e);
+    }
+}
+
+function attachBannerClickLogging() {
+    if (typeof document === "undefined") return;
+    const main = document.getElementById('bannerMain');
+    const floatingLeft = document.getElementById('bannerFloatingLeft');
+    const floatingRight = document.getElementById('bannerFloatingRight');
+    const footer = document.getElementById('bannerFooter');
+
+    if (main) main.addEventListener('click', () => logBannerClick('bannerMain', 'main'));
+    if (floatingLeft) floatingLeft.addEventListener('click', () => logBannerClick('bannerFloatingLeft', 'floatingLeft'));
+    if (floatingRight) floatingRight.addEventListener('click', () => logBannerClick('bannerFloatingRight', 'floatingRight'));
+    if (footer) footer.addEventListener('click', () => logBannerClick('bannerFooter', 'footer'));
+}
+
+async function fetchBannerStats(period) {
+    if (!supabaseClient) return [];
+    try {
+        let query = supabaseClient.from('banner_clicks').select('banner_id, banner_name, clicked_at');
+        const now = new Date();
+        if (period === 'today') {
+            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+            query = query.gte('clicked_at', todayStart);
+        } else if (period === '7days') {
+            const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+            query = query.gte('clicked_at', sevenDaysAgo);
+        } else if (period === '30days') {
+            const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+            query = query.gte('clicked_at', thirtyDaysAgo);
+        }
+        const { data, error } = await query;
+        if (error) {
+            console.error('Stats fetch error:', error);
+            return [];
+        }
+        
+        // Group by banner_name & banner_id
+        const counts = {};
+        (data || []).forEach(row => {
+            const key = row.banner_id || row.banner_name || 'unknown';
+            if (!counts[key]) {
+                counts[key] = { id: row.banner_id || key, name: row.banner_name || key, count: 0 };
+            }
+            counts[key].count += 1;
+        });
+        return Object.values(counts).sort((a, b) => b.count - a.count);
+    } catch (e) {
+        console.error('Fetch banner stats exception:', e);
+        return [];
+    }
+}
+
+async function renderBannerClickStatsUI() {
+    const periodSelect = document.getElementById('statsPeriodSelect');
+    const tbody = document.getElementById('bannerStatsTbody');
+    if (!tbody) return;
+
+    const period = periodSelect ? periodSelect.value : 'all';
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:16px;">통계 데이터를 불러오는 중...</td></tr>`;
+
+    const stats = await fetchBannerStats(period);
+    if (!stats || stats.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--text-muted); padding:16px;">선택한 기간 동안의 배너 클릭 기록이 없습니다.</td></tr>`;
+        return;
+    }
+
+    const bannerLabels = {
+        'bannerMain': '중앙 메인 배너 (쿠스페 기획전)',
+        'bannerFloatingLeft': '좌측 플로팅 배너 (프리다이빙)',
+        'bannerFloatingRight': '우측 플로팅 배너 (스쿠버다이빙)',
+        'bannerFooter': '하단 풋터 배너 (오픈워터 장비전)'
+    };
+
+    tbody.innerHTML = stats.map(item => {
+        const label = bannerLabels[item.id] || item.name || item.id;
+        return `
+            <tr>
+                <td><code>${escapeHtml(item.id)}</code></td>
+                <td><strong>${escapeHtml(label)}</strong></td>
+                <td><strong style="color: var(--accent-cyan); font-size:1.05rem;">${item.count.toLocaleString()} 회</strong></td>
+                <td><span style="color: #00e676; font-weight:700;">정상 로깅 중</span></td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function saveCoupangApiKey() {
+    const input = document.getElementById('coupangApiKey');
+    if (!input) return;
+    const val = input.value.trim();
+    if (!val) {
+        showToast('⚠️ 쿠팡 API Key를 입력해 주세요!');
+        return;
+    }
+    localStorage.setItem('coupangApiKey', val);
+    showToast('💾 쿠팡 파트너스 API Key가 성공적으로 저장되었습니다!');
+}
+
+function loadCoupangApiKey() {
+    const input = document.getElementById('coupangApiKey');
+    if (!input) return;
+    const saved = localStorage.getItem('coupangApiKey');
+    if (saved) {
+        input.value = saved;
+    }
+}
+
 // Famous Diving & Swimming Spot Coordinates Map Safeguard
 if (typeof window !== "undefined" && typeof window.FAMOUS_SPOT_COORDS === "undefined") {
     window.FAMOUS_SPOT_COORDS = {
@@ -739,284 +861,8 @@ const OCEAN_WEATHER_DATA = [
     { id: "tide-jeju-hwasun", name: "제주서부 화순 금모래해변", regionCat: "jeju", region: "제주서부 화순", waterTemp: "24.4°C", waveHeight: "0.4m", windSpeed: "2.7 m/s", tideName: "8물", highTide: "08:04 (204cm)", lowTide: "14:14 (44cm)", status: "수면 잔잔함" }
 ];
 
-// Initial Posts Sample Data
-const INITIAL_POSTS = [
-    {
-        id: "post-instructor-1",
-        title: "[프리다이빙] 가평 K26 1일 원데이 프리다이빙 체험 & AIDA2 자격증 코스!",
-        category: "instructor",
-        instSubCategory: "freediving",
-        categoryName: "강사 클래스 (프리다이빙)",
-        instructorOrg: "AIDA",
-        instructorLicenseCode: "AIDA-IN-98472",
-        classType: "1일 원데이 체험 강습",
-        classFee: 60000,
-        classRatio: "1:2 소수정예 강습",
-        classInclusion: "장비 풀세트 렌탈 포함 (풀장 입장료 별도)",
-        location: "가평 K26 잠수풀 (수심 26m)",
-        region: "seoul",
-        locationName: "가평 K26 잠수풀 (수심 26m)",
-        mapAddress: "경기도 가평군 청평면 고성리 317 K26",
-        date: "2026-08-02T11:00",
-        userName: "해양마스터강사",
-        userLicense: "AIDA Master Instructor (No. AIDA-IN-98472)",
-        certImage: "",
-        reqLicense: "입문자 / 초보자 누구나 수강 가능",
-        capacity: 2,
-        joinedCount: 1,
-        attendees: ["해양마스터강사"],
-        hostRating: 5.0,
-        hostReviewsCount: 42,
-        desc: "수영을 못해도 OK! AIDA 공인 인증 강사가 1:2 소수 정예로 안전하고 재미있게 수심 10m 프리다이빙을 체험시켜 드립니다. 고화질 수중 영상 무료 촬영 서비스 포함!",
-        status: "recruiting",
-        statusText: "수강생 모집 중",
-        likes: 28,
-        userLiked: false,
-        wishlistCount: 19,
-        userWished: false,
-        unreadCount: 0,
-        comments: [
-            { author: "초보다이버", text: "수영 전혀 못하는데 신청 가능한가요?", time: "2시간 전" },
-            { author: "해양마스터강사", text: "네! 수영 능력 상관없이 1:2 밀착 케어로 진행되니 안심하고 신청하세요!", time: "1시간 전" }
-        ],
-        images: [],
-        createdAt: "2026-07-27T22:00:00"
-    },
-    {
-        id: "post-instructor-swim",
-        title: "[실내수영] 자유형/배영 영법 교정 & 스타트/턴 1:1 개인레슨",
-        category: "instructor",
-        instSubCategory: "swim",
-        categoryName: "강사 클래스 (실내수영)",
-        instructorOrg: "체육지도자",
-        instructorLicenseCode: "SWIM-IN-5519",
-        classType: "1:1 교정 클리닉",
-        classFee: 50000,
-        classRatio: "1:1 개인밀착 강습",
-        classInclusion: "수중 폼 영상 분석 리포트 포함",
-        location: "양산시 국민체육센터 수영장",
-        region: "yeongnam",
-        locationName: "양산시 국민체육센터 수영장",
-        mapAddress: "경남 양산시 물금읍 가촌리 1312",
-        date: "2026-08-03T10:00",
-        userName: "수영마스터코치",
-        userLicense: "전문스포츠지도사 1급 (수영)",
-        certImage: "",
-        reqLicense: "자유형 50m 가능자 / 폼 교정 희망 다이버",
-        capacity: 2,
-        joinedCount: 1,
-        attendees: ["수영마스터코치"],
-        hostRating: 4.9,
-        hostReviewsCount: 31,
-        desc: "호흡이 차고 어깨가 아프신가요? 1:1 수중 카메라 촬영 폼 분석으로 스트로크와 캐치 동작을 완벽히 교정해 드립니다.",
-        status: "recruiting",
-        statusText: "수강생 모집 중",
-        likes: 19,
-        userLiked: false,
-        wishlistCount: 12,
-        userWished: false,
-        unreadCount: 0,
-        comments: [],
-        images: [],
-        createdAt: "2026-07-28T14:00:00"
-    },
-    {
-        id: "post-instructor-ocean",
-        title: "[바다수영] 동해/포항 오픈워터 해양 수영 & 스노클링 입수 안전 강습",
-        category: "instructor",
-        instSubCategory: "ocean_swim",
-        categoryName: "강사 클래스 (바다수영)",
-        instructorOrg: "KUA",
-        instructorLicenseCode: "OCEAN-IN-3019",
-        classType: "1일 원데이 체험 강습",
-        classFee: 70000,
-        classRatio: "1:3 소수그룹 강습",
-        classInclusion: "오렌지 안전부표 렌탈 & 조류 적응 훈련",
-        location: "포항 영일대 해양 레저 스팟",
-        region: "yeongnam",
-        locationName: "포항 영일대 해수욕장",
-        mapAddress: "경북 포항시 북구 두호동 1014",
-        date: "2026-08-04T09:00",
-        userName: "오픈워터대장",
-        userLicense: "바다수영 10년 / KUA 지도자",
-        certImage: "",
-        reqLicense: "실내수영 100m 완료자",
-        capacity: 3,
-        joinedCount: 1,
-        attendees: ["오픈워터대장"],
-        hostRating: 5.0,
-        hostReviewsCount: 27,
-        desc: "바다 입수가 무서운 분들을 위한 실전 해양 수영 훈련! 너울 파도 대처법, 조류 탈출법, 수트 착용 조력 적응을 안전하게 지도합니다.",
-        status: "recruiting",
-        statusText: "수강생 모집 중",
-        likes: 22,
-        userLiked: false,
-        wishlistCount: 15,
-        userWished: false,
-        unreadCount: 0,
-        comments: [],
-        images: [],
-        createdAt: "2026-07-28T15:30:00"
-    },
-    {
-        id: "post-instructor-scuba",
-        title: "[스쿠버다이빙] 제주 서귀포 문섬/범섬 오픈워터 라이선스 정규 코스",
-        category: "instructor",
-        instSubCategory: "scuba",
-        categoryName: "강사 클래스 (스쿠버다이빙)",
-        instructorOrg: "SSI",
-        instructorLicenseCode: "SSI-CD-10928",
-        classType: "자격증 코스 정규반",
-        classFee: 350000,
-        classRatio: "1:2 소수정예 강습",
-        classInclusion: "SSI 국제 라이선스 발급비 & 공기통 렌탈 포함",
-        location: "제주 서귀포 문섬 해양 스팟",
-        region: "jeju",
-        locationName: "제주 서귀포 문섬 해양 스팟",
-        mapAddress: "제주특별자치도 서귀포시 서귀동 756",
-        date: "2026-08-10T10:00",
-        userName: "스쿠버코스디렉터",
-        userLicense: "SSI Course Director (No. 10928)",
-        certImage: "",
-        reqLicense: "만 10세 이상 누구나 수강 가능",
-        capacity: 2,
-        joinedCount: 1,
-        attendees: ["스쿠버코스디렉터"],
-        hostRating: 5.0,
-        hostReviewsCount: 88,
-        desc: "세계적인 청정 다이빙 스팟 서귀포 문섬에서 진행되는 3일 정규 오픈워터 코스! SSI 코스 디렉터 직강으로 중성부력과 수중 안전을 완벽 마스터해 드립니다.",
-        status: "recruiting",
-        statusText: "수강생 모집 중",
-        likes: 45,
-        userLiked: false,
-        wishlistCount: 30,
-        userWished: false,
-        unreadCount: 0,
-        comments: [],
-        images: [],
-        createdAt: "2026-07-28T18:00:00"
-    },
-    {
-        id: "post-openwater-1",
-        title: "포항 영일대 해수욕장 2.5km 바다수영 버디 구합니다!",
-        category: "openwater",
-        categoryName: "바다 수영",
-        location: "포항 영일대 해변 바다수영 스팟",
-        region: "yeongnam",
-        locationName: "포항 영일대 해변 바다수영 스팟",
-        mapAddress: "경북 포항시 북구 두호동 영일대해수욕장 1구역",
-        date: "2026-08-01T08:30",
-        userName: "포항돌고래",
-        userLicense: "오픈워터 수영 3년차 / 안전부표 소지",
-        reqLicense: "오픈워터 안전부표 & 핀(오리발) 필수",
-        capacity: 4,
-        joinedCount: 2,
-        attendees: ["포항돌고래", "동해물개"],
-        hostRating: 4.9,
-        hostReviewsCount: 18,
-        desc: "이번 토요일 아침 파도가 잔잔할 때 영일대 해변에서 2.5km 바다수영 함께하실 버디 구합니다. 슈트 및 오렌지색 안전부표 필수 착용!",
-        status: "recruiting",
-        statusText: "모집 중",
-        likes: 12,
-        userLiked: false,
-        wishlistCount: 5,
-        userWished: false,
-        unreadCount: 1,
-        comments: [
-            { author: "동해물개", text: "영일대 아침 수영 파도 잔잔하고 좋습니다! 저도 참가 신청합니다.", time: "1시간 전" }
-        ],
-        images: [],
-        createdAt: "2026-07-27T20:00:00"
-    },
-    {
-        id: "post-freediving-k26",
-        title: "가평 K26 딥트레이닝 버디 구해요! (수심 20m~25m)",
-        category: "freediving",
-        categoryName: "프리다이빙",
-        location: "가평 K26 잠수풀 (수심 26m)",
-        region: "seoul",
-        locationName: "가평 K26 잠수풀 (수심 26m)",
-        mapAddress: "경기도 가평군 청평면 고성리 317 K26",
-        date: "2026-07-30T10:00",
-        userName: "딥블루다이버",
-        userLicense: "AIDA 3 / CPR 자격 소지",
-        reqLicense: "AIDA 3 / PADI Advanced 이상",
-        capacity: 4,
-        joinedCount: 4,
-        attendees: ["딥블루다이버", "프리마니아", "바다마스터", "해양탐험가"],
-        hostRating: 5.0,
-        hostReviewsCount: 24,
-        desc: "이번 토요일 K26에서 20m 이상 딥 세션 트레이닝 함께하실 버디 구합니다. 1인 잠수 1인 수면 감시(One-Up One-Down) 철저 준수!",
-        status: "in_progress",
-        statusText: "참가자 확정 완료 (일정 진행 중)",
-        likes: 18,
-        userLiked: false,
-        wishlistCount: 9,
-        userWished: false,
-        unreadCount: 2,
-        comments: [
-            { author: "프리마니아", text: "AIDA 3 소지하고 있고 20m 수심 랜야드 세이프티 잘 봐드립니다!", time: "2시간 전" }
-        ],
-        images: [],
-        createdAt: "2026-07-27T19:30:00"
-    },
-    {
-        id: "post-market-1",
-        title: "[중고장터] AIDA 카본 롱핀 (리더핀 카본 41-42) 상태 극상 팝니다!",
-        category: "market",
-        categoryName: "중고장터",
-        location: "서울 송파구 올림픽공원 다이빙풀 입구",
-        region: "seoul",
-        locationName: "서울 송파구 올림픽공원 다이빙풀 입구",
-        mapAddress: "서울 송파구 올림픽공원 다이빙풀 입구",
-        dealMethod: "직거래/택배 둘 다 가능",
-        price: 240000,
-        priceText: "240,000 원",
-        userName: "핀마스터",
-        userLicense: "프리다이버 / 마켓 인증",
-        capacity: 1,
-        hostRating: 4.8,
-        hostReviewsCount: 9,
-        desc: "리더핀 카본 미디움 41-42 사이즈입니다. 실사용 5회 미만으로 기스 거의 없습니다. 올림픽수영장 직거래 또는 우체국 택배 가능합니다.",
-        status: "recruiting",
-        statusText: "판매 중",
-        likes: 8,
-        userLiked: false,
-        wishlistCount: 14,
-        userWished: false,
-        unreadCount: 0,
-        comments: [],
-        images: [],
-        createdAt: "2026-07-27T18:00:00"
-    },
-    {
-        id: "post-community-1",
-        title: "[수다방] 딥스테이션 36m 첫 통과 후기 & 프렌젤 이퀄 꿀팁!",
-        category: "community",
-        categoryName: "자유수다방",
-        location: "용인 딥스테이션",
-        region: "seoul",
-        locationName: "용인 딥스테이션 (수심 36m)",
-        userName: "이퀄신동",
-        userLicense: "AIDA 4 Master",
-        capacity: 1,
-        hostRating: 4.9,
-        hostReviewsCount: 31,
-        desc: "그동안 딥스테이션 20m 부근에서 이퀄이 막혀 고생했는데, 목 근육 힘을 빼고 혀뿌리 펌핑에 집중하니 36m 아치를 쉽게 통과했습니다! 이퀄 막히하시는 분들 질문 주세요.",
-        status: "completed",
-        statusText: "인기 글",
-        likes: 34,
-        userLiked: false,
-        wishlistCount: 0,
-        userWished: false,
-        unreadCount: 0,
-        comments: [
-            { author: "초보다이버", text: "유익한 팁 감사합니다! 역압 체크할 때 혀 위치는 어디로 해야 하나요?", time: "3시간 전" }
-        ],
-        images: [],
-        createdAt: "2026-07-27T15:00:00"
-    }
-];
+// Initial Posts Sample Data (Real Data Only Mode)
+const INITIAL_POSTS = [];
 
 // App State
 let posts = [];
@@ -3057,23 +2903,23 @@ function getPostInstSubCategory(post) {
     return "freediving";
 }
 
-function loadPosts() {
-    const saved = localStorage.getItem("aqua_buddy_posts_v27");
-    if (saved) {
-        try {
-            const parsed = JSON.parse(saved);
-            const existingIds = new Set(parsed.map(p => p.id));
-            INITIAL_POSTS.forEach(initP => {
-                if (!existingIds.has(initP.id)) {
-                    parsed.push(initP);
-                }
-            });
-            posts = parsed;
-        } catch (e) {
-            posts = [...INITIAL_POSTS];
+async function loadPosts() {
+    if (!supabaseClient) {
+        posts = [];
+        return;
+    }
+    try {
+        const { data, error } = await supabaseClient.from('posts').select('*').order('createdAt', { ascending: false });
+        if (error) {
+            console.error('Error loading posts:', error);
+            posts = [];
+        } else {
+            posts = data;
+            localStorage.setItem("aqua_buddy_posts_v27", JSON.stringify(posts));
         }
-    } else {
-        posts = [...INITIAL_POSTS];
+    } catch (e) {
+        console.error('Exception loading posts:', e);
+        posts = [];
     }
 }
 
@@ -7061,9 +6907,17 @@ function enforceRootFooterPlacement() {
 }
 
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', enforceRootFooterPlacement);
+    document.addEventListener('DOMContentLoaded', () => {
+        enforceRootFooterPlacement();
+        attachBannerClickLogging();
+        renderBannerClickStatsUI();
+        loadCoupangApiKey();
+    });
 } else {
     enforceRootFooterPlacement();
+    attachBannerClickLogging();
+    renderBannerClickStatsUI();
+    loadCoupangApiKey();
 }
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").then(() => console.log("Service Worker registered")).catch(err => console.error("SW registration failed:", err));

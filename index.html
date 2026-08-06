@@ -14,28 +14,7 @@
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!--let supabaseClient = null;
-
-// Banner click logging
-async function logBannerClick(bannerId, bannerName) {
-  if (!supabaseClient) return;
-  const { error } = await supabaseClient
-    .from('banner_clicks')
-    .insert({
-      banner_id: bannerId,
-      banner_name: bannerName,
-      clicked_at: new Date().toISOString(),
-    });
-  if (error) console.error('Banner click log error:', error);
-}
-function attachBannerClickLogging() {
-  const main = document.getElementById('bannerMain');
-  const floating = document.getElementById('bannerFloating');
-  const footer = document.getElementById('bannerFooter');
-  if (main) main.addEventListener('click', () => logBannerClick('bannerMain', 'main'));
-  if (floating) floating.addEventListener('click', () => logBannerClick('bannerFloating', 'floating'));
-  if (footer) footer.addEventListener('click', () => logBannerClick('bannerFooter', 'footer'));
-}Library -->
+    <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <!-- HLS.js Library for m3u8 Live Video Streaming -->
@@ -45,9 +24,7 @@ function attachBannerClickLogging() {
     <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=7c316726691ea5e02f234a85f5a20bab&libraries=services,clusterer"></script>
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="style// sw.js (v=20260806_REAL_DATA_ONLY)
-self.addEventListener('install', e => self.skipWaiting());
-self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));_DB_FIX">
+    <link rel="stylesheet" href="styles.css?v=20260806_REAL_DATA_ONLY">
     <!-- PWA Manifest and Meta Tags -->
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
@@ -64,13 +41,13 @@ self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));_DB_FI
     <div class="bubble-container" id="bubbleContainer"></div>
 
     <!-- Side Banners (Left & Right) with Ad Inquiry Trigger -->
-    <div class="side-ad-banner side-left" id="bannerFloating">
+    <div class="side-ad-banner side-left" id="bannerFloatingLeft">
         <span class="ad-tag">AD PARTNER</span>
-        <a href="https://link.coupang.com/a/fKqE2ov1Qi" target="_blank" class="side-ad-img-box">
+        <a href="https://link.coupang.com/a/fKszBcQl6y" target="_blank" class="side-ad-img-box">
             <img src="left_ad_freediving.jpg" alt="프리다이빙 장비 기획전">
         </a>
         <h4>프리다이빙</h4>
-        <a href="https://link.coupang.com/a/fKqE2ov1Qi" target="_blank" class="side-ad-link">장비 구경 ➔</a>
+        <a href="https://link.coupang.com/a/fKszBcQl6y" target="_blank" class="side-ad-link">장비 특가 ➔</a>
         <span class="ftc-notice-micro">※ 쿠팡 파트너스 수수료 제공</span>
         
         <div class="side-ad-inquiry-box">
@@ -80,7 +57,7 @@ self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));_DB_FI
         </div>
     </div>
 
-    <div class="side-ad-banner side-right" id="bannerFloating">
+    <div class="side-ad-banner side-right" id="bannerFloatingRight">
         <span class="ad-tag">AD PARTNER</span>
         <a href="https://link.coupang.com/a/fKszBcQl6y" target="_blank" class="side-ad-img-box">
             <img src="right_ad_scuba.jpg" alt="스쿠버 다이빙 장비 기획전">
@@ -112,18 +89,7 @@ self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));_DB_FI
                     <i id="bellIcon" class="fa-solid fa-bell"></i>
                     <span id="globalUnreadBadge" class="global-unread-badge hidden">0</span>
                 </button>
-
-                <!-- Notification Dropdown Menu (Glassmorphism Notiasync function fetchBannerStats(period) {
-  if (!supabaseClient) return [];
-  const { data, error } = await supabaseClient
-    .from('banner_clicks')
-    .select('banner_name, count')
-    .group('banner_name')
-    .order('count', { ascending: false })
-    .eq('period', period);
-  if (error) console.error('Stats fetch error:', error);
-  return data || [];
-}-->
+                <!-- Notification Dropdown Menu -->
                 <div id="notificationDropdown" class="notification-dropdown hidden">
                     <div class="notification-dropdown-header">
                         <div style="display: flex; align-items: center; gap: 8px; font-weight: 800; color: var(--accent-cyan); font-size: 0.9rem;">
@@ -362,30 +328,6 @@ self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));_DB_FI
 
             <!-- Homepage Main Dashboard Category Blocks Container -->
             <div id="dashboardBlocksSection" class="dashboard-container"></div>
-    <script>function initStatsUI() {
-  const select = document.getElementById('statsPeriodSelect');
-  const tbody = document.querySelector('#statsTable tbody');
-  if (!select || !tbody) return;
-  select.addEventListener('change', async () => {
-    const period = select.value;
-    const stats = await fetchBannerStats(period);
-    tbody.innerHTML = stats.map(s => `<tr><td>${s.banner_name}</td><td>${s.count}</td></tr>`).join('');
-  });
-  // 초기 로드 (default: today)
-  select.dispatchEvent(new Event('change'));
-}</script><section id="statsSection" class="glass-panel stats-panel">
-      <h2>배너 클릭 통계</h2>
-      <select id="statsPeriodSelect">
-        <option value="today">오늘</option>
-        <option value="7days">최근 7일</option>
-        <option value="30days">최근 30일</option>
-        <option value="all">전체 기간</option>
-      </select>
-      <table id="statsTable" class="stats-table">
-        <thead><tr><th>배너</th><th>클릭수</th></tr></thead>
-        <tbody><!-- 동적 삽입 --></tbody>
-      </table>
-    </section>
 
             <!-- Feed Posts Grid -->
             <section class="posts-section">
@@ -395,10 +337,10 @@ self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));_DB_FI
 
                 <div class="empty-state hidden" id="emptyState">
                     <i class="fa-solid fa-compass-drafting empty-icon"></i>
-                    <h3>조회 조건에 해당하는 게시글이 없습니다.</h3>
-                    <p>필터를 변경하거나 내가 직접 새 버디 모집글, 강사 클래스 또는 중고 장비를 등록해 보세요!</p>
+                    <h3>등록된 게시글이 없습니다. 첫 번째 이야기를 남겨보세요!</h3>
+                    <p>내가 직접 새 버디 모집글, 강사 클래스 또는 중고 장비를 등록해 보세요!</p>
                     <button class="btn btn-primary" onclick="document.getElementById('openCreateModalBtn').click()">
-                        <i class="fa-solid fa-plus"></i> 새 글 작성하기
+                        <i class="fa-solid fa-plus"></i> 첫 이야기 등록하기
                     </button>
                 </div>
             </section>
@@ -406,11 +348,7 @@ self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));_DB_FI
 
 
         <!-- VIEW 2: Dedicated Water Tide Table View Section (#tideViewSection) -->
-        <script>window.addEventListener('load', function() {
-  attachBannerClickLogging();
-  initStatsUI();
-  initApiKeyUI();
-});</script><div id="tideViewSection" class="hidden">
+        <div id="tideViewSection" class="hidden">
             <!-- Center Top Ad Banner for Tide View -->
             <div class="ad-banner-panel glass-panel" style="margin-bottom: 20px;">
                 <div class="ad-content">
@@ -1100,6 +1038,44 @@ self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));_DB_FI
                             <span class="stat-sub" id="adminStatPostsBreakdown">버디/클래스/수다/장터</span>
                         </div>
                     </div>
+
+                    <!-- 실시간 배너 클릭 통계 섹션 -->
+                    <div style="margin-top: 24px; background: rgba(0,0,0,0.3); padding: 18px; border-radius: 12px; border: 1px solid var(--glass-border);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+                            <h3 style="font-size: 1rem; color: var(--accent-cyan); margin: 0;">
+                                📊 실시간 배너 클릭 통계 (Supabase 연동)
+                            </h3>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <label for="statsPeriodSelect" style="font-size: 0.85rem; color: #ccc;">조회 기간:</label>
+                                <select id="statsPeriodSelect" onchange="renderBannerClickStatsUI()" style="padding: 6px 12px; background: rgba(0,0,0,0.6); border: 1px solid var(--accent-cyan); border-radius: 6px; color: #fff; font-size: 0.85rem;">
+                                    <option value="today">오늘</option>
+                                    <option value="7days">최근 7일</option>
+                                    <option value="30days">최근 30일</option>
+                                    <option value="all" selected>전체 기간</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="admin-table-container">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>배너 ID</th>
+                                        <th>배너 위치 / 명칭</th>
+                                        <th>총 클릭 수</th>
+                                        <th>상태</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bannerStatsTbody">
+                                    <tr>
+                                        <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 16px;">
+                                            통계 데이터를 불러오는 중입니다...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
 
                 <div id="adminPanelInquiries" class="hidden">
@@ -1257,12 +1233,22 @@ self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));_DB_FI
 
                 <!-- Internal Protected Settings Tab Panel -->
                 <div id="adminPanelSettings" class="hidden">
-                    <div style="background: rgba(0, 242, 254, 0.06); border: 1px border var(--accent-cyan); padding: 16px; border-radius: var(--radius-sm); margin-bottom: 16px;">
+                    <div style="background: rgba(0, 242, 254, 0.06); border: 1px solid var(--accent-cyan); padding: 16px; border-radius: var(--radius-sm); margin-bottom: 16px;">
                         <h4 style="color: var(--accent-cyan); margin-bottom: 8px;"><i class="fa-solid fa-shield-halved"></i> 보안 격리된 API Key 및 백엔드 연동 정보</h4>
                         <p style="font-size: 0.83rem; color: var(--text-main);">
                             • Supabase Backend Project URL: <strong style="color: var(--accent-cyan); font-family: monospace;">https://ogfzfgsvmjuimjjhaubs.supabase.co</strong><br>
                             • Kakao JavaScript SDK App Key: <strong style="color: var(--accent-gold); font-family: monospace;">7c316726691ea5e02f234a85f5a20bab</strong>
                         </p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="coupangApiKey"><i class="fa-solid fa-key"></i> 쿠팡 파트너스 API Key (비밀번호 형태)</label>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="password" id="coupangApiKey" placeholder="쿠팡 파트너스 API Key를 입력하세요" style="flex: 1; background: rgba(0,0,0,0.5); border: 1px solid var(--accent-cyan); color: #fff; padding: 10px 14px; border-radius: 8px;">
+                            <button type="button" id="saveApiKeyBtn" onclick="saveCoupangApiKey()" class="btn btn-primary" style="background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); color: #000; font-weight: 800; white-space: nowrap;">
+                                <i class="fa-solid fa-floppy-disk"></i> 저장하기
+                            </button>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -1592,7 +1578,7 @@ self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));_DB_FI
 
     <!-- Bottom Footer Visual Image Ad Banner -->
     <section class="bottom-footer-ad container ad-banner-container" style="width: 100%; max-width: 1200px; margin: 20px auto; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; z-index: 10;">
-        <div class="glass-panel bottom-ad-content" style="width: 100%;">
+        <div id="bannerFooter" class="ad-banner-panel glass-panel bottom-ad-content" style="width: 100%;">
             <a href="https://link.coupang.com/a/fKq8aVxMvA" target="_blank" class="bottom-ad-visual-card" onclick="showToast('오픈워터 바다수영 장비 기획전으로 이동합니다!')">
                 <img src="bottom_ad_openwater.jpg" alt="바다수영 수평선 배경" class="bottom-ad-bg-img">
                 <div class="bottom-ad-overlay-content">
@@ -1762,7 +1748,7 @@ self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));_DB_FI
     </div>
 
     <!-- App Configuration & Main Logic Script -->
-    <script src="config.js?v=45.0"></script>
-    <script src="app.js?v=20260806_ADMIN_DB_FIX"></script>
+    <script src="config.js?v=20260806_REAL_DATA_ONLY"></script>
+    <script src="app.js?v=20260806_REAL_DATA_ONLY"></script>
 </body>
 </html>
