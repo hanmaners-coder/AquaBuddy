@@ -3310,9 +3310,72 @@ function filterTideRegion(regionKey) {
     renderWeatherGrid(regionKey);
 }
 
+let tideSearchDebounceTimer = null;
+
 function handleTideSearch(keyword) {
-    tideSearchKeyword = keyword.trim().toLowerCase();
-    renderWeatherGrid(activeTideRegion);
+    const trimmed = (keyword || "").trim().toLowerCase();
+    tideSearchKeyword = trimmed;
+    if (!trimmed) return;
+
+    if (tideSearchDebounceTimer) clearTimeout(tideSearchDebounceTimer);
+
+    tideSearchDebounceTimer = setTimeout(() => {
+        // 1. 등록된 스팟 배열에서 먼저 매칭 검색
+        const match = OCEAN_WEATHER_DATA.find(spot => 
+            spot.name.toLowerCase().includes(trimmed) || 
+            (spot.region && spot.region.toLowerCase().includes(trimmed))
+        );
+
+        if (match) {
+            renderUnifiedSpotDashboard(match);
+            return;
+        }
+
+        // 2. 등록된 배열에 없는 전국 해양/항구/해수욕장 키워드 -> 카카오 Geocoder / Places 검색
+        if (window.kakao && window.kakao.maps && window.kakao.maps.services) {
+            const places = new window.kakao.maps.services.Places();
+            places.keywordSearch(keyword, function(result, status) {
+                if (status === window.kakao.maps.services.Status.OK && result && result.length > 0) {
+                    const place = result[0];
+                    const customSpot = {
+                        id: `search-${Date.now()}`,
+                        name: place.place_name || keyword,
+                        region: place.address_name || place.road_address_name || "대한민국 해역",
+                        regionCat: "all",
+                        lat: parseFloat(place.y),
+                        lng: parseFloat(place.x),
+                        waterTemp: "실시간 표 참조",
+                        waveHeight: "실시간 표 참조",
+                        windSpeed: "실시간 표 참조",
+                        highTide: "바다타임 표 참조",
+                        lowTide: "바다타임 표 참조"
+                    };
+                    renderUnifiedSpotDashboard(customSpot);
+                } else {
+                    const geocoder = new window.kakao.maps.services.Geocoder();
+                    geocoder.addressSearch(keyword, function(geoResult, geoStatus) {
+                        if (geoStatus === window.kakao.maps.services.Status.OK && geoResult && geoResult.length > 0) {
+                            const geo = geoResult[0];
+                            const customSpot = {
+                                id: `search-${Date.now()}`,
+                                name: keyword,
+                                region: geo.address_name || "대한민국 해역",
+                                regionCat: "all",
+                                lat: parseFloat(geo.y),
+                                lng: parseFloat(geo.x),
+                                waterTemp: "실시간 표 참조",
+                                waveHeight: "실시간 표 참조",
+                                windSpeed: "실시간 표 참조",
+                                highTide: "바다타임 표 참조",
+                                lowTide: "바다타임 표 참조"
+                            };
+                            renderUnifiedSpotDashboard(customSpot);
+                        }
+                    });
+                }
+            });
+        }
+    }, 250);
 }
 
 function filterCctvRegion(regionCategoryKey) {
@@ -3676,33 +3739,27 @@ function renderUnifiedSpotDashboard(spot) {
         `;
     }
 
-    const windyUrl = `https://embed.windy.com/embed2.html?lat=${coords.lat}&lon=${coords.lng}&detailLat=${coords.lat}&detailLon=${coords.lng}&width=100%25&height=320&zoom=10&level=surface&overlay=waves&product=ecmwf&metricWind=m%2Fs&metricTemp=%C2%B0C`;
+    const windyUrl = `https://embed.windy.com/embed2.html?lat=${lat}&lon=${lng}&detailLat=${lat}&detailLon=${lng}&width=100%25&height=450&zoom=11&level=surface&overlay=waves&product=ecmwf&metricWind=m%2Fs&metricTemp=%C2%B0C`;
 
     container.innerHTML = `
         <div class="spot-dashboard-card glass-panel" style="padding: 20px; border-radius: 16px; margin-bottom: 30px; border: 1px solid rgba(0, 242, 254, 0.25); background: rgba(15, 23, 42, 0.85);">
-            <!-- Header Banner -->
+            <!-- Header Banner (우측 가짜/하드코딩 데이터 뱃지 완전 삭제) -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 14px;">
                 <div>
-                    <span class="badge badge-primary" style="font-size: 0.8rem; margin-bottom: 4px; display: inline-block;">📍 ${spot.region || '대한민국 해역'}</span>
+                    <span class="badge badge-primary" style="font-size: 0.8rem; margin-bottom: 4px; display: inline-block;">📍 ${spot.region || '대한민국 해역'} (${lat.toFixed(4)}, ${lng.toFixed(4)})</span>
                     <h2 style="color: #fff; font-size: 1.35rem; font-weight: 800; margin: 0;">${spot.name} 실시간 통합 대시보드</h2>
-                </div>
-                <div style="display: flex; gap: 14px; font-size: 0.88rem; background: rgba(0,0,0,0.4); padding: 8px 16px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06); flex-wrap: wrap;">
-                    <span>🌡️ 수온: <strong style="color: var(--accent-gold);">${spot.waterTemp}</strong></span>
-                    <span>🌊 파고: <strong style="color: var(--accent-cyan);">${spot.waveHeight}</strong></span>
-                    <span>💨 풍속: <strong>${spot.windSpeed}</strong></span>
-                    <span>🔺 만조: <strong style="color: #00e676;">${spot.highTide}</strong></span>
                 </div>
             </div>
 
             <!-- Responsive Grid Layout (PC: 윈디 상단 1열 + 바다타임/CCTV 하단 2열) -->
             <div class="spot-dashboard-grid">
-                <!-- ① Windy 파도 지도 (Height 320px) -->
+                <!-- ① Windy 파도 지도 (Height 450px, 하단 상세 예보표 자동 노출) -->
                 <div class="dashboard-windy-section">
                     <h3 style="color: var(--accent-cyan); font-size: 1.05rem; margin-bottom: 10px; font-weight: 700;">
-                        <i class="fa-solid fa-wind"></i> ① Windy 좌표 파도 & 바람 실시간 지도 (${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)})
+                        <i class="fa-solid fa-wind"></i> ① Windy 좌표 파도 & 바람 실시간 지도 및 상세 예보표 (${lat.toFixed(4)}, ${lng.toFixed(4)})
                     </h3>
-                    <div style="width: 100%; height: 320px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
-                        <iframe src="${windyUrl}" style="width: 100%; height: 320px; border: none;"></iframe>
+                    <div style="width: 100%; height: 450px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
+                        <iframe src="${windyUrl}" style="width: 100%; height: 450px; border: none;"></iframe>
                     </div>
                 </div>
 
@@ -3729,86 +3786,11 @@ function renderUnifiedSpotDashboard(spot) {
 }
 window.renderUnifiedSpotDashboard = renderUnifiedSpotDashboard;
 
+// 46개 카드 그리드 완전 삭제 (대시보드 전용 뷰 제공)
 function renderWeatherGrid(regionKey = "all") {
-    const grid = document.getElementById("weatherGrid");
-    if (!grid) return;
-
-    let filteredSpots = (regionKey === "all")
-        ? [...OCEAN_WEATHER_DATA]
-        : OCEAN_WEATHER_DATA.filter(spot => spot.regionCat === regionKey);
-
-    if (tideSearchKeyword) {
-        filteredSpots = OCEAN_WEATHER_DATA.filter(spot => 
-            `${spot.name} ${spot.region} ${spot.status}`.toLowerCase().includes(tideSearchKeyword)
-        );
-    }
-
-    if (!currentDashboardSpot && filteredSpots.length > 0) {
-        renderUnifiedSpotDashboard(filteredSpots[0]);
-    }
-
-    grid.innerHTML = filteredSpots.map((spot, idx) => `
-        <div class="weather-card" id="weatherCard_${spot.id || idx}" onclick="selectDashboardSpot('${spot.id}')" style="cursor: pointer;">
-            <div class="weather-card-header">
-                <h3><i class="fa-solid fa-location-dot" style="color: var(--accent-cyan);"></i> ${spot.name}</h3>
-                <span class="tide-badge">${spot.tideName}</span>
-            </div>
-            
-            <div class="weather-metrics">
-                <div class="metric-box">
-                    <span class="metric-label"><i class="fa-solid fa-temperature-three-quarters"></i> 수온</span>
-                    <span class="metric-val">${spot.waterTemp}</span>
-                </div>
-                <div class="metric-box">
-                    <span class="metric-label"><i class="fa-solid fa-water"></i> 파고</span>
-                    <span class="metric-val">${spot.waveHeight}</span>
-                </div>
-                <div class="metric-box">
-                    <span class="metric-label"><i class="fa-solid fa-wind"></i> 풍속</span>
-                    <span class="metric-val" style="font-size: 0.85rem;">${spot.windSpeed}</span>
-                </div>
-                <div class="metric-box">
-                    <span class="metric-label"><i class="fa-solid fa-shield-heart"></i> 상태</span>
-                    <span class="metric-val" style="font-size: 0.82rem; color: #00e676;">${spot.status}</span>
-                </div>
-            </div>
-
-            <div class="tide-times" id="tideTime_${spot.id || idx}">
-                <span>🔺 만조: ${spot.highTide}</span>
-                <span>🔻 간조: ${spot.lowTide}</span>
-            </div>
-        </div>
-    `).join("");
-
-    // 비동기 실시간 국립해양조사원 및 기상청 API 연동 및 데이터 반영
-    filteredSpots.forEach(async (spot, idx) => {
-        const liveData = await fetchTideData(spot);
-        if (liveData && (liveData.highTide !== spot.highTide || liveData.lowTide !== spot.lowTide)) {
-            const timeContainer = document.getElementById(`tideTime_${spot.id || idx}`);
-            if (timeContainer) {
-                timeContainer.innerHTML = `
-                    <span>🔺 만조: ${liveData.highTide}</span>
-                    <span>🔻 간조: ${liveData.lowTide}</span>
-                `;
-            }
-        }
-
-        const regCoords = REGION_LAT_LNG[spot.regionCat] || REGION_LAT_LNG["busan"];
-        const kmaLive = await getKmaObsMetricsForSpot(regCoords.lat, regCoords.lng);
-        if (kmaLive) {
-            const cardEl = document.getElementById(`weatherCard_${spot.id || idx}`);
-            if (cardEl) {
-                const tempEl = cardEl.querySelector(".metric-box:nth-child(1) .metric-val");
-                const waveEl = cardEl.querySelector(".metric-box:nth-child(2) .metric-val");
-                const windEl = cardEl.querySelector(".metric-box:nth-child(3) .metric-val");
-
-                if (tempEl && kmaLive.tw) tempEl.textContent = kmaLive.tw;
-                if (waveEl && kmaLive.wh) waveEl.textContent = kmaLive.wh;
-                if (windEl && kmaLive.ws) windEl.textContent = kmaLive.ws;
-            }
-        }
-    });
+    // 46개 카드 그리드 완전히 삭제 -> 불필요한 스크롤 방지
 }
+window.renderWeatherGrid = renderWeatherGrid;
 
 function updateCreateButtonText(cat) {
     if (!createBtnText || !openCreateModalBtn) return;
