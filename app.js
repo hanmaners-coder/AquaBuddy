@@ -5545,24 +5545,42 @@ async function handleSavePost(e) {
     };
 
     let savedPost = null;
-    try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 800);
-        const response = await fetch('/api/posts', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(payload),
-            signal: controller.signal
-        });
-        clearTimeout(timeoutId);
-        if (response && response.ok) {
-            savedPost = await response.json();
+    if (supabaseClient) {
+        try {
+            const dbPayload = {
+                title: payload.title,
+                category: payload.category,
+                category_name: payload.categoryName || payload.category_name,
+                class_type: payload.classType || payload.class_type,
+                class_fee: payload.classFee || payload.class_fee,
+                class_ratio: payload.classRatio || payload.class_ratio,
+                class_inclusion: payload.classInclusion || payload.class_inclusion,
+                price: payload.price,
+                deal_method: payload.dealMethod || payload.deal_method,
+                capacity: payload.capacity,
+                location: payload.location,
+                location_name: payload.locationName || payload.location_name,
+                map_address: payload.mapAddress || payload.map_address,
+                date: payload.date,
+                user_name: payload.userName || payload.user_name,
+                user_license: payload.userLicense || payload.user_license,
+                req_license: payload.reqLicense || payload.req_license,
+                desc: payload.desc,
+                status: payload.status,
+                status_text: payload.statusText || payload.status_text,
+                images: payload.images,
+                created_at: payload.createdAt || new Date().toISOString()
+            };
+
+            const { data, error } = await supabaseClient.from('posts').insert([dbPayload]).select();
+            if (!error && data && data.length > 0) {
+                savedPost = { ...payload, ...data[0] };
+            } else if (error) {
+                console.warn('Supabase INSERT failed, using client fallback:', error);
+            }
+        } catch (dbErr) {
+            console.error('Supabase INSERT exception:', dbErr);
         }
-    } catch (err) {
-        console.log("Backend API sync bypassed - fallback to client local storage:", err);
     }
 
     if (!savedPost || typeof savedPost !== 'object' || !savedPost.id) {
@@ -5589,7 +5607,8 @@ async function handleSavePost(e) {
     savePosts();
 
     filterAndRender();
-    if (typeof createPostForm !== "undefined" && createPostForm && createPostForm.reset) {
+    const createPostForm = document.getElementById("createPostForm");
+    if (createPostForm && typeof createPostForm.reset === "function") {
         createPostForm.reset();
     }
     uploadedCompressedImages = [];
