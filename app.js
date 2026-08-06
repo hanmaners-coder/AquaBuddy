@@ -1556,6 +1556,7 @@ async function saveUserProfileToSupabase(userData, isExplicitEdit = false) {
 
         // 명시적 프로필 수정 모달 [저장] (isExplicitEdit = true) 또는 신규 회원(insert)인 경우에만 DB UPDATE/INSERT 수행
         const userNick = userData.nickname || userData.name || (userEmail.includes('@') ? userEmail.split('@')[0] : '다이버');
+        const userRealName = userData.realName || userData.real_name || userData.name || '다이버';
         const userLicense = (userData.user_license !== undefined && userData.user_license !== null)
             ? userData.user_license
             : ((userData.license_info !== undefined && userData.license_info !== null) ? userData.license_info : (userData.license || ''));
@@ -1565,6 +1566,7 @@ async function saveUserProfileToSupabase(userData, isExplicitEdit = false) {
         const payload = {
             email: userEmail,
             nickname: userNick,
+            user_name: userRealName,
             user_license: userLicense,
             phone: userPhone
         };
@@ -1605,6 +1607,8 @@ async function saveUserProfileToSupabase(userData, isExplicitEdit = false) {
                         ...currentUser,
                         name: latestDB.nickname || userNick,
                         nickname: latestDB.nickname || userNick,
+                        realName: latestDB.user_name || latestDB.real_name || latestDB.realName || userRealName,
+                        real_name: latestDB.user_name || latestDB.real_name || latestDB.realName || userRealName,
                         phone: (latestDB.phone && latestDB.phone !== "010-0000-0000") ? latestDB.phone : (currentUser.phone || ""),
                         license: (latestDB.user_license !== undefined && latestDB.user_license !== null) ? latestDB.user_license : userLicense,
                         license_info: (latestDB.user_license !== undefined && latestDB.user_license !== null) ? latestDB.user_license : userLicense,
@@ -1808,11 +1812,11 @@ async function renderAdminUsersTable() {
     const countBadge = document.getElementById("adminUsersCountBadge");
     const statTotalUsers = document.getElementById("adminStatTotalUsers");
 
-    // Real-time actual data sync from Supabase users table
+    let usersList = [];
     if (supabaseClient) {
         try {
             const { data, error } = await supabaseClient.from('users').select('*');
-            if (!error && data && Array.isArray(data) && data.length > 0) {
+            if (!error && data && Array.isArray(data)) {
                 const usersMap = getRegisteredUsers();
                 data.forEach(dbUser => {
                     const key = (dbUser.email || "").toLowerCase();
@@ -1824,10 +1828,10 @@ async function renderAdminUsersTable() {
                         usersMap[key] = {
                             ...existing,
                             email: dbUser.email,
-                            realName: dbUser.real_name || dbUser.realName || existing.realName || dbUser.name || "다이버",
-                            name: dbUser.name || existing.name || "다이버",
+                            realName: dbUser.user_name || dbUser.real_name || dbUser.realName || existing.realName || dbUser.name || "다이버",
+                            name: dbUser.name || dbUser.nickname || existing.name || "다이버",
                             phone: phoneVal,
-                            license: dbUser.license || existing.license || "자유다이버",
+                            license: dbUser.user_license || dbUser.license || existing.license || "자유다이버",
                             instructorStatus: dbUser.instructor_status || dbUser.instructorStatus || existing.instructorStatus || "none",
                             rejectionReason: dbUser.rejection_reason || dbUser.rejectionReason || existing.rejectionReason || "",
                             provider: dbUser.provider || existing.provider || "홈페이지 회원",
@@ -1836,14 +1840,17 @@ async function renderAdminUsersTable() {
                     }
                 });
                 safeLocalStorageSet("aqua_buddy_registered_users", JSON.stringify(usersMap));
+                usersList = Object.values(usersMap);
             }
         } catch (err) {
-            console.warn("Supabase user sync error:", err);
+            console.warn("Supabase user fetch error, fallback to local:", err);
         }
     }
 
-    const usersMap = getRegisteredUsers();
-    const usersList = Object.values(usersMap);
+    if (usersList.length === 0) {
+        const usersMap = getRegisteredUsers();
+        usersList = Object.values(usersMap);
+    }
 
     if (countBadge) countBadge.textContent = usersList.length;
     if (statTotalUsers) statTotalUsers.textContent = `${usersList.length} 명`;
@@ -1990,12 +1997,34 @@ function openCertificateImageModal(imgUrl) {
     modal.style.setProperty("z-index", "9999999", "important");
 }
 
-function renderAdminInstructorsTable() {
+async function renderAdminInstructorsTable() {
     const queueTbody = document.getElementById("adminInstructorQueueTbody");
     const pendingBadge = document.getElementById("adminInstPendingBadge");
 
-    const usersMap = getRegisteredUsers();
-    const pendingUsers = Object.values(usersMap).filter(u => u.instructorStatus === "pending");
+    let pendingUsers = [];
+    if (supabaseClient) {
+        try {
+            const { data, error } = await supabaseClient.from('users').select('*').eq('instructor_status', 'pending');
+            if (!error && data) {
+                pendingUsers = data.map(dbUser => ({
+                    email: dbUser.email,
+                    name: dbUser.nickname || dbUser.name || "다이버",
+                    realName: dbUser.user_name || dbUser.real_name || dbUser.realName || dbUser.name || "다이버",
+                    instructorOrg: dbUser.license_info ? dbUser.license_info.split(' ')[0] : 'PADI',
+                    instructorCode: dbUser.instructor_code || '',
+                    certImage: dbUser.cert_image || dbUser.certImage || '',
+                    createdAt: dbUser.created_at || new Date()
+                }));
+            }
+        } catch (err) {
+            console.warn("Supabase instructor queue fetch error:", err);
+        }
+    }
+
+    if (pendingUsers.length === 0) {
+        const usersMap = getRegisteredUsers();
+        pendingUsers = Object.values(usersMap).filter(u => u.instructorStatus === "pending" || u.instructor_status === "pending");
+    }
 
     if (pendingBadge) pendingBadge.textContent = pendingUsers.length || "0";
     if (!queueTbody) return;
@@ -2003,24 +2032,8 @@ function renderAdminInstructorsTable() {
     if (pendingUsers.length === 0) {
         queueTbody.innerHTML = `
             <tr>
-                <td><strong>해양마스터강사</strong></td>
-                <td><span class="badge badge-instructor">AIDA</span></td>
-                <td><code>AIDA-IN-98472</code></td>
-                <td>
-                    <button class="btn btn-secondary" onclick="openCertificateImageModal('right_ad_swimming.jpg')" style="padding: 4px 8px; font-size: 0.75rem;">
-                        🖼️ 📷 실물 사본 보기
-                    </button>
-                </td>
-                <td>2026-07-28 17:20</td>
-                <td>
-                    <div style="display:flex; gap:6px;">
-                        <button class="btn btn-primary" onclick="approveInstructorCertDemo('해양마스터강사')" style="padding: 4px 10px; font-size: 0.75rem; background: #00e676; color:#000; font-weight:bold;">
-                            ✓ 승인 (인장 부여)
-                        </button>
-                        <button class="btn btn-secondary" onclick="rejectInstructorCertDemo('해양마스터강사')" style="padding: 4px 10px; font-size: 0.75rem; background: #ff5252; color:#fff; font-weight:bold; border:none;">
-                            ❌ 심사 반려
-                        </button>
-                    </div>
+                <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                    심사 대기중인 강사 자격증 신청건이 없습니다.
                 </td>
             </tr>
         `;
@@ -2052,7 +2065,7 @@ function renderAdminInstructorsTable() {
     `).join("");
 }
 
-function approveInstructorCertDemo(identifier) {
+async function approveInstructorCertDemo(identifier) {
     const usersMap = getRegisteredUsers();
     let targetUser = null;
     let targetKey = "";
@@ -2070,7 +2083,17 @@ function approveInstructorCertDemo(identifier) {
         usersMap[targetKey].isApprovedInstructor = true;
         delete usersMap[targetKey].rejectionReason;
         safeLocalStorageSet("aqua_buddy_registered_users", JSON.stringify(usersMap));
-        syncUserToSupabaseCloud(usersMap[targetKey]);
+
+        if (supabaseClient) {
+            try {
+                await supabaseClient.from('users').update({
+                    instructor_status: 'approved',
+                    user_license: targetUser.license || '공인 강사'
+                }).eq('email', targetKey);
+            } catch (err) {
+                console.error("Supabase instructor approval update failed:", err);
+            }
+        }
 
         if (currentUser && (currentUser.email.toLowerCase() === targetKey || currentUser.name === identifier)) {
             currentUser.instructorStatus = "approved";
@@ -2087,7 +2110,7 @@ function approveInstructorCertDemo(identifier) {
     renderAdminUsersTable();
 }
 
-function rejectInstructorCertDemo(identifier) {
+async function rejectInstructorCertDemo(identifier) {
     const usersMap = getRegisteredUsers();
     let targetUser = null;
     let targetKey = "";
@@ -2114,7 +2137,17 @@ function rejectInstructorCertDemo(identifier) {
         usersMap[targetKey].rejectionReason = finalReason;
         usersMap[targetKey].isApprovedInstructor = false;
         safeLocalStorageSet("aqua_buddy_registered_users", JSON.stringify(usersMap));
-        syncUserToSupabaseCloud(usersMap[targetKey]);
+
+        if (supabaseClient) {
+            try {
+                await supabaseClient.from('users').update({
+                    instructor_status: 'rejected',
+                    rejection_reason: finalReason
+                }).eq('email', targetKey);
+            } catch (err) {
+                console.error("Supabase instructor rejection update failed:", err);
+            }
+        }
 
         if (currentUser && (currentUser.email.toLowerCase() === targetKey || currentUser.name === identifier)) {
             currentUser.instructorStatus = "rejected";
@@ -7031,4 +7064,7 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', enforceRootFooterPlacement);
 } else {
     enforceRootFooterPlacement();
+}
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js").then(() => console.log("Service Worker registered")).catch(err => console.error("SW registration failed:", err));
 }
