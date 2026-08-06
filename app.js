@@ -3710,9 +3710,13 @@ function renderUnifiedSpotDashboard(spot) {
     const container = document.getElementById("unifiedDashboardContainer");
     if (!container) return;
 
-    const coords = (spot.lat && spot.lng) 
-        ? { lat: spot.lat, lng: spot.lng }
-        : (REGION_LAT_LNG[spot.regionCat] || { lat: 35.1587, lng: 129.1604 });
+    const spotLat = (spot && typeof spot.lat === 'number' && !isNaN(spot.lat)) 
+        ? spot.lat 
+        : (spot && spot.regionCat && REGION_LAT_LNG[spot.regionCat] ? REGION_LAT_LNG[spot.regionCat].lat : 35.1587);
+
+    const spotLng = (spot && typeof spot.lng === 'number' && !isNaN(spot.lng)) 
+        ? spot.lng 
+        : (spot && spot.regionCat && REGION_LAT_LNG[spot.regionCat] ? REGION_LAT_LNG[spot.regionCat].lng : 129.1604);
 
     const cleanSpotName = spot.name.replace(/부산|울산|거제|포항|경북|경남|강원|제주/g, "").replace(/해수욕장|해변|포구|항|해상/g, "").trim();
     const matchingCctv = OCEAN_WEBCAMS_DATA.find(c => c.name.includes(cleanSpotName) || spot.name.includes(c.name.replace(/CCTV|부산|기장군|해수욕장/g, "").trim())) || null;
@@ -3739,14 +3743,14 @@ function renderUnifiedSpotDashboard(spot) {
         `;
     }
 
-    const windyUrl = `https://embed.windy.com/embed2.html?lat=${lat}&lon=${lng}&detailLat=${lat}&detailLon=${lng}&width=100%25&height=450&zoom=11&level=surface&overlay=waves&product=ecmwf&metricWind=m%2Fs&metricTemp=%C2%B0C`;
+    const windyUrl = `https://embed.windy.com/embed2.html?lat=${spotLat}&lon=${spotLng}&detailLat=${spotLat}&detailLon=${spotLng}&width=100%25&height=450&zoom=11&level=surface&overlay=waves&product=ecmwf&metricWind=m%2Fs&metricTemp=%C2%B0C`;
 
     container.innerHTML = `
         <div class="spot-dashboard-card glass-panel" style="padding: 20px; border-radius: 16px; margin-bottom: 30px; border: 1px solid rgba(0, 242, 254, 0.25); background: rgba(15, 23, 42, 0.85);">
             <!-- Header Banner (우측 가짜/하드코딩 데이터 뱃지 완전 삭제) -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 14px;">
                 <div>
-                    <span class="badge badge-primary" style="font-size: 0.8rem; margin-bottom: 4px; display: inline-block;">📍 ${spot.region || '대한민국 해역'} (${lat.toFixed(4)}, ${lng.toFixed(4)})</span>
+                    <span class="badge badge-primary" style="font-size: 0.8rem; margin-bottom: 4px; display: inline-block;">📍 ${spot.region || '대한민국 해역'} (${spotLat.toFixed(4)}, ${spotLng.toFixed(4)})</span>
                     <h2 style="color: #fff; font-size: 1.35rem; font-weight: 800; margin: 0;">${spot.name} 실시간 통합 대시보드</h2>
                 </div>
             </div>
@@ -3756,7 +3760,7 @@ function renderUnifiedSpotDashboard(spot) {
                 <!-- ① Windy 파도 지도 (Height 450px, 하단 상세 예보표 자동 노출) -->
                 <div class="dashboard-windy-section">
                     <h3 style="color: var(--accent-cyan); font-size: 1.05rem; margin-bottom: 10px; font-weight: 700;">
-                        <i class="fa-solid fa-wind"></i> ① Windy 좌표 파도 & 바람 실시간 지도 및 상세 예보표 (${lat.toFixed(4)}, ${lng.toFixed(4)})
+                        <i class="fa-solid fa-wind"></i> ① Windy 좌표 파도 & 바람 실시간 지도 및 상세 예보표 (${spotLat.toFixed(4)}, ${spotLng.toFixed(4)})
                     </h3>
                     <div style="width: 100%; height: 450px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
                         <iframe src="${windyUrl}" style="width: 100%; height: 450px; border: none;"></iframe>
