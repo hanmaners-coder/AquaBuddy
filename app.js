@@ -4199,29 +4199,9 @@ function renderCompactPostRow(post) {
 
     return `
         <div class="post-card feed-card feed-card-item compact-post-row" data-post-id="${post.id}" onclick="openPostDetailModal('${post.id}')" style="cursor: pointer; display: flex !important; flex-direction: column !important; align-items: stretch !important; padding: 12px 16px !important; margin-bottom: 8px !important;">
-            <div style="display: flex !important; flex-direction: row !important; justify-conte        // Supabase DB messages 테이블 대화 내역 SELECT 연동
-        if (supabaseClient && postId) {
-            supabaseClient.from('messages')
-                .select('*')
-                .eq('post_id', String(postId))
-                .order('created_at', { ascending: true })
-                .then(({ data, error }) => {
-                    if (!error && data && data.length > 0) {
-                        const loadedMsgs = data.map(m => ({
-                            id: m.id || `msg-${m.created_at}`,
-                            sender: m.sender || 'user',
-                            author: m.author || m.user_name || '다이버',
-                            text: m.text || m.content || '',
-                            time: m.time || (m.created_at ? new Date(m.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '방금 전'),
-                            timestamp: m.created_at ? new Date(m.created_at).getTime() : Date.now()
-                        }));
-                        chatMessages[post.id] = loadedMsgs;
-                        renderChatStream(post.id);
-                    }
-                }).catch(err => console.warn('Supabase messages SELECT catch:', err));
-        }
-
-        if (typeof renderChatStream === "function") renderChatStream(post.id);
+            ${metaLineHtml}
+        </div>
+    `;
     } catch (dataErr) {
         console.error('대화방 데이터 바인딩 중 예외 발생 (모달 표시는 유효함):', dataErr);
     }
@@ -4238,13 +4218,13 @@ function renderChatStream(postId) {
     const isHost = typeof isMyPost === 'function' && currentChatPost ? isMyPost(currentChatPost) : false;
 
     // 신규 참가자 개인정보 및 과거 대화 보호 필터링 (시스템 메시지, 주최자, 본인 작성 메시지, 입장 이후 메시지)
-    const visibleStream = stream.filter(msg => {
+    const visibleStream = stream.filter(function(msg) {
         if (msg.sender === "system" || isHost) return true;
         if (msg.author === currentUserName) return true;
         return (msg.timestamp && msg.timestamp >= (joinTime - 5000));
     });
 
-    container.innerHTML = visibleStream.map(msg => {
+    container.innerHTML = visibleStream.map(function(msg) {
         if (msg.sender === "system") {
             return `
             <div class="chat-system-notice" style="text-align: center; margin: 10px 0;">
@@ -4308,7 +4288,7 @@ function handleSendChatMessage(e) {
     // Supabase DB messages 테이블 INSERT 연동 (created_at 100% snake_case)
     if (supabaseClient) {
         try {
-            supabaseClient.from('messages').insert([{
+            supabaseClient.from('chats').insert([{
                 post_id: postId,
                 sender: msgObj.sender,
                 author: currentUserName,
@@ -4522,7 +4502,7 @@ function handleSendChatMessage(e) {
 
         // Supabase DB messages 테이블 대화 내역 SELECT 연동 (created_at 100% snake_case)
         if (supabaseClient && post && post.id) {
-            supabaseClient.from('messages')
+            supabaseClient.from('chats')
                 .select('*')
                 .eq('post_id', String(post.id))
                 .order('created_at', { ascending: true })
@@ -4630,7 +4610,7 @@ function handleSendChatMessage(e) {
     // REST API & Supabase DB Cloud Sync
     if (supabaseClient) {
         try {
-            supabaseClient.from('messages').insert([{
+            supabaseClient.from('chats').insert([{
                 post_id: postId,
                 sender: msgObj.sender,
                 author: currentUserName,
