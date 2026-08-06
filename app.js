@@ -160,6 +160,39 @@ function loadCoupangApiKey() {
     }
 }
 
+// Test Supabase connectivity: insert a dummy post and fetch all posts, logging results.
+async function testSupabase() {
+  if (!supabaseClient) {
+    console.warn('Supabase client not initialized.');
+    return;
+  }
+  try {
+    const testData = {
+      author_name: 'TestUser',
+      content: 'Supabase test entry',
+      created_at: new Date().toISOString()
+    };
+    const { data: insertData, error: insertError } = await supabaseClient
+      .from('posts')
+      .insert([testData], { returning: 'representation' });
+    if (insertError) {
+      console.error('Supabase insert error:', insertError);
+    } else {
+      console.log('Supabase insert successful:', insertData);
+    }
+    const { data: selectData, error: selectError } = await supabaseClient
+      .from('posts')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (selectError) {
+      console.error('Supabase select error:', selectError);
+    } else {
+      console.log('Supabase select returned', selectData.length, 'posts.');
+    }
+  } catch (e) {
+    console.error('Supabase test exception:', e);
+  }
+}
 // Famous Diving & Swimming Spot Coordinates Map Safeguard
 if (typeof window !== "undefined" && typeof window.FAMOUS_SPOT_COORDS === "undefined") {
     window.FAMOUS_SPOT_COORDS = {
@@ -4166,104 +4199,132 @@ function renderCompactPostRow(post) {
 
     return `
         <div class="post-card feed-card feed-card-item compact-post-row" data-post-id="${post.id}" onclick="openPostDetailModal('${post.id}')" style="cursor: pointer; display: flex !important; flex-direction: column !important; align-items: stretch !important; padding: 12px 16px !important; margin-bottom: 8px !important;">
-            <div style="display: flex !important; flex-direction: row !important; justify-content: space-between !important; align-items: center !important; width: 100% !important;">
-                <div class="post-info-left compact-row-main" style="display: flex !important; align-items: center !important; gap: 10px !important; flex: 1 !important; min-width: 0 !important;">
-                    <span class="badge badge-${post.category}">${escapeHtml(post.categoryName || post.category)}</span>
-                    <span class="compact-post-title" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; color: #fff; font-size: 0.95rem;">${escapeHtml(post.title)}</span>
-                </div>
-                <div class="post-info-right compact-row-meta" style="display: flex !important; align-items: center !important; gap: 8px !important; flex-shrink: 0 !important;">
-                    <span class="compact-author-name" style="font-size: 0.85rem;"><i class="fa-solid fa-user-circle"></i> ${escapeHtml(post.userName || '다이버')}</span>
-                    <span class="compact-rating" style="color: #ffb703; font-size: 0.85rem;">★ ${post.hostRating || 5.0}</span>
-                    ${priceText ? `<span style="color: var(--accent-gold); font-weight: 700; font-size: 0.85rem;">${priceText}</span>` : ''}
-                    <span class="compact-action-link" style="color: #38bdf8; font-weight: bold; font-size: 0.85rem;">상세 ➔</span>
-                </div>
-            </div>
-            ${metaLineHtml}
-        </div>
-    `;
+            <div style="display: flex !important; flex-direction: row !important; justify-conte        // Supabase DB messages 테이블 대화 내역 SELECT 연동
+        if (supabaseClient && postId) {
+            supabaseClient.from('messages')
+                .select('*')
+                .eq('post_id', String(postId))
+                .order('created_at', { ascending: true })
+                .then(({ data, error }) => {
+                    if (!error && data && data.length > 0) {
+                        const loadedMsgs = data.map(m => ({
+                            id: m.id || `msg-${m.created_at}`,
+                            sender: m.sender || 'user',
+                            author: m.author || m.user_name || '다이버',
+                            text: m.text || m.content || '',
+                            time: m.time || (m.created_at ? new Date(m.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '방금 전'),
+                            timestamp: m.created_at ? new Date(m.created_at).getTime() : Date.now()
+                        }));
+                        chatMessages[post.id] = loadedMsgs;
+                        renderChatStream(post.id);
+                    }
+                }).catch(err => console.warn('Supabase messages SELECT catch:', err));
+        }
+
+        if (typeof renderChatStream === "function") renderChatStream(post.id);
+    } catch (dataErr) {
+        console.error('대화방 데이터 바인딩 중 예외 발생 (모달 표시는 유효함):', dataErr);
+    }
 }
 
-function bindPostCardClickListeners() {
-    if (typeof document === "undefined") return;
-    document.querySelectorAll('.post-card, .feed-card, .feed-card-item, .compact-post-row, [data-post-id]').forEach(card => {
-        card.style.cursor = 'pointer';
-        card.onclick = (e) => {
-            if (!e.target.closest('button, a, input, .btn, .like-btn, .action-btn')) {
-                const postId = card.getAttribute('data-post-id') || card.dataset.postId || card.dataset.id;
-                if (postId) {
-                    openPostDetailModal(postId);
-                }
-            }
-        };
+function renderChatStream(postId) {
+    const stream = chatMessages[postId] || [];
+    const currentUserName = currentUser ? (currentUser.name || currentUser.nickname || currentUser.email || "손님") : "손님";
+    const container = document.getElementById("chatMessagesStream") || document.getElementById("chatMessageList");
+    if (!container) return;
+
+    const joinKey = `${postId}_${currentUserName}`;
+    const joinTime = chatJoinTimestamps[joinKey] || 0;
+    const isHost = typeof isMyPost === 'function' && currentChatPost ? isMyPost(currentChatPost) : false;
+
+    // 신규 참가자 개인정보 및 과거 대화 보호 필터링 (시스템 메시지, 주최자, 본인 작성 메시지, 입장 이후 메시지)
+    const visibleStream = stream.filter(msg => {
+        if (msg.sender === "system" || isHost) return true;
+        if (msg.author === currentUserName) return true;
+        return (msg.timestamp && msg.timestamp >= (joinTime - 5000));
     });
+
+    container.innerHTML = visibleStream.map(msg => {
+        if (msg.sender === "system") {
+            return `
+            <div class="chat-system-notice" style="text-align: center; margin: 10px 0;">
+                <span style="background: rgba(0, 242, 254, 0.12); color: var(--accent-cyan); font-size: 0.78rem; padding: 4px 12px; border-radius: 12px; border: 1px dashed var(--accent-cyan);">
+                    ${typeof escapeHtml === 'function' ? escapeHtml(msg.text) : msg.text}
+                </span>
+            </div>
+            `;
+        }
+
+        const isUserMsg = (currentUser && (msg.author === currentUser.name || msg.author === currentUser.nickname)) || msg.sender === "user";
+        const isHostMsg = msg.sender === "host" || (currentChatPost && msg.author === currentChatPost.userName);
+
+        return `
+        <div class="chat-bubble ${isUserMsg ? 'user' : (isHostMsg ? 'host' : 'attendee')}" style="${isUserMsg ? 'margin-left: auto; background: linear-gradient(135deg, #00f2fe, #4facfe); color: #000; text-align: right;' : 'margin-right: auto; background: rgba(255,255,255,0.1); color: #fff;'} padding: 8px 14px; border-radius: 12px; margin-bottom: 8px; max-width: 80%;">
+            ${!isUserMsg ? `
+            <div class="chat-sender-info" style="font-weight: bold; font-size: 0.8rem; margin-bottom: 2px;">
+                <i class="fa-solid ${isHostMsg ? 'fa-crown' : 'fa-user'}"></i> ${typeof escapeHtml === 'function' ? escapeHtml(msg.author || '참가자') : msg.author} ${isHostMsg ? '(주최자/강사)' : ''}
+            </div>
+            ` : ''}
+            <p style="margin: 0; font-size: 0.9rem; word-break: break-word;">${typeof escapeHtml === 'function' ? escapeHtml(msg.text) : msg.text}</p>
+            <span class="chat-time" style="font-size: 0.7rem; opacity: 0.7; display: block; margin-top: 4px;">${msg.time || '방금 전'}</span>
+        </div>
+        `;
+    }).join("");
+
+    container.scrollTop = container.scrollHeight;
 }
 
-// Render Feed Posts in Compact Simplified List View Mode
-function renderGrid(data) {
-    if (activeCountText) activeCountText.textContent = `총 ${data.length}개의 게시글 / 모집글 / 강사 클래스`;
-
-    if (data.length === 0) {
-        if (postsGrid) postsGrid.innerHTML = "";
-        if (emptyState) emptyState.classList.remove("hidden");
-        return;
-    }
-
-    if (emptyState) emptyState.classList.add("hidden");
-    if (postsGrid) {
-        postsGrid.className = "compact-post-table";
-        postsGrid.innerHTML = data.map(post => renderCompactPostRow(post)).join("");
-    }
-    bindPostCardClickListeners();
-}
-
-let chatJoinTimestamps = {};
-
-function togglePinNotice() {
-    const contentEl = document.getElementById("chatPinNoticeContent");
-    const toggleTextEl = document.getElementById("pinNoticeToggleText");
-    if (!contentEl) return;
-
-    if (contentEl.style.display === "none") {
-        contentEl.style.display = "block";
-        if (toggleTextEl) toggleTextEl.textContent = "접기 ▲";
-    } else {
-        contentEl.style.display = "none";
-        if (toggleTextEl) toggleTextEl.textContent = "펴기 ▼";
-    }
-}
-
-function requestCourseRegistration() {
+function handleSendChatMessage(e) {
+    if (e && e.preventDefault) e.preventDefault();
     if (!currentChatPost) return;
-    const isInstructor = currentChatPost.category === "instructor";
-    const postTitle = currentChatPost.title || "강사 클래스";
-    const feeStr = currentChatPost.classFee ? currentChatPost.classFee.toLocaleString() + '원' : '수강료 문의';
-    
-    if (typeof showToast === "function") {
-        showToast("🎓 수강 신청 및 입금 안내 메시지가 대화방에 전송되었습니다!");
-    }
 
-    const currentUserName = currentUser ? (currentUser.name || currentUser.nickname || currentUser.email || "수강생") : "수강생";
-    const sysMsg = {
-        id: `sys-course-${Date.now()}`,
-        sender: "system",
-        author: "AquaBuddy 시스템",
-        text: `🎓 [수강 신청 알림] ${currentUserName}님이 '${postTitle}' (${feeStr}) 수강 신청 및 입금 계좌를 요청하셨습니다. 강사님께서는 입금 계좌와 일정을 안내해 주세요!`,
-        time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+    const inputEl = document.getElementById("chatMessageInput") || document.getElementById("chatInput");
+    if (!inputEl) return;
+
+    const text = inputEl.value.trim();
+    if (!text) return;
+
+    const postId = String(currentChatPost.id);
+    const currentUserName = currentUser ? (currentUser.name || currentUser.nickname || currentUser.email || "다이버") : "다이버";
+    const isHostMsg = typeof isMyPost === 'function' ? isMyPost(currentChatPost) : false;
+    const nowTimeStr = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+    const isoNow = new Date().toISOString();
+
+    const msgObj = {
+        id: `msg-${Date.now()}`,
+        sender: isHostMsg ? "host" : "user",
+        author: currentUserName,
+        text: text,
+        time: nowTimeStr,
         timestamp: Date.now()
     };
 
-    if (!chatMessages[currentChatPost.id]) chatMessages[currentChatPost.id] = [];
-    chatMessages[currentChatPost.id].push(sysMsg);
+    if (!chatMessages[postId]) chatMessages[postId] = [];
+    chatMessages[postId].push(msgObj);
 
-    if (typeof renderChatStream === "function") renderChatStream(currentChatPost.id);
-}
+    inputEl.value = "";
+    renderChatStream(postId);
 
-function openChatRoomModal(postId) {
-    console.log('[대화방 모달 오픈 요청]', postId);
-
-    let chatModalTarget = document.getElementById('chatModal')
-                       || document.querySelector('.chat-modal-container')
-                       || document.querySelector('.modal-overlay#chatModal');
+    // Supabase DB messages 테이블 INSERT 연동 (created_at 100% snake_case)
+    if (supabaseClient) {
+        try {
+            supabaseClient.from('messages').insert([{
+                post_id: postId,
+                sender: msgObj.sender,
+                author: currentUserName,
+                user_name: currentUserName,
+                text: text,
+                content: text,
+                time: nowTimeStr,
+                created_at: isoNow
+            }]).then(({ error }) => {
+                if (error) console.warn('Supabase messages INSERT notice:', error);
+                else console.log('✨ Supabase messages INSERT success');
+            }).catch(err => console.warn('Supabase messages INSERT catch:', err));
+        } catch(sbErr) {
+            console.warn('Supabase messages INSERT exception:', sbErr);
+        }
+    }t.querySelector('.modal-overlay#chatModal');
     
     if (!chatModalTarget) {
         alert('대화방 모달 HTML 요소를 찾을 수 없습니다 (#chatModal).');
@@ -4459,6 +4520,28 @@ function openChatRoomModal(postId) {
             }
         }
 
+        // Supabase DB messages 테이블 대화 내역 SELECT 연동 (created_at 100% snake_case)
+        if (supabaseClient && post && post.id) {
+            supabaseClient.from('messages')
+                .select('*')
+                .eq('post_id', String(post.id))
+                .order('created_at', { ascending: true })
+                .then(({ data, error }) => {
+                    if (!error && data && data.length > 0) {
+                        const loadedMsgs = data.map(m => ({
+                            id: m.id || `msg-${m.created_at}`,
+                            sender: m.sender || 'user',
+                            author: m.author || m.user_name || '다이버',
+                            text: m.text || m.content || '',
+                            time: m.time || (m.created_at ? new Date(m.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '방금 전'),
+                            timestamp: m.created_at ? new Date(m.created_at).getTime() : Date.now()
+                        }));
+                        chatMessages[post.id] = loadedMsgs;
+                        if (typeof renderChatStream === "function") renderChatStream(post.id);
+                    }
+                }).catch(err => console.warn('Supabase messages SELECT catch:', err));
+        }
+
         if (typeof renderChatStream === "function") renderChatStream(post.id);
     } catch (dataErr) {
         console.error('대화방 데이터 바인딩 중 예외 발생 (모달 표시는 유효함):', dataErr);
@@ -4545,27 +4628,24 @@ function handleSendChatMessage(e) {
     renderChatStream(postId);
 
     // REST API & Supabase DB Cloud Sync
-    try {
-        fetch('/api/chats', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
+    if (supabaseClient) {
+        try {
+            supabaseClient.from('messages').insert([{
                 post_id: postId,
                 sender: msgObj.sender,
                 author: currentUserName,
+                user_name: currentUserName,
                 text: text,
+                content: text,
                 time: nowTimeStr,
-                timestamp: msgObj.timestamp
-            })
-        }).then(res => res.json()).then(data => {
-            console.log('✨ Supabase/Backend Chat Sync success:', data);
-        }).catch(err => {
-            console.log('Chat backend API sync note (saved locally):', err);
-        });
-    } catch(err) {
-        console.log('Chat fetch exception:', err);
+                created_at: new Date().toISOString()
+            }]).then(({ error }) => {
+                if (error) console.warn('Supabase messages INSERT notice:', error);
+                else console.log('✨ Supabase messages INSERT success');
+            }).catch(err => console.warn('Supabase messages INSERT catch:', err));
+        } catch(sbErr) {
+            console.warn('Supabase messages INSERT exception:', sbErr);
+        }
     }
 }
 
