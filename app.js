@@ -3703,6 +3703,55 @@ function selectDashboardSpot(spotId) {
 }
 window.selectDashboardSpot = selectDashboardSpot;
 
+function renderCctvDropdownOptions(selectedCctvId) {
+    const categories = {
+        "busan_gijang": "🌊 [부산] 기장 / 해운대 / 수영",
+        "busan_south": "⚓ [부산] 남구 / 영도 / 서구",
+        "donghae": "🏔️ [경북/동해] 포항 / 독도 / 동해",
+        "jeju_live": "🏝️ [제주] 실시간 해양 CCTV",
+        "jeonnam_namhae": "🌅 [전남/경남] 여수 / 완도 / 창원",
+        "seohae": "🏙️ [서해/수도권] 군산 / 인천"
+    };
+
+    let html = `<option value="">📹 -- 전국 44개 해양 CCTV 선택 --</option>`;
+
+    Object.keys(categories).forEach(catKey => {
+        const cctvs = OCEAN_WEBCAMS_DATA.filter(c => c.regionCategory === catKey);
+        if (cctvs.length > 0) {
+            html += `<optgroup label="${categories[catKey]}">`;
+            cctvs.forEach(c => {
+                const isSelected = c.id === selectedCctvId ? "selected" : "";
+                html += `<option value="${c.id}" ${isSelected}>${c.name} (${c.region})</option>`;
+            });
+            html += `</optgroup>`;
+        }
+    });
+
+    return html;
+}
+window.renderCctvDropdownOptions = renderCctvDropdownOptions;
+
+function changeCctvSelect(cctvId) {
+    if (!cctvId) return;
+    const cam = OCEAN_WEBCAMS_DATA.find(c => c.id === cctvId);
+    if (!cam) return;
+
+    const cctvContainer = document.getElementById("dashboardCctvPlayerBox");
+    if (cctvContainer) {
+        const rawUrl = cam.embedUrl || cam.hlsUrl;
+        const effectiveUrl = getCctvProxyUrl(rawUrl);
+        cctvContainer.innerHTML = `
+            <div class="dashboard-cctv-box" style="width: 100%; height: 380px; border-radius: 12px; overflow: hidden; background: #000; position: relative;">
+                <iframe src="${effectiveUrl}" style="width: 100%; height: 380px; border: none;" allowfullscreen></iframe>
+                <div style="position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.75); padding: 6px 12px; border-radius: 8px; color: #00e676; font-weight: 700; font-size: 0.82rem; backdrop-filter: blur(4px);">
+                    🔴 24H LIVE CCTV 생중계 (${cam.name})
+                </div>
+            </div>
+        `;
+    }
+}
+window.changeCctvSelect = changeCctvSelect;
+
 function renderUnifiedSpotDashboard(spot) {
     if (!spot) spot = currentDashboardSpot || OCEAN_WEATHER_DATA[0];
     currentDashboardSpot = spot;
@@ -3721,6 +3770,9 @@ function renderUnifiedSpotDashboard(spot) {
     const cleanSpotName = spot.name.replace(/부산|울산|거제|포항|경북|경남|강원|제주/g, "").replace(/해수욕장|해변|포구|항|해상/g, "").trim();
     const matchingCctv = OCEAN_WEBCAMS_DATA.find(c => c.name.includes(cleanSpotName) || spot.name.includes(c.name.replace(/CCTV|부산|기장군|해수욕장/g, "").trim())) || null;
 
+    const selectedCctvId = matchingCctv ? matchingCctv.id : "";
+    const dropdownOptionsHtml = renderCctvDropdownOptions(selectedCctvId);
+
     let cctvHtml = "";
     if (matchingCctv) {
         const rawUrl = matchingCctv.embedUrl || matchingCctv.hlsUrl;
@@ -3738,16 +3790,16 @@ function renderUnifiedSpotDashboard(spot) {
             <div class="dashboard-cctv-none" style="width: 100%; height: 380px; border-radius: 12px; background: rgba(15, 23, 42, 0.7); border: 1px dashed rgba(255,255,255,0.2); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: var(--text-muted); box-sizing: border-box; padding: 20px;">
                 <i class="fa-solid fa-video-slash" style="font-size: 3rem; margin-bottom: 12px; color: #ff9800;"></i>
                 <h4 style="color: #fff; font-size: 1.15rem; margin-bottom: 8px;">📷 CCTV 미설치 스팟입니다</h4>
-                <p style="font-size: 0.85rem; color: #94a3b8; margin: 0; max-width: 280px; line-height: 1.4;">상단 Windy 실시간 파도 지도 및 바다타임 물때표 정보를 참조하여 안전하게 입수하세요.</p>
+                <p style="font-size: 0.85rem; color: #94a3b8; margin: 0; max-width: 280px; line-height: 1.4;">상단 드롭다운에서 인근 해양 CCTV를 선택하거나 실시간 Windy 지도를 참조하세요.</p>
             </div>
         `;
     }
 
-    const windyUrl = `https://embed.windy.com/embed2.html?lat=${spotLat}&lon=${spotLng}&detailLat=${spotLat}&detailLon=${spotLng}&marker=true&width=100%25&height=480&zoom=11&level=surface&overlay=waves&product=ecmwf&metricWind=m%2Fs&metricTemp=%C2%B0C`;
+    const windyUrl = `https://embed.windy.com/embed2.html?lat=${spotLat}&lon=${spotLng}&detailLat=${spotLat}&detailLon=${spotLng}&width=100%25&height=480&zoom=11&level=surface&overlay=waves&product=ecmwf&menu=&message=true&marker=true&calendar=now&pressure=&type=map&location=coordinates&detail=true&metricWind=m%2Fs&metricTemp=%C2%B0C`;
 
     container.innerHTML = `
-        <div class="spot-dashboard-card glass-panel" style="padding: 20px; border-radius: 16px; margin-bottom: 30px; border: 1px solid rgba(0, 242, 254, 0.25); background: rgba(15, 23, 42, 0.85);">
-            <!-- Header Banner (우측 가짜/하드코딩 데이터 뱃지 완전 삭제) -->
+        <div class="spot-dashboard-card" style="padding: 20px; border-radius: 16px; margin-bottom: 24px; border: 1px solid rgba(0, 242, 254, 0.25); background: rgba(15, 23, 42, 0.85);">
+            <!-- Header Banner (단일 클린 패널 헤더) -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 14px;">
                 <div>
                     <span class="badge badge-primary" style="font-size: 0.8rem; margin-bottom: 4px; display: inline-block;">📍 ${spot.region || '대한민국 해역'} (${spotLat.toFixed(4)}, ${spotLng.toFixed(4)})</span>
@@ -3757,10 +3809,10 @@ function renderUnifiedSpotDashboard(spot) {
 
             <!-- Responsive Grid Layout (PC: 윈디 상단 1열 + 바다타임/CCTV 하단 2열) -->
             <div class="spot-dashboard-grid">
-                <!-- ① Windy 파도 지도 (Height 480px, 마커 및 하단 상세 예보표 자동 노출) -->
+                <!-- ① Windy 파도 지도 (Height 480px, 핀 마커📍 및 상세 예보 레이어 강제 연동) -->
                 <div class="dashboard-windy-section">
                     <h3 style="color: var(--accent-cyan); font-size: 1.05rem; margin-bottom: 10px; font-weight: 700;">
-                        <i class="fa-solid fa-wind"></i> ① Windy 좌표 파도 & 바람 실시간 지도 및 상세 예보표 (${spotLat.toFixed(4)}, ${spotLng.toFixed(4)})
+                        <i class="fa-solid fa-wind"></i> ① Windy 좌표 핀 마커(📍) & 바람·파도 실시간 지도 (${spotLat.toFixed(4)}, ${spotLng.toFixed(4)})
                     </h3>
                     <div style="width: 100%; height: 480px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
                         <iframe src="${windyUrl}" style="width: 100%; height: 480px; border: none;"></iframe>
@@ -3777,12 +3829,24 @@ function renderUnifiedSpotDashboard(spot) {
                     </div>
                 </div>
 
-                <!-- ③ CCTV 생중계 / 미설치 안내 (Height 380px) -->
+                <!-- ③ CCTV 생중계 & 컴팩트 드롭다운 선택 (Height 380px) -->
                 <div class="dashboard-cctv-section">
-                    <h3 style="color: var(--accent-cyan); font-size: 1.05rem; margin-bottom: 10px; font-weight: 700;">
-                        <i class="fa-solid fa-video" style="color:#ff5252;"></i> ③ 스팟 실시간 CCTV 생중계
-                    </h3>
-                    ${cctvHtml}
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                        <h3 style="color: var(--accent-cyan); font-size: 1.05rem; font-weight: 700; margin: 0;">
+                            <i class="fa-solid fa-video" style="color:#ff5252;"></i> ③ 해양 CCTV 선택 (전국 44개)
+                        </h3>
+                    </div>
+
+                    <!-- Compact Dropdown Select Menu -->
+                    <div style="margin-bottom: 10px;">
+                        <select id="cctvSpotSelect" class="cctv-dropdown-select" onchange="changeCctvSelect(this.value)">
+                            ${dropdownOptionsHtml}
+                        </select>
+                    </div>
+
+                    <div id="dashboardCctvPlayerBox">
+                        ${cctvHtml}
+                    </div>
                 </div>
             </div>
         </div>
