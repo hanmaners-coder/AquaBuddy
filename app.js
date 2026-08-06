@@ -3743,7 +3743,7 @@ function renderUnifiedSpotDashboard(spot) {
         `;
     }
 
-    const windyUrl = `https://embed.windy.com/embed2.html?lat=${spotLat}&lon=${spotLng}&detailLat=${spotLat}&detailLon=${spotLng}&width=100%25&height=450&zoom=11&level=surface&overlay=waves&product=ecmwf&metricWind=m%2Fs&metricTemp=%C2%B0C`;
+    const windyUrl = `https://embed.windy.com/embed2.html?lat=${spotLat}&lon=${spotLng}&detailLat=${spotLat}&detailLon=${spotLng}&marker=true&width=100%25&height=480&zoom=11&level=surface&overlay=waves&product=ecmwf&metricWind=m%2Fs&metricTemp=%C2%B0C`;
 
     container.innerHTML = `
         <div class="spot-dashboard-card glass-panel" style="padding: 20px; border-radius: 16px; margin-bottom: 30px; border: 1px solid rgba(0, 242, 254, 0.25); background: rgba(15, 23, 42, 0.85);">
@@ -3757,13 +3757,13 @@ function renderUnifiedSpotDashboard(spot) {
 
             <!-- Responsive Grid Layout (PC: 윈디 상단 1열 + 바다타임/CCTV 하단 2열) -->
             <div class="spot-dashboard-grid">
-                <!-- ① Windy 파도 지도 (Height 450px, 하단 상세 예보표 자동 노출) -->
+                <!-- ① Windy 파도 지도 (Height 480px, 마커 및 하단 상세 예보표 자동 노출) -->
                 <div class="dashboard-windy-section">
                     <h3 style="color: var(--accent-cyan); font-size: 1.05rem; margin-bottom: 10px; font-weight: 700;">
                         <i class="fa-solid fa-wind"></i> ① Windy 좌표 파도 & 바람 실시간 지도 및 상세 예보표 (${spotLat.toFixed(4)}, ${spotLng.toFixed(4)})
                     </h3>
-                    <div style="width: 100%; height: 450px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
-                        <iframe src="${windyUrl}" style="width: 100%; height: 450px; border: none;"></iframe>
+                    <div style="width: 100%; height: 480px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
+                        <iframe src="${windyUrl}" style="width: 100%; height: 480px; border: none;"></iframe>
                     </div>
                 </div>
 
