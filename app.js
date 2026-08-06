@@ -1447,12 +1447,25 @@ async function saveUserProfileToSupabase(userData, isExplicitEdit = false) {
             nickname: userNick,
             user_name: userRealName,
             user_license: userLicense,
-            phone: userPhone
+            phone: userPhone,
+            provider: userData.provider || "홈페이지 회원",
+            instructor_status: userData.instructor_status || userData.instructorStatus || "none",
+            instructor_code: instCode || userData.instructor_code || userData.instructorCode || "",
+            instructor_org: userData.instructor_org || userData.instructorOrg || "",
+            cert_image: userData.cert_image || userData.certImage || "",
+            rejection_reason: userData.rejection_reason || userData.rejectionReason || "",
+            class_type: userData.class_type || userData.classType || "",
+            class_fee: userData.class_fee || userData.classFee || null,
+            capacity: userData.capacity || null,
+            location_name: userData.location_name || userData.locationName || "",
+            map_address: userData.map_address || userData.mapAddress || "",
+            event_date: userData.event_date || userData.date || "",
+            description: userData.description || userData.desc || "",
+            images: userData.images || null
         };
 
         if (authUser && authUser.id) payload.id = authUser.id;
         else if (existingUser && existingUser.id) payload.id = existingUser.id;
-        if (instCode) payload.instructor_code = instCode;
 
         console.log("DB 연동 시도 페이로드 (isExplicitEdit=", isExplicitEdit, "):", payload);
 
@@ -4080,6 +4093,74 @@ function filterAndRender() {
     renderGrid(filtered);
 }
 
+function renderGrid(filteredPosts) {
+    const postsGrid = document.getElementById("postsGrid");
+    if (!postsGrid) return;
+    
+    if (!filteredPosts || filteredPosts.length === 0) {
+        postsGrid.innerHTML = "";
+        const emptyState = document.getElementById("emptyState");
+        if (emptyState) emptyState.classList.remove("hidden");
+        return;
+    }
+    
+    const emptyState = document.getElementById("emptyState");
+    if (emptyState) emptyState.classList.add("hidden");
+    
+    postsGrid.innerHTML = filteredPosts.map(post => {
+        const isInst = post.category === "instructor";
+        const isMarket = post.category === "market";
+        const isCommunity = post.category === "community";
+        const isBuddy = !isInst && !isMarket && !isCommunity;
+        
+        let labelHtml = "";
+        if (isInst) {
+            labelHtml = `<span class="badge badge-instructor"><i class="fa-solid fa-graduation-cap"></i> 강사 클래스</span>`;
+        } else if (isMarket) {
+            labelHtml = `<span class="badge badge-market"><i class="fa-solid fa-tags"></i> 중고장터</span>`;
+        } else if (isCommunity) {
+            labelHtml = `<span class="badge badge-community"><i class="fa-solid fa-comments"></i> 자유수다</span>`;
+        } else {
+            labelHtml = `<span class="badge badge-primary"><i class="fa-solid fa-user-group"></i> 버디모집</span>`;
+        }
+        
+        const imageHtml = post.images && post.images.length > 0
+            ? `<div class="post-card-image"><img src="${post.images[0]}" alt="대표 이미지"></div>`
+            : "";
+            
+        const dateStr = post.date ? formatDate(post.date) : (post.createdAt ? formatDate(post.createdAt) : "일시 미정");
+        const priceText = isInst
+            ? (post.classFee ? post.classFee.toLocaleString() + "원" : "수강료 문의")
+            : (isMarket ? (post.price ? post.price.toLocaleString() + "원" : "가격 협의") : "");
+            
+        return `
+            <div class="post-card" data-post-id="${post.id}" onclick="openPostDetailModal('${post.id}')" style="cursor: pointer;">
+                ${imageHtml}
+                <div class="post-card-body">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        ${labelHtml}
+                        <span style="font-size:0.75rem; color:var(--text-muted);">${formatTimeAgo(post.createdAt)}</span>
+                    </div>
+                    <h3 class="post-card-title">${escapeHtml(post.title)}</h3>
+                    <p class="post-card-desc">${escapeHtml(post.desc || "").substring(0, 80)}${(post.desc || "").length > 80 ? "..." : ""}</p>
+                    
+                    ${isBuddy || isInst ? `
+                        <div class="post-card-meta">
+                            <span><i class="fa-solid fa-calendar"></i> ${dateStr}</span>
+                            <span><i class="fa-solid fa-location-dot"></i> ${escapeHtml((post.mapAddress || post.locationName || "").substring(0, 15))}</span>
+                        </div>
+                    ` : ""}
+                    
+                    <div class="post-card-footer" style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06);">
+                        <span style="font-size:0.8rem; color:var(--accent-cyan); font-weight:700;"><i class="fa-solid fa-user"></i> ${escapeHtml(post.userName || "다이버")}</span>
+                        ${priceText ? `<span style="font-size:0.9rem; color:var(--accent-gold); font-weight:800;">${priceText}</span>` : ""}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join("");
+}
+
 // Render Dashboard Category Blocks for 'all' mode
 function renderDashboardBlocks() {
     const container = document.getElementById("dashboardBlocksSection");
@@ -4517,7 +4598,7 @@ function openChatRoomModal(postId) {
                             id: m.id || `msg-${m.created_at}`,
                             sender: m.sender || 'user',
                             author: m.author || m.user_name || '다이버',
-                            text: m.text || m.content || '',
+                            text: m.message_text || m.text || m.content || '',
                             time: m.time || (m.created_at ? new Date(m.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '방금 전'),
                             timestamp: m.created_at ? new Date(m.created_at).getTime() : Date.now()
                         }));
@@ -4615,13 +4696,15 @@ function handleSendChatMessage(e) {
     // REST API & Supabase DB Cloud Sync
     if (supabaseClient) {
         try {
+            const senderEmail = currentUser ? currentUser.email : "";
+            const authorEmail = currentChatPost ? (currentChatPost.author || currentChatPost.authorEmail || currentChatPost.email || "") : "";
+            
             supabaseClient.from('chats').insert([{
                 post_id: postId,
-                sender: msgObj.sender,
-                author: currentUserName,
+                sender: senderEmail,
+                author: authorEmail,
                 user_name: currentUserName,
-                text: text,
-                content: text,
+                message_text: text,
                 time: nowTimeStr,
                 created_at: new Date().toISOString()
             }]).then(({ error }) => {
@@ -5621,14 +5704,18 @@ async function handleSavePost(e) {
                 location_name: payload.locationName || payload.location_name,
                 map_address: payload.mapAddress || payload.map_address,
                 date: payload.date,
+                event_date: payload.date || null,
                 user_name: payload.userName || payload.user_name,
-                author: payload.userName || payload.user_name,
+                author: currentUser ? currentUser.email : (payload.userName || payload.user_name),
                 user_license: payload.userLicense || payload.user_license,
                 req_license: payload.reqLicense || payload.req_license,
                 desc: payload.desc,
+                content: payload.desc,
                 status: payload.status,
                 status_text: payload.statusText || payload.status_text,
                 images: payload.images,
+                instructor_org: currentUser ? (currentUser.instructorOrg || "") : "",
+                instructor_license_code: currentUser ? (currentUser.instructorCode || "") : "",
                 created_at: payload.createdAt || new Date().toISOString()
             };
 
@@ -6911,6 +6998,25 @@ function handleInquirySubmit(e) {
 
     localInquiries.unshift(newInquiry);
     localStorage.setItem('aqua_buddy_inquiries', JSON.stringify(localInquiries));
+
+    if (supabaseClient) {
+        try {
+            supabaseClient.from('inquiries').insert([{
+                category: newInquiry.category,
+                category_name: newInquiry.categoryName,
+                name: newInquiry.name,
+                contact: newInquiry.contact,
+                title: newInquiry.title,
+                content: newInquiry.content,
+                image: inquiryImageCompressed || "",
+                status: newInquiry.status
+            }]).then(({ error }) => {
+                if (error) console.warn('Supabase inquiries INSERT notice:', error);
+            });
+        } catch(sbErr) {
+            console.warn('Supabase inquiries INSERT exception:', sbErr);
+        }
+    }
 
     const modalEl = document.getElementById("inquiryModal");
     if (modalEl && typeof closeModal === "function") {
