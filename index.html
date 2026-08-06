@@ -14,7 +14,28 @@
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Supabase JS Client Library -->
+    <!--let supabaseClient = null;
+
+// Banner click logging
+async function logBannerClick(bannerId, bannerName) {
+  if (!supabaseClient) return;
+  const { error } = await supabaseClient
+    .from('banner_clicks')
+    .insert({
+      banner_id: bannerId,
+      banner_name: bannerName,
+      clicked_at: new Date().toISOString(),
+    });
+  if (error) console.error('Banner click log error:', error);
+}
+function attachBannerClickLogging() {
+  const main = document.getElementById('bannerMain');
+  const floating = document.getElementById('bannerFloating');
+  const footer = document.getElementById('bannerFooter');
+  if (main) main.addEventListener('click', () => logBannerClick('bannerMain', 'main'));
+  if (floating) floating.addEventListener('click', () => logBannerClick('bannerFloating', 'floating'));
+  if (footer) footer.addEventListener('click', () => logBannerClick('bannerFooter', 'footer'));
+}Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <!-- HLS.js Library for m3u8 Live Video Streaming -->
@@ -24,7 +45,9 @@
     <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=7c316726691ea5e02f234a85f5a20bab&libraries=services,clusterer"></script>
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="styles.css?v=20260806_ADMIN_DB_FIX">
+    <link rel="stylesheet" href="style// sw.js (v=20260806_REAL_DATA_ONLY)
+self.addEventListener('install', e => self.skipWaiting());
+self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));_DB_FIX">
     <!-- PWA Manifest and Meta Tags -->
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
@@ -41,7 +64,7 @@
     <div class="bubble-container" id="bubbleContainer"></div>
 
     <!-- Side Banners (Left & Right) with Ad Inquiry Trigger -->
-    <div class="side-ad-banner side-left">
+    <div class="side-ad-banner side-left" id="bannerFloating">
         <span class="ad-tag">AD PARTNER</span>
         <a href="https://link.coupang.com/a/fKqE2ov1Qi" target="_blank" class="side-ad-img-box">
             <img src="left_ad_freediving.jpg" alt="프리다이빙 장비 기획전">
@@ -57,7 +80,7 @@
         </div>
     </div>
 
-    <div class="side-ad-banner side-right">
+    <div class="side-ad-banner side-right" id="bannerFloating">
         <span class="ad-tag">AD PARTNER</span>
         <a href="https://link.coupang.com/a/fKszBcQl6y" target="_blank" class="side-ad-img-box">
             <img src="right_ad_scuba.jpg" alt="스쿠버 다이빙 장비 기획전">
@@ -90,7 +113,17 @@
                     <span id="globalUnreadBadge" class="global-unread-badge hidden">0</span>
                 </button>
 
-                <!-- Notification Dropdown Menu (Glassmorphism Notification Center Layer) -->
+                <!-- Notification Dropdown Menu (Glassmorphism Notiasync function fetchBannerStats(period) {
+  if (!supabaseClient) return [];
+  const { data, error } = await supabaseClient
+    .from('banner_clicks')
+    .select('banner_name, count')
+    .group('banner_name')
+    .order('count', { ascending: false })
+    .eq('period', period);
+  if (error) console.error('Stats fetch error:', error);
+  return data || [];
+}-->
                 <div id="notificationDropdown" class="notification-dropdown hidden">
                     <div class="notification-dropdown-header">
                         <div style="display: flex; align-items: center; gap: 8px; font-weight: 800; color: var(--accent-cyan); font-size: 0.9rem;">
@@ -304,7 +337,7 @@
             </section>
 
             <!-- Balanced Center Main Banner -->
-            <div class="ad-banner-panel glass-panel" id="adBannerPanel">
+            <div class="ad-banner-panel glass-panel" id="bannerMain">
                 <div class="ad-content" id="adContent">
                     <a href="https://link.coupang.com/a/fKqrpaA2Fw" target="_blank" class="center-ad-visual-card">
                         <img src="right_ad_swimming.jpg" alt="수영장비 세로형 비주얼 카드 배경" class="center-ad-bg-img">
@@ -329,6 +362,30 @@
 
             <!-- Homepage Main Dashboard Category Blocks Container -->
             <div id="dashboardBlocksSection" class="dashboard-container"></div>
+    <script>function initStatsUI() {
+  const select = document.getElementById('statsPeriodSelect');
+  const tbody = document.querySelector('#statsTable tbody');
+  if (!select || !tbody) return;
+  select.addEventListener('change', async () => {
+    const period = select.value;
+    const stats = await fetchBannerStats(period);
+    tbody.innerHTML = stats.map(s => `<tr><td>${s.banner_name}</td><td>${s.count}</td></tr>`).join('');
+  });
+  // 초기 로드 (default: today)
+  select.dispatchEvent(new Event('change'));
+}</script><section id="statsSection" class="glass-panel stats-panel">
+      <h2>배너 클릭 통계</h2>
+      <select id="statsPeriodSelect">
+        <option value="today">오늘</option>
+        <option value="7days">최근 7일</option>
+        <option value="30days">최근 30일</option>
+        <option value="all">전체 기간</option>
+      </select>
+      <table id="statsTable" class="stats-table">
+        <thead><tr><th>배너</th><th>클릭수</th></tr></thead>
+        <tbody><!-- 동적 삽입 --></tbody>
+      </table>
+    </section>
 
             <!-- Feed Posts Grid -->
             <section class="posts-section">
@@ -349,7 +406,11 @@
 
 
         <!-- VIEW 2: Dedicated Water Tide Table View Section (#tideViewSection) -->
-        <div id="tideViewSection" class="hidden">
+        <script>window.addEventListener('load', function() {
+  attachBannerClickLogging();
+  initStatsUI();
+  initApiKeyUI();
+});</script><div id="tideViewSection" class="hidden">
             <!-- Center Top Ad Banner for Tide View -->
             <div class="ad-banner-panel glass-panel" style="margin-bottom: 20px;">
                 <div class="ad-content">
@@ -586,6 +647,22 @@
         </div>
     </div>
 
+    <!-- API Key 입력 UI -->
+    <script>function initApiKeyUI() {
+  const input = document.getElementById('coupangApiKey');
+  const btn = document.getElementById('saveApiKeyBtn');
+  const saved = localStorage.getItem('coupangApiKey') || '';
+  input.value = saved;
+  btn.addEventListener('click', () => {
+    const val = input.value.trim();
+    localStorage.setItem('coupangApiKey', val);
+    alert('API 키가 저장되었습니다.');
+  });
+}</script><section id="apiKeySection" class="glass-panel">
+      <h3>Coupang API 키 설정</h3>
+      <input type="password" id="coupangApiKey" placeholder="API Key (비밀번호 형태)" />
+      <button type="button" id="saveApiKeyBtn" class="btn btn-primary">저장하기</button>
+    </section>
     <!-- Modal 1: Contextual Create & Edit Post Modal -->
     <div class="modal-overlay hidden" id="createModal">
         <div class="modal-container glass-panel">
@@ -593,7 +670,7 @@
                 <h2><i class="fa-solid fa-pen-to-square"></i> <span id="modalFormTitle">새 글 작성</span></h2>
                 <button class="close-btn" id="closeCreateModalBtn">&times;</button>
             </div>
-            <form id="createPostForm" onsubmit="interceptHostSubmit(event); return false;">
+            <form id="cr// generateDummyPosts(); // DisabledForm" onsubmit="interceptHostSubmit(event); return false;">
                 <div class="form-group" id="postCategoryGroup" style="display: none;">
                     <label for="postCategory">작성 카테고리 *</label>
                     <select id="postCategory">
@@ -1388,7 +1465,13 @@
     </div>
 
     <!-- Image Lightbox Modal (#imageLightboxModal) -->
-    <div class="modal-overlay hidden" id="imageLightboxModal" style="z-index: 9999999 !important; background: rgba(0, 0, 0, 0.94);" onclick="if(event.target === this || event.target.id === 'lightboxBackdrop' || event.target.classList.contains('lightbox-wrapper')) closeModal(this);">
+    <div class="modal-overlay hidden" id="imageLightboxModal" style="z-index: 9999999 !important; background: rgba(0, 0, 0, 0.94);"/* ==========================================================================
+   AquaBuddy (아쿠아버디) - Dynamic Application Logic (v44.0 Unified Inquiries & Ad Partnerships)
+   - Restored Responsive Side Banners (1200px Media Query Breakpoint)
+   - Unified Customer Feedback & Ad Inquiry Modal (#inquiryModal)
+   - Categories: Ad Partnership, Bug Report, Feature Idea, Content Edit, General Feedback
+   - Protected Webmaster Admin Dashboard Inquiries Management Table
+   ========================================================================== */ 'lightboxBackdrop' || event.target.classList.contains('lightbox-wrapper')) closeModal(this);">
         <div class="lightbox-wrapper" id="lightboxBackdrop" style="position: relative; width: 100vw; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box;">
             <button type="button" class="lightbox-btn-close" onclick="closeModal(document.getElementById('imageLightboxModal'))" title="닫기 (Esc 또는 배경 클릭)">
                 <i class="fa-solid fa-xmark"></i> ✕ 닫기
