@@ -586,22 +586,6 @@
         </div>
     </div>
 
-    <!-- API Key 입력 UI -->
-    <script>function initApiKeyUI() {
-  const input = document.getElementById('coupangApiKey');
-  const btn = document.getElementById('saveApiKeyBtn');
-  const saved = localStorage.getItem('coupangApiKey') || '';
-  input.value = saved;
-  btn.addEventListener('click', () => {
-    const val = input.value.trim();
-    localStorage.setItem('coupangApiKey', val);
-    alert('API 키가 저장되었습니다.');
-  });
-}</script><section id="apiKeySection" class="glass-panel">
-      <h3>Coupang API 키 설정</h3>
-      <input type="password" id="coupangApiKey" placeholder="API Key (비밀번호 형태)" />
-      <button type="button" id="saveApiKeyBtn" class="btn btn-primary">저장하기</button>
-    </section>
     <!-- Modal 1: Contextual Create & Edit Post Modal -->
     <div class="modal-overlay hidden" id="createModal">
         <div class="modal-container glass-panel">
@@ -609,7 +593,7 @@
                 <h2><i class="fa-solid fa-pen-to-square"></i> <span id="modalFormTitle">새 글 작성</span></h2>
                 <button class="close-btn" id="closeCreateModalBtn">&times;</button>
             </div>
-            <form id="cr// generateDummyPosts(); // DisabledForm" onsubmit="interceptHostSubmit(event); return false;">
+            <form id="createPostForm" onsubmit="interceptHostSubmit(event); return false;">
                 <div class="form-group" id="postCategoryGroup" style="display: none;">
                     <label for="postCategory">작성 카테고리 *</label>
                     <select id="postCategory">

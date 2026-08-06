@@ -2909,12 +2909,26 @@ async function loadPosts() {
         return;
     }
     try {
-        const { data, error } = await supabaseClient.from('posts').select('*').order('createdAt', { ascending: false });
+        let { data, error } = await supabaseClient.from('posts').select('*').order('created_at', { ascending: false });
+        if (error) {
+            console.warn('created_at order error, trying createdAt:', error);
+            const fallback = await supabaseClient.from('posts').select('*').order('createdAt', { ascending: false });
+            if (!fallback.error && fallback.data) {
+                data = fallback.data;
+                error = null;
+            } else {
+                const unordered = await supabaseClient.from('posts').select('*');
+                if (!unordered.error && unordered.data) {
+                    data = unordered.data;
+                    error = null;
+                }
+            }
+        }
         if (error) {
             console.error('Error loading posts:', error);
             posts = [];
         } else {
-            posts = data;
+            posts = data || [];
             localStorage.setItem("aqua_buddy_posts_v27", JSON.stringify(posts));
         }
     } catch (e) {
@@ -3782,7 +3796,9 @@ function preselectModalCategory(cat, isEditing = false) {
         uploadedCompressedImages = [];
         uploadedCertImage = "";
         renderImagePreviews();
-        createPostForm.reset();
+        if (createPostForm && typeof createPostForm.reset === "function") {
+            createPostForm.reset();
+        }
         submitBtnText.textContent = "등록하기";
     } else {
         submitBtnText.textContent = "수정 완료";
