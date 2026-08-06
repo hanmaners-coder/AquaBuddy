@@ -27,6 +27,8 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
+  // Only handle HTTP and HTTPS requests to prevent chrome-extension or other schemes from breaking cache.put
+  if (!event.request.url.startsWith('http:') && !event.request.url.startsWith('https:')) return;
   event.respondWith(
     caches.match(event.request).then(cached => {
       return cached || fetch(event.request).then(response => {

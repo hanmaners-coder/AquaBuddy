@@ -4158,7 +4158,8 @@ function renderDashboardBlocks() {
 }
 
 function renderCompactPostRow(post) {
-    const isInst = post.category === "instructor";
+    try {
+        const isInst = post.category === "instructor";
     const isMarket = post.category === "market";
     const isCommunity = post.category === "community";
     const isBuddy = !isInst && !isMarket && !isCommunity;
