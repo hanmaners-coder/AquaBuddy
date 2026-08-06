@@ -2911,17 +2911,11 @@ async function loadPosts() {
     try {
         let { data, error } = await supabaseClient.from('posts').select('*').order('created_at', { ascending: false });
         if (error) {
-            console.warn('created_at order error, trying createdAt:', error);
-            const fallback = await supabaseClient.from('posts').select('*').order('createdAt', { ascending: false });
-            if (!fallback.error && fallback.data) {
-                data = fallback.data;
+            console.warn('created_at order query failed, retrying simple select:', error);
+            const unordered = await supabaseClient.from('posts').select('*');
+            if (!unordered.error && unordered.data) {
+                data = unordered.data;
                 error = null;
-            } else {
-                const unordered = await supabaseClient.from('posts').select('*');
-                if (!unordered.error && unordered.data) {
-                    data = unordered.data;
-                    error = null;
-                }
             }
         }
         if (error) {
@@ -5563,6 +5557,7 @@ async function handleSavePost(e) {
                 map_address: payload.mapAddress || payload.map_address,
                 date: payload.date,
                 user_name: payload.userName || payload.user_name,
+                author_name: payload.userName || payload.user_name,
                 user_license: payload.userLicense || payload.user_license,
                 req_license: payload.reqLicense || payload.req_license,
                 desc: payload.desc,
