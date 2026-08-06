@@ -168,7 +168,7 @@ async function testSupabase() {
   }
   try {
     const testData = {
-      author_name: 'TestUser',
+      author: 'TestUser',
       content: 'Supabase test entry',
       created_at: new Date().toISOString()
     };
@@ -5622,7 +5622,7 @@ async function handleSavePost(e) {
                 map_address: payload.mapAddress || payload.map_address,
                 date: payload.date,
                 user_name: payload.userName || payload.user_name,
-                author_name: payload.userName || payload.user_name,
+                author: payload.userName || payload.user_name,
                 user_license: payload.userLicense || payload.user_license,
                 req_license: payload.reqLicense || payload.req_license,
                 desc: payload.desc,
