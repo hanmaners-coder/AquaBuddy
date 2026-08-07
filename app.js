@@ -4441,8 +4441,9 @@ function handleSendChatMessage(e) {
     // Supabase DB messages 테이블 INSERT 연동 (created_at 100% snake_case)
     if (supabaseClient) {
         try {
+            const numericPostId = !isNaN(parseInt(postId)) ? parseInt(postId) : postId;
             supabaseClient.from('chats').insert([{
-                post_id: postId,
+                post_id: numericPostId,
                 sender: msgObj.sender,
                 author: currentUserName,
                 user_name: currentUserName,
@@ -4661,7 +4662,7 @@ function openChatRoomModal(postId) {
 
         // Supabase DB chat_rooms & chats 연동 (chat_rooms 확인/생성 후 chats 불러오기)
         if (supabaseClient && post && post.id) {
-            const pId = String(post.id);
+            const pId = !isNaN(parseInt(post.id)) ? parseInt(post.id) : String(post.id);
             // 1. chat_rooms 존재 여부 확인 및 생성
             supabaseClient.from('chat_rooms')
                 .select('*')
@@ -4875,8 +4876,9 @@ function handleAddComment(e, postId) {
         // Supabase DB comments 테이블 연동
         if (supabaseClient) {
             try {
+                const numericPostId = !isNaN(parseInt(postId)) ? parseInt(postId) : postId;
                 supabaseClient.from('comments').insert([{
-                    post_id: String(post.id),
+                    post_id: numericPostId,
                     author: authorName,
                     content: text,
                     created_at: new Date().toISOString()
@@ -4926,9 +4928,10 @@ function openDetailModal(postId) {
 
         // Supabase DB comments SELECT
         if (supabaseClient && post && post.id) {
+            const numericPostId = !isNaN(parseInt(post.id)) ? parseInt(post.id) : post.id;
             supabaseClient.from('comments')
                 .select('*')
-                .eq('post_id', String(post.id))
+                .eq('post_id', numericPostId)
                 .order('created_at', { ascending: true })
                 .then(({ data, error }) => {
                     if (!error && data && data.length > 0) {
