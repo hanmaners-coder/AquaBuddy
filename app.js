@@ -4894,8 +4894,7 @@ function handleAddComment(e, postId) {
 
     input.value = "";
     openDetailModal(postId);
-        showToast("💬 댓글이 성공적으로 등록되었습니다!");
-    }
+    showToast("💬 댓글이 성공적으로 등록되었습니다!");
 }
 window.handleAddComment = handleAddComment;
 
