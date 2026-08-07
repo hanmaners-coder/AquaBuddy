@@ -4475,6 +4475,16 @@ function openChatRoomModal(postId) {
         return;
     }
 
+    // 1. 상세 모달 즉시 닫기 (상세 모달이 대화방 모달을 가리는 현상 방지)
+    try {
+        const detailModalEl = document.getElementById('detailModal');
+        if (detailModalEl && typeof closeModal === 'function') {
+            closeModal(detailModalEl);
+        }
+        const dynamicOverlay = document.getElementById('dynamicDetailModalOverlay');
+        if (dynamicOverlay) dynamicOverlay.remove();
+    } catch(e) {}
+
     const chatModalTarget = document.querySelector('.modal-overlay#chatModal');
     
     if (!chatModalTarget) {
@@ -4487,27 +4497,17 @@ function openChatRoomModal(postId) {
         document.body.appendChild(chatModalTarget);
     }
 
-    // 최상위 레이어 강제 노출
+    // 최상위 레이어 강제 노출 (z-index 9999999)
     chatModalTarget.classList.remove('hidden');
     chatModalTarget.classList.add('active');
     chatModalTarget.style.setProperty('display', 'flex', 'important');
-    chatModalTarget.style.setProperty('z-index', '999999', 'important');
+    chatModalTarget.style.setProperty('z-index', '9999999', 'important');
     chatModalTarget.style.setProperty('visibility', 'visible', 'important');
     chatModalTarget.style.setProperty('opacity', '1', 'important');
 
     if (typeof openModal === 'function') {
         openModal(chatModalTarget);
     }
-
-    // 상세 모달 닫기
-    try {
-        const detailModalEl = document.getElementById('detailModal');
-        if (detailModalEl && typeof closeModal === 'function') {
-            closeModal(detailModalEl);
-        }
-        const dynamicOverlay = document.getElementById('dynamicDetailModalOverlay');
-        if (dynamicOverlay) dynamicOverlay.remove();
-    } catch(e) {}
 
     // 게시글 수집 및 대화 데이터 렌더링
     try {
@@ -4872,27 +4872,28 @@ function handleAddComment(e, postId) {
         };
         post.comments.push(commentObj);
         savePosts();
+    }
 
-        // Supabase DB comments 테이블 연동
-        if (supabaseClient) {
-            try {
-                const numericPostId = !isNaN(parseInt(postId)) ? parseInt(postId) : postId;
-                supabaseClient.from('comments').insert([{
-                    post_id: numericPostId,
-                    author: authorName,
-                    content: text,
-                    created_at: new Date().toISOString()
-                }]).then(({ error }) => {
-                    if (error) console.warn('Supabase comments insert notice:', error);
-                    else console.log('✨ Supabase comment inserted successfully');
-                }).catch(err => console.warn('Supabase comments insert catch:', err));
-            } catch (err) {
-                console.warn('Supabase comments insert exception:', err);
-            }
+    // Supabase DB comments 테이블 연동 (로컬 post 배열 존재 여부와 무관하게 100% 실행)
+    if (supabaseClient) {
+        try {
+            const numericPostId = !isNaN(parseInt(postId)) ? parseInt(postId) : postId;
+            supabaseClient.from('comments').insert([{
+                post_id: numericPostId,
+                author: authorName,
+                content: text,
+                created_at: new Date().toISOString()
+            }]).then(({ error }) => {
+                if (error) console.warn('Supabase comments insert notice:', error);
+                else console.log('✨ Supabase comment inserted successfully');
+            }).catch(err => console.warn('Supabase comments insert catch:', err));
+        } catch (err) {
+            console.warn('Supabase comments insert exception:', err);
         }
+    }
 
-        input.value = "";
-        openDetailModal(postId);
+    input.value = "";
+    openDetailModal(postId);
         showToast("💬 댓글이 성공적으로 등록되었습니다!");
     }
 }
