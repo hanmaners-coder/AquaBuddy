@@ -3095,6 +3095,14 @@ function initEventListeners() {
         openCreateModalBtn.addEventListener("click", () => {
             if (!currentUser) {
                 showToast("🔑 회원가입 / 로그인 후 글을 작성하실 수 있습니다!");
+                pendingLoginAction = function() {
+                    if (currentUser) {
+                        editingPostId = null;
+                        preselectModalCategory(activeCategory);
+                        openModal(createModal);
+                    }
+                };
+                closeModal(createModal);
                 openModal(authModal);
                 return;
             }
@@ -3197,7 +3205,11 @@ function initEventListeners() {
         switchAuthTab('login');
         openModal(authModal);
     });
-    if (closeAuthModalBtn) closeAuthModalBtn.addEventListener("click", () => closeModal(authModal));
+    if (closeAuthModalBtn) closeAuthModalBtn.addEventListener("click", () => {
+        pendingLoginAction = null;
+        closeModal(authModal);
+        closeModal(createModal);
+    });
 
     if (closeChatModalBtn) closeChatModalBtn.addEventListener("click", () => closeModal(chatModal));
     if (chatForm) chatForm.addEventListener("submit", handleSendChatMessage);
@@ -3220,7 +3232,11 @@ function initEventListeners() {
     window.addEventListener("click", (e) => {
         // [작성글 보호] 모집하기/글작성 모달은 바탕 클릭으로 닫히지 않게 조치 (작성 중 내용 날림 방지)
         // if (e.target === createModal) closeModal(createModal);
-        if (e.target === authModal) closeModal(authModal);
+        if (e.target === authModal) {
+            pendingLoginAction = null;
+            closeModal(authModal);
+            closeModal(createModal);
+        }
         if (e.target === chatModal) closeModal(chatModal);
         if (e.target === ratingModal) closeModal(ratingModal);
         if (e.target === detailModal) closeModal(detailModal);
@@ -6575,10 +6591,8 @@ if (typeof document !== "undefined") {
 
 // Initialize button event listeners after DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    const createBtn = document.getElementById('openCreateModalBtn');
-    if (createBtn) createBtn.addEventListener('click', () => openModal('createModal'));
     const authBtn = document.getElementById('openAuthModalBtn');
-    if (authBtn) authBtn.addEventListener('click', () => openModal('authModal'));
+    if (authBtn) authBtn.addEventListener('click', () => openModal(authModal));
     const instBtn = document.querySelector('.nav-inst-btn');
     if (instBtn) instBtn.addEventListener('click', () => openInstructorAuthModal());
 
