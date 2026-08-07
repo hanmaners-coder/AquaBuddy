@@ -946,6 +946,7 @@ const createPostForm = document.getElementById("createPostForm");
 const postImagesInput = document.getElementById("postImagesInput");
 const imagePreviewGrid = document.getElementById("imagePreviewGrid");
 
+let pendingLoginAction = null; // 로그인 후 실행할 보류 액션 (댓글/채팅/참가)
 const authModal = document.getElementById("authModal");
 const openAuthModalBtn = document.getElementById("openAuthModalBtn");
 const closeAuthModalBtn = document.getElementById("closeAuthModalBtn");
@@ -1859,7 +1860,7 @@ function renderAdminPostsTable() {
         <tr>
             <td><span class="badge badge-${post.category}">${post.categoryName}</span></td>
             <td><strong>${escapeHtml(post.title)}</strong></td>
-            <td>${escapeHtml(post.userName)}</td>
+            <td>${escapeHtml(post.nickname || post.userName || '알 수 없음')}</td>
             <td>${formatTimeAgo(post.createdAt)}</td>
             <td>
                 <button class="btn-delete" onclick="performPostDeletion('${post.id}')" style="padding: 4px 8px; font-size: 0.75rem;">
@@ -2099,7 +2100,7 @@ function renderDynamicProfileModal(user) {
 
             <div style="background: rgba(255, 255, 255, 0.05); padding: 14px; border-radius: 10px; margin-bottom: 16px;">
                 <h3 style="margin: 0 0 4px 0; color: #fff; font-size: 1.15rem;">
-                    👤 ${escapeHtml(user.name || '다이버')}
+                     ${escapeHtml(user.nickname || user.name || "다이버")}
                     ${isInstructor ? '<span style="background: linear-gradient(135deg, #ffb703, #ff8f00); color: #000; font-size: 0.75rem; font-weight: 900; padding: 3px 8px; border-radius: 12px; margin-left: 6px;">VERIFIED INSTRUCTOR</span>' : ''}
                 </h3>
                 <p style="margin: 0 0 4px 0; color: #a0aec0; font-size: 0.85rem;">${isInstructor ? '🎓 AquaBuddy 검증 공인 강사 계정' : `${escapeHtml(user.provider || 'AquaBuddy')} 인증 계정`}</p>
@@ -2217,7 +2218,7 @@ function openInstructorInquiryModal(classId) {
 
     if (post) {
         if (targetClassEl) targetClassEl.textContent = `클래스명: ${post.title}`;
-        if (targetInstEl) targetInstEl.textContent = `담당 강사: ${post.userName} (${post.userLicense || '공인 강사'})`;
+        if (targetInstEl) targetInstEl.textContent = `담당 강사: ${post.nickname || post.userName || '알 수 없음'} (${post.userLicense || '공인 강사'})`;
     } else {
         if (targetClassEl) targetClassEl.textContent = `클래스명: 강사 1:1 레슨 문의`;
         if (targetInstEl) targetInstEl.textContent = `담당 강사: AquaBuddy 공인 강사`;
@@ -2623,6 +2624,18 @@ async function handleLogin(emailArg, passwordArg) {
         filterAndRender();
         if (typeof showToast === "function") showToast("로그인 되었습니다!");
         alert(`🎉 ${currentUser.name || currentUser.nickname || '다이버'}님, 로그인에 성공하셨습니다!`);
+
+        // 로그인 성공 후 pendingLoginAction 콜백 실행 (댓글/채팅/참가 등)
+        if (typeof pendingLoginAction === "function") {
+            try {
+                const action = pendingLoginAction;
+                pendingLoginAction = null;
+                setTimeout(() => action(), 300);
+            } catch(e) {
+                console.warn("pendingLoginAction 실행 오류:", e);
+                pendingLoginAction = null;
+            }
+        }
     } catch (err) {
         console.error("로그인 에러:", err);
         alert("❌ 로그인 중 오류가 발생했습니다: " + (err.message || "이메일 및 비밀번호를 확인해주세요."));
@@ -4152,7 +4165,7 @@ function renderGrid(filteredPosts) {
                     ` : ""}
                     
                     <div class="post-card-footer" style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06);">
-                        <span style="font-size:0.8rem; color:var(--accent-cyan); font-weight:700;"><i class="fa-solid fa-user"></i> ${escapeHtml(post.userName || "다이버")}</span>
+                        <span style="font-size:0.8rem; color:var(--accent-cyan); font-weight:700;"><i class="fa-solid fa-user"></i> ${escapeHtml(post.nickname || post.userName || "다이버")}</span>
                         ${priceText ? `<span style="font-size:0.9rem; color:var(--accent-gold); font-weight:800;">${priceText}</span>` : ""}
                     </div>
                 </div>
@@ -4479,9 +4492,9 @@ function openChatRoomModal(postId) {
         const buddyNameEl = document.getElementById("chatBuddyName");
         if (buddyNameEl) {
             if (isInstructor) {
-                buddyNameEl.textContent = `🎓 ${post.userName} 강사님과의 1:1 수강 상담 대화방`;
+                buddyNameEl.textContent = `🎓 ${post.nickname || post.userName || '강사'} 강사님과의 1:1 수강 상담 대화방`;
             } else if (isMarket) {
-                buddyNameEl.textContent = `🛒 ${post.userName}님과의 1:1 중고거래 문의 대화방`;
+                buddyNameEl.textContent = `🛒 ${post.nickname || post.userName || '판매자'}님과의 1:1 중고거래 문의 대화방`;
             } else {
                 buddyNameEl.textContent = `🌊 '${(post.title || '').substring(0, 16)}' 버디 모집 일정 대화방`;
             }
@@ -4847,7 +4860,7 @@ function openDetailModal(postId) {
         mainInfoHtml = `
             <div class="detail-profile-card">
                 <div>
-                    <h3><i class="fa-solid fa-user-circle" style="color: var(--accent-cyan);"></i> ${escapeHtml(post.userName)} ${isHost ? '<span style="color: var(--accent-gold); font-size: 0.8rem;">(담당 강사 - 본인)</span>' : ''}</h3>
+                    <h3><i class="fa-solid fa-user-circle" style="color: var(--accent-cyan);"></i> ${escapeHtml(post.nickname || post.userName || "다이버")} ${isHost ? '<span style="color: var(--accent-gold); font-size: 0.8rem;">(담당 강사 - 본인)</span>' : ''}</h3>
                     <div class="detail-badge-list">
                         <span class="instructor-badge"><i class="fa-solid fa-graduation-cap"></i> ${escapeHtml(post.userLicense)}</span>
                         <span class="host-rating-badge"><i class="fa-solid fa-star"></i> 강사 평점 ${post.hostRating || 5.0} (${post.hostReviewsCount || 42}건)</span>
@@ -4947,7 +4960,7 @@ function openDetailModal(postId) {
         mainInfoHtml = `
             <div class="detail-profile-card">
                 <div>
-                    <h3><i class="fa-solid fa-user-circle" style="color: var(--accent-cyan);"></i> ${escapeHtml(post.userName)} ${isHost ? '<span style="color: var(--accent-gold); font-size: 0.8rem;">(판매자 - 본인)</span>' : ''} (중고장터)</h3>
+                    <h3><i class="fa-solid fa-user-circle" style="color: var(--accent-cyan);"></i> ${escapeHtml(post.nickname || post.userName || '알 수 없음')} ${isHost ? '<span style="color: var(--accent-gold); font-size: 0.8rem;">(판매자 - 본인)</span>' : ''} (중고장터)</h3>
                     <div class="detail-badge-list">
                         <span class="detail-badge"><i class="fa-solid fa-certificate"></i> ${escapeHtml(post.userLicense)}</span>
                     </div>
@@ -5027,7 +5040,7 @@ function openDetailModal(postId) {
         mainInfoHtml = `
             <div class="detail-profile-card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                 <div>
-                    <h3><i class="fa-solid fa-user-circle" style="color: var(--accent-cyan);"></i> ${escapeHtml(post.userName)} ${isHost ? '<span style="color: var(--accent-gold); font-size: 0.8rem;">(작성자 - 본인)</span>' : ''} (자유수다방)</h3>
+                    <h3><i class="fa-solid fa-user-circle" style="color: var(--accent-cyan);"></i> ${escapeHtml(post.nickname || post.userName || '알 수 없음')} ${isHost ? '<span style="color: var(--accent-gold); font-size: 0.8rem;">(작성자 - 본인)</span>' : ''} (자유수다방)</h3>
                     <div class="detail-badge-list">
                         <span class="detail-badge"><i class="fa-solid fa-certificate"></i> ${escapeHtml(post.userLicense)}</span>
                     </div>
@@ -5140,7 +5153,7 @@ function openDetailModal(postId) {
         mainInfoHtml = `
             <div class="detail-profile-card">
                 <div>
-                    <h3><i class="fa-solid fa-user-circle" style="color: var(--accent-cyan);"></i> ${escapeHtml(post.userName)} ${isHost ? '<span style="color: var(--accent-gold); font-size: 0.8rem;">(주최자 - 본인)</span>' : ''} (${post.categoryName})</h3>
+                    <h3><i class="fa-solid fa-user-circle" style="color: var(--accent-cyan);"></i> ${escapeHtml(post.nickname || post.userName || '알 수 없음')} ${isHost ? '<span style="color: var(--accent-gold); font-size: 0.8rem;">(주최자 - 본인)</span>' : ''} (${post.categoryName})</h3>
                     <div class="detail-badge-list">
                         <span class="detail-badge"><i class="fa-solid fa-certificate"></i> ${escapeHtml(post.userLicense)}</span>
                         <span class="host-rating-badge"><i class="fa-solid fa-star"></i> 주최자 평점 ${post.hostRating || 4.9} (${post.hostReviewsCount || 10}건)</span>
@@ -5325,9 +5338,11 @@ function toggleLike(postId) {
 }
 
 function joinBuddyMatch(postId) {
-    if (!currentUser) {
+    if (!currentUser || !currentUser.name) {
         showToast("🔑 로그인 후 참가 신청을 진행하실 수 있습니다!");
-        openModal(authModal);
+        pendingLoginAction = function() { joinBuddyMatch(postId); };
+        if (typeof switchAuthTab === "function") switchAuthTab('login');
+        openModal(document.getElementById("authModal"));
         return;
     }
     interceptJoinPost(postId);
@@ -5503,7 +5518,7 @@ async function submitHostRating() {
     }
 
     const targetEmail = currentRatingPost.email || currentRatingPost.userEmail || "";
-    const targetName = currentRatingPost.userName || currentRatingPost.author || "상대방 다이버";
+    const targetName = currentRatingPost.nickname || currentRatingPost.userName || currentRatingPost.author || "상대방 다이버";
 
     const reviewPayload = {
         post_id: currentRatingPost.id,
@@ -6075,7 +6090,8 @@ function handleAddComment(e, postId) {
     e.preventDefault();
     if (!currentUser || !currentUser.name) {
         showToast("🔑 로그인 후 실시간 댓글을 작성하실 수 있습니다!");
-        switchAuthTab('login');
+        pendingLoginAction = function() { openDetailModal(postId); };
+        if (typeof switchAuthTab === "function") switchAuthTab('login');
         openModal(document.getElementById("authModal"));
         return;
     }
@@ -6249,6 +6265,34 @@ function generateBubbles() {
 function openPostDetailModal(postId) {
     if (!postId) return;
     openDetailModal(postId);
+}
+
+function openChatRoomModal(postId) {
+    if (!postId) return;
+    // 로그인 가드: 비로그인 시 로그인 모달 후 자동 재실행
+    if (!currentUser || !currentUser.name) {
+        showToast("🔑 로그인 후 대화방에 입장하실 수 있습니다!");
+        pendingLoginAction = function() { openChatRoomModal(postId); };
+        if (typeof switchAuthTab === "function") switchAuthTab('login');
+        openModal(document.getElementById("authModal"));
+        return;
+    }
+    const post = posts.find(p => String(p.id) === String(postId));
+    if (!post) {
+        showToast("⚠️ 채팅할 게시글을 찾을 수 없습니다.");
+        return;
+    }
+    currentChatPost = post;
+    chatMessages[postId] = chatMessages[postId] || [];
+    if (typeof renderChatStream === "function") {
+        renderChatStream(postId);
+    }
+    const chatModalEl = document.getElementById("chatRoomModal");
+    if (chatModalEl) {
+        openModal(chatModalEl);
+    } else {
+        openModal("chatRoomModal");
+    }
 }
 
 // Explicit Window Global Bindings for HTML Inline Onclick Handlers
