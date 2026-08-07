@@ -4155,14 +4155,14 @@ function renderGrid(filteredPosts) {
         return `
             <div class="post-card post-card-slim" data-post-id="${post.id}" onclick="openPostDetailModal('${post.id}')" style="cursor: pointer;">
                 <div class="slim-card-inner">
-                    <div class="slim-card-row1">
+                    <div class="slim-card-left">
                         <span class="slim-cat-badge" style="color:${catColor}; border-color:${catColor};">
                             <i class="fa-solid ${catIcon}"></i> ${catLabel}
                         </span>
                         <span class="slim-author" style="color:${catColor};">${authorName}</span>
                         <span class="slim-title">${escapeHtml(post.title)}</span>
                     </div>
-                    <div class="slim-card-row2">
+                    <div class="slim-card-right">
                         <span class="slim-meta"><i class="fa-regular fa-calendar"></i> ${dateStr}</span>
                         ${statusText ? `<span class="slim-meta"><i class="fa-solid fa-users"></i> ${statusText}</span>` : ""}
                         ${priceText ? `<span class="slim-price" style="color:var(--accent-gold);">${priceText}</span>` : ""}
