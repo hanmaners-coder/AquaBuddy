@@ -1898,21 +1898,66 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 
     /* Filter Section Padding & Margin Diet */
     .filter-section {
-        padding: 12px 14px;
-        margin-bottom: 12px;
+        padding: 10px 12px;
+        margin-bottom: 10px;
     }
     .filter-header {
-        margin-bottom: 8px;
+        margin-bottom: 6px;
         flex-direction: row !important;
         align-items: center !important;
         justify-content: space-between;
     }
     .filter-header h2 {
-        font-size: 0.95rem;
+        font-size: 0.9rem;
     }
     .active-count {
-        font-size: 0.78rem;
+        font-size: 0.76rem;
     }
+    
+    /* 전국 해양 스팟 모바일 최적화 (CCTV 퀵선택 숨김 및 검색창 선명화) */
+    .cctv-quick-select-box {
+        display: none !important;
+    }
+    #tideSearchInput, .filter-item input, .filter-item select {
+        border: 1.5px solid rgba(0, 242, 254, 0.45) !important;
+        box-shadow: 0 0 8px rgba(0, 242, 254, 0.15) !important;
+    }
+
+    /* 모바일 쿠팡 광고 배너 크기 대폭 축소 */
+    .ad-banner-panel, .ad-banner-container {
+        padding: 6px 10px !important;
+        margin-bottom: 10px !important;
+        margin-top: 5px !important;
+    }
+    .center-ad-visual-card {
+        height: 54px !important;
+        min-height: 54px !important;
+    }
+    .center-ad-bg-img {
+        height: 54px !important;
+    }
+    .center-ad-overlay-content {
+        padding: 4px 10px !important;
+    }
+    .center-ad-badge, .center-ad-subtitle {
+        display: none !important;
+    }
+    .center-ad-title {
+        font-size: 0.78rem !important;
+        line-height: 1.2 !important;
+        margin: 0 !important;
+    }
+    .center-ad-cta-btn {
+        padding: 3px 6px !important;
+        font-size: 0.68rem !important;
+        height: auto !important;
+        margin-left: auto !important;
+    }
+    .ftc-legal-notice {
+        font-size: 0.68rem !important;
+        margin-top: 4px !important;
+    }
+
     .filter-grid-clean {
         gap: 6px !important;
         margin-bottom: 8px;

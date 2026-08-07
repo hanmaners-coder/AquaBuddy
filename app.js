@@ -3071,7 +3071,7 @@ function initEventListeners() {
 
     if (resetFiltersBtn) {
         resetFiltersBtn.addEventListener("click", () => {
-            activeCategory = "all";
+            // 현재 활성화된 카테고리 탭(activeCategory) 유지
             searchKeyword = "";
             selectedRegion = "all";
             selectedSort = "newest";
@@ -3080,13 +3080,10 @@ function initEventListeners() {
             if (regionSelect) regionSelect.value = "all";
             if (sortSelect) sortSelect.value = "newest";
 
-            tabBtns.forEach(b => b.classList.remove("active"));
-            if (tabBtns[0]) tabBtns[0].classList.add("active");
-
-            updateCreateButtonText("all");
+            // 카테고리 탭 엘리먼트들의 active 상태는 그대로 두고 필터만 리셋
             renderAdBanner();
             filterAndRender();
-            showToast("모든 필터가 초기화되었습니다.");
+            showToast("필터가 초기화되었습니다.");
         });
     }
 
@@ -4045,7 +4042,7 @@ function filterAndRender() {
         if (filterSec) filterSec.style.display = "none";
         if (postsSec) postsSec.style.display = "none";
         renderDashboardBlocks();
-        if (activeCountText) activeCountText.textContent = `AquaBuddy 통합 대시보드 - 주요 카테고리 핫이슈`;
+        if (activeCountText) activeCountText.textContent = "";
         return;
     }
 
