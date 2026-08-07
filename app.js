@@ -4461,6 +4461,19 @@ function handleSendChatMessage(e) {
 }
 
 function openChatRoomModal(postId) {
+    const isLoggedIn = typeof currentUser !== 'undefined' && currentUser && (currentUser.name || currentUser.nickname || currentUser.email || (currentUser.user_metadata && currentUser.user_metadata.full_name));
+
+    if (!isLoggedIn) {
+        if (typeof showToast === "function") showToast("🔑 로그인 후 실시간 대화방에 참여하실 수 있습니다!");
+        pendingLoginAction = function() {
+            openChatRoomModal(postId);
+        };
+        if (typeof switchAuthTab === "function") switchAuthTab('login');
+        const authModalEl = document.getElementById("authModal") || (typeof authModal !== 'undefined' ? authModal : null);
+        if (authModalEl && typeof openModal === "function") openModal(authModalEl);
+        return;
+    }
+
     const chatModalTarget = document.querySelector('.modal-overlay#chatModal');
     
     if (!chatModalTarget) {
@@ -4494,17 +4507,6 @@ function openChatRoomModal(postId) {
         const dynamicOverlay = document.getElementById('dynamicDetailModalOverlay');
         if (dynamicOverlay) dynamicOverlay.remove();
     } catch(e) {}
-
-    // 비로그인 유저 검증 -> 안내 Toast & Auth Modal 오픈
-    const isLoggedIn = typeof currentUser !== 'undefined' && currentUser && (currentUser.name || currentUser.nickname || currentUser.email || (currentUser.user_metadata && currentUser.user_metadata.full_name));
-
-    if (!isLoggedIn) {
-        if (typeof showToast === "function") showToast("🔑 로그인 후 실시간 대화방에 참여하실 수 있습니다!");
-        if (typeof switchAuthTab === "function") switchAuthTab('login');
-        const authModalEl = document.getElementById("authModal") || (typeof authModal !== 'undefined' ? authModal : null);
-        if (authModalEl && typeof openModal === "function") openModal(authModalEl);
-        return;
-    }
 
     // 게시글 수집 및 대화 데이터 렌더링
     try {
