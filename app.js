@@ -5667,6 +5667,8 @@ async function handleSavePost(e) {
 
     const token = localStorage.getItem("aqua_buddy_user_token") || localStorage.getItem("access_token") || "guest_demo_token";
 
+    const isCommunity = category === "community";
+
     const payload = {
         title,
         category,
@@ -5678,9 +5680,9 @@ async function handleSavePost(e) {
         price: priceVal ? parseInt(priceVal) : null,
         dealMethod: dealMethodVal,
         capacity: capacityVal ? parseInt(capacityVal) : 2,
-        location: mapAddress || "전국 포인트",
-        locationName: mapAddress || "전국 포인트",
-        mapAddress: mapAddress || "서울 송파구 올림픽공원",
+        location: isCommunity ? null : (mapAddress || "전국 포인트"),
+        locationName: isCommunity ? null : (mapAddress || "전국 포인트"),
+        mapAddress: isCommunity ? null : (mapAddress || "서울 송파구 올림픽공원"),
         date: date || null,
         userName,
         userLicense,
@@ -5730,18 +5732,29 @@ async function handleSavePost(e) {
                 status_text: payload.statusText || payload.status_text,
                 images: payload.images,
                 instructor_org: currentUser ? (currentUser.instructorOrg || "") : "",
-                instructor_license_code: currentUser ? (currentUser.instructorCode || "") : "",
-                created_at: payload.createdAt || new Date().toISOString()
+                instructor_license_code: currentUser ? (currentUser.instructorCode || "") : ""
             };
 
-            const { data, error } = await supabaseClient.from('posts').insert([dbPayload]).select();
-            if (!error && data && data.length > 0) {
-                savedPost = { ...payload, ...data[0] };
-            } else if (error) {
-                console.warn('Supabase INSERT failed, using client fallback:', error);
+            if (editingPostId) {
+                // UPDATE 기존 행 수정
+                const { data, error } = await supabaseClient.from('posts').update(dbPayload).eq('id', editingPostId).select();
+                if (!error && data && data.length > 0) {
+                    savedPost = { ...data[0] };
+                } else if (error) {
+                    console.warn('Supabase UPDATE failed, using client fallback:', error);
+                }
+            } else {
+                // INSERT 신규 추가
+                dbPayload.created_at = payload.createdAt || new Date().toISOString();
+                const { data, error } = await supabaseClient.from('posts').insert([dbPayload]).select();
+                if (!error && data && data.length > 0) {
+                    savedPost = { ...payload, ...data[0] };
+                } else if (error) {
+                    console.warn('Supabase INSERT failed, using client fallback:', error);
+                }
             }
         } catch (dbErr) {
-            console.error('Supabase INSERT exception:', dbErr);
+            console.error('Supabase save exception:', dbErr);
         }
     }
 
@@ -5754,7 +5767,18 @@ async function handleSavePost(e) {
 
     if (editingPostId) {
         const idx = posts.findIndex(p => p.id === editingPostId);
-        if (idx !== -1) posts[idx] = savedPost;
+        if (idx !== -1) {
+            // 기존 클라이언트 속성 보존 (댓글, 좋아요 등)
+            posts[idx] = {
+                ...posts[idx],
+                ...savedPost,
+                comments: posts[idx].comments || savedPost.comments || [],
+                likes: posts[idx].likes !== undefined ? posts[idx].likes : (savedPost.likes || 0),
+                userLiked: posts[idx].userLiked !== undefined ? posts[idx].userLiked : (savedPost.userLiked || false),
+                wishlistCount: posts[idx].wishlistCount !== undefined ? posts[idx].wishlistCount : (savedPost.wishlistCount || 0),
+                userWished: posts[idx].userWished !== undefined ? posts[idx].userWished : (savedPost.userWished || false)
+            };
+        }
         editingPostId = null;
         showToast("✏️ 게시글이 수정되었습니다!");
     } else {
