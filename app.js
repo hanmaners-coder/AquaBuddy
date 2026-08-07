@@ -2966,6 +2966,7 @@ function getPostInstSubCategory(post) {
 async function loadPosts() {
     if (!supabaseClient) {
         posts = [];
+        filterAndRender();
         return;
     }
     try {
@@ -2988,6 +2989,9 @@ async function loadPosts() {
     } catch (e) {
         console.error('Exception loading posts:', e);
         posts = [];
+    }
+    if (typeof filterAndRender === 'function') {
+        filterAndRender();
     }
 }
 
@@ -4112,6 +4116,47 @@ function filterAndRender() {
     renderGrid(filtered);
 }
 
+function formatTimeAgo(dateInput) {
+    if (!dateInput) return "방금 전";
+    try {
+        let past;
+        if (typeof dateInput === "string") {
+            // ISO formatted string without Z / offset might be parsed differently, force UTC or ISO parse
+            let isoStr = dateInput;
+            if (!isoStr.endsWith("Z") && !isoStr.includes("+") && !isoStr.includes("-", 10)) {
+                isoStr += "Z";
+            }
+            past = new Date(isoStr).getTime();
+        } else if (dateInput instanceof Date) {
+            past = dateInput.getTime();
+        } else {
+            past = new Date(dateInput).getTime();
+        }
+
+        if (isNaN(past)) return "방금 전";
+
+        const now = Date.now();
+        let diffMs = now - past;
+
+        // If slight future offset due to clock skew, cap at 0
+        if (diffMs < 0) diffMs = 0;
+
+        const diffSec = Math.floor(diffMs / 1000);
+        const diffMin = Math.floor(diffSec / 60);
+        const diffHour = Math.floor(diffMin / 60);
+        const diffDay = Math.floor(diffHour / 24);
+
+        if (diffMin < 1) return "방금 전";
+        if (diffMin < 60) return `${diffMin}분 전`;
+        if (diffHour < 24) return `${diffHour}시간 전`;
+        if (diffDay < 30) return `${diffDay}일 전`;
+        return formatDate(dateInput);
+    } catch (e) {
+        return "방금 전";
+    }
+}
+window.formatTimeAgo = formatTimeAgo;
+
 function renderGrid(filteredPosts) {
     const postsGrid = document.getElementById("postsGrid");
     if (!postsGrid) return;
@@ -4596,18 +4641,41 @@ function openChatRoomModal(postId) {
             }
         }
 
-        // Supabase DB messages 테이블 대화 내역 SELECT 연동 (created_at 100% snake_case)
+        // Supabase DB chat_rooms & chats 연동 (chat_rooms 확인/생성 후 chats 불러오기)
         if (supabaseClient && post && post.id) {
+            const pId = String(post.id);
+            // 1. chat_rooms 존재 여부 확인 및 생성
+            supabaseClient.from('chat_rooms')
+                .select('*')
+                .eq('post_id', pId)
+                .then(({ data: roomData, error: roomError }) => {
+                    if (roomError) {
+                        console.warn('chat_rooms select notice:', roomError);
+                    }
+                    if (!roomData || roomData.length === 0) {
+                        supabaseClient.from('chat_rooms').insert([{
+                            post_id: pId,
+                            title: post.title || '대화방',
+                            host_name: post.userName || post.nickname || '주최자',
+                            created_at: new Date().toISOString()
+                        }]).then(({ error: insertErr }) => {
+                            if (insertErr) console.warn('chat_rooms insert notice:', insertErr);
+                            else console.log('✨ chat_rooms created successfully');
+                        }).catch(e => console.warn('chat_rooms insert catch:', e));
+                    }
+                }).catch(e => console.warn('chat_rooms select catch:', e));
+
+            // 2. chats 메시지 가져오기
             supabaseClient.from('chats')
                 .select('*')
-                .eq('post_id', String(post.id))
+                .eq('post_id', pId)
                 .order('created_at', { ascending: true })
                 .then(({ data, error }) => {
                     if (!error && data && data.length > 0) {
                         const loadedMsgs = data.map(m => ({
                             id: m.id || `msg-${m.created_at}`,
                             sender: m.sender || 'user',
-                            author: m.author || m.user_name || '다이버',
+                            author: m.user_name || m.author || '다이버',
                             text: m.message_text || m.text || m.content || '',
                             time: m.time || (m.created_at ? new Date(m.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '방금 전'),
                             timestamp: m.created_at ? new Date(m.created_at).getTime() : Date.now()
@@ -4756,31 +4824,62 @@ function renderDynamicDetailModal(post) {
     if (dynOverlay) dynOverlay.remove();
 }
 
-function handleDynamicCommentSubmit(e, postId) {
-    e.preventDefault();
-    if (!currentUser || !currentUser.name) {
+function handleAddComment(e, postId) {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!currentUser || (!currentUser.name && !currentUser.nickname)) {
         showToast("🔑 로그인 후 실시간 댓글을 작성하실 수 있습니다!");
-        switchAuthTab('login');
-        openModal(document.getElementById("authModal"));
+        if (typeof switchAuthTab === "function") switchAuthTab('login');
+        const authModalEl = document.getElementById("authModal");
+        if (authModalEl && typeof openModal === "function") openModal(authModalEl);
         return;
     }
-    const input = document.getElementById("dynamicCommentInput_" + postId);
+
+    const input = document.getElementById("newCommentInput") || document.getElementById("dynamicCommentInput_" + postId);
     if (!input) return;
     const text = input.value.trim();
     if (!text) return;
 
     const post = posts.find(p => String(p.id) === String(postId));
+    const authorName = currentUser.nickname || currentUser.name || "다이버";
+
     if (post) {
         if (!Array.isArray(post.comments)) post.comments = [];
-        post.comments.push({
-            author: currentUser.name,
+        const commentObj = {
+            author: authorName,
             text: text,
-            time: "방금 전"
-        });
+            content: text,
+            time: "방금 전",
+            created_at: new Date().toISOString()
+        };
+        post.comments.push(commentObj);
         savePosts();
-        renderDynamicDetailModal(post);
-        showToast("💬 댓글이 등록되었습니다!");
+
+        // Supabase DB comments 테이블 연동
+        if (supabaseClient) {
+            try {
+                supabaseClient.from('comments').insert([{
+                    post_id: String(post.id),
+                    author: authorName,
+                    content: text,
+                    created_at: new Date().toISOString()
+                }]).then(({ error }) => {
+                    if (error) console.warn('Supabase comments insert notice:', error);
+                    else console.log('✨ Supabase comment inserted successfully');
+                }).catch(err => console.warn('Supabase comments insert catch:', err));
+            } catch (err) {
+                console.warn('Supabase comments insert exception:', err);
+            }
+        }
+
+        input.value = "";
+        openDetailModal(postId);
+        showToast("💬 댓글이 성공적으로 등록되었습니다!");
     }
+}
+window.handleAddComment = handleAddComment;
+
+function handleDynamicCommentSubmit(e, postId) {
+    handleAddComment(e, postId);
 }
 window.handleDynamicCommentSubmit = handleDynamicCommentSubmit;
 
@@ -4806,6 +4905,38 @@ function openDetailModal(postId) {
         
         const isHost = isMyPost(post);
         const isAttendee = Array.isArray(post.attendees) && post.attendees.includes(currentUserName);
+
+        // Supabase DB comments SELECT
+        if (supabaseClient && post && post.id) {
+            supabaseClient.from('comments')
+                .select('*')
+                .eq('post_id', String(post.id))
+                .order('created_at', { ascending: true })
+                .then(({ data, error }) => {
+                    if (!error && data && data.length > 0) {
+                        const fetchedComments = data.map(c => ({
+                            author: c.author || c.user_name || '다이버',
+                            text: c.content || c.text || '',
+                            content: c.content || c.text || '',
+                            time: c.created_at ? formatTimeAgo(c.created_at) : '방금 전',
+                            created_at: c.created_at
+                        }));
+                        post.comments = fetchedComments;
+                        const container = document.getElementById("commentListContainer");
+                        if (container) {
+                            container.innerHTML = fetchedComments.map(c => `
+                                <div class="comment-item" style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06); padding: 10px 14px; border-radius: 10px; margin-bottom: 8px;">
+                                    <div class="comment-header" style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                        <span style="font-weight: 700; color: var(--accent-cyan); font-size: 0.85rem;"><i class="fa-solid fa-user-circle"></i> ${escapeHtml(c.author || '')}</span>
+                                        <span style="opacity: 0.6; font-size: 0.74rem;">${c.time || '방금 전'}</span>
+                                    </div>
+                                    <p style="color: var(--text-main); font-size: 0.88rem;">${escapeHtml(c.text || '')}</p>
+                                </div>
+                            `).join("");
+                        }
+                    }
+                }).catch(e => console.warn('comments select catch:', e));
+        }
 
         const encodedLocation = encodeURIComponent(post.mapAddress || post.locationName || '');
         const kakaoMapUrl = `https://map.kakao.com/?q=${encodedLocation}`;
