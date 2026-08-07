@@ -4442,6 +4442,7 @@ function handleSendChatMessage(e) {
     if (supabaseClient) {
         try {
             const numericPostId = !isNaN(parseInt(postId)) ? parseInt(postId) : postId;
+            console.log('🚀 Supabase chats INSERT 시도:', { post_id: numericPostId, author: currentUserName, text: text });
             supabaseClient.from('chats').insert([{
                 post_id: numericPostId,
                 sender: msgObj.sender,
@@ -4451,12 +4452,16 @@ function handleSendChatMessage(e) {
                 content: text,
                 time: nowTimeStr,
                 created_at: isoNow
-            }]).then(({ error }) => {
-                if (error) console.warn('Supabase messages INSERT notice:', error);
-                else console.log('✨ Supabase messages INSERT success');
-            }).catch(err => console.warn('Supabase messages INSERT catch:', err));
+            }]).then(({ data, error }) => {
+                if (error) {
+                    console.error('❌ Supabase chats INSERT 에러:', error);
+                    if (typeof showToast === "function") showToast("⚠️ DB 대화 저장 거절: " + (error.message || JSON.stringify(error)));
+                } else {
+                    console.log('✨ Supabase messages INSERT success', data);
+                }
+            }).catch(err => console.error('Supabase messages INSERT catch:', err));
         } catch(sbErr) {
-            console.warn('Supabase messages INSERT exception:', sbErr);
+            console.error('Supabase messages INSERT exception:', sbErr);
         }
     }
 }
@@ -4878,17 +4883,25 @@ function handleAddComment(e, postId) {
     if (supabaseClient) {
         try {
             const numericPostId = !isNaN(parseInt(postId)) ? parseInt(postId) : postId;
+            console.log('🚀 Supabase comments INSERT 시도:', { post_id: numericPostId, author: authorName, content: text });
             supabaseClient.from('comments').insert([{
                 post_id: numericPostId,
                 author: authorName,
                 content: text,
                 created_at: new Date().toISOString()
-            }]).then(({ error }) => {
-                if (error) console.warn('Supabase comments insert notice:', error);
-                else console.log('✨ Supabase comment inserted successfully');
-            }).catch(err => console.warn('Supabase comments insert catch:', err));
+            }]).then(({ data, error }) => {
+                if (error) {
+                    console.error('❌ Supabase comments insert 에러 발생:', error);
+                    if (typeof showToast === "function") showToast("⚠️ Supabase 댓글 DB 저장 실패: " + (error.message || JSON.stringify(error)));
+                } else {
+                    console.log('✨ Supabase comment inserted successfully!', data);
+                    if (typeof showToast === "function") showToast("✨ Supabase Cloud DB에 댓글이 전송되었습니다!");
+                }
+            }).catch(err => {
+                console.error('❌ Supabase comments insert catch:', err);
+            });
         } catch (err) {
-            console.warn('Supabase comments insert exception:', err);
+            console.error('❌ Supabase comments insert exception:', err);
         }
     }
 
