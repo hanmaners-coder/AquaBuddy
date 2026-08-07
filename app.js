@@ -923,6 +923,7 @@ let instAppCertImage = "";
 let inquiryImageCompressed = "";
 let myCreatedPostIds = [];
 let activeHlsPlayer = null;
+let chatJoinTimestamps = {};
 
 // DOM Elements
 const postsGrid = document.getElementById("postsGrid");
@@ -6160,7 +6161,11 @@ function openModal(modal) {
     targetEl.style.setProperty("left", "0px", "important");
     targetEl.style.setProperty("width", "100vw", "important");
     targetEl.style.setProperty("height", "100vh", "important");
-    targetEl.style.setProperty("z-index", "999999", "important");
+    if (targetEl.id === "authModal") {
+        targetEl.style.setProperty("z-index", "9999999", "important");
+    } else {
+        targetEl.style.setProperty("z-index", "999999", "important");
+    }
     targetEl.style.setProperty("pointer-events", "auto", "important");
     targetEl.style.setProperty("opacity", "1", "important");
     targetEl.style.setProperty("visibility", "visible", "important");
