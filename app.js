@@ -5808,6 +5808,9 @@ function showMap(addressQuery) {
     if (!mapContainer) return;
     mapContainer.classList.remove("hidden");
 
+    let queryLower = (addressQuery || "").toLowerCase();
+    let matchedSpot = null;
+
     const spotCoords = (typeof FAMOUS_SPOT_COORDS !== "undefined" && FAMOUS_SPOT_COORDS) ? FAMOUS_SPOT_COORDS : (window.FAMOUS_SPOT_COORDS || {});
 
     for (const key in spotCoords) {
