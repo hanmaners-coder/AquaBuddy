@@ -5896,31 +5896,30 @@ async function handleSavePost(e) {
                 title: payload.title,
                 category: payload.category,
                 category_name: payload.categoryName || payload.category_name,
+                user_name: userNick,
+                user_license: payload.userLicense || payload.user_license,
+                instructor_org: currentUser ? (currentUser.instructorOrg || "") : "",
+                instructor_license_code: currentUser ? (currentUser.instructorCode || "") : "",
                 class_type: payload.classType || payload.class_type,
                 class_fee: payload.classFee || payload.class_fee,
-                class_ratio: payload.classRatio || payload.class_ratio,
-                class_inclusion: payload.classInclusion || payload.class_inclusion,
                 price: payload.price,
-                deal_method: payload.dealMethod || payload.deal_method,
                 capacity: payload.capacity,
-                location: payload.location,
                 location_name: payload.locationName || payload.location_name,
                 map_address: payload.mapAddress || payload.map_address,
-                date: payload.date,
                 event_date: payload.date || null,
-                user_name: userNick,
-                nickname: userNick,
-                real_name: userReal,
-                author: currentUser ? currentUser.email : userNick,
-                user_license: payload.userLicense || payload.user_license,
-                req_license: payload.reqLicense || payload.req_license,
-                desc: payload.desc,
-                content: payload.desc,
+                description: payload.desc,
                 status: payload.status,
-                status_text: payload.statusText || payload.status_text,
                 images: payload.images,
-                instructor_org: currentUser ? (currentUser.instructorOrg || "") : "",
-                instructor_license_code: currentUser ? (currentUser.instructorCode || "") : ""
+                desc: payload.desc,
+                status_text: payload.statusText || payload.status_text,
+                author: currentUser ? currentUser.email : userNick,
+                req_license: payload.reqLicense || payload.req_license,
+                location: payload.location,
+                date: payload.date,
+                class_ratio: payload.classRatio || payload.class_ratio,
+                class_inclusion: payload.classInclusion || payload.class_inclusion,
+                deal_method: payload.dealMethod || payload.deal_method,
+                content: payload.desc
             };
 
             if (editingPostId) {
@@ -5929,7 +5928,8 @@ async function handleSavePost(e) {
                 if (!error && data && data.length > 0) {
                     savedPost = { ...data[0] };
                 } else if (error) {
-                    console.warn('Supabase UPDATE failed, using client fallback:', error);
+                    console.error('❌ Supabase posts UPDATE 실패:', error);
+                    alert("⚠️ Supabase posts DB 수정 거부됨: " + (error.message || JSON.stringify(error)));
                 }
             } else {
                 // INSERT 신규 추가
@@ -5937,12 +5937,15 @@ async function handleSavePost(e) {
                 const { data, error } = await supabaseClient.from('posts').insert([dbPayload]).select();
                 if (!error && data && data.length > 0) {
                     savedPost = { ...payload, ...data[0] };
+                    console.log('✨ Supabase posts INSERT 성공:', data[0]);
                 } else if (error) {
-                    console.warn('Supabase INSERT failed, using client fallback:', error);
+                    console.error('❌ Supabase posts INSERT 실패 상세원인:', error);
+                    alert("⚠️ Supabase posts DB 저장 거부됨: " + (error.message || JSON.stringify(error)));
                 }
             }
         } catch (dbErr) {
             console.error('Supabase save exception:', dbErr);
+            alert("❌ DB 연동 예외 발생: " + (dbErr.message || dbErr));
         }
     }
 
