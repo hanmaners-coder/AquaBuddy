@@ -1447,23 +1447,15 @@ async function saveUserProfileToSupabase(userData, isExplicitEdit = false) {
         const payload = {
             email: userEmail,
             nickname: userNick,
-            user_name: userRealName,
             user_license: userLicense,
-            phone: userPhone,
-            provider: userData.provider || "홈페이지 회원",
-            instructor_status: userData.instructor_status || userData.instructorStatus || "none",
             instructor_code: instCode || userData.instructor_code || userData.instructorCode || "",
-            instructor_org: userData.instructor_org || userData.instructorOrg || "",
-            cert_image: userData.cert_image || userData.certImage || "",
+            provider: userData.provider || "홈페이지 회원",
+            phone: userPhone,
+            real_name: userRealName,
+            license_info: userLicense,
+            instructor_status: userData.instructor_status || userData.instructorStatus || "none",
             rejection_reason: userData.rejection_reason || userData.rejectionReason || "",
-            class_type: userData.class_type || userData.classType || "",
-            class_fee: userData.class_fee || userData.classFee || null,
-            capacity: userData.capacity || null,
-            location_name: userData.location_name || userData.locationName || "",
-            map_address: userData.map_address || userData.mapAddress || "",
-            event_date: userData.event_date || userData.date || "",
-            description: userData.description || userData.desc || "",
-            images: userData.images || null
+            cert_image: userData.cert_image || userData.certImage || ""
         };
 
         if (authUser && authUser.id) payload.id = authUser.id;
