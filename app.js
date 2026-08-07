@@ -3337,7 +3337,13 @@ function filterCctvRegion(regionCategoryKey) {
 }
 
 function handleImageUpload(e) {
-    const files = Array.from(e.target.files).slice(0, 4 - uploadedCompressedImages.length);
+    const MAX_IMAGES = 3;
+    const remaining = MAX_IMAGES - uploadedCompressedImages.length;
+    if (remaining <= 0) {
+        showToast("⚠️ 이미지는 최대 3장까지만 업로드할 수 있습니다.");
+        return;
+    }
+    const files = Array.from(e.target.files).slice(0, remaining);
     if (files.length === 0) return;
 
     files.forEach(file => {
@@ -3346,7 +3352,7 @@ function handleImageUpload(e) {
             const img = new Image();
             img.onload = () => {
                 const canvas = document.createElement("canvas");
-                const MAX_WIDTH = 800;
+                const MAX_WIDTH = 500; // 500px 이하로 강압축 (용량 절감)
                 let width = img.width;
                 let height = img.height;
 
@@ -3361,9 +3367,11 @@ function handleImageUpload(e) {
                 const ctx = canvas.getContext("2d");
                 ctx.drawImage(img, 0, 0, width, height);
 
-                const compressedBase64 = canvas.toDataURL("image/jpeg", 0.75);
-                uploadedCompressedImages.push(compressedBase64);
-                renderImagePreviews();
+                const compressedBase64 = canvas.toDataURL("image/jpeg", 0.55); // 55% 품질로 초강력 압축
+                if (uploadedCompressedImages.length < MAX_IMAGES) {
+                    uploadedCompressedImages.push(compressedBase64);
+                    renderImagePreviews();
+                }
             };
             img.src = event.target.result;
         };
@@ -4127,47 +4135,38 @@ function renderGrid(filteredPosts) {
         const isCommunity = post.category === "community";
         const isBuddy = !isInst && !isMarket && !isCommunity;
         
-        let labelHtml = "";
-        if (isInst) {
-            labelHtml = `<span class="badge badge-instructor"><i class="fa-solid fa-graduation-cap"></i> 강사 클래스</span>`;
-        } else if (isMarket) {
-            labelHtml = `<span class="badge badge-market"><i class="fa-solid fa-tags"></i> 중고장터</span>`;
-        } else if (isCommunity) {
-            labelHtml = `<span class="badge badge-community"><i class="fa-solid fa-comments"></i> 자유수다</span>`;
-        } else {
-            labelHtml = `<span class="badge badge-primary"><i class="fa-solid fa-user-group"></i> 버디모집</span>`;
-        }
+        let catColor = "var(--accent-cyan)";
+        let catIcon = "fa-user-group";
+        let catLabel = "버디모집";
+        if (isInst)       { catColor = "var(--accent-gold)"; catIcon = "fa-graduation-cap"; catLabel = "강사클래스"; }
+        else if (isMarket)    { catColor = "#00e676"; catIcon = "fa-tags"; catLabel = "중고장터"; }
+        else if (isCommunity) { catColor = "#b39ddb"; catIcon = "fa-comments"; catLabel = "수다방"; }
         
-        const imageHtml = post.images && post.images.length > 0
-            ? `<div class="post-card-image"><img src="${post.images[0]}" alt="대표 이미지"></div>`
-            : "";
-            
+        const authorName = escapeHtml(post.nickname || post.userName || "다이버");
         const dateStr = post.date ? formatDate(post.date) : (post.createdAt ? formatDate(post.createdAt) : "일시 미정");
         const priceText = isInst
             ? (post.classFee ? post.classFee.toLocaleString() + "원" : "수강료 문의")
             : (isMarket ? (post.price ? post.price.toLocaleString() + "원" : "가격 협의") : "");
-            
+
+        const statusText = isBuddy
+            ? `${post.joinedCount || 1}/${post.capacity || 2}명`
+            : (isMarket ? (post.status === 'completed' ? '거래완료' : '판매중') : "");
+
         return `
-            <div class="post-card" data-post-id="${post.id}" onclick="openPostDetailModal('${post.id}')" style="cursor: pointer;">
-                ${imageHtml}
-                <div class="post-card-body">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                        ${labelHtml}
-                        <span style="font-size:0.75rem; color:var(--text-muted);">${formatTimeAgo(post.createdAt)}</span>
+            <div class="post-card post-card-slim" data-post-id="${post.id}" onclick="openPostDetailModal('${post.id}')" style="cursor: pointer;">
+                <div class="slim-card-inner">
+                    <div class="slim-card-row1">
+                        <span class="slim-cat-badge" style="color:${catColor}; border-color:${catColor};">
+                            <i class="fa-solid ${catIcon}"></i> ${catLabel}
+                        </span>
+                        <span class="slim-author" style="color:${catColor};">${authorName}</span>
+                        <span class="slim-title">${escapeHtml(post.title)}</span>
                     </div>
-                    <h3 class="post-card-title">${escapeHtml(post.title)}</h3>
-                    <p class="post-card-desc">${escapeHtml(post.desc || "").substring(0, 80)}${(post.desc || "").length > 80 ? "..." : ""}</p>
-                    
-                    ${isBuddy || isInst ? `
-                        <div class="post-card-meta">
-                            <span><i class="fa-solid fa-calendar"></i> ${dateStr}</span>
-                            <span><i class="fa-solid fa-location-dot"></i> ${escapeHtml((post.mapAddress || post.locationName || "").substring(0, 15))}</span>
-                        </div>
-                    ` : ""}
-                    
-                    <div class="post-card-footer" style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06);">
-                        <span style="font-size:0.8rem; color:var(--accent-cyan); font-weight:700;"><i class="fa-solid fa-user"></i> ${escapeHtml(post.nickname || post.userName || "다이버")}</span>
-                        ${priceText ? `<span style="font-size:0.9rem; color:var(--accent-gold); font-weight:800;">${priceText}</span>` : ""}
+                    <div class="slim-card-row2">
+                        <span class="slim-meta"><i class="fa-regular fa-calendar"></i> ${dateStr}</span>
+                        ${statusText ? `<span class="slim-meta"><i class="fa-solid fa-users"></i> ${statusText}</span>` : ""}
+                        ${priceText ? `<span class="slim-price" style="color:var(--accent-gold);">${priceText}</span>` : ""}
+                        <span class="slim-time">${formatTimeAgo(post.createdAt)}</span>
                     </div>
                 </div>
             </div>
@@ -6319,13 +6318,45 @@ function openChatRoomModal(postId) {
     if (typeof renderChatStream === "function") {
         renderChatStream(postId);
     }
-    const chatModalEl = document.getElementById("chatRoomModal");
+    // chatModal (실제 index.html의 ID)와 chatRoomModal(레거시) 양쪽 대응
+    const chatModalEl = document.getElementById("chatModal") || document.getElementById("chatRoomModal");
     if (chatModalEl) {
         openModal(chatModalEl);
     } else {
-        openModal("chatRoomModal");
+        console.warn("openChatRoomModal: chatModal 또는 chatRoomModal 엘리먼트를 찾을 수 없습니다.");
+        showToast("⚠️ 대화방 모달을 찾을 수 없습니다. 개발자에게 문의해 주세요.");
     }
 }
+
+// ===== 30일 경과 채팅 자동 삭제 (Supabase 용량 폭탄 방지) =====
+async function cleanOldChats() {
+    if (!supabaseClient) return;
+    try {
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - 30);
+        const cutoffISO = cutoffDate.toISOString();
+
+        const { error } = await supabaseClient
+            .from('chats')
+            .delete()
+            .lt('created_at', cutoffISO);
+
+        if (error) {
+            console.warn('채팅 자동 삭제 실패:', error.message);
+        } else {
+            console.log('✅ 30일 이전 채팅 데이터 자동 삭제 완료 (기준일:', cutoffISO, ')');
+        }
+    } catch (e) {
+        console.warn('cleanOldChats 예외:', e);
+    }
+}
+window.cleanOldChats = cleanOldChats;
+
+// 앱 시작 시 1회 + 이후 24시간마다 자동 실행
+(function scheduleCleanOldChats() {
+    cleanOldChats();
+    setInterval(cleanOldChats, 24 * 60 * 60 * 1000);
+})();
 
 // Explicit Window Global Bindings for HTML Inline Onclick Handlers
 if (typeof window !== "undefined") {
