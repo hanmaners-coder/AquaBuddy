@@ -4184,7 +4184,7 @@ function renderGrid(filteredPosts) {
         else if (isMarket)    { catColor = "#00e676"; catIcon = "fa-tags"; catLabel = "중고장터"; }
         else if (isCommunity) { catColor = "#b39ddb"; catIcon = "fa-comments"; catLabel = "수다방"; }
         
-        const authorName = escapeHtml(post.nickname || post.userName || "다이버");
+        const authorName = escapeHtml(post.nickname || post.userName || post.user_name || post.author || "다이버");
         const dateStr = post.date ? formatDate(post.date) : (post.createdAt ? formatDate(post.createdAt) : "일시 미정");
         const priceText = isInst
             ? (post.classFee ? post.classFee.toLocaleString() + "원" : "수강료 문의")
@@ -4985,12 +4985,18 @@ function openDetailModal(postId) {
             </div>
         ` : '';
 
+        const instNick = post.nickname || post.userName || post.user_name || "다이버";
+        const instReal = post.realName || post.real_name || (currentUser && currentUser.realName ? currentUser.realName : "");
+        const nameDisplay = instReal && instReal !== instNick 
+            ? `${escapeHtml(instNick)} (실명: ${escapeHtml(instReal)})` 
+            : escapeHtml(instNick);
+
         mainInfoHtml = `
             <div class="detail-profile-card">
                 <div>
-                    <h3><i class="fa-solid fa-user-circle" style="color: var(--accent-cyan);"></i> ${escapeHtml(post.nickname || post.userName || "다이버")} ${isHost ? '<span style="color: var(--accent-gold); font-size: 0.8rem;">(담당 강사 - 본인)</span>' : ''}</h3>
+                    <h3><i class="fa-solid fa-user-circle" style="color: var(--accent-cyan);"></i> ${nameDisplay} ${isHost ? '<span style="color: var(--accent-gold); font-size: 0.8rem;">(담당 강사 - 본인)</span>' : ''}</h3>
                     <div class="detail-badge-list">
-                        <span class="instructor-badge"><i class="fa-solid fa-graduation-cap"></i> ${escapeHtml(post.userLicense)}</span>
+                        <span class="instructor-badge"><i class="fa-solid fa-graduation-cap"></i> ${escapeHtml(post.userLicense || post.user_license || '공인 강사')}</span>
                         <span class="host-rating-badge"><i class="fa-solid fa-star"></i> 강사 평점 ${post.hostRating || 5.0} (${post.hostReviewsCount || 42}건)</span>
                     </div>
                 </div>
@@ -5003,7 +5009,8 @@ function openDetailModal(postId) {
                             <i class="fa-solid fa-certificate"></i> AquaBuddy 공식 검증 완료 강사 프로필
                         </p>
                         <p style="font-size: 0.82rem; color: var(--text-main); margin-top: 4px;">
-                            • 대표 자격: <strong>${escapeHtml(post.userLicense || '공인 강사')}</strong> (운영진 검증 100% 완료)
+                            • 대표 자격: <strong>${escapeHtml(post.userLicense || '공인 강사')}</strong> (운영진 검증 100% 완료)<br>
+                            ${instReal ? `• 강사 실명: <strong style="color: var(--accent-cyan);">${escapeHtml(instReal)}</strong> (신원 및 자격증 실명 대조 완료)` : ''}
                         </p>
                     </div>
                     <div style="background: var(--accent-gold); color: #000; font-size: 0.76rem; font-weight: 900; padding: 6px 12px; border-radius: 20px; text-transform: uppercase;">
@@ -5168,9 +5175,9 @@ function openDetailModal(postId) {
         mainInfoHtml = `
             <div class="detail-profile-card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                 <div>
-                    <h3><i class="fa-solid fa-user-circle" style="color: var(--accent-cyan);"></i> ${escapeHtml(post.nickname || post.userName || '알 수 없음')} ${isHost ? '<span style="color: var(--accent-gold); font-size: 0.8rem;">(작성자 - 본인)</span>' : ''} (자유수다방)</h3>
+                    <h3><i class="fa-solid fa-user-circle" style="color: var(--accent-cyan);"></i> ${escapeHtml(post.nickname || post.userName || post.user_name || post.author || '다이버')} ${isHost ? '<span style="color: var(--accent-gold); font-size: 0.8rem;">(작성자 - 본인)</span>' : ''} (자유수다방)</h3>
                     <div class="detail-badge-list">
-                        <span class="detail-badge"><i class="fa-solid fa-certificate"></i> ${escapeHtml(post.userLicense)}</span>
+                        <span class="detail-badge"><i class="fa-solid fa-certificate"></i> ${escapeHtml(post.userLicense || post.user_license || '자유수다 다이버')}</span>
                     </div>
                 </div>
                 ${(isHost || isAdminAuthenticated) ? `
@@ -5278,12 +5285,15 @@ function openDetailModal(postId) {
             }
         }
 
+        const authorDisplay = post.nickname || post.userName || post.user_name || post.author || '다이버';
+        const userLicenseDisplay = post.userLicense || post.user_license || '공인 강사 / 다이버';
+
         mainInfoHtml = `
             <div class="detail-profile-card">
                 <div>
-                    <h3><i class="fa-solid fa-user-circle" style="color: var(--accent-cyan);"></i> ${escapeHtml(post.nickname || post.userName || '알 수 없음')} ${isHost ? '<span style="color: var(--accent-gold); font-size: 0.8rem;">(주최자 - 본인)</span>' : ''} (${post.categoryName})</h3>
+                    <h3><i class="fa-solid fa-user-circle" style="color: var(--accent-cyan);"></i> ${escapeHtml(authorDisplay)} ${isHost ? '<span style="color: var(--accent-gold); font-size: 0.8rem;">(주최자 - 본인)</span>' : ''} (${post.categoryName || '버디모집'})</h3>
                     <div class="detail-badge-list">
-                        <span class="detail-badge"><i class="fa-solid fa-certificate"></i> ${escapeHtml(post.userLicense)}</span>
+                        <span class="detail-badge"><i class="fa-solid fa-certificate"></i> ${escapeHtml(userLicenseDisplay)}</span>
                         <span class="host-rating-badge"><i class="fa-solid fa-star"></i> 주최자 평점 ${post.hostRating || 4.9} (${post.hostReviewsCount || 10}건)</span>
                     </div>
                 </div>
@@ -5743,6 +5753,16 @@ window.openEditModal = openEditModal;
 async function handleSavePost(e) {
     if (e && e.preventDefault) e.preventDefault();
 
+    if (!currentUser || (!currentUser.name && !currentUser.nickname && !currentUser.email)) {
+        showToast("🔑 로그인 후 글을 작성하실 수 있습니다!");
+        const createM = document.getElementById("createModal");
+        if (createM) closeModal(createM);
+        if (typeof switchAuthTab === "function") switchAuthTab('login');
+        const authModalEl = document.getElementById("authModal");
+        if (authModalEl && typeof openModal === "function") openModal(authModalEl);
+        return;
+    }
+
     const titleEl = document.getElementById("postTitle");
     const descEl = document.getElementById("postDesc");
     const title = titleEl ? titleEl.value.trim() : "";
@@ -5781,8 +5801,9 @@ async function handleSavePost(e) {
     const mapAddress = mapAddressEl ? mapAddressEl.value.trim() : "";
     const dateEl = document.getElementById("postDate");
     const date = dateEl ? dateEl.value : "";
-    const userName = currentUser ? currentUser.name : "다이버";
-    let userLicense = currentUser ? currentUser.license : "공인 강사 / 다이버";
+    const userNick = currentUser ? (currentUser.nickname || currentUser.name || currentUser.realName || "다이버") : "다이버";
+    const userReal = currentUser ? (currentUser.realName || currentUser.real_name || currentUser.name || "다이버") : "다이버";
+    let userLicense = currentUser ? (currentUser.license || currentUser.user_license || currentUser.license_info || "공인 강사 / 다이버") : "공인 강사 / 다이버";
 
     let categoryName = "버디 모집";
     if (category === "swimming") categoryName = "실내 수영";
@@ -5812,7 +5833,10 @@ async function handleSavePost(e) {
         locationName: isCommunity ? null : (mapAddress || "전국 포인트"),
         mapAddress: isCommunity ? null : (mapAddress || "서울 송파구 올림픽공원"),
         date: date || null,
-        userName,
+        userName: userNick,
+        nickname: userNick,
+        realName: userReal,
+        real_name: userReal,
         userLicense,
         reqLicense: category === "market" ? "상태 우수 / 직거래 가능" : (category === "instructor" ? "초보/입문자 환영" : "안전 수칙 준수"),
         desc,
@@ -5850,8 +5874,10 @@ async function handleSavePost(e) {
                 map_address: payload.mapAddress || payload.map_address,
                 date: payload.date,
                 event_date: payload.date || null,
-                user_name: payload.userName || payload.user_name,
-                author: currentUser ? currentUser.email : (payload.userName || payload.user_name),
+                user_name: userNick,
+                nickname: userNick,
+                real_name: userReal,
+                author: currentUser ? currentUser.email : userNick,
                 user_license: payload.userLicense || payload.user_license,
                 req_license: payload.reqLicense || payload.req_license,
                 desc: payload.desc,
