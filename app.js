@@ -5523,7 +5523,7 @@ function openDetailModal(postId) {
 
             <div class="contact-box" style="margin-top: 20px; justify-content: flex-end;">
                 <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-                    <button class="btn btn-primary" onclick="openChatRoomModal('${post.id}');">
+                    <button class="btn btn-primary" onclick="closeDetailModalAndUnsubscribe(); openChatRoomModal('${post.id}');">
                         <i class="fa-solid fa-comment-dots"></i> 일정 대화방 입장
                     </button>
                     ${actionButtonsHtml}
@@ -5637,7 +5637,8 @@ function toggleWishlist(postId) {
     savePosts();
     filterAndRender();
 
-    if (!detailModal.classList.contains("hidden")) {
+    const detailM = document.getElementById("postDetailModal") || document.getElementById("detailModal") || (typeof detailModal !== 'undefined' ? detailModal : null);
+    if (detailM && detailM.classList && !detailM.classList.contains("hidden")) {
         openDetailModal(postId);
     }
 }
@@ -5665,7 +5666,8 @@ function toggleLike(postId) {
     savePosts();
     filterAndRender();
 
-    if (!detailModal.classList.contains("hidden")) {
+    const detailM2 = document.getElementById("postDetailModal") || document.getElementById("detailModal") || (typeof detailModal !== 'undefined' ? detailModal : null);
+    if (detailM2 && detailM2.classList && !detailM2.classList.contains("hidden")) {
         openDetailModal(postId);
     }
 }
