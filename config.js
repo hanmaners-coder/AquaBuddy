@@ -6,7 +6,7 @@ window.AQUA_CONFIG = {
     // Supabase Backend Database Credentials
     supabase: {
         url: "https://ogfzfgsvmjuimjjhaubs.supabase.co",
-        anonKey: "sb_publishable_yq1u37mBsk6LfPqq428BOA_DKEEqaoW"
+        anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9nZnpmZ3N2bWp1aW1qamhhdWJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyMTE5NjgsImV4cCI6MjEwMDc4Nzk2OH0.UV_saHismzZs4uaic5i4h30OrV5PELERBWxKZGACR_o"
     },
 
     // Kakao Developers JavaScript API Key
