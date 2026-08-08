@@ -4430,30 +4430,33 @@ function handleSendChatMessage(e) {
     inputEl.value = "";
     renderChatStream(postId);
 
-    // Supabase DB messages 테이블 INSERT 연동 (created_at 100% snake_case)
+    // Supabase DB chats 테이블 INSERT 연동 (400 에러 방지를 위한 100% DB 스키마 매칭)
     if (supabaseClient) {
         try {
             const numericPostId = !isNaN(parseInt(postId)) ? parseInt(postId) : postId;
-            console.log('🚀 Supabase chats INSERT 시도:', { post_id: numericPostId, author: currentUserName, text: text });
-            supabaseClient.from('chats').insert([{
+            const chatPayload = {
                 post_id: numericPostId,
                 sender: msgObj.sender,
+                sender_name: currentUserName,
                 author: currentUserName,
                 user_name: currentUserName,
+                message_text: text,
                 text: text,
                 content: text,
                 time: nowTimeStr,
                 created_at: isoNow
-            }]).then(({ data, error }) => {
+            };
+            console.log('🚀 Supabase chats INSERT 시도:', chatPayload);
+            supabaseClient.from('chats').insert([chatPayload]).then(({ data, error }) => {
                 if (error) {
                     console.error('❌ Supabase chats INSERT 에러:', error);
                     if (typeof showToast === "function") showToast("⚠️ DB 대화 저장 거절: " + (error.message || JSON.stringify(error)));
                 } else {
-                    console.log('✨ Supabase messages INSERT success', data);
+                    console.log('✨ Supabase chats INSERT success', data);
                 }
-            }).catch(err => console.error('Supabase messages INSERT catch:', err));
+            }).catch(err => console.error('Supabase chats INSERT catch:', err));
         } catch(sbErr) {
-            console.error('Supabase messages INSERT exception:', sbErr);
+            console.error('Supabase chats INSERT exception:', sbErr);
         }
     }
 }
