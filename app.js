@@ -4863,72 +4863,64 @@ function renderDynamicDetailModal(post) {
 
 async function handleAddComment(e, postId) {
     if (e && e.preventDefault) e.preventDefault();
-    console.log('📌 [DEBUG] handleAddComment 호출됨! postId:', postId);
+    console.log('📌 [COMMENT DEBUG] handleAddComment 시작! postId:', postId);
 
     const input = document.getElementById("newCommentInput") || 
                   document.getElementById("dynamicCommentInput_" + postId) || 
                   (e && e.target ? (e.target.querySelector('input') || e.target) : null) ||
                   document.querySelector('.comment-input-modern');
-    if (!input) {
-        console.warn("⚠️ 댓글 입력창 요소를 찾을 수 없습니다.");
-        alert("⚠️ 댓글 입력창을 찾지 못했습니다. 페이지를 새로고침 해보세요.");
-        return;
-    }
-    const text = input.value.trim();
+    
+    const text = input ? input.value.trim() : "";
     if (!text) {
         alert("💬 댓글 내용을 입력해 주세요!");
         return;
     }
 
     const post = posts.find(p => String(p.id) === String(postId));
-    const authorName = (currentUser && (currentUser.nickname || currentUser.name)) 
-        ? (currentUser.nickname || currentUser.name) 
+    const authorName = (currentUser && (currentUser.nickname || currentUser.name || currentUser.email)) 
+        ? (currentUser.nickname || currentUser.name || currentUser.email) 
         : "익명 다이버";
 
-    // Supabase DB comments 테이블 연동 (디버깅 로그 및 인증 키 점검, Not-null 보장)
+    const commentPayload = {
+        post_id: String(postId || "default_post"),
+        author: authorName,
+        user_name: authorName,
+        nickname: authorName,
+        content: text,
+        text: text,
+        created_at: new Date().toISOString()
+    };
+
+    console.log('🚀 [COMMENT INSERT TRY] Supabase comments 전송 데이터:', commentPayload);
+
     if (supabaseClient) {
         try {
-            const commentPayload = {
-                post_id: String(postId || "default_post"),
-                author: authorName || "다이버",
-                user_name: authorName || "다이버",
-                nickname: authorName || "다이버",
-                content: text || "",
-                text: text || "",
-                created_at: new Date().toISOString()
-            };
-            console.log('🔍 [DEBUG] Supabase 클라이언트 API Key 상태:', SUPABASE_ANON_KEY ? "존재함 (Valid)" : "누락됨 (Missing)");
-            console.log('🚀 [DEBUG] 댓글 전송 시도 데이터:', commentPayload);
-
             const { data, error } = await supabaseClient.from('comments').insert([commentPayload]);
             if (error) {
-                console.error('❌ Supabase comments insert 에러 발생:', error);
-                alert("⚠️ Supabase 댓글 DB 저장 실패!\n코드: " + error.code + "\n원인: " + (error.message || JSON.stringify(error)));
-                return;
+                console.error('❌ [SUPABASE COMMENTS ERROR]', error);
+                alert("⚠️ 댓글 저장 실패 (Supabase):\n코드: " + error.code + "\n원인: " + (error.message || JSON.stringify(error)));
             } else {
-                console.log('✨ [SUCCESS] Supabase comment inserted successfully!', data);
+                console.log('✨ [SUPABASE COMMENTS SUCCESS]', data);
             }
         } catch (err) {
-            console.error('❌ Supabase comments insert exception:', err);
-            alert("❌ DB 연동 예외: " + (err.message || err));
-            return;
+            console.error('❌ [SUPABASE COMMENTS EXCEPTION]', err);
+            alert("❌ 댓글 연동 예외 발생:\n" + (err.message || err));
         }
     }
 
     if (post) {
         if (!Array.isArray(post.comments)) post.comments = [];
-        const commentObj = {
+        post.comments.push({
             author: authorName,
             text: text,
             content: text,
             time: "방금 전",
             created_at: new Date().toISOString()
-        };
-        post.comments.push(commentObj);
+        });
         savePosts();
     }
 
-    input.value = "";
+    if (input) input.value = "";
     openDetailModal(postId);
     showToast("💬 댓글이 성공적으로 등록되었습니다!");
 }
