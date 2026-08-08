@@ -4997,49 +4997,17 @@ function openDetailModal(postId) {
         const isHost = isMyPost(post);
         const isAttendee = Array.isArray(post.attendees) && post.attendees.includes(currentUserName);
 
-        // Supabase DB comments SELECT (String conversion & 400 Catch fallback)
+        // Supabase DB comments SELECT (Clean post_id query)
         if (supabaseClient && post && post.id) {
             const rawPostId = String(post.id);
-            const queryPostId = /^\d+$/.test(rawPostId) ? parseInt(rawPostId) : rawPostId;
 
             supabaseClient.from('comments')
                 .select('*')
-                .eq('post_id', queryPostId)
+                .eq('post_id', rawPostId)
                 .order('created_at', { ascending: true })
                 .then(({ data, error }) => {
                     if (error) {
-                        console.warn('Comments query by post_id notice:', error);
-                        if (error.code === '22P02' || error.status === 400) {
-                            // Retry with String post_id fallback if bigint failed
-                            supabaseClient.from('comments')
-                                .select('*')
-                                .eq('post_id', String(rawPostId))
-                                .order('created_at', { ascending: true })
-                                .then(({ data: retryData }) => {
-                                    if (retryData && retryData.length > 0) {
-                                        const fetchedComments = retryData.map(c => ({
-                                            author: c.author || c.user_name || '다이버',
-                                            text: c.content || c.text || '',
-                                            content: c.content || c.text || '',
-                                            time: c.created_at ? formatTimeAgo(c.created_at) : '방금 전',
-                                            created_at: c.created_at
-                                        }));
-                                        post.comments = fetchedComments;
-                                        const container = document.getElementById("commentListContainer");
-                                        if (container) {
-                                            container.innerHTML = fetchedComments.map(c => `
-                                                <div class="comment-item" style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06); padding: 10px 14px; border-radius: 10px; margin-bottom: 8px;">
-                                                    <div class="comment-header" style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                                                        <span style="font-weight: 700; color: var(--accent-cyan); font-size: 0.85rem;"><i class="fa-solid fa-user-circle"></i> ${escapeHtml(c.author || '')}</span>
-                                                        <span style="opacity: 0.6; font-size: 0.74rem;">${c.time || '방금 전'}</span>
-                                                    </div>
-                                                    <p style="color: var(--text-main); font-size: 0.88rem;">${escapeHtml(c.text || '')}</p>
-                                                </div>
-                                            `).join("");
-                                        }
-                                    }
-                                }).catch(() => {});
-                        }
+                        console.warn('Comments query notice:', error);
                     } else if (data && data.length > 0) {
                         const fetchedComments = data.map(c => ({
                             author: c.author || c.user_name || '다이버',
