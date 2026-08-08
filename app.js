@@ -4863,27 +4863,27 @@ function renderDynamicDetailModal(post) {
 
 async function handleAddComment(e, postId) {
     if (e && e.preventDefault) e.preventDefault();
-    if (!currentUser || (!currentUser.name && !currentUser.nickname)) {
-        showToast("🔑 로그인 후 실시간 댓글을 작성하실 수 있습니다!");
-        if (typeof switchAuthTab === "function") switchAuthTab('login');
-        const authModalEl = document.getElementById("authModal");
-        if (authModalEl && typeof openModal === "function") openModal(authModalEl);
-        return;
-    }
+    console.log('📌 [DEBUG] handleAddComment 호출됨! postId:', postId);
 
     const input = document.getElementById("newCommentInput") || 
                   document.getElementById("dynamicCommentInput_" + postId) || 
-                  (e && e.target ? e.target.querySelector('input') : null) ||
+                  (e && e.target ? (e.target.querySelector('input') || e.target) : null) ||
                   document.querySelector('.comment-input-modern');
     if (!input) {
         console.warn("⚠️ 댓글 입력창 요소를 찾을 수 없습니다.");
+        alert("⚠️ 댓글 입력창을 찾지 못했습니다. 페이지를 새로고침 해보세요.");
         return;
     }
     const text = input.value.trim();
-    if (!text) return;
+    if (!text) {
+        alert("💬 댓글 내용을 입력해 주세요!");
+        return;
+    }
 
     const post = posts.find(p => String(p.id) === String(postId));
-    const authorName = currentUser.nickname || currentUser.name || "다이버";
+    const authorName = (currentUser && (currentUser.nickname || currentUser.name)) 
+        ? (currentUser.nickname || currentUser.name) 
+        : "익명 다이버";
 
     // Supabase DB comments 테이블 연동 (디버깅 로그 및 인증 키 점검, Not-null 보장)
     if (supabaseClient) {
