@@ -5020,7 +5020,7 @@ function openDetailModal(postId) {
         ` : '';
 
     const modernCommentFormHtml = `
-        <form class="comment-form-modern" id="modernCommentForm_${post.id}" onsubmit="handleAddComment(event, '${post.id}'); return false;">
+        <form class="comment-form-modern" id="modernCommentForm_${post.id}" data-post-id="${post.id}" onsubmit="handleAddComment(event, '${post.id}'); return false;">
             <i class="fa-solid fa-comment-dots" style="color: var(--accent-cyan);"></i>
             <input type="text" id="newCommentInput" class="comment-input-modern" placeholder="실시간 댓글 또는 문의를 작성하세요..." required autocomplete="off">
             <button type="button" class="comment-submit-btn" onclick="handleAddComment(event, '${post.id}')"><i class="fa-solid fa-paper-plane"></i> 등록</button>
@@ -7442,16 +7442,14 @@ document.addEventListener('click', function(e) {
     if (btn) {
         console.log('📌 [GLOBAL DELEGATION] .comment-submit-btn 클릭 감지!');
         const form = btn.closest('form');
-        const input = form ? form.querySelector('input') : document.getElementById('newCommentInput');
         
         let targetPostId = null;
-        if (form && form.id && form.id.includes('modernCommentForm_')) {
+        if (form && form.getAttribute('data-post-id')) {
+            targetPostId = form.getAttribute('data-post-id');
+        } else if (form && form.id && form.id.includes('modernCommentForm_')) {
             targetPostId = form.id.replace('modernCommentForm_', '');
-        } else if (currentChatPost && currentChatPost.id) {
+        } else if (typeof currentChatPost !== 'undefined' && currentChatPost && currentChatPost.id) {
             targetPostId = currentChatPost.id;
-        } else {
-            const activeModal = document.querySelector('.post-card[data-post-id]') || document.querySelector('[data-post-id]');
-            if (activeModal) targetPostId = activeModal.getAttribute('data-post-id');
         }
 
         if (targetPostId && typeof handleAddComment === 'function') {
