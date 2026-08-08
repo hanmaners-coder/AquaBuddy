@@ -4373,44 +4373,6 @@ function renderChatStream(postId) {
     const joinTime = chatJoinTimestamps[joinKey] || 0;
     const isHost = typeof isMyPost === 'function' && currentChatPost ? isMyPost(currentChatPost) : false;
 
-    // 신규 참가자 개인정보 및 과거 대화 보호 필터링 (시스템 메시지, 주최자, 본인 작성 메시지, 입장 이후 메시지)
-    // 1. Supabase chats DB 가져오기 (bigint 22P02 오류 완벽 방지)
-    if (supabaseClient && currentChatPost && currentChatPost.id) {
-        const rawPostId = String(currentChatPost.id);
-        const isNumeric = !isNaN(parseInt(rawPostId)) && /^\d+$/.test(rawPostId);
-        const pId = isNumeric ? parseInt(rawPostId) : rawPostId;
-
-        // 1. chat_rooms 확인 및 생성
-        supabaseClient.from('chat_rooms')
-            .select('*')
-            .eq('post_id', pId)
-            .then(({ data: roomData, error: roomError }) => {
-                if (roomError) {
-                    console.warn('chat_rooms select notice:', roomError);
-                }
-                if (!roomData || roomData.length === 0) {
-                    supabaseClient.from('chat_rooms').insert([{
-                        post_id: pId,
-                        title: currentChatPost.title || '대화방',
-                        host_name: currentChatPost.userName || currentChatPost.nickname || '주최자',
-                        created_at: new Date().toISOString()
-                    }]).then(({ error: insertErr }) => {
-                        if (insertErr) console.warn('chat_rooms insert notice:', insertErr);
-                        else console.log('✨ chat_rooms created successfully');
-                    }).catch(e => console.warn('chat_rooms insert catch:', e));
-                }
-            }).catch(e => console.warn('chat_rooms select catch:', e));
-
-        // 2. chats 메시지 가져오기
-        supabaseClient.from('chats')
-            .select('*')
-            .eq('post_id', pId)
-            .order('created_at', { ascending: true })
-            .then(({ data, error }) => {
-                if (error) console.error('Chats fetch error:', error);
-            });
-    }
-
     const visibleStream = stream.filter(function(msg) {
         if (msg.sender === "system" || isHost) return true;
         if (msg.author === currentUserName) return true;
@@ -4447,7 +4409,7 @@ function renderChatStream(postId) {
     container.scrollTop = container.scrollHeight;
 }
 
-function handleSendChatMessage(e) {
+async function handleSendChatMessage(e) {
     if (e && e.preventDefault) e.preventDefault();
     if (!currentChatPost) return;
 
@@ -4472,13 +4434,7 @@ function handleSendChatMessage(e) {
         timestamp: Date.now()
     };
 
-    if (!chatMessages[postId]) chatMessages[postId] = [];
-    chatMessages[postId].push(msgObj);
-
-    inputEl.value = "";
-    renderChatStream(postId);
-
-    // Supabase DB chats 테이블 INSERT 연동
+    // Supabase DB chats 테이블 INSERT 연동 (await로 즉시 에러 포착)
     if (supabaseClient) {
         try {
             const chatPayload = {
@@ -4494,18 +4450,26 @@ function handleSendChatMessage(e) {
                 created_at: isoNow
             };
             console.log('🚀 Supabase chats INSERT 시도:', chatPayload);
-            supabaseClient.from('chats').insert([chatPayload]).then(({ data, error }) => {
-                if (error) {
-                    console.error('❌ Supabase chats INSERT 에러:', error);
-                    if (typeof showToast === "function") showToast("⚠️ DB 대화 저장 실패: " + (error.message || JSON.stringify(error)));
-                } else {
-                    console.log('✨ Supabase chats INSERT success', data);
-                }
-            }).catch(err => console.error('Supabase chats INSERT catch:', err));
+            const { data, error } = await supabaseClient.from('chats').insert([chatPayload]);
+            if (error) {
+                console.error('❌ Supabase chats INSERT 에러:', error);
+                alert("⚠️ DB 대화 저장 실패!\n원인: " + (error.message || JSON.stringify(error)));
+                return;
+            } else {
+                console.log('✨ Supabase chats INSERT success', data);
+            }
         } catch(sbErr) {
             console.error('Supabase chats INSERT exception:', sbErr);
+            alert("❌ DB 대화 예외 발생: " + (sbErr.message || sbErr));
+            return;
         }
     }
+
+    if (!chatMessages[postId]) chatMessages[postId] = [];
+    chatMessages[postId].push(msgObj);
+
+    inputEl.value = "";
+    renderChatStream(postId);
 }
 
 function openChatRoomModal(postId) {
