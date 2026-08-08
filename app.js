@@ -4852,6 +4852,106 @@ function finishScheduleFromChat() {
     showToast("⚡ 대화방에서 일정 완료 처리 및 평가가 활성화되었습니다!");
 }
 
+// ==========================================
+// 댓글 Supabase 실시간 구독 관리
+// ==========================================
+let _commentRealtimeChannel = null;
+let _commentRealtimePostId = null;
+
+// 특정 게시글의 최신 댓글을 Supabase에서 불러와 즉시 화면 갱신
+async function fetchAndRenderComments(postId) {
+    if (!supabaseClient || !postId) return;
+    try {
+        const { data, error } = await supabaseClient
+            .from('comments')
+            .select('*')
+            .eq('post_id', String(postId))
+            .order('created_at', { ascending: true });
+
+        if (error) {
+            console.warn('[FETCH COMMENTS] Supabase error:', error);
+            return;
+        }
+
+        const fetchedComments = (data || []).map(c => ({
+            author: c.author || c.user_name || '다이버',
+            text: c.content || c.text || '',
+            content: c.content || c.text || '',
+            time: c.created_at ? formatTimeAgo(c.created_at) : '방금 전',
+            created_at: c.created_at
+        }));
+
+        // 로컬 posts 배열에도 동기화
+        const post = posts.find(p => String(p.id) === String(postId));
+        if (post) post.comments = fetchedComments;
+
+        // 화면 댓글 컨테이너 즉시 갱신
+        const container = document.getElementById('commentListContainer');
+        if (container) {
+            if (fetchedComments.length === 0) {
+                container.innerHTML = '<p style="font-size: 0.85rem; color: var(--text-muted);">첫 댓글을 남겨보세요!</p>';
+            } else {
+                container.innerHTML = fetchedComments.map(c => `
+                    <div class="comment-item" style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06); padding: 10px 14px; border-radius: 10px; margin-bottom: 8px;">
+                        <div class="comment-header" style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="font-weight: 700; color: var(--accent-cyan); font-size: 0.85rem;"><i class="fa-solid fa-user-circle"></i> ${escapeHtml(c.author || '')}</span>
+                            <span style="opacity: 0.6; font-size: 0.74rem;">${c.time || '방금 전'}</span>
+                        </div>
+                        <p style="color: var(--text-main); font-size: 0.88rem;">${escapeHtml(c.text || '')}</p>
+                    </div>
+                `).join('');
+            }
+        }
+        console.log('[FETCH COMMENTS] 댓글 화면 갱신 완료, count:', fetchedComments.length);
+    } catch(err) {
+        console.warn('[FETCH COMMENTS] 예외:', err);
+    }
+}
+window.fetchAndRenderComments = fetchAndRenderComments;
+
+// Supabase Realtime 댓글 구독 시작 (게시글 상세 열릴 때 호출)
+function subscribeCommentRealtime(postId) {
+    if (!supabaseClient || !postId) return;
+    // 이미 같은 게시글 구독 중이면 스킵
+    if (_commentRealtimePostId === String(postId) && _commentRealtimeChannel) return;
+
+    // 기존 구독 해제
+    unsubscribeCommentRealtime();
+
+    _commentRealtimePostId = String(postId);
+    try {
+        _commentRealtimeChannel = supabaseClient
+            .channel('comments_realtime_' + postId)
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'comments',
+                filter: 'post_id=eq.' + String(postId)
+            }, (payload) => {
+                console.log('[REALTIME COMMENTS] 변경 감지:', payload.eventType);
+                fetchAndRenderComments(postId);
+            })
+            .subscribe((status) => {
+                console.log('[REALTIME COMMENTS] 구독 상태:', status);
+            });
+    } catch(err) {
+        console.warn('[REALTIME COMMENTS] 구독 실패:', err);
+    }
+}
+window.subscribeCommentRealtime = subscribeCommentRealtime;
+
+// Supabase Realtime 댓글 구독 해제 (게시글 상세 닫힐 때 호출)
+function unsubscribeCommentRealtime() {
+    if (_commentRealtimeChannel && supabaseClient) {
+        try {
+            supabaseClient.removeChannel(_commentRealtimeChannel);
+        } catch(e) {}
+    }
+    _commentRealtimeChannel = null;
+    _commentRealtimePostId = null;
+}
+window.unsubscribeCommentRealtime = unsubscribeCommentRealtime;
+
 function renderDynamicDetailModal(post) {
     const dynOverlay = document.getElementById("dynamicDetailModalOverlay");
     if (dynOverlay) dynOverlay.remove();
@@ -4917,6 +5017,8 @@ async function handleAddComment(e, postId) {
                 alert("⚠️ 댓글 저장 실패 (Supabase):\n코드: " + error.code + "\n원인: " + (error.message || JSON.stringify(error)));
             } else {
                 console.log('✨ [SUPABASE COMMENTS SUCCESS]', data);
+                // INSERT 성공 후 즉시 댓글 목록 새로고침 (모바일 캐시 무시)
+                await fetchAndRenderComments(postId);
             }
         } catch (err) {
             console.error('❌ [SUPABASE COMMENTS EXCEPTION]', err);
@@ -4938,7 +5040,6 @@ async function handleAddComment(e, postId) {
         savePosts();
     }
 
-    openDetailModal(postId);
     showToast("💬 댓글이 성공적으로 등록되었습니다!");
 }
 window.handleAddComment = handleAddComment;
@@ -5453,6 +5554,13 @@ function openDetailModal(postId) {
                 }
             }, 150);
         }
+
+        // Supabase Realtime 댓글 구독 시작 (실시간 데이터 감지)
+        subscribeCommentRealtime(post.id);
+
+        // Supabase에서 최신 댓글 즉시 로드 (모바일 캐시 우회)
+        fetchAndRenderComments(post.id);
+
     } catch(err) {
         console.error("openDetailModal error:", err);
         alert("게시글 상세 정보 열기 중 오류가 발생했습니다:\n" + err.message);
@@ -5460,6 +5568,22 @@ function openDetailModal(postId) {
 }
 window.openDetailModal = openDetailModal;
 window.openPostDetailModal = openDetailModal;
+
+// 게시글 상세 화면 닫기 (실시간 구독 해제 포함)
+function closeDetailModalAndUnsubscribe() {
+    // Realtime 댓글 구독 해제
+    unsubscribeCommentRealtime();
+    // 모든 게시글 상세 모달 닫기
+    ['postDetailModal', 'detailModal'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.classList.add('hidden');
+            el.style.setProperty('display', 'none', 'important');
+        }
+    });
+    document.querySelectorAll('#dynamicDetailModalOverlay, .dynamic-detail-overlay').forEach(el => el.remove());
+}
+window.closeDetailModalAndUnsubscribe = closeDetailModalAndUnsubscribe;
 
 function deletePostWithPassword(postId) {
     performPostDeletion(postId);
