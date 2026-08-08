@@ -4524,7 +4524,7 @@ function openChatRoomModal(postId) {
         return;
     }
 
-    // 1. 상세 모달 완전 닫기 (모든 상세 모달 ID 커버)
+    // 1. 모든 상세 모달 및 동적 팝업 오버레이 완전 즉시 닫기
     try {
         ['postDetailModal', 'detailModal'].forEach(id => {
             const el = document.getElementById(id);
@@ -4534,11 +4534,10 @@ function openChatRoomModal(postId) {
                 el.style.setProperty('z-index', '-1', 'important');
             }
         });
-        const dynamicOverlay = document.getElementById('dynamicDetailModalOverlay');
-        if (dynamicOverlay) dynamicOverlay.remove();
+        document.querySelectorAll('#dynamicDetailModalOverlay, .dynamic-detail-overlay').forEach(el => el.remove());
     } catch(e) {}
 
-    // 대화방 모달 탐색 (다양한 선택자로 fallback)
+    // 2. 대화방 모달 요소 탐색
     const chatModalTarget = document.getElementById('chatModal') ||
                             document.querySelector('.modal-overlay#chatModal') ||
                             document.querySelector('#chatModal');
@@ -4548,22 +4547,30 @@ function openChatRoomModal(postId) {
         return;
     }
 
-    // body 직계 자식으로 강제 이동 (다른 모달의 z-index/overflow 영향 방지)
-    document.body.appendChild(chatModalTarget);
+    // 3. body 직계 자식으로 강제 이동 후 최고 z-index(99999999)로 즉시 전면 표시
+    if (chatModalTarget.parentElement !== document.body) {
+        document.body.appendChild(chatModalTarget);
+    }
 
-    // 최상위 레이어 강제 노출
     chatModalTarget.classList.remove('hidden');
     chatModalTarget.classList.add('active');
     chatModalTarget.style.removeProperty('display');
     chatModalTarget.style.setProperty('display', 'flex', 'important');
-    chatModalTarget.style.setProperty('z-index', '9999999', 'important');
+    chatModalTarget.style.setProperty('z-index', '99999999', 'important');
     chatModalTarget.style.setProperty('visibility', 'visible', 'important');
     chatModalTarget.style.setProperty('opacity', '1', 'important');
     chatModalTarget.style.setProperty('position', 'fixed', 'important');
     chatModalTarget.style.setProperty('top', '0', 'important');
     chatModalTarget.style.setProperty('left', '0', 'important');
-    chatModalTarget.style.setProperty('width', '100%', 'important');
-    chatModalTarget.style.setProperty('height', '100%', 'important');
+    chatModalTarget.style.setProperty('width', '100vw', 'important');
+    chatModalTarget.style.setProperty('height', '100vh', 'important');
+    chatModalTarget.style.setProperty('background', 'rgba(0, 0, 0, 0.85)', 'important');
+
+    // 입력창으로 즉시 포커스 이동
+    setTimeout(() => {
+        const inp = document.getElementById("chatMessageInput") || document.getElementById("chatInput");
+        if (inp) inp.focus();
+    }, 50);
 
     // 게시글 수집 및 대화 데이터 렌더링
     try {
@@ -4819,59 +4826,7 @@ function renderChatStream(postId) {
 
 
 
-function handleSendChatMessage(e) {
-    if (e && e.preventDefault) e.preventDefault();
-    if (!currentChatPost) return;
-
-    const inputEl = document.getElementById("chatMessageInput") || document.getElementById("chatInput");
-    if (!inputEl) return;
-
-    const text = inputEl.value.trim();
-    if (!text) return;
-
-    const postId = String(currentChatPost.id);
-    const currentUserName = currentUser ? (currentUser.name || currentUser.nickname || currentUser.email || "다이버") : "다이버";
-    const isHostMsg = typeof isMyPost === 'function' ? isMyPost(currentChatPost) : false;
-    const nowTimeStr = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
-
-    const msgObj = {
-        id: `msg-${Date.now()}`,
-        sender: isHostMsg ? "host" : "user",
-        author: currentUserName,
-        text: text,
-        time: nowTimeStr,
-        timestamp: Date.now()
-    };
-
-    if (!chatMessages[postId]) chatMessages[postId] = [];
-    chatMessages[postId].push(msgObj);
-
-    inputEl.value = "";
-    renderChatStream(postId);
-
-    // REST API & Supabase DB Cloud Sync
-    if (supabaseClient) {
-        try {
-            const senderEmail = currentUser ? currentUser.email : "";
-            const authorEmail = currentChatPost ? (currentChatPost.author || currentChatPost.authorEmail || currentChatPost.email || "") : "";
-            
-            supabaseClient.from('chats').insert([{
-                post_id: postId,
-                sender: senderEmail,
-                author: authorEmail,
-                user_name: currentUserName,
-                message_text: text,
-                time: nowTimeStr,
-                created_at: new Date().toISOString()
-            }]).then(({ error }) => {
-                if (error) console.warn('Supabase messages INSERT notice:', error);
-                else console.log('✨ Supabase messages INSERT success');
-            }).catch(err => console.warn('Supabase messages INSERT catch:', err));
-        } catch(sbErr) {
-            console.warn('Supabase messages INSERT exception:', sbErr);
-        }
-    }
-}
+// Legacy duplicate handleSendChatMessage removed (unified with async handleSendChatMessage above)
 
 
 
