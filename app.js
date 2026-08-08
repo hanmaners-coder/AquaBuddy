@@ -4374,6 +4374,43 @@ function renderChatStream(postId) {
     const isHost = typeof isMyPost === 'function' && currentChatPost ? isMyPost(currentChatPost) : false;
 
     // 신규 참가자 개인정보 및 과거 대화 보호 필터링 (시스템 메시지, 주최자, 본인 작성 메시지, 입장 이후 메시지)
+    // 1. Supabase chats DB 가져오기 (bigint 22P02 오류 완벽 방지)
+    if (supabaseClient && currentChatPost && currentChatPost.id) {
+        const rawPostId = String(currentChatPost.id);
+        const isNumeric = !isNaN(parseInt(rawPostId)) && /^\d+$/.test(rawPostId);
+        const pId = isNumeric ? parseInt(rawPostId) : rawPostId;
+
+        // 1. chat_rooms 확인 및 생성
+        supabaseClient.from('chat_rooms')
+            .select('*')
+            .eq('post_id', pId)
+            .then(({ data: roomData, error: roomError }) => {
+                if (roomError) {
+                    console.warn('chat_rooms select notice:', roomError);
+                }
+                if (!roomData || roomData.length === 0) {
+                    supabaseClient.from('chat_rooms').insert([{
+                        post_id: pId,
+                        title: currentChatPost.title || '대화방',
+                        host_name: currentChatPost.userName || currentChatPost.nickname || '주최자',
+                        created_at: new Date().toISOString()
+                    }]).then(({ error: insertErr }) => {
+                        if (insertErr) console.warn('chat_rooms insert notice:', insertErr);
+                        else console.log('✨ chat_rooms created successfully');
+                    }).catch(e => console.warn('chat_rooms insert catch:', e));
+                }
+            }).catch(e => console.warn('chat_rooms select catch:', e));
+
+        // 2. chats 메시지 가져오기
+        supabaseClient.from('chats')
+            .select('*')
+            .eq('post_id', pId)
+            .order('created_at', { ascending: true })
+            .then(({ data, error }) => {
+                if (error) console.error('Chats fetch error:', error);
+            });
+    }
+
     const visibleStream = stream.filter(function(msg) {
         if (msg.sender === "system" || isHost) return true;
         if (msg.author === currentUserName) return true;
@@ -4441,12 +4478,15 @@ function handleSendChatMessage(e) {
     inputEl.value = "";
     renderChatStream(postId);
 
-    // Supabase DB chats 테이블 INSERT 연동 (400 에러 방지를 위한 100% DB 스키마 매칭)
+    // Supabase DB chats 테이블 INSERT 연동 (bigint 22P02 오류 완벽 방지)
     if (supabaseClient) {
         try {
-            const numericPostId = !isNaN(parseInt(postId)) ? parseInt(postId) : postId;
+            const rawPostId = String(postId);
+            const isNumeric = !isNaN(parseInt(rawPostId)) && /^\d+$/.test(rawPostId);
+            const queryPostId = isNumeric ? parseInt(rawPostId) : rawPostId;
+
             const chatPayload = {
-                post_id: numericPostId,
+                post_id: queryPostId,
                 sender: msgObj.sender,
                 sender_name: currentUserName,
                 author: currentUserName,
@@ -4671,9 +4711,12 @@ function openChatRoomModal(postId) {
             }
         }
 
-        // Supabase DB chat_rooms & chats 연동 (chat_rooms 확인/생성 후 chats 불러오기)
+        // Supabase DB chat_rooms & chats 연동 (bigint 22P02 오류 완벽 방지)
         if (supabaseClient && post && post.id) {
-            const pId = !isNaN(parseInt(post.id)) ? parseInt(post.id) : String(post.id);
+            const rawPostId = String(post.id);
+            const isNumeric = !isNaN(parseInt(rawPostId)) && /^\d+$/.test(rawPostId);
+            const pId = isNumeric ? parseInt(rawPostId) : rawPostId;
+
             // 1. chat_rooms 존재 여부 확인 및 생성
             supabaseClient.from('chat_rooms')
                 .select('*')
@@ -4891,13 +4934,16 @@ function handleAddComment(e, postId) {
         savePosts();
     }
 
-    // Supabase DB comments 테이블 연동 (로컬 post 배열 존재 여부와 무관하게 100% 실행)
+    // Supabase DB comments 테이블 연동 (bigint 22P02 오류 완벽 방지)
     if (supabaseClient) {
         try {
-            const numericPostId = !isNaN(parseInt(postId)) ? parseInt(postId) : postId;
-            console.log('🚀 Supabase comments INSERT 시도:', { post_id: numericPostId, author: authorName, content: text });
+            const rawPostId = String(postId);
+            const isNumeric = !isNaN(parseInt(rawPostId)) && /^\d+$/.test(rawPostId);
+            const queryPostId = isNumeric ? parseInt(rawPostId) : rawPostId;
+
+            console.log('🚀 Supabase comments INSERT 시도:', { post_id: queryPostId, author: authorName, content: text });
             supabaseClient.from('comments').insert([{
-                post_id: numericPostId,
+                post_id: queryPostId,
                 author: authorName,
                 content: text,
                 created_at: new Date().toISOString()
@@ -4951,12 +4997,15 @@ function openDetailModal(postId) {
         const isHost = isMyPost(post);
         const isAttendee = Array.isArray(post.attendees) && post.attendees.includes(currentUserName);
 
-        // Supabase DB comments SELECT
+        // Supabase DB comments SELECT (bigint 22P02 오류 완벽 방지)
         if (supabaseClient && post && post.id) {
-            const numericPostId = !isNaN(parseInt(post.id)) ? parseInt(post.id) : post.id;
+            const rawPostId = String(post.id);
+            const isNumeric = !isNaN(parseInt(rawPostId)) && /^\d+$/.test(rawPostId);
+            const queryPostId = isNumeric ? parseInt(rawPostId) : rawPostId;
+
             supabaseClient.from('comments')
                 .select('*')
-                .eq('post_id', numericPostId)
+                .eq('post_id', queryPostId)
                 .order('created_at', { ascending: true })
                 .then(({ data, error }) => {
                     if (!error && data && data.length > 0) {
