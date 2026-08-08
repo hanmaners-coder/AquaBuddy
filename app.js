@@ -4863,13 +4863,17 @@ function renderDynamicDetailModal(post) {
 
 async function handleAddComment(e, postId) {
     if (e && e.preventDefault) e.preventDefault();
+    if (e && e.stopPropagation) e.stopPropagation(); // 이중 이벤트 방지
     console.log('📌 [COMMENT DEBUG] handleAddComment 시작! postId:', postId);
 
+    // 입력값을 먼저 읽는다 (클리어 전)
     let input = null;
+    // 1순위: 클릭된 버튼의 상위 form에서 input 탐색
     if (e && e.target) {
         const form = e.target.closest('form');
         if (form) input = form.querySelector('input[type="text"]') || form.querySelector('input');
     }
+    // 2순위: ID로 직접 탐색
     if (!input) {
         input = document.getElementById("newCommentInput") || 
                 document.getElementById("dynamicCommentInput_" + postId) || 
@@ -4877,8 +4881,18 @@ async function handleAddComment(e, postId) {
     }
     
     const text = input ? input.value.trim() : "";
+    console.log('📝 [COMMENT TEXT]', text, '| input found:', !!input);
+
     if (!text) {
-        alert("💬 댓글 내용을 입력해 주세요!");
+        if (input) input.focus();
+        showToast("💬 댓글 내용을 입력해 주세요!");
+        return;
+    }
+
+    // postId 유효성 검사
+    if (!postId || postId === 'undefined' || postId === 'null') {
+        console.error('❌ [COMMENT ERROR] postId가 유효하지 않습니다:', postId);
+        alert('게시글 ID를 찾을 수 없습니다. 모달을 닫고 다시 열어주세요.');
         return;
     }
 
@@ -4888,7 +4902,7 @@ async function handleAddComment(e, postId) {
         : "익명 다이버";
 
     const commentPayload = {
-        post_id: String(postId || "default_post"),
+        post_id: String(postId),
         author: authorName,
         user_name: authorName,
         nickname: authorName,
@@ -4898,6 +4912,9 @@ async function handleAddComment(e, postId) {
     };
 
     console.log('🚀 [COMMENT INSERT TRY] Supabase comments 전송 데이터:', commentPayload);
+
+    // 입력창 즉시 클리어 (UX)
+    if (input) input.value = "";
 
     if (supabaseClient) {
         try {
@@ -4912,6 +4929,8 @@ async function handleAddComment(e, postId) {
             console.error('❌ [SUPABASE COMMENTS EXCEPTION]', err);
             alert("❌ 댓글 연동 예외 발생:\n" + (err.message || err));
         }
+    } else {
+        console.warn('⚠️ supabaseClient가 초기화되지 않았습니다. Supabase 연동 없이 로컬 저장만 진행합니다.');
     }
 
     if (post) {
@@ -4926,7 +4945,6 @@ async function handleAddComment(e, postId) {
         savePosts();
     }
 
-    if (input) input.value = "";
     openDetailModal(postId);
     showToast("💬 댓글이 성공적으로 등록되었습니다!");
 }
@@ -5028,8 +5046,8 @@ function openDetailModal(postId) {
     const modernCommentFormHtml = `
         <form class="comment-form-modern" id="modernCommentForm_${post.id}" data-post-id="${post.id}" onsubmit="handleAddComment(event, '${post.id}'); return false;">
             <i class="fa-solid fa-comment-dots" style="color: var(--accent-cyan);"></i>
-            <input type="text" id="newCommentInput" class="comment-input-modern" placeholder="실시간 댓글 또는 문의를 작성하세요..." required autocomplete="off">
-            <button type="button" class="comment-submit-btn" onclick="handleAddComment(event, '${post.id}')"><i class="fa-solid fa-paper-plane"></i> 등록</button>
+            <input type="text" id="newCommentInput_${post.id}" name="commentText" class="comment-input-modern" placeholder="실시간 댓글 또는 문의를 작성하세요..." autocomplete="off">
+            <button type="submit" class="comment-submit-btn"><i class="fa-solid fa-paper-plane"></i> 등록</button>
         </form>
     `;
 
@@ -7442,30 +7460,7 @@ if (document.readyState === 'loading') {
     renderBannerClickStatsUI();
     loadCoupangApiKey();
 }
-// Global Event Delegation for Dynamic Comment Submit Buttons
-document.addEventListener('click', function(e) {
-    const btn = e.target.closest('.comment-submit-btn');
-    if (btn) {
-        console.log('📌 [GLOBAL DELEGATION] .comment-submit-btn 클릭 감지!');
-        const form = btn.closest('form');
-        
-        let targetPostId = null;
-        if (form && form.getAttribute('data-post-id')) {
-            targetPostId = form.getAttribute('data-post-id');
-        } else if (form && form.id && form.id.includes('modernCommentForm_')) {
-            targetPostId = form.id.replace('modernCommentForm_', '');
-        } else if (typeof currentChatPost !== 'undefined' && currentChatPost && currentChatPost.id) {
-            targetPostId = currentChatPost.id;
-        }
-
-        if (targetPostId && typeof handleAddComment === 'function') {
-            console.log('🚀 [GLOBAL DELEGATION EXECUTING] handleAddComment 실행! targetPostId:', targetPostId);
-            handleAddComment(e, targetPostId);
-        } else {
-            console.warn('⚠️ [GLOBAL DELEGATION WARN] targetPostId를 찾을 수 없습니다.');
-        }
-    }
-});
+// 댓글 폼 submit 이벤트 위임 (onsubmit이 이미 연결되어 있으므로 별도 click 위임 제거)
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").then(() => console.log("Service Worker registered")).catch(err => console.error("SW registration failed:", err));
