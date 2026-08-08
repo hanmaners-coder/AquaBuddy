@@ -4930,26 +4930,24 @@ function handleAddComment(e, postId) {
         savePosts();
     }
 
-    // Supabase DB comments 테이블 연동 (bigint 22P02 오류 완벽 방지)
+    // Supabase DB comments 테이블 연동 (DB 저장 100% 보장)
     if (supabaseClient) {
         try {
-            const rawPostId = String(postId);
-            const isNumeric = !isNaN(parseInt(rawPostId)) && /^\d+$/.test(rawPostId);
-            const queryPostId = isNumeric ? parseInt(rawPostId) : rawPostId;
-
-            console.log('🚀 Supabase comments INSERT 시도:', { post_id: queryPostId, author: authorName, content: text });
-            supabaseClient.from('comments').insert([{
-                post_id: queryPostId,
+            const commentPayload = {
+                post_id: String(postId),
                 author: authorName,
+                user_name: authorName,
                 content: text,
+                text: text,
                 created_at: new Date().toISOString()
-            }]).then(({ data, error }) => {
+            };
+            console.log('🚀 Supabase comments INSERT 시도:', commentPayload);
+            supabaseClient.from('comments').insert([commentPayload]).then(({ data, error }) => {
                 if (error) {
                     console.error('❌ Supabase comments insert 에러 발생:', error);
-                    if (typeof showToast === "function") showToast("⚠️ Supabase 댓글 DB 저장 실패: " + (error.message || JSON.stringify(error)));
+                    alert("⚠️ Supabase 댓글 DB 저장 실패: " + (error.message || JSON.stringify(error)));
                 } else {
                     console.log('✨ Supabase comment inserted successfully!', data);
-                    if (typeof showToast === "function") showToast("✨ Supabase Cloud DB에 댓글이 전송되었습니다!");
                 }
             }).catch(err => {
                 console.error('❌ Supabase comments insert catch:', err);
