@@ -5028,10 +5028,10 @@ function openDetailModal(postId) {
         ` : '';
 
     const modernCommentFormHtml = `
-        <form class="comment-form-modern" onsubmit="handleAddComment(event, '${post.id}')">
+        <form class="comment-form-modern" id="modernCommentForm_${post.id}" onsubmit="handleAddComment(event, '${post.id}'); return false;">
             <i class="fa-solid fa-comment-dots" style="color: var(--accent-cyan);"></i>
             <input type="text" id="newCommentInput" class="comment-input-modern" placeholder="실시간 댓글 또는 문의를 작성하세요..." required autocomplete="off">
-            <button type="submit" class="comment-submit-btn"><i class="fa-solid fa-paper-plane"></i> 등록</button>
+            <button type="button" class="comment-submit-btn" onclick="handleAddComment(event, '${post.id}')"><i class="fa-solid fa-paper-plane"></i> 등록</button>
         </form>
     `;
 
