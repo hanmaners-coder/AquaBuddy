@@ -4434,29 +4434,33 @@ async function handleSendChatMessage(e) {
         timestamp: Date.now()
     };
 
-    // Supabase DB chats 테이블 INSERT 연동 (await로 즉시 에러 포착)
+    // Supabase DB chats 테이블 INSERT 연동 (디버깅 로그 및 인증 키 점검, Not-null 보장)
     if (supabaseClient) {
         try {
+            const safeSenderName = currentUserName || "다이버";
             const chatPayload = {
-                post_id: String(postId),
-                sender: msgObj.sender,
-                sender_name: currentUserName,
-                author: currentUserName,
-                user_name: currentUserName,
-                message_text: text,
-                text: text,
-                content: text,
-                time: nowTimeStr,
+                post_id: String(postId || "default_chat"),
+                sender: msgObj.sender || "user",
+                sender_name: safeSenderName,
+                author: safeSenderName,
+                user_name: safeSenderName,
+                nickname: safeSenderName,
+                message_text: text || "",
+                text: text || "",
+                content: text || "",
+                time: nowTimeStr || "방금 전",
                 created_at: isoNow
             };
-            console.log('🚀 Supabase chats INSERT 시도:', chatPayload);
+            console.log('🔍 [DEBUG] Supabase 클라이언트 API Key 상태:', SUPABASE_ANON_KEY ? "존재함 (Valid)" : "누락됨 (Missing)");
+            console.log('🚀 [DEBUG] 채팅 전송 시도 데이터:', chatPayload);
+
             const { data, error } = await supabaseClient.from('chats').insert([chatPayload]);
             if (error) {
                 console.error('❌ Supabase chats INSERT 에러:', error);
-                alert("⚠️ DB 대화 저장 실패!\n원인: " + (error.message || JSON.stringify(error)));
+                alert("⚠️ DB 대화 저장 실패!\n코드: " + error.code + "\n원인: " + (error.message || JSON.stringify(error)));
                 return;
             } else {
-                console.log('✨ Supabase chats INSERT success', data);
+                console.log('✨ [SUCCESS] Supabase chats INSERT success', data);
             }
         } catch(sbErr) {
             console.error('Supabase chats INSERT exception:', sbErr);
@@ -4881,25 +4885,28 @@ async function handleAddComment(e, postId) {
     const post = posts.find(p => String(p.id) === String(postId));
     const authorName = currentUser.nickname || currentUser.name || "다이버";
 
-    // Supabase DB comments 테이블 연동 (await로 즉시 에러 포착)
+    // Supabase DB comments 테이블 연동 (디버깅 로그 및 인증 키 점검, Not-null 보장)
     if (supabaseClient) {
         try {
             const commentPayload = {
-                post_id: String(postId),
-                author: authorName,
-                user_name: authorName,
-                content: text,
-                text: text,
+                post_id: String(postId || "default_post"),
+                author: authorName || "다이버",
+                user_name: authorName || "다이버",
+                nickname: authorName || "다이버",
+                content: text || "",
+                text: text || "",
                 created_at: new Date().toISOString()
             };
-            console.log('🚀 Supabase comments INSERT 시도:', commentPayload);
+            console.log('🔍 [DEBUG] Supabase 클라이언트 API Key 상태:', SUPABASE_ANON_KEY ? "존재함 (Valid)" : "누락됨 (Missing)");
+            console.log('🚀 [DEBUG] 댓글 전송 시도 데이터:', commentPayload);
+
             const { data, error } = await supabaseClient.from('comments').insert([commentPayload]);
             if (error) {
                 console.error('❌ Supabase comments insert 에러 발생:', error);
-                alert("⚠️ Supabase 댓글 DB 저장 실패!\n원인: " + (error.message || JSON.stringify(error)));
+                alert("⚠️ Supabase 댓글 DB 저장 실패!\n코드: " + error.code + "\n원인: " + (error.message || JSON.stringify(error)));
                 return;
             } else {
-                console.log('✨ Supabase comment inserted successfully!', data);
+                console.log('✨ [SUCCESS] Supabase comment inserted successfully!', data);
             }
         } catch (err) {
             console.error('❌ Supabase comments insert exception:', err);
