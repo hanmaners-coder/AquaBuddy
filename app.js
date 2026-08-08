@@ -4420,7 +4420,12 @@ async function handleSendChatMessage(e) {
     if (!text) return;
 
     const postId = String(currentChatPost.id);
-    const currentUserName = currentUser ? (currentUser.name || currentUser.nickname || currentUser.email || "다이버") : "다이버";
+    let currentUserName = "다이버";
+    if (currentUser) {
+        currentUserName = currentUser.nickname || currentUser.name || currentUser.user_name || currentUser.email || "다이버";
+    }
+    const safeSenderName = (currentUserName && String(currentUserName).trim()) ? String(currentUserName).trim() : "다이버";
+
     const isHostMsg = typeof isMyPost === 'function' ? isMyPost(currentChatPost) : false;
     const nowTimeStr = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
     const isoNow = new Date().toISOString();
@@ -4428,7 +4433,7 @@ async function handleSendChatMessage(e) {
     const msgObj = {
         id: `msg-${Date.now()}`,
         sender: isHostMsg ? "host" : "user",
-        author: currentUserName,
+        author: safeSenderName,
         text: text,
         time: nowTimeStr,
         timestamp: Date.now()
@@ -4437,7 +4442,6 @@ async function handleSendChatMessage(e) {
     // Supabase DB chats 테이블 INSERT 연동 (디버깅 로그 및 인증 키 점검, Not-null 보장)
     if (supabaseClient) {
         try {
-            const safeSenderName = currentUserName || "다이버";
             const chatPayload = {
                 post_id: String(postId || "default_chat"),
                 sender: msgObj.sender || "user",
@@ -4486,9 +4490,10 @@ function openChatRoomModal(postId) {
 
     // 1. 상세 모달 즉시 닫기 (상세 모달이 대화방 모달을 가리는 현상 방지)
     try {
-        const detailModalEl = document.getElementById('detailModal');
-        if (detailModalEl && typeof closeModal === 'function') {
-            closeModal(detailModalEl);
+        const detailModalEl = document.getElementById('postDetailModal') || document.getElementById('detailModal');
+        if (detailModalEl) {
+            detailModalEl.classList.add('hidden');
+            detailModalEl.style.display = 'none';
         }
         const dynamicOverlay = document.getElementById('dynamicDetailModalOverlay');
         if (dynamicOverlay) dynamicOverlay.remove();
