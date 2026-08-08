@@ -27,14 +27,25 @@ const COUPANG_CUSPE_URL = (typeof window !== "undefined" && window.AQUA_CONFIG &
     ? window.AQUA_CONFIG.coupang.cuspeUrl
     : "https://link.coupang.com/a/fKqrpaA2Fw";
 
-// Initialize Supabase JS Client
+// Initialize Supabase JS Client with explicit API key headers (No API key found error fix)
 let supabaseClient = null;
 if (typeof window !== "undefined" && window.supabase && window.supabase.createClient) {
     try {
-        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        console.log("Supabase Client Initialized Successfully:", SUPABASE_URL);
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: {
+                persistSession: true,
+                autoRefreshToken: true
+            },
+            global: {
+                headers: {
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+                }
+            }
+        });
+        console.log("✨ Supabase Client Initialized with API Key Headers:", SUPABASE_URL);
     } catch (err) {
-        console.log("Supabase Init Warning:", err);
+        console.error("Supabase Init Exception:", err);
     }
 }
 
