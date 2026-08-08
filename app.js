@@ -4865,10 +4865,16 @@ async function handleAddComment(e, postId) {
     if (e && e.preventDefault) e.preventDefault();
     console.log('📌 [COMMENT DEBUG] handleAddComment 시작! postId:', postId);
 
-    const input = document.getElementById("newCommentInput") || 
-                  document.getElementById("dynamicCommentInput_" + postId) || 
-                  (e && e.target ? (e.target.querySelector('input') || e.target) : null) ||
-                  document.querySelector('.comment-input-modern');
+    let input = null;
+    if (e && e.target) {
+        const form = e.target.closest('form');
+        if (form) input = form.querySelector('input[type="text"]') || form.querySelector('input');
+    }
+    if (!input) {
+        input = document.getElementById("newCommentInput") || 
+                document.getElementById("dynamicCommentInput_" + postId) || 
+                document.querySelector('.comment-input-modern');
+    }
     
     const text = input ? input.value.trim() : "";
     if (!text) {
