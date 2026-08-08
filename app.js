@@ -4478,15 +4478,11 @@ function handleSendChatMessage(e) {
     inputEl.value = "";
     renderChatStream(postId);
 
-    // Supabase DB chats 테이블 INSERT 연동 (bigint 22P02 오류 완벽 방지)
+    // Supabase DB chats 테이블 INSERT 연동
     if (supabaseClient) {
         try {
-            const rawPostId = String(postId);
-            const isNumeric = !isNaN(parseInt(rawPostId)) && /^\d+$/.test(rawPostId);
-            const queryPostId = isNumeric ? parseInt(rawPostId) : rawPostId;
-
             const chatPayload = {
-                post_id: queryPostId,
+                post_id: String(postId),
                 sender: msgObj.sender,
                 sender_name: currentUserName,
                 author: currentUserName,
@@ -4501,7 +4497,7 @@ function handleSendChatMessage(e) {
             supabaseClient.from('chats').insert([chatPayload]).then(({ data, error }) => {
                 if (error) {
                     console.error('❌ Supabase chats INSERT 에러:', error);
-                    if (typeof showToast === "function") showToast("⚠️ DB 대화 저장 거절: " + (error.message || JSON.stringify(error)));
+                    if (typeof showToast === "function") showToast("⚠️ DB 대화 저장 실패: " + (error.message || JSON.stringify(error)));
                 } else {
                     console.log('✨ Supabase chats INSERT success', data);
                 }
