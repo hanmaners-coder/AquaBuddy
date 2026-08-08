@@ -5449,6 +5449,8 @@ function openDetailModal(postId) {
         alert("게시글 상세 정보 열기 중 오류가 발생했습니다:\n" + err.message);
     }
 }
+window.openDetailModal = openDetailModal;
+window.openPostDetailModal = openDetailModal;
 
 function deletePostWithPassword(postId) {
     performPostDeletion(postId);
@@ -7442,6 +7444,26 @@ if (document.readyState === 'loading') {
     renderBannerClickStatsUI();
     loadCoupangApiKey();
 }
+// Global Event Delegation for Dynamic Comment Submit Buttons
+document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.comment-submit-btn');
+    if (btn) {
+        console.log('📌 [GLOBAL DELEGATION] .comment-submit-btn 클릭 감지!');
+        const form = btn.closest('form');
+        const input = form ? form.querySelector('input') : document.getElementById('newCommentInput');
+        if (input) {
+            const onsubmitAttr = form ? form.getAttribute('onsubmit') : null;
+            if (onsubmitAttr && onsubmitAttr.includes('handleAddComment')) {
+                const match = onsubmitAttr.match(/handleAddComment\s*\(\s*event\s*,\s*['"]([^'"]+)['"]\s*\)/);
+                if (match && match[1]) {
+                    handleAddComment(e, match[1]);
+                    return;
+                }
+            }
+        }
+    }
+});
+
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").then(() => console.log("Service Worker registered")).catch(err => console.error("SW registration failed:", err));
 }
