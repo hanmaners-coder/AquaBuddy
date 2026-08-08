@@ -7443,15 +7443,22 @@ document.addEventListener('click', function(e) {
         console.log('📌 [GLOBAL DELEGATION] .comment-submit-btn 클릭 감지!');
         const form = btn.closest('form');
         const input = form ? form.querySelector('input') : document.getElementById('newCommentInput');
-        if (input) {
-            const onsubmitAttr = form ? form.getAttribute('onsubmit') : null;
-            if (onsubmitAttr && onsubmitAttr.includes('handleAddComment')) {
-                const match = onsubmitAttr.match(/handleAddComment\s*\(\s*event\s*,\s*['"]([^'"]+)['"]\s*\)/);
-                if (match && match[1]) {
-                    handleAddComment(e, match[1]);
-                    return;
-                }
-            }
+        
+        let targetPostId = null;
+        if (form && form.id && form.id.includes('modernCommentForm_')) {
+            targetPostId = form.id.replace('modernCommentForm_', '');
+        } else if (currentChatPost && currentChatPost.id) {
+            targetPostId = currentChatPost.id;
+        } else {
+            const activeModal = document.querySelector('.post-card[data-post-id]') || document.querySelector('[data-post-id]');
+            if (activeModal) targetPostId = activeModal.getAttribute('data-post-id');
+        }
+
+        if (targetPostId && typeof handleAddComment === 'function') {
+            console.log('🚀 [GLOBAL DELEGATION EXECUTING] handleAddComment 실행! targetPostId:', targetPostId);
+            handleAddComment(e, targetPostId);
+        } else {
+            console.warn('⚠️ [GLOBAL DELEGATION WARN] targetPostId를 찾을 수 없습니다.');
         }
     }
 });
