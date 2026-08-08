@@ -4442,13 +4442,7 @@ async function handleSendChatMessage(e) {
                 post_id: String(postId || "default_chat"),
                 sender: msgObj.sender || "user",
                 sender_name: safeSenderName,
-                author: safeSenderName,
-                user_name: safeSenderName,
-                nickname: safeSenderName,
                 message_text: text || "",
-                text: text || "",
-                content: text || "",
-                time: nowTimeStr || "방금 전",
                 created_at: isoNow
             };
             console.log('🔍 [DEBUG] Supabase 클라이언트 API Key 상태:', SUPABASE_ANON_KEY ? "존재함 (Valid)" : "누락됨 (Missing)");
@@ -4904,10 +4898,7 @@ async function handleAddComment(e, postId) {
     const commentPayload = {
         post_id: String(postId),
         author: authorName,
-        user_name: authorName,
-        nickname: authorName,
         content: text,
-        text: text,
         created_at: new Date().toISOString()
     };
 
