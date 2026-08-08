@@ -4850,8 +4850,14 @@ function handleAddComment(e, postId) {
         return;
     }
 
-    const input = document.getElementById("newCommentInput") || document.getElementById("dynamicCommentInput_" + postId);
-    if (!input) return;
+    const input = document.getElementById("newCommentInput") || 
+                  document.getElementById("dynamicCommentInput_" + postId) || 
+                  (e && e.target ? e.target.querySelector('input') : null) ||
+                  document.querySelector('.comment-input-modern');
+    if (!input) {
+        console.warn("⚠️ 댓글 입력창 요소를 찾을 수 없습니다.");
+        return;
+    }
     const text = input.value.trim();
     if (!text) return;
 

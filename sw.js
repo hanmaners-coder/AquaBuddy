@@ -1,10 +1,10 @@
 // Service Worker for AquaBuddy PWA
-const CACHE_NAME = 'aqua-buddy-cache-v20260808_FORCE_REFRESH_130';
+const CACHE_NAME = 'aqua-buddy-cache-v20260808_FORCE_REFRESH_131';
 const ASSETS = [
   '/',
   '/index.html',
-  '/styles.css?v=20260808_FORCE_REFRESH_130',
-  '/app.js?v=20260808_FORCE_REFRESH_130',
+  '/styles.css?v=20260808_FORCE_REFRESH_131',
+  '/app.js?v=20260808_FORCE_REFRESH_131',
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png'
