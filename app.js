@@ -4893,7 +4893,7 @@ function renderDynamicDetailModal(post) {
     if (dynOverlay) dynOverlay.remove();
 }
 
-function handleAddComment(e, postId) {
+async function handleAddComment(e, postId) {
     if (e && e.preventDefault) e.preventDefault();
     if (!currentUser || (!currentUser.name && !currentUser.nickname)) {
         showToast("🔑 로그인 후 실시간 댓글을 작성하실 수 있습니다!");
@@ -4917,20 +4917,7 @@ function handleAddComment(e, postId) {
     const post = posts.find(p => String(p.id) === String(postId));
     const authorName = currentUser.nickname || currentUser.name || "다이버";
 
-    if (post) {
-        if (!Array.isArray(post.comments)) post.comments = [];
-        const commentObj = {
-            author: authorName,
-            text: text,
-            content: text,
-            time: "방금 전",
-            created_at: new Date().toISOString()
-        };
-        post.comments.push(commentObj);
-        savePosts();
-    }
-
-    // Supabase DB comments 테이블 연동 (DB 저장 100% 보장)
+    // Supabase DB comments 테이블 연동 (await로 즉시 에러 포착)
     if (supabaseClient) {
         try {
             const commentPayload = {
@@ -4942,19 +4929,32 @@ function handleAddComment(e, postId) {
                 created_at: new Date().toISOString()
             };
             console.log('🚀 Supabase comments INSERT 시도:', commentPayload);
-            supabaseClient.from('comments').insert([commentPayload]).then(({ data, error }) => {
-                if (error) {
-                    console.error('❌ Supabase comments insert 에러 발생:', error);
-                    alert("⚠️ Supabase 댓글 DB 저장 실패: " + (error.message || JSON.stringify(error)));
-                } else {
-                    console.log('✨ Supabase comment inserted successfully!', data);
-                }
-            }).catch(err => {
-                console.error('❌ Supabase comments insert catch:', err);
-            });
+            const { data, error } = await supabaseClient.from('comments').insert([commentPayload]);
+            if (error) {
+                console.error('❌ Supabase comments insert 에러 발생:', error);
+                alert("⚠️ Supabase 댓글 DB 저장 실패!\n원인: " + (error.message || JSON.stringify(error)));
+                return;
+            } else {
+                console.log('✨ Supabase comment inserted successfully!', data);
+            }
         } catch (err) {
             console.error('❌ Supabase comments insert exception:', err);
+            alert("❌ DB 연동 예외: " + (err.message || err));
+            return;
         }
+    }
+
+    if (post) {
+        if (!Array.isArray(post.comments)) post.comments = [];
+        const commentObj = {
+            author: authorName,
+            text: text,
+            content: text,
+            time: "방금 전",
+            created_at: new Date().toISOString()
+        };
+        post.comments.push(commentObj);
+        savePosts();
     }
 
     input.value = "";
