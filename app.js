@@ -1532,7 +1532,7 @@ async function syncUserToSupabaseCloud(userData) {
     return await saveUserProfileToSupabase(userData, false);
 }
 
-function handleInstructorAuthSubmit(e) {
+async function handleInstructorAuthSubmit(e) {
     e.preventDefault();
 
     if (currentUser && (currentUser.isInstructor || currentUser.role === 'instructor' || currentUser.instructorStatus === 'approved')) {
@@ -1584,6 +1584,30 @@ function handleInstructorAuthSubmit(e) {
             }
         }
         updateNavbarUserUI();
+    }
+
+    // Supabase users 테이블 직접 UPDATE (강사 인증 신청 상태 즉시 반영)
+    if (supabaseClient && currentUser && currentUser.email) {
+        try {
+            const instPayload = {
+                instructor_code: code,
+                instructor_org: org,
+                instructor_status: 'pending',
+                cert_image: instAppCertImage || currentUser.certImage || '',
+                user_name: currentUser.nickname || currentUser.name || currentUser.email
+            };
+            console.log('🚀 [INSTRUCTOR CERT] Supabase users UPDATE:', instPayload);
+            const { error } = await supabaseClient.from('users')
+                .update(instPayload)
+                .eq('email', currentUser.email);
+            if (error) {
+                console.warn('강사 인증 신청 Supabase update notice:', error);
+            } else {
+                console.log('✨ 강사 인증 신청이 Supabase DB에 성공적으로 저장되었습니다!');
+            }
+        } catch(sbErr) {
+            console.warn('강사 인증 신청 DB 예외:', sbErr);
+        }
     }
 
     closeModal(document.getElementById("instructorAuthModal"));
@@ -4420,50 +4444,62 @@ async function handleSendChatMessage(e) {
     if (!text) return;
 
     const postId = String(currentChatPost.id);
-    let currentUserName = "다이버";
+    // sender_name을 절대 null/빈값 불가 - 다중 fallback으로 완전 보장
+    let safeSenderName = "다이버";
     if (currentUser) {
-        currentUserName = currentUser.nickname || currentUser.name || currentUser.user_name || currentUser.email || "다이버";
+        safeSenderName = String(
+            currentUser.nickname ||
+            currentUser.name ||
+            currentUser.user_name ||
+            currentUser.user_metadata?.full_name ||
+            currentUser.email ||
+            "다이버"
+        ).trim() || "다이버";
     }
-    const safeSenderName = (currentUserName && String(currentUserName).trim()) ? String(currentUserName).trim() : "다이버";
 
     const isHostMsg = typeof isMyPost === 'function' ? isMyPost(currentChatPost) : false;
+    const senderRole = isHostMsg ? "host" : "user";
     const nowTimeStr = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
     const isoNow = new Date().toISOString();
 
     const msgObj = {
         id: `msg-${Date.now()}`,
-        sender: isHostMsg ? "host" : "user",
+        sender: senderRole,
         author: safeSenderName,
         text: text,
         time: nowTimeStr,
         timestamp: Date.now()
     };
 
-    // Supabase DB chats 테이블 INSERT 연동 (디버깅 로그 및 인증 키 점검, Not-null 보장)
+    // Supabase DB chats 테이블 INSERT - 스키마 전체 컬럼 완전 매핑
     if (supabaseClient) {
         try {
+            // chats 스키마: id(uuid), post_id, sender_name(NOT NULL), message_text(NOT NULL),
+            //               created_at, sender, author, user_name, text, content, time
             const chatPayload = {
-                post_id: String(postId || "default_chat"),
-                sender: msgObj.sender || "user",
-                sender_name: safeSenderName,
-                message_text: text || "",
+                post_id: String(postId),
+                sender_name: safeSenderName,   // NOT NULL
+                message_text: text,            // NOT NULL
+                sender: senderRole,
+                author: safeSenderName,
+                user_name: safeSenderName,
+                text: text,
+                content: text,
+                time: nowTimeStr,
                 created_at: isoNow
             };
-            console.log('🔍 [DEBUG] Supabase 클라이언트 API Key 상태:', SUPABASE_ANON_KEY ? "존재함 (Valid)" : "누락됨 (Missing)");
-            console.log('🚀 [DEBUG] 채팅 전송 시도 데이터:', chatPayload);
+            console.log('🚀 [CHAT SEND] payload:', chatPayload);
 
             const { data, error } = await supabaseClient.from('chats').insert([chatPayload]);
             if (error) {
-                console.error('❌ Supabase chats INSERT 에러:', error);
-                alert("⚠️ DB 대화 저장 실패!\n코드: " + error.code + "\n원인: " + (error.message || JSON.stringify(error)));
-                return;
+                console.error('❌ [CHAT INSERT ERROR]', error);
+                // 에러는 콘솔에만 남기고 alert로 UX 방해 안 함
+                showToast("⚠️ 채팅 저장 실패: " + (error.message || error.code));
             } else {
-                console.log('✨ [SUCCESS] Supabase chats INSERT success', data);
+                console.log('✨ [CHAT INSERT SUCCESS]', data);
             }
         } catch(sbErr) {
-            console.error('Supabase chats INSERT exception:', sbErr);
-            alert("❌ DB 대화 예외 발생: " + (sbErr.message || sbErr));
-            return;
+            console.error('[CHAT INSERT EXCEPTION]', sbErr);
         }
     }
 
@@ -4488,40 +4524,46 @@ function openChatRoomModal(postId) {
         return;
     }
 
-    // 1. 상세 모달 즉시 닫기 (상세 모달이 대화방 모달을 가리는 현상 방지)
+    // 1. 상세 모달 완전 닫기 (모든 상세 모달 ID 커버)
     try {
-        const detailModalEl = document.getElementById('postDetailModal') || document.getElementById('detailModal');
-        if (detailModalEl) {
-            detailModalEl.classList.add('hidden');
-            detailModalEl.style.display = 'none';
-        }
+        ['postDetailModal', 'detailModal'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.classList.add('hidden');
+                el.style.setProperty('display', 'none', 'important');
+                el.style.setProperty('z-index', '-1', 'important');
+            }
+        });
         const dynamicOverlay = document.getElementById('dynamicDetailModalOverlay');
         if (dynamicOverlay) dynamicOverlay.remove();
     } catch(e) {}
 
-    const chatModalTarget = document.querySelector('.modal-overlay#chatModal');
+    // 대화방 모달 탐색 (다양한 선택자로 fallback)
+    const chatModalTarget = document.getElementById('chatModal') ||
+                            document.querySelector('.modal-overlay#chatModal') ||
+                            document.querySelector('#chatModal');
     
     if (!chatModalTarget) {
         alert('대화방 모달 HTML 요소를 찾을 수 없습니다 (#chatModal).');
         return;
     }
 
-    // 부모 태그의 display:none 영향을 받지 않도록 body 직계 자식으로 강제 이동
-    if (chatModalTarget.parentElement !== document.body) {
-        document.body.appendChild(chatModalTarget);
-    }
+    // body 직계 자식으로 강제 이동 (다른 모달의 z-index/overflow 영향 방지)
+    document.body.appendChild(chatModalTarget);
 
-    // 최상위 레이어 강제 노출 (z-index 9999999)
+    // 최상위 레이어 강제 노출
     chatModalTarget.classList.remove('hidden');
     chatModalTarget.classList.add('active');
+    chatModalTarget.style.removeProperty('display');
     chatModalTarget.style.setProperty('display', 'flex', 'important');
     chatModalTarget.style.setProperty('z-index', '9999999', 'important');
     chatModalTarget.style.setProperty('visibility', 'visible', 'important');
     chatModalTarget.style.setProperty('opacity', '1', 'important');
-
-    if (typeof openModal === 'function') {
-        openModal(chatModalTarget);
-    }
+    chatModalTarget.style.setProperty('position', 'fixed', 'important');
+    chatModalTarget.style.setProperty('top', '0', 'important');
+    chatModalTarget.style.setProperty('left', '0', 'important');
+    chatModalTarget.style.setProperty('width', '100%', 'important');
+    chatModalTarget.style.setProperty('height', '100%', 'important');
 
     // 게시글 수집 및 대화 데이터 렌더링
     try {
@@ -7273,7 +7315,7 @@ function openInquiryModal(category) {
     modalEl.style.setProperty("z-index", "999999", "important");
 }
 
-function handleInquirySubmit(e) {
+async function handleInquirySubmit(e) {
     if (e && e.preventDefault) e.preventDefault();
 
     const category = document.getElementById("inquiryCategory") ? document.getElementById("inquiryCategory").value : "general";
@@ -7309,23 +7351,31 @@ function handleInquirySubmit(e) {
     localInquiries.unshift(newInquiry);
     localStorage.setItem('aqua_buddy_inquiries', JSON.stringify(localInquiries));
 
+    // Supabase inquiries 테이블 INSERT (스키마: id,created_at,category,category_name,name,contact,title,content,image,status)
     if (supabaseClient) {
         try {
-            supabaseClient.from('inquiries').insert([{
+            const inquiryPayload = {
                 category: newInquiry.category,
                 category_name: newInquiry.categoryName,
                 name: newInquiry.name,
                 contact: newInquiry.contact,
                 title: newInquiry.title,
                 content: newInquiry.content,
-                image: inquiryImageCompressed || "",
+                image: (typeof inquiryImageCompressed !== 'undefined' && inquiryImageCompressed) ? inquiryImageCompressed : "",
                 status: newInquiry.status
-            }]).then(({ error }) => {
-                if (error) console.warn('Supabase inquiries INSERT notice:', error);
-            });
+            };
+            console.log('🚀 [INQUIRY INSERT] Supabase payload:', inquiryPayload);
+            const { data, error } = await supabaseClient.from('inquiries').insert([inquiryPayload]);
+            if (error) {
+                console.error('❌ [INQUIRY INSERT ERROR]', error);
+                showToast("⚠️ 문의 DB 저장 실패: " + (error.message || error.code));
+            } else {
+                console.log('✨ [INQUIRY INSERT SUCCESS]', data);
+            }
         } catch(sbErr) {
             console.warn('Supabase inquiries INSERT exception:', sbErr);
         }
+    }
     }
 
     const modalEl = document.getElementById("inquiryModal");
