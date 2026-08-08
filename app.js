@@ -6348,33 +6348,7 @@ function updateAddressFromCoords(lat, lng) {
     }
 }
 
-function handleAddComment(e, postId) {
-    e.preventDefault();
-    if (!currentUser || !currentUser.name) {
-        showToast("🔑 로그인 후 실시간 댓글을 작성하실 수 있습니다!");
-        pendingLoginAction = function() { openDetailModal(postId); };
-        if (typeof switchAuthTab === "function") switchAuthTab('login');
-        openModal(document.getElementById("authModal"));
-        return;
-    }
-    const post = posts.find(p => p.id === postId);
-    if (!post) return;
-
-    const input = document.getElementById("newCommentInput");
-    const text = input.value.trim();
-    if (!text) return;
-
-    if (!post.comments) post.comments = [];
-    post.comments.push({
-        author: currentUser ? currentUser.name : "익명 다이버",
-        text: text,
-        time: "방금 전"
-    });
-
-    savePosts();
-    openDetailModal(postId);
-    showToast("💬 댓글이 등록되었습니다!");
-}
+// Legacy duplicate handleAddComment removed (unified with async handleAddComment above)
 
 function openModal(modal) {
     let targetEl = modal;
