@@ -7376,7 +7376,6 @@ async function handleInquirySubmit(e) {
             console.warn('Supabase inquiries INSERT exception:', sbErr);
         }
     }
-    }
 
     const modalEl = document.getElementById("inquiryModal");
     if (modalEl && typeof closeModal === "function") {
