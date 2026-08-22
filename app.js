@@ -15143,19 +15143,42 @@ window.renderAdminAffiliateStats = renderAdminAffiliateStats;
 // ─── 1. 카카오 지도 + 실시간 해양 카드 오버레이 ───────────────
 var _oceanKakaoMapObj = null;
 var _customOverlayObj = null;
+var _oceanMapResizeObserver = null;
+var _lastOceanKakaoPos = null;
 
 function initKakaoOceanMap(spot) {
     var container = document.getElementById('oceanKakaoMap');
     if (!container) return;
 
+    // 🌟 ResizeObserver로 컨테이너 크기가 0에서 화면 크기로 변하는 순간 자동 relayout
+    if (typeof ResizeObserver !== 'undefined' && container && !_oceanMapResizeObserver) {
+        _oceanMapResizeObserver = new ResizeObserver(function() {
+            if (_oceanKakaoMapObj && container.offsetWidth > 0) {
+                _oceanKakaoMapObj.relayout();
+                if (_lastOceanKakaoPos) {
+                    _oceanKakaoMapObj.setCenter(_lastOceanKakaoPos);
+                }
+            }
+        });
+        _oceanMapResizeObserver.observe(container);
+    }
+
     var doRender = function() {
         if (typeof window.kakao === 'undefined' || !window.kakao.maps) return;
+
+        // 컨테이너가 아직 화면에 표출 안 됨(width == 0)일 때 지연 렌더링
+        if (container.offsetWidth === 0 || container.offsetHeight === 0) {
+            setTimeout(function() { initKakaoOceanMap(spot); }, 80);
+            return;
+        }
 
         var lat = (spot && typeof spot.lat === 'number') ? spot.lat : 35.1587;
         var lng = (spot && typeof spot.lng === 'number') ? spot.lng : 129.1604;
         var pos = new window.kakao.maps.LatLng(lat, lng);
+        _lastOceanKakaoPos = pos;
 
         if (!_oceanKakaoMapObj) {
+            container.innerHTML = ''; // 깨진 DOM 요소 초기화
             _oceanKakaoMapObj = new window.kakao.maps.Map(container, { center: pos, level: 6 });
         } else {
             _oceanKakaoMapObj.setCenter(pos);
@@ -15163,7 +15186,7 @@ function initKakaoOceanMap(spot) {
 
         // 🌟 지도가 처음 표출되거나 탭 전환 시 회색 박스/깨짐 방지 (다단계 릴레이아웃)
         var refreshMap = function() {
-            if (_oceanKakaoMapObj) {
+            if (_oceanKakaoMapObj && container.offsetWidth > 0) {
                 _oceanKakaoMapObj.relayout();
                 _oceanKakaoMapObj.setCenter(pos);
             }
@@ -15171,7 +15194,7 @@ function initKakaoOceanMap(spot) {
 
         refreshMap();
         if (window.requestAnimationFrame) window.requestAnimationFrame(refreshMap);
-        [30, 100, 250, 500].forEach(function(delay) {
+        [40, 120, 300, 600].forEach(function(delay) {
             setTimeout(refreshMap, delay);
         });
 

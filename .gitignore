@@ -31,6 +31,7 @@ git_commit_helper.py
 search_map.py
 find_init_map.py
 find_scuba_code.py
+do_push.py
 
 # OS metadata
 .DS_Store

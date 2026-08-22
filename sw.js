@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v670-no-gray-map-tiles";
+const CACHE_NAME = "aquabuddy-cache-v680-resizeobserver-map-fix";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
