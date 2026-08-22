@@ -911,10 +911,14 @@
                         </span>
                         <span style="font-size: 0.78rem; color: #94a3b8;">📍 선택된 스팟에 단일 핀 마커 표시</span>
                     </div>
-                    <div id="oceanKakaoMap" style="width: 100%; height: 380px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.15); background: #070e17; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; box-sizing: border-box; padding: 20px;">
-                        <i class="fa-solid fa-map-location-dot" style="font-size: 2.6rem; color: #00f2fe; margin-bottom: 12px; opacity: 0.85;"></i>
-                        <h4 style="color: #fff; font-size: 1.1rem; font-weight: 800; margin-bottom: 6px;">🗺️ 실시간 해양 관측 스팟 지도</h4>
-                        <p style="color: #94a3b8; font-size: 0.85rem; margin: 0;">상단 추천 스팟(📍 해운대, 임랑 등)을 누르거나 검색하면 카카오 지도가 바로 펼쳐집니다.</p>
+                    <div id="oceanKakaoMap" style="width: 100%; height: 380px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(0, 242, 254, 0.3); background: rgba(10, 18, 35, 0.95); position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; box-sizing: border-box; padding: 24px;">
+                        <div style="background: rgba(0, 242, 254, 0.12); width: 68px; height: 68px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; border: 1px solid rgba(0, 242, 254, 0.35); box-shadow: 0 0 20px rgba(0,242,254,0.2);">
+                            <i class="fa-solid fa-map-location-dot" style="font-size: 2rem; color: #00f2fe;"></i>
+                        </div>
+                        <h4 style="color: #fff; font-size: 1.18rem; font-weight: 800; margin-bottom: 8px;">🗺️ 해양 관측 스팟 지도 대기 중</h4>
+                        <p style="color: #94a3b8; font-size: 0.88rem; margin: 0; max-width: 400px; line-height: 1.5;">
+                            상단의 <strong style="color: #00f2fe; font-weight: 800;">🔥 추천 스팟 (📍해운대, 📍제주 등)</strong>을 클릭하거나<br>검색창에 스팟 이름을 입력하시면 카카오 지도가 즉시 연결됩니다.
+                        </p>
                     </div>
                 </div>
 
@@ -2188,7 +2192,7 @@
  
      <!-- App Configuration & Main Logic Script -->
      <script src="config.js?v=V503_EXACT_SS_LIST"></script>
-     <script src="app.js?v=V710_SINGLE_MAP_INSTANCE_FIX"></script>
+     <script src="app.js?v=V720_STANDBY_UI_INSTANT_MAP_LOAD"></script>
      <!-- Toast Notification Container -->
     <div id="toastContainer" class="toast-container"></div>
 </body>

@@ -925,8 +925,8 @@ function switchMainView(viewName) {
             if (!currentDashboardSpot && typeof OCEAN_WEATHER_DATA !== "undefined" && OCEAN_WEATHER_DATA.length > 0) {
                 currentDashboardSpot = OCEAN_WEATHER_DATA[0];
             }
-            if (typeof renderUnifiedSpotDashboard === "function" && currentDashboardSpot) {
-                renderUnifiedSpotDashboard(currentDashboardSpot);
+            if (typeof showOceanMapStandbyScreen === "function") {
+                showOceanMapStandbyScreen();
             }
             if (typeof renderWeatherGrid === "function") {
                 renderWeatherGrid(activeTideRegion || "all");
@@ -15134,6 +15134,25 @@ var _oceanKakaoMapObj = null;
 var _customOverlayObj = null;
 var _oceanMapResizeObserver = null;
 var _lastOceanKakaoPos = null;
+
+function showOceanMapStandbyScreen() {
+    var container = document.getElementById('oceanKakaoMap');
+    if (!container) return;
+    _oceanKakaoMapObj = null;
+    if (_customOverlayObj) { _customOverlayObj.setMap(null); _customOverlayObj = null; }
+    container.innerHTML = `
+        <div style="width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; box-sizing: border-box; background: rgba(10, 18, 35, 0.95);">
+            <div style="background: rgba(0, 242, 254, 0.12); width: 68px; height: 68px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; border: 1px solid rgba(0, 242, 254, 0.35); box-shadow: 0 0 20px rgba(0,242,254,0.2);">
+                <i class="fa-solid fa-map-location-dot" style="font-size: 2rem; color: #00f2fe;"></i>
+            </div>
+            <h4 style="color: #fff; font-size: 1.18rem; font-weight: 800; margin-bottom: 8px;">🗺️ 해양 관측 스팟 지도 대기 중</h4>
+            <p style="color: #94a3b8; font-size: 0.88rem; margin: 0; max-width: 400px; line-height: 1.5;">
+                상단의 <strong style="color: #00f2fe; font-weight: 800;">🔥 추천 스팟 (📍해운대, 📍제주 등)</strong>을 클릭하거나<br>검색창에 스팟 이름을 입력하시면 카카오 지도가 즉시 연결됩니다.
+            </p>
+        </div>
+    `;
+}
+window.showOceanMapStandbyScreen = showOceanMapStandbyScreen;
 
 function initKakaoOceanMap(spot) {
     var container = document.getElementById('oceanKakaoMap');
