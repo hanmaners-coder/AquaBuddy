@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v690-fresh-map-instance-fix";
+const CACHE_NAME = "aquabuddy-cache-v700-dark-placeholder-instant-map";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

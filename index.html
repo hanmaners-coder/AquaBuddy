@@ -911,7 +911,11 @@
                         </span>
                         <span style="font-size: 0.78rem; color: #94a3b8;">📍 선택된 스팟에 단일 핀 마커 표시</span>
                     </div>
-                    <div id="oceanKakaoMap" style="width: 100%; height: 380px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.15); background: #0f172a; position: relative;"></div>
+                    <div id="oceanKakaoMap" style="width: 100%; height: 380px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.15); background: #070e17; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; box-sizing: border-box; padding: 20px;">
+                        <i class="fa-solid fa-map-location-dot" style="font-size: 2.6rem; color: #00f2fe; margin-bottom: 12px; opacity: 0.85;"></i>
+                        <h4 style="color: #fff; font-size: 1.1rem; font-weight: 800; margin-bottom: 6px;">🗺️ 실시간 해양 관측 스팟 지도</h4>
+                        <p style="color: #94a3b8; font-size: 0.85rem; margin: 0;">상단 추천 스팟(📍 해운대, 임랑 등)을 누르거나 검색하면 카카오 지도가 바로 펼쳐집니다.</p>
+                    </div>
                 </div>
 
                 <!-- 3층: 지도 밑 나란히 배치 (왼쪽: CCTV / 오른쪽: 스쿠버 지수) -->
@@ -2184,7 +2188,7 @@
  
      <!-- App Configuration & Main Logic Script -->
      <script src="config.js?v=V503_EXACT_SS_LIST"></script>
-     <script src="app.js?v=V690_FRESH_MAP_INSTANCE_FIX"></script>
+     <script src="app.js?v=V700_DARK_PLACEHOLDER_INSTANT_MAP"></script>
      <!-- Toast Notification Container -->
     <div id="toastContainer" class="toast-container"></div>
 </body>

@@ -4285,9 +4285,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     switchMainView('all');
     if (typeof OCEAN_WEATHER_DATA !== "undefined" && OCEAN_WEATHER_DATA.length > 0) {
         currentDashboardSpot = OCEAN_WEATHER_DATA[0];
-        if (typeof renderUnifiedSpotDashboard === "function") {
-            renderUnifiedSpotDashboard(OCEAN_WEATHER_DATA[0]);
-        }
     }
     renderWeatherGrid(activeTideRegion);
     renderOceanWebcams(activeCctvRegion);
