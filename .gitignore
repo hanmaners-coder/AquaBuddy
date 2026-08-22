@@ -2,7 +2,11 @@
 node_modules/
 .npm/
 
-# Environment & Executables
+# Environment & Secret Keys
+.env
+*.env
+
+# Executables & Zips
 *.exe
 ngrok.exe
 ngrok.zip
@@ -22,9 +26,12 @@ server_stdout.log
 boundary_output.txt
 gaps_summary.txt
 
+# Temp scripts
+git_commit_helper.py
+search_map.py
+find_init_map.py
+find_scuba_code.py
+
 # OS metadata
 .DS_Store
 Thumbs.db
-
-# Temp / Local scratch
-scratch/
