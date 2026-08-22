@@ -928,14 +928,6 @@ function switchMainView(viewName) {
             if (typeof renderUnifiedSpotDashboard === "function" && currentDashboardSpot) {
                 renderUnifiedSpotDashboard(currentDashboardSpot);
             }
-            // 🌟 탭 전환 후 지도가 시각화될 때 즉시 relayout() 실행 (회색 박스 현상 100% 방지)
-            [30, 100, 250, 500].forEach(function(delay) {
-                setTimeout(function() {
-                    if (typeof initKakaoOceanMap === "function" && currentDashboardSpot) {
-                        initKakaoOceanMap(currentDashboardSpot);
-                    }
-                }, delay);
-            });
             if (typeof renderWeatherGrid === "function") {
                 renderWeatherGrid(activeTideRegion || "all");
             }
@@ -15174,24 +15166,20 @@ function initKakaoOceanMap(spot) {
         var pos = new window.kakao.maps.LatLng(lat, lng);
         _lastOceanKakaoPos = pos;
 
-        // 🌟 지도가 이전에 0px일 때 잘못 생성되어 150px로 갇히는 현상 원천 차단:
-        // 컨테이너가 정상 표출된 상태(offsetWidth > 0)일 때 항상 깨끗하게 새로 지도 인스턴스 생성!
-        container.innerHTML = '';
-        _oceanKakaoMapObj = new window.kakao.maps.Map(container, { center: pos, level: 6 });
+        if (!_oceanKakaoMapObj) {
+            container.innerHTML = '';
+            _oceanKakaoMapObj = new window.kakao.maps.Map(container, { center: pos, level: 6 });
+        } else {
+            _oceanKakaoMapObj.relayout();
+            _oceanKakaoMapObj.setCenter(pos);
+        }
 
-        // 🌟 지도가 처음 표출되거나 탭 전환 시 회색 박스/깨짐 방지 (다단계 릴레이아웃)
-        var refreshMap = function() {
+        setTimeout(function() {
             if (_oceanKakaoMapObj && container.offsetWidth > 0) {
                 _oceanKakaoMapObj.relayout();
                 _oceanKakaoMapObj.setCenter(pos);
             }
-        };
-
-        refreshMap();
-        if (window.requestAnimationFrame) window.requestAnimationFrame(refreshMap);
-        [40, 120, 300, 600].forEach(function(delay) {
-            setTimeout(refreshMap, delay);
-        });
+        }, 100);
 
         if (_customOverlayObj) { _customOverlayObj.setMap(null); _customOverlayObj = null; }
         if (!spot) return;
