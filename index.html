@@ -1,0 +1,2191 @@
+<!DOCTYPE html>
+ <html lang="ko">
+ <head>
+    <!-- 영구 결함 방지: currentUser & 카테고리/해양스팟 자가구동 방탄 인라인 가드 (v354) -->
+    <script>
+        if (typeof window.currentUser === 'undefined') window.currentUser = null;
+        if (typeof currentUser === 'undefined') var currentUser = null;
+
+        (function() {
+            window._activeMainView = 'all';
+            window._activeCategory = 'all';
+
+            window.forceScrollToTop = function() {
+                window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+                if (document.documentElement) document.documentElement.scrollTop = 0;
+                if (document.body) document.body.scrollTop = 0;
+            };
+
+            window.formatDesc = function(str) {
+                if (!str) return "상세 내용이 없습니다.";
+                var safe = typeof window.escapeHtml === "function" ? window.escapeHtml(str) : String(str);
+                return safe.split("\n").join("<br>");
+            };
+
+            window.updateCreateButtonText = function(catKey) {
+                var btnTextEls = document.querySelectorAll("#createBtnText, .create-btn-text, #openCreateModalBtn span");
+                var text = "버디 모집하기";
+                if (catKey === "instructor") {
+                    text = "강사 클래스 개설";
+                } else if (catKey === "community") {
+                    text = "자유수다 게시글 작성";
+                } else if (catKey === "market") {
+                    text = "중고 장비 매물 등록";
+                } else if (catKey === "partnership") {
+                    text = "제휴 입점 문의하기";
+                } else if (catKey === "my_activity") {
+                    text = "새 모집글 등록하기";
+                }
+                btnTextEls.forEach(function(el) { el.textContent = text; });
+            };
+
+            window.switchMainView = function(viewName) {
+                if (!viewName) viewName = "all";
+                if (viewName === "home" || viewName === "feed" || viewName === "buddy") viewName = "all";
+
+                window._activeMainView = viewName;
+                window._activeCategory = viewName;
+                if (typeof window.activeMainView !== 'undefined') window.activeMainView = viewName;
+                if (typeof window.activeCategory !== 'undefined') window.activeCategory = viewName;
+                if (typeof window.currentMainView !== 'undefined') window.currentMainView = viewName;
+
+                // 1. 모든 네비게이션 버튼 & 탭 active 상태 동기화
+                document.querySelectorAll(".nav-item, .main-nav-btn, .nav-btn, .tab-btn, .category-tab-btn, .category-pill").forEach(function(btn) {
+                    var onclickAttr = btn.getAttribute("onclick") || "";
+                    var catData = btn.dataset ? btn.dataset.category : null;
+                    var viewData = btn.dataset ? btn.dataset.view : null;
+                    var targetId = "navLink" + viewName.charAt(0).toUpperCase() + viewName.slice(1);
+
+                    if (btn.id === targetId || catData === viewName || viewData === viewName || onclickAttr.indexOf("'" + viewName + "'") !== -1) {
+                        btn.classList.add("active");
+                    } else if (onclickAttr.indexOf("switchMainView") !== -1 || onclickAttr.indexOf("filterByCategory") !== -1 || btn.classList.contains("nav-item") || btn.classList.contains("tab-btn") || btn.classList.contains("category-pill")) {
+                        btn.classList.remove("active");
+                    }
+                });
+
+                window.updateCreateButtonText(viewName);
+
+                // 2. 주요 섹션 (피드 / 해양스팟 / CCTV) 뷰 분기
+                var feedSec = document.getElementById("mainFeedViewSection");
+                var tideSec = document.getElementById("tideViewSection");
+                var cctvSec = document.getElementById("cctvViewSection");
+
+                var categoryBar = document.getElementById("categoryFilterBar");
+                var subFilterBar = document.getElementById("instructorSubFilterBar");
+                var activitySubFilterBar = document.getElementById("activitySubFilterBar");
+                var partnershipSubFilterBar = document.getElementById("partnershipSubFilterBar");
+                var partnershipTeaserBanner = document.getElementById("partnershipTeaserBanner");
+                var oceanWeatherSection = document.getElementById("oceanWeatherSection");
+                var mainBannerSlider = document.getElementById("mainBannerSlider");
+
+                // 🌊 전국 해양 스팟 / CCTV 뷰
+                if (viewName === "tide" || viewName === "spots" || viewName === "cctv") {
+                    document.body.classList.add("category-view-active", "tide-view-active", "category-view-tide");
+                    if (feedSec) { feedSec.style.display = "none"; feedSec.classList.add("hidden"); }
+                    if (cctvSec) {
+                        if (viewName === "cctv") { cctvSec.style.display = "block"; cctvSec.classList.remove("hidden"); }
+                        else { cctvSec.style.display = "none"; cctvSec.classList.add("hidden"); }
+                    }
+                    if (tideSec) {
+                        if (viewName !== "cctv") { tideSec.style.display = "block"; tideSec.classList.remove("hidden"); }
+                        else { tideSec.style.display = "none"; tideSec.classList.add("hidden"); }
+                    }
+
+                    if (categoryBar) categoryBar.style.display = "none";
+                    if (subFilterBar) { subFilterBar.style.display = "none"; subFilterBar.classList.add("hidden"); }
+                    if (activitySubFilterBar) { activitySubFilterBar.style.display = "none"; activitySubFilterBar.classList.add("hidden"); }
+                    if (partnershipSubFilterBar) { partnershipSubFilterBar.style.display = "none"; partnershipSubFilterBar.classList.add("hidden"); }
+                    if (partnershipTeaserBanner) { partnershipTeaserBanner.style.display = "none"; partnershipTeaserBanner.classList.add("hidden"); }
+                    if (oceanWeatherSection) oceanWeatherSection.style.display = "none";
+                    if (mainBannerSlider) mainBannerSlider.style.display = "none";
+
+                    if (viewName !== "cctv") {
+                        if (typeof window.renderUnifiedSpotDashboard === "function" && typeof window.OCEAN_WEATHER_DATA !== "undefined" && window.OCEAN_WEATHER_DATA.length > 0) {
+                            window.renderUnifiedSpotDashboard(window.currentDashboardSpot || window.OCEAN_WEATHER_DATA[0]);
+                        }
+                        if (typeof window.renderWeatherGrid === "function") {
+                            window.renderWeatherGrid(window.activeTideRegion || "all");
+                        }
+                    }
+                    window.forceScrollToTop();
+                    return;
+                }
+
+                // 📋 일반 게시판 피드 뷰
+                document.body.classList.remove("tide-view-active", "category-view-tide");
+                if (feedSec) { feedSec.style.display = "block"; feedSec.classList.remove("hidden"); }
+                if (tideSec) { tideSec.style.display = "none"; tideSec.classList.add("hidden"); }
+                if (cctvSec) { cctvSec.style.display = "none"; cctvSec.classList.add("hidden"); }
+
+                if (viewName === "all") {
+                    document.body.classList.remove("category-view-active");
+                    if (categoryBar) categoryBar.style.display = "flex";
+                    if (subFilterBar) { subFilterBar.style.display = "none"; subFilterBar.classList.add("hidden"); }
+                    if (activitySubFilterBar) { activitySubFilterBar.style.display = "none"; activitySubFilterBar.classList.add("hidden"); }
+                    if (partnershipSubFilterBar) { partnershipSubFilterBar.style.display = "none"; partnershipSubFilterBar.classList.add("hidden"); }
+                    if (partnershipTeaserBanner) { partnershipTeaserBanner.style.display = "none"; partnershipTeaserBanner.classList.add("hidden"); }
+                    if (oceanWeatherSection) oceanWeatherSection.style.display = "block";
+                    if (mainBannerSlider) mainBannerSlider.style.display = "block";
+                } else {
+                    document.body.classList.add("category-view-active");
+                    if (categoryBar) categoryBar.style.display = (viewName === "swimming" || viewName === "openwater" || viewName === "freediving" || viewName === "scuba") ? "flex" : "none";
+                    if (oceanWeatherSection) oceanWeatherSection.style.display = "none";
+                    if (mainBannerSlider) mainBannerSlider.style.display = "none";
+
+                    if (subFilterBar) {
+                        if (viewName === "instructor") { subFilterBar.style.display = "flex"; subFilterBar.classList.remove("hidden"); }
+                        else { subFilterBar.style.display = "none"; subFilterBar.classList.add("hidden"); }
+                    }
+                    if (activitySubFilterBar) {
+                        if (viewName === "my_activity" || viewName === "activity_log") { activitySubFilterBar.style.display = "flex"; activitySubFilterBar.classList.remove("hidden"); }
+                        else { activitySubFilterBar.style.display = "none"; activitySubFilterBar.classList.add("hidden"); }
+                    }
+                    if (partnershipSubFilterBar) {
+                        if (viewName === "partnership") { partnershipSubFilterBar.style.display = "flex"; partnershipSubFilterBar.classList.remove("hidden"); }
+                        else { partnershipSubFilterBar.style.display = "none"; partnershipSubFilterBar.classList.add("hidden"); }
+                    }
+                    if (partnershipTeaserBanner) {
+                        if (viewName === "partnership") { partnershipTeaserBanner.style.display = "block"; partnershipTeaserBanner.classList.remove("hidden"); }
+                        else { partnershipTeaserBanner.style.display = "none"; partnershipTeaserBanner.classList.add("hidden"); }
+                    }
+                }
+
+                if (typeof window.filterAndRender === "function") {
+                    window.filterAndRender();
+                }
+                window.forceScrollToTop();
+            };
+
+            window.filterByCategory = window.switchMainView;
+            window.filterByCategoryImpl = window.switchMainView;
+            window.doFilterByCategory = window.switchMainView;
+        })();
+    </script>
+
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+     <title>AquaBuddy (아쿠아버디) - 함께라서 안전한 프리미엄 수중 버디 매칭 & 강사 클래스</title>
+
+          <!-- ===== Open Graph (OG) Meta Tags ===== -->
+     <!-- AquaBuddy SNS/Threads/KakaoTalk 공유 최적화 -->
+     <meta property="og:type" content="website">
+     <meta property="og:site_name" content="AquaBuddy (아쿠아버디)">
+     <meta property="og:title" content="AquaBuddy (아쿠아버디) - 수중 액티비티 필수 앱">
+     <meta property="og:description" content="실시간 버디 매칭, 강사 클래스, 전국 46개 입수 스팟 물때표 및 CCTV까지! 지금 바로 다이빙 짝꿍을 찾아보세요.">
+     <meta property="og:image" content="https://aquabuddy1.com/hero.jpg">
+     <meta property="og:image:width" content="1200">
+     <meta property="og:image:height" content="630">
+     <meta property="og:image:alt" content="AquaBuddy - 함께라서 안전한 수중 버디 매칭 앱">
+     <meta property="og:url" content="https://aquabuddy1.com/">
+     <meta property="og:locale" content="ko_KR">
+
+     <!-- ===== Twitter (X) Card Meta Tags ===== -->
+     <meta name="twitter:card" content="summary_large_image">
+     <meta name="twitter:site" content="@AquaBuddy_KR">
+     <meta name="twitter:title" content="AquaBuddy - 함께라서 안전한 수중 버디">
+     <meta name="twitter:description" content="다이버들을 위한 올인원 커뮤니티! 실시간 물때표와 안전한 버디를 만나보세요.">
+     <meta name="twitter:image" content="https://aquabuddy1.com/hero.jpg">
+     <meta name="twitter:image:alt" content="AquaBuddy - 수중 버디 매칭 &amp; 강사 클래스 플랫폼">
+
+     <meta name="description" content="실내 수영, 바다 수영, 프리다이빙, 스쿠버다이빙 안전 버디 매칭, 강사 클래스 체험/자격증 코스, 자유수다방, 중고장터, 내 활동기록, 전국 46개 입수 포인트 실시간 물때표 및 44개 해양 CCTV 라이브">
+     
+     <!-- Google Fonts -->
+     <link rel="preconnect" href="https://fonts.googleapis.com">
+     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+     
+     <!-- FontAwesome Icons -->
+     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+     
+     <!-- Supabase JS Client -->
+     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+     
+     <!-- HLS.js Library for m3u8 Live Video Streaming -->
+     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+ 
+     <!-- Kakao Maps JavaScript API SDK with Services Library -->
+     <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=7c316726691ea5e02f234a85f5a20bab&libraries=services,clusterer"></script>
+     
+      <!-- Custom CSS -->
+      <link rel="stylesheet" href="styles.css?v=V503_EXACT_SS_LIST">
+     <!-- PWA Manifest and Meta Tags -->
+     <link rel="manifest" href="manifest.json">
+     <link rel="apple-touch-icon" href="icon-192.png">
+     <link rel="icon" type="image/png" href="icon-192.png">
+     <link rel="icon" sizes="512x512" type="image/png" href="icon-512.png">
+     <meta name="apple-mobile-web-app-title" content="AquaBuddy">
+     <meta name="mobile-web-app-capable" content="yes">
+     <meta name="apple-mobile-web-app-capable" content="yes">
+     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+     <meta name="theme-color" content="#0f172a">
+
+     <!-- 💻 PC 데스크톱 원본 직사각형 카드 복원 & 📱 모바일 스코핑 스타일 -->
+     <style>
+     /* 💻 PC/데스크톱 화면: 넉넉하고 시원한 원본 직사각형 카드 디자인 */
+     .post-card,
+     .post-card-slim {
+         padding: 16px 18px !important;
+         margin-bottom: 16px !important;
+         border-radius: 14px !important;
+         background: rgba(13, 23, 38, 0.85) !important;
+         border: 1px solid rgba(0, 242, 254, 0.25) !important;
+         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
+         transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease !important;
+     }
+
+     .post-card:hover,
+     .post-card-slim:hover {
+         transform: translateY(-3px) !important;
+         box-shadow: 0 8px 30px rgba(0, 242, 254, 0.3) !important;
+         border-color: #00f2fe !important;
+     }
+
+     .slim-card-inner {
+         display: flex !important;
+         flex-direction: column !important;
+         gap: 8px !important;
+     }
+
+     .post-card-slim .card-line-1 {
+         display: flex !important;
+         align-items: center !important;
+         flex-wrap: wrap !important;
+         gap: 8px !important;
+         margin-bottom: 4px !important;
+     }
+
+     .post-card-slim .slim-title {
+         font-size: 1.15rem !important;
+         font-weight: 700 !important;
+         color: #ffffff !important;
+         line-height: 1.4 !important;
+         display: block !important;
+         margin: 4px 0 6px 0 !important;
+         word-break: break-word !important;
+     }
+
+     .post-card-slim .card-line-3 {
+         display: flex !important;
+         align-items: center !important;
+         flex-wrap: wrap !important;
+         gap: 10px !important;
+         font-size: 0.9rem !important;
+         font-weight: 600 !important;
+         margin-top: 6px !important;
+     }
+
+     .post-card-slim .slim-author {
+         color: #cbd5e1 !important;
+         font-size: 0.82rem !important;
+         font-weight: 600 !important;
+     }
+
+     .post-card .slim-date,
+     .post-card-slim .slim-date,
+     .post-card .slim-capacity,
+     .post-card-slim .slim-capacity,
+     .card-line-3 .slim-date,
+     .card-line-3 .slim-capacity {
+         color: #ffffff !important;
+         font-weight: 600 !important;
+     }
+
+     /* 📱 오직 모바일 환경(max-width: 768px)에서만 컴팩트 축소 작동 */
+     @media (max-width: 768px) {
+         .post-card,
+         .post-card-slim {
+             padding: 8px 10px !important;
+             margin-bottom: 8px !important;
+             border-radius: 10px !important;
+         }
+         .slim-card-inner {
+             gap: 3px !important;
+         }
+         .card-line-1 {
+             gap: 4px !important;
+             margin-bottom: 2px !important;
+         }
+         .slim-cat-badge, .slim-meta {
+             font-size: 0.68rem !important;
+             padding: 1px 5px !important;
+             border-radius: 4px !important;
+         }
+         .user-badge-demographic {
+             font-size: 0.65rem !important;
+             padding: 1px 4px !important;
+         }
+         .card-line-2 {
+             margin: 2px 0 3px 0 !important;
+         }
+         .slim-title {
+             font-size: 0.98rem !important;
+             line-height: 1.25 !important;
+             font-weight: 700 !important;
+         }
+         .card-line-3 {
+             gap: 6px !important;
+             font-size: 0.78rem !important;
+             margin-top: 2px !important;
+         }
+
+         /* 모바일 메인 컨테이너 및 전국해양스팟 full-width */
+         .main-container,
+         .container,
+         #tideViewSection,
+         #cctvViewSection,
+         #oceanWeatherSection {
+             width: 100% !important;
+             max-width: 100% !important;
+             padding-left: 0 !important;
+             padding-right: 0 !important;
+             margin-left: 0 !important;
+             margin-right: 0 !important;
+             box-sizing: border-box !important;
+         }
+         #tideViewSection .weather-section {
+             padding: 0 !important;
+             margin: 0 !important;
+             width: 100% !important;
+         }
+         #unifiedDashboardContainer {
+             width: 100% !important;
+             margin: 0 !important;
+             padding: 0 !important;
+         }
+         .spot-dashboard-card {
+             padding: 6px 2px !important;
+             margin-bottom: 8px !important;
+             border-radius: 8px !important;
+             width: 100% !important;
+             box-sizing: border-box !important;
+             background: rgba(15, 23, 42, 0.95) !important;
+         }
+         .spot-dashboard-grid {
+             display: flex !important;
+             flex-direction: column !important;
+             gap: 8px !important;
+             width: 100% !important;
+         }
+         .dashboard-windy-section, 
+         .dashboard-badatime-section, 
+         .dashboard-cctv-section {
+             width: 100% !important;
+             box-sizing: border-box !important;
+         }
+         .dashboard-windy-section > div, 
+         .dashboard-badatime-section > div, 
+         .dashboard-cctv-box,
+         .dashboard-cctv-none {
+             width: 100% !important;
+             height: 560px !important;
+             border-radius: 8px !important;
+         }
+         .dashboard-windy-section iframe, 
+         .dashboard-badatime-section iframe, 
+         .dashboard-cctv-box iframe,
+         .dashboard-cctv-box video {
+             width: 100% !important;
+             height: 100% !important;
+             border-radius: 8px !important;
+         }
+     }
+    
+     /* 💻 PC 데스크톱: 한 줄로 길게 펼쳐지는 100% 직사각형 바 레이아웃 (이미지 2와 100% 통일) */
+     .posts-grid,
+     #postsGrid {
+         display: flex !important;
+         flex-direction: column !important;
+         gap: 14px !important;
+         width: 100% !important;
+     }
+
+     .posts-grid .post-card,
+     .posts-grid .post-card-slim,
+     #postsGrid .post-card,
+     #postsGrid .post-card-slim {
+         width: 100% !important;
+         max-width: 100% !important;
+         box-sizing: border-box !important;
+         padding: 16px 20px !important;
+         margin-bottom: 0 !important;
+         border-radius: 14px !important;
+         background: rgba(13, 23, 38, 0.85) !important;
+         border: 1px solid rgba(0, 242, 254, 0.25) !important;
+         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
+     }
+
+     @media (max-width: 768px) {
+         /* 📱 모바일 화면: 기존 모바일 컴팩트 레이아웃 100% 유지 */
+         .posts-grid,
+         #postsGrid {
+             display: flex !important;
+             flex-direction: column !important;
+             gap: 8px !important;
+             width: 100% !important;
+         }
+
+         .posts-grid .post-card,
+         .posts-grid .post-card-slim,
+         #postsGrid .post-card,
+         #postsGrid .post-card-slim {
+             padding: 8px 10px !important;
+             margin-bottom: 0 !important;
+             border-radius: 10px !important;
+         }
+     }
+
+    
+     /* 🌟 모달 탭 및 옵션 필(Pill) 버튼 예쁜 디자인 효과 복원 및 강화 */
+     .auth-switch-tabs {
+         display: flex !important;
+         gap: 8px !important;
+         background: rgba(7, 14, 23, 0.75) !important;
+         padding: 5px !important;
+         border-radius: 12px !important;
+         border: 1px solid rgba(0, 242, 254, 0.25) !important;
+         margin-bottom: 20px !important;
+     }
+
+     .auth-tab-btn {
+         flex: 1 !important;
+         padding: 10px 16px !important;
+         font-size: 0.95rem !important;
+         font-weight: 800 !important;
+         border-radius: 8px !important;
+         border: none !important;
+         background: transparent !important;
+         color: #94a3b8 !important;
+         cursor: pointer !important;
+         transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+     }
+
+     .auth-tab-btn:hover {
+         color: #ffffff !important;
+         background: rgba(0, 242, 254, 0.12) !important;
+     }
+
+     .auth-tab-btn.active {
+         background: linear-gradient(135deg, #00f2fe, #4facfe) !important;
+         color: #070e17 !important;
+         box-shadow: 0 4px 15px rgba(0, 242, 254, 0.4) !important;
+     }
+
+     .pill-select-group {
+         display: flex !important;
+         flex-wrap: wrap !important;
+         gap: 8px !important;
+         margin-top: 6px !important;
+         margin-bottom: 12px !important;
+     }
+
+     .pill-select-group button,
+     .depth-pill-btn,
+     .license-pill-btn,
+     .course-pill-btn,
+     .ratio-pill-btn,
+     .inclusion-pill-btn,
+     .pill-btn {
+         padding: 8px 14px !important;
+         font-size: 0.85rem !important;
+         font-weight: 700 !important;
+         border-radius: 10px !important;
+         border: 1px solid rgba(0, 242, 254, 0.25) !important;
+         background: rgba(13, 23, 38, 0.85) !important;
+         color: #cbd5e1 !important;
+         cursor: pointer !important;
+         transition: all 0.2s ease !important;
+         outline: none !important;
+     }
+
+     .pill-select-group button:hover,
+     .depth-pill-btn:hover,
+     .license-pill-btn:hover,
+     .course-pill-btn:hover,
+     .ratio-pill-btn:hover,
+     .inclusion-pill-btn:hover,
+     .pill-btn:hover {
+         border-color: #00f2fe !important;
+         color: #ffffff !important;
+         background: rgba(0, 242, 254, 0.18) !important;
+         transform: translateY(-1px) !important;
+     }
+
+     .pill-select-group button.active,
+     .depth-pill-btn.active,
+     .license-pill-btn.active,
+     .course-pill-btn.active,
+     .ratio-pill-btn.active,
+     .inclusion-pill-btn.active,
+     .pill-btn.active {
+         background: linear-gradient(135deg, rgba(0, 242, 254, 0.3), rgba(79, 172, 254, 0.45)) !important;
+         border-color: #00f2fe !important;
+         color: #00f2fe !important;
+         font-weight: 800 !important;
+         box-shadow: 0 0 12px rgba(0, 242, 254, 0.4) !important;
+     }
+
+     </style>
+ </head>
+
+ <body>
+     <!-- Background Bubbles Animation Container -->
+     <div class="bubble-container" id="bubbleContainer"></div>
+ 
+     <!-- Side Banners (Left & Right) with Ad Inquiry Trigger -->
+     <div class="side-ad-banner side-left" id="bannerFloatingLeft">
+         <span class="ad-tag">AD PARTNER</span>
+         <a href="https://link.coupang.com/a/fKszBcQl6y" target="_blank" class="side-ad-img-box">
+             <img src="left_ad_freediving.jpg" alt="프리다이빙 장비 기획전" loading="lazy">
+         </a>
+         <h4>프리다이빙</h4>
+         <a href="https://link.coupang.com/a/fKszBcQl6y" target="_blank" class="side-ad-link">장비 특가 ➔</a>
+         <span class="ftc-notice-micro">※ 쿠팡 파트너스 수수료 제공</span>
+         
+         <div class="side-ad-inquiry-box">
+             <button type="button" class="ad-inquiry-btn" onclick="openInquiryModal('ad')" title="이 자리에 광고를 입점하세요!">
+                 📢 광고 제휴 문의 ➔
+             </button>
+         </div>
+     </div>
+ 
+     <div class="side-ad-banner side-right" id="bannerFloatingRight">
+         <span class="ad-tag">AD PARTNER</span>
+         <a href="https://link.coupang.com/a/fKszBcQl6y" target="_blank" class="side-ad-img-box">
+             <img src="right_ad_scuba.jpg" alt="스쿠버 다이빙 장비 기획전" loading="lazy">
+         </a>
+         <h4>스쿠버 다이빙</h4>
+         <a href="https://link.coupang.com/a/fKszBcQl6y" target="_blank" class="side-ad-link">장비 특가 ➔</a>
+         <span class="ftc-notice-micro">※ 쿠팡 파트너스 수수료 제공</span>
+ 
+         <div class="side-ad-inquiry-box">
+             <button type="button" class="ad-inquiry-btn" onclick="openInquiryModal('ad')" title="이 자리에 광고를 입점하세요!">
+                 📢 광고 입점 가능 ➔
+             </button>
+         </div>
+     </div>
+ 
+     <!-- Clean Header Navigation Bar (Streamlined Top Actions for 100% Mobile Visibility) -->
+     <header class="navbar">
+         <div class="nav-container-top container">
+             <!-- Brand Logo -->
+             <a href="#" onclick="switchMainView('all'); return false;" class="logo">
+                 <i class="fa-solid fa-water-ladder logo-icon"></i>
+                 <span class="logo-text">AquaBuddy</span>
+             </a>
+ 
+             <!-- Right Quick Actions (Guaranteed Mobile Fit for '+ 버디모집하기') -->
+             <div class="nav-actions" style="position: relative;">
+                <!-- Dedicated Instructor Certification Button -->
+                <button type="button" class="btn btn-secondary nav-inst-btn" onclick="openInstructorAuthModal()" title="강사이신가요? 1초 강사 인증 신청">
+                     <i class="fa-solid fa-graduation-cap"></i> 강사인증
+                 </button>
+ 
+                 <!-- Clickable User Profile Badge -->
+                 <div id="userProfileNav" class="user-nav-badge hidden" onclick="openProfileModal()" style="cursor: pointer;" title="클릭하여 내 프로필/계정 정보 확인">
+                     <i class="fa-solid fa-user-circle"></i>
+                     <span id="navUserName">다이버</span>
+                 </div>
+ 
+                 <button type="button" class="btn btn-primary nav-login-btn" id="openAuthModalBtn">
+                     <i class="fa-solid fa-right-to-bracket"></i> 로그인 / 회원가입
+                 </button>
+ 
+                 <!-- Restored Eye-Catching Vibrant Create Button (Always Visible!) -->
+                 <button type="button" class="btn btn-vibrant-action" id="openCreateModalBtn">
+                     <i class="fa-solid fa-plus-circle"></i> <span id="createBtnText">버디 모집하기</span>
+                 </button>
+             </div>
+         </div>
+ 
+         <!-- Tier 2: Enhanced High-Contrast Category Links -->
+         <div class="nav-sub-menu container">
+             <nav class="nav-links-grid">
+                 <a href="#" class="nav-item active" id="navLinkHome" onclick="switchMainView('all'); return false;">
+                     <i class="fa-solid fa-house"></i> 홈
+                 </a>
+                 <a href="#" class="nav-item" id="navLinkFeed" onclick="switchMainView('freediving'); return false;">
+                     <i class="fa-solid fa-compass"></i> 버디 탐색
+                 </a>
+                 <a href="#" class="nav-item nav-item-gold" id="navLinkInstructor" onclick="switchMainView('instructor'); return false;">
+                     <i class="fa-solid fa-graduation-cap"></i> 강사 클래스
+                 </a>
+                 <a href="#" class="nav-item" id="navLinkCommunity" onclick="switchMainView('community'); return false;">
+                     <i class="fa-solid fa-comments"></i> 자유수다방
+                 </a>
+                 <a href="#" class="nav-item" id="navLinkMarket" onclick="switchMainView('market'); return false;">
+                     <i class="fa-solid fa-tags"></i> 중고장터
+                 </a>
+                 <a href="#" class="nav-item" id="navLinkPartnership" onclick="switchMainView('partnership'); return false;">
+                     <i class="fa-solid fa-handshake"></i> 투어 & 제휴
+                 </a>
+                 <a href="#" class="nav-item" id="navLinkActivity" onclick="if(!currentUser){if(typeof switchAuthTab==='function')switchAuthTab('login');const m=document.getElementById('authModal');if(m&&typeof openModal==='function')openModal(m);return false;} switchMainView('my_activity'); return false;">
+                     <i class="fa-solid fa-clipboard-list"></i> 내 활동기록
+                 </a>
+                 <a href="#" class="nav-item" id="navLinkTide" onclick="switchMainView('tide'); return false;">
+                     <i class="fa-solid fa-water"></i> 🌊 전국 해양 스팟
+                 </a>
+             </nav>
+         </div>
+     </header>
+ 
+     <!-- Hero Section -->
+     <section class="hero-section">
+         <div class="hero-backdrop" style="background-image: url('hero.jpg');"></div>
+         <div class="hero-overlay"></div>
+         <div class="hero-content container">
+             <span class="hero-badge"><i class="fa-solid fa-shield-halved"></i> 함께라서 안전한 수중 액티비티</span>
+             <h1 class="hero-title">안전한 버디 & 검증된 강사와 함께하는<br><span class="highlight">AquaBuddy</span> 프리미엄 플랫폼</h1>
+             <p class="hero-subtitle">
+                 전국 46개 핵심 입수 스팟 실시간 물때표 & 부산·경북·제주·전남·서해 44개 해양 라이브 CCTV 출처 명시 연동!
+             </p>
+             
+             <div class="hero-stats">
+                 <div class="stat-card">
+                     <div class="stat-number">실시간 버디 매칭</div>
+                     <div class="stat-label">안전 수칙 & 매너 검증 버디</div>
+                 </div>
+                 <div class="stat-card">
+                     <div class="stat-number">라이선스 인증 강사</div>
+                     <div class="stat-label">공인 자격증 사본 검증 완료 클래스</div>
+                 </div>
+                 <div class="stat-card">
+                     <div class="stat-number">46개 입수 스팟 물때표</div>
+                     <div class="stat-label">부산 · 울산 · 거제 · 동해 · 독도 · 제주 실시간 수온/만간조</div>
+                 </div>
+             </div>
+         </div>
+     </section>
+ 
+     <!-- Main Content Container -->
+     <main class="main-container container">
+ 
+         <!-- VIEW 1: Main Posts & Community Feed Section -->
+         <div id="mainFeedViewSection">
+             <!-- Search & Filter Panel -->
+             <section class="filter-section glass-panel" id="feed">
+                 <div class="filter-header">
+                     <h2><i class="fa-solid fa-sliders"></i> 탐색 & 필터링</h2>
+                     <span class="active-count" id="activeCountText">불러오는 중...</span>
+                 </div>
+ 
+                 <!-- High-Contrast Category Tabs -->
+                 <div class="category-tabs" id="categoryFilterBar">
+                    <button class="tab-btn active" data-category="all" onclick="filterByCategory('all'); return false;">
+                        <i class="fa-solid fa-house"></i> 전체 보기 (홈)
+                    </button>
+                    <button class="tab-btn instructor-tab" data-category="instructor" onclick="filterByCategory('instructor'); return false;">
+                        <i class="fa-solid fa-graduation-cap"></i> 강사 클래스 (체험/자격증)
+                    </button>
+                    <button class="tab-btn" data-category="swimming" onclick="filterByCategory('swimming'); return false;">
+                        <i class="fa-solid fa-person-swimming"></i> 실내 수영
+                    </button>
+                    <button class="tab-btn highlight-tab" data-category="openwater" onclick="filterByCategory('openwater'); return false;">
+                        <i class="fa-solid fa-water"></i> 바다 수영
+                    </button>
+                    <button class="tab-btn" data-category="freediving" onclick="filterByCategory('freediving'); return false;">
+                        <i class="fa-solid fa-person-swimming"></i> 프리다이빙
+                    </button>
+                    <button class="tab-btn" data-category="scuba" onclick="filterByCategory('scuba'); return false;">
+                        <i class="fa-solid fa-mask-snorkel"></i> 스쿠버다이빙
+                    </button>
+                    <button class="tab-btn community-tab" data-category="community" onclick="filterByCategory('community'); return false;">
+                        <i class="fa-solid fa-comments"></i> 자유수다방
+                    </button>
+                    <button class="tab-btn market-tab" data-category="market" onclick="filterByCategory('market'); return false;">
+                        <i class="fa-solid fa-tags"></i> 중고장터
+                    </button>
+                    <button class="tab-btn partnership-tab" data-category="partnership" onclick="filterByCategory('partnership'); return false;">
+                        <i class="fa-solid fa-handshake"></i> 투어 & 제휴
+                    </button>
+                </div>
+ 
+                 
+                 <!-- Sub Filter Bar for 5 Major Diving/Swimming Buddy Sports -->
+                 <div class="buddy-sub-tabs" id="buddySubFilterBar" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; background: rgba(0, 242, 254, 0.08); padding: 10px; border-radius: 12px; border: 1px dashed var(--accent-cyan);">
+                     <span style="font-size: 0.82rem; color: var(--accent-cyan); font-weight: 800; display: flex; align-items: center; gap: 4px; margin-right: 4px;">
+                         <i class="fa-solid fa-compass"></i> 버디 탐색 종목:
+                     </span>
+                     <button type="button" class="sub-tab-btn active" data-buddysub="all" onclick="filterBuddySub('all')">
+                         🌐 전체 버디 모집
+                     </button>
+                     <button type="button" class="sub-tab-btn" data-buddysub="freediving" onclick="filterBuddySub('freediving')">
+                         🤿 프리다이빙
+                     </button>
+                     <button type="button" class="sub-tab-btn" data-buddysub="scuba" onclick="filterBuddySub('scuba')">
+                         🤿 스쿠버다이빙
+                     </button>
+                     <button type="button" class="sub-tab-btn" data-buddysub="swimming" onclick="filterBuddySub('swimming')">
+                         🏊‍♂️ 실내수영
+                     </button>
+                     <button type="button" class="sub-tab-btn" data-buddysub="openwater" onclick="filterBuddySub('openwater')">
+                         🌊 바다수영
+                     </button>
+                     <button type="button" class="sub-tab-btn" data-buddysub="mermaid" onclick="filterBuddySub('mermaid')">
+                         🧜‍♀️ 머메이드
+                     </button>
+                 </div>
+
+                 <!-- Sub Filter Bar for 4 Specialized Instructor Classes -->
+                 <div class="instructor-sub-tabs hidden" id="instructorSubFilterBar" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; background: rgba(255, 183, 3, 0.08); padding: 10px; border-radius: 12px; border: 1px dashed var(--accent-gold);">
+                     <span style="font-size: 0.82rem; color: var(--accent-gold); font-weight: 800; display: flex; align-items: center; gap: 4px; margin-right: 4px;">
+                         <i class="fa-solid fa-graduation-cap"></i> 강사 클래스 카테고리:
+                     </span>
+                     <button class="sub-tab-btn active" data-instsub="all" onclick="filterInstructorSub('all')">
+                         🌐 전체 강사 클래스
+                     </button>
+                     <button class="sub-tab-btn" data-instsub="swim" onclick="filterInstructorSub('swim')">
+                         🏊‍♂️ 실내수영 강습 & 자세교정
+                     </button>
+                     <button class="sub-tab-btn" data-instsub="ocean_swim" onclick="filterInstructorSub('ocean_swim')">
+                         🌊 바다수영 & 스노클링
+                     </button>
+                     <button class="sub-tab-btn" data-instsub="freediving" onclick="filterInstructorSub('freediving')">
+                         🤿 프리다이빙 체험 & 자격증 코스
+                     </button>
+                     <button class="sub-tab-btn" data-instsub="scuba" onclick="filterInstructorSub('scuba')">
+                         🤿 스쿠버다이빙 체험 & 자격증 코스
+                     </button>
+                 </div>
+
+                <!-- Sub Filter Bar for Tour & Partnership -->
+                <div class="partnership-sub-tabs hidden" id="partnershipSubFilterBar" style="display: none; gap: 8px; flex-wrap: wrap; margin-top: 10px; background: rgba(0, 242, 254, 0.08); padding: 10px; border-radius: 12px; border: 1px dashed var(--accent-cyan);">
+                    <span style="font-size: 0.82rem; color: var(--accent-cyan); font-weight: 800; display: flex; align-items: center; gap: 4px; margin-right: 4px;">
+                        <i class="fa-solid fa-handshake"></i> 제휴 카테고리:
+                    </span>
+                    <button class="sub-tab-btn active" data-partsub="all" onclick="filterPartnershipSub('all')">
+                        🌐 전체
+                    </button>
+                    <button class="sub-tab-btn" data-partsub="tour_resort" onclick="filterPartnershipSub('tour_resort')">
+                        ✈️ 투어/리조트
+                    </button>
+                    <button class="sub-tab-btn" data-partsub="shop_food" onclick="filterPartnershipSub('shop_food')">
+                        🍺 맛집/장비샵
+                    </button>
+                </div>
+ 
+                 <!-- Sub Filter Bar for My Activity Log -->
+                 <div class="activity-sub-tabs hidden" id="activitySubFilterBar">
+                     <button class="sub-tab-btn active" data-sub="my_posts" onclick="filterActivitySub('my_posts')"><i class="fa-solid fa-pen"></i> 내가 작성한 글</button>
+                     <button class="sub-tab-btn" data-sub="chat_rooms" onclick="filterActivitySub('chat_rooms')"><i class="fa-solid fa-comments"></i> 대화했던 방</button>
+                     <button class="sub-tab-btn" data-sub="joined" onclick="filterActivitySub('joined')"><i class="fa-solid fa-user-check"></i> 참가 신청한 글</button>
+                     <button class="sub-tab-btn" data-sub="liked" onclick="filterActivitySub('liked')"><i class="fa-solid fa-heart"></i> 좋아요/공감한 글</button>
+                     <button class="sub-tab-btn" data-sub="commented" onclick="filterActivitySub('commented')"><i class="fa-solid fa-comment-dots"></i> 댓글 작성한 글</button>
+                     <button class="sub-tab-btn" data-sub="wished" onclick="filterActivitySub('wished')"><i class="fa-solid fa-bookmark"></i> 찜한 중고 상품</button>
+                 </div>
+ 
+                 <!-- Filter Grid -->
+                 <div class="filter-grid-clean">
+                     <div class="filter-item search-box">
+                         <i class="fa-solid fa-magnifying-glass"></i>
+                         <input type="text" id="searchInput" placeholder="검색어 (예: 포항, 영일대, K26, 강사, 라이선스, 체험강습, AIDA2, 롱핀)...">
+                     </div>
+ 
+                     <div class="filter-item">
+                         <i class="fa-solid fa-map"></i>
+                         <select id="regionSelect">
+                             <option value="all">🌐 전국 지역 전체</option>
+                             <option value="seoul">수도권 (서울/경기/인천)</option>
+                             <option value="gangwon">강원권</option>
+                             <option value="chungcheong">충청권 (대전/세종/충청)</option>
+                             <option value="jeolla">전라권 (광주/전라)</option>
+                             <option value="gyeongsang">경상권 (부산/대구/울산/경상)</option>
+                             <option value="jeju">제주권</option>
+                         </select>
+                     </div>
+ 
+                     <div class="filter-item">
+                         <i class="fa-solid fa-arrow-down-wide-short"></i>
+                         <select id="sortSelect">
+                             <option value="newest">🕒 최신 등록순 (기본)</option>
+                             <option value="premium">⭐ 프리미엄 최상단 노출순</option>
+                             <option value="popularity">🔥 인기도 / 공감 많은순</option>
+                             <option value="closing_soon">⚡ 마감 임박순</option>
+                         </select>
+                     </div>
+                 </div>
+ 
+                 <div class="filter-action-row">
+                     <button class="btn btn-secondary reset-btn-clean" id="resetFiltersBtn">
+                         <i class="fa-solid fa-rotate-right"></i> 필터 초기화
+                     </button>
+                 </div>
+             </section>
+ 
+             <!-- Balanced Center Main Banner -->
+             <div class="ad-banner-panel glass-panel" id="mainBannerSlider">
+                 <div class="ad-content" id="adContent">
+                     <a href="https://link.coupang.com/a/fKqrpaA2Fw" target="_blank" class="center-ad-visual-card">
+                         <img src="right_ad_swimming.jpg" alt="수영장비 세로형 비주얼 카드 배경" class="center-ad-bg-img" loading="lazy">
+                         <div class="center-ad-overlay-content">
+                             <span class="center-ad-badge"><i class="fa-solid fa-fire"></i> 썸머 스포츠 페스타</span>
+                             <h2 class="center-ad-title">🏆 쿠팡 썸머 스포츠 페스타!<br><span class="highlight-gold">수영·다이빙 특가 기획전</span></h2>
+                             <p class="center-ad-subtitle">수경, 롱핀/숏핀, 수영복 & 프리다이빙 장비 단독 기획전</p>
+                         </div>
+                         <div class="center-ad-cta-btn">
+                             <span>특가 기획전 보러가기</span>
+                             <i class="fa-solid fa-arrow-right"></i>
+                         </div>
+                     </a>
+                 </div>
+                 <div class="ftc-legal-notice" style="margin-top: 10px; font-size: 0.76rem; color: var(--text-dim); text-align: center; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                     <span><i class="fa-solid fa-scale-balanced"></i> ※ 본 배너는 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.</span>
+                     <a href="javascript:void(0)" onclick="openInquiryModal('ad')" style="color: var(--accent-gold); font-weight: 800; text-decoration: underline;">
+                         📢 메인/사이드 광고 배너 입점 문의 ➔
+                     </a>
+                 </div>
+             </div>
+ 
+             <!-- Homepage Main Dashboard Category Blocks Container -->
+             <div id="dashboardBlocksSection" class="dashboard-container"></div>
+ 
+             <!-- Feed Posts Grid -->
+             <section class="posts-section">
+                 <!-- Partnership Teaser Banner (Visible only when activeCategory === 'partnership') -->
+                <div id="partnershipTeaserBanner" class="partnership-teaser-banner hidden" style="display: none; margin-bottom: 20px; cursor: pointer;" onclick="openInquiryModal('ad')">
+                    <div style="background: linear-gradient(135deg, rgba(0, 242, 254, 0.15), rgba(79, 172, 254, 0.25)); border: 1px solid rgba(0, 242, 254, 0.4); border-radius: 16px; padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; box-shadow: 0 8px 32px rgba(0, 242, 254, 0.15); transition: all 0.2s ease;">
+                        <div style="display: flex; align-items: center; gap: 16px;">
+                            <div style="width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, #00f2fe, #4facfe); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #070e17; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0, 242, 254, 0.4);">
+                                🤝
+                            </div>
+                            <div>
+                                <h3 style="margin: 0 0 4px 0; font-size: 1.08rem; color: #00f2fe; font-weight: 900; letter-spacing: -0.3px;">
+                                    🤝 AquaBuddy 공식 파트너 모집 (투어, 리조트, 로컬 샵 입점 환영!)
+                                </h3>
+                                <p style="margin: 0; font-size: 0.85rem; color: #e2e8f0;">
+                                    국내외 다이빙 투어, 리조트, 프리다이빙/스쿠버 장비샵 및 로컬 제휴 업체를 모십니다. (클릭하여 문의)
+                                </p>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-primary" style="padding: 10px 18px; border-radius: 12px; font-weight: 800; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; background: linear-gradient(135deg, #00f2fe, #00c6ff); color: #070e17; border: none; cursor: pointer;">
+                            <span>제휴 문의하기</span> <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="posts-grid" id="postsGrid"></div>
+                     <!-- Dynamic cards rendered by JS -->
+                 </div>
+ 
+                 <div class="empty-state hidden" id="emptyState">
+                     <i class="fa-solid fa-compass-drafting empty-icon"></i>
+                     <h3>등록된 게시글이 없습니다. 첫 번째 이야기를 남겨보세요!</h3>
+                     <p>내가 직접 새 버디 모집글, 강사 클래스 또는 중고 장비를 등록해 보세요!</p>
+                     <button class="btn btn-primary" onclick="document.getElementById('openCreateModalBtn').click()">
+                         <i class="fa-solid fa-plus"></i> 첫 이야기 등록하기
+                     </button>
+                 </div>
+             </section>
+         </div>
+ 
+ 
+         <!-- VIEW 2: Dedicated Water Tide Table View Section (#tideViewSection) -->
+        <div id="tideViewSection" class="hidden">
+            <section class="weather-section">
+                <!-- 1층: 스팟 직접 검색창 & 인기 스팟 퀵 태그 -->
+                <div style="background: rgba(15, 23, 42, 0.85); padding: 18px; border-radius: 16px; margin-bottom: 20px; border: 1px solid rgba(0, 242, 254, 0.25); backdrop-filter: blur(10px);">
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px;">
+                        <div class="filter-item search-box" style="flex: 1; min-width: 260px; margin: 0;">
+                            <i class="fa-solid fa-magnifying-glass" style="color: var(--accent-cyan);"></i>
+                            <input type="text" id="tideSearchInput" placeholder="전국 192개 해양 관측 스팟 검색 (예: 해운대, 태종대, 서귀포, 독도, 속초, 여수)..." oninput="handleTideSearch(this.value)" onkeydown="if(event.key==='Enter') handleTideSearch(this.value)">
+                        </div>
+                    </div>
+                    <!-- Quick Spot Chips -->
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+                        <span style="font-size: 0.78rem; color: #94a3b8; font-weight: 700; margin-right: 4px;">🔥 추천 스팟:</span>
+                        <button class="badge" style="background: rgba(0,242,254,0.12); color: #00f2fe; border: 1px solid rgba(0,242,254,0.3); cursor: pointer; padding: 5px 11px; font-weight: 700;" onclick="selectDashboardSpot('tide-haeundae')">📍 해운대</button>
+                        <button class="badge" style="background: rgba(0,242,254,0.12); color: #00f2fe; border: 1px solid rgba(0,242,254,0.3); cursor: pointer; padding: 5px 11px; font-weight: 700;" onclick="selectDashboardSpot('tide-spot-175')">📍 임랑</button>
+                        <button class="badge" style="background: rgba(0,242,254,0.12); color: #00f2fe; border: 1px solid rgba(0,242,254,0.3); cursor: pointer; padding: 5px 11px; font-weight: 700;" onclick="selectDashboardSpot('tide-spot-009')">📍 부산</button>
+                        <button class="badge" style="background: rgba(0,242,254,0.12); color: #00f2fe; border: 1px solid rgba(0,242,254,0.3); cursor: pointer; padding: 5px 11px; font-weight: 700;" onclick="selectDashboardSpot('tide-spot-007')">📍 제주</button>
+                        <button class="badge" style="background: rgba(0,242,254,0.12); color: #00f2fe; border: 1px solid rgba(0,242,254,0.3); cursor: pointer; padding: 5px 11px; font-weight: 700;" onclick="selectDashboardSpot('tide-spot-067')">📍 독도</button>
+                        <button class="badge" style="background: rgba(0,242,254,0.12); color: #00f2fe; border: 1px solid rgba(0,242,254,0.3); cursor: pointer; padding: 5px 11px; font-weight: 700;" onclick="selectDashboardSpot('tide-spot-021')">📍 속초</button>
+                        <button class="badge" style="background: rgba(0,242,254,0.12); color: #00f2fe; border: 1px solid rgba(0,242,254,0.3); cursor: pointer; padding: 5px 11px; font-weight: 700;" onclick="selectDashboardSpot('tide-spot-047')">📍 완도</button>
+                        <button class="badge" style="background: rgba(0,242,254,0.12); color: #00f2fe; border: 1px solid rgba(0,242,254,0.3); cursor: pointer; padding: 5px 11px; font-weight: 700;" onclick="selectDashboardSpot('tide-spot-027')">📍 여수</button>
+                    </div>
+                </div>
+
+                <!-- 2층: 카카오 인터랙티브 지도 (#oceanKakaoMap) -->
+                <div style="background: rgba(15, 23, 42, 0.85); padding: 14px; border-radius: 16px; margin-bottom: 20px; border: 1px solid rgba(0, 242, 254, 0.3); backdrop-filter: blur(10px);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="color: #fff; font-size: 0.95rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-map-location-dot" style="color: #00f2fe;"></i> 🗺️ 해양 관측 스팟 지도
+                        </span>
+                        <span style="font-size: 0.78rem; color: #94a3b8;">📍 선택된 스팟에 단일 핀 마커 표시</span>
+                    </div>
+                    <div id="oceanKakaoMap" style="width: 100%; height: 380px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.15); background: #0f172a; position: relative;"></div>
+                </div>
+
+                <!-- 3층: 지도 밑 나란히 배치 (왼쪽: CCTV / 오른쪽: 스쿠버 지수) -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; margin-bottom: 20px; align-items: stretch;">
+
+                    <!-- 👈 [왼쪽] 📷 실시간 라이브 CCTV -->
+                    <div id="fullwidthCctvContainer" style="background: rgba(10, 18, 35, 0.95); border-radius: 18px; padding: 18px; border: 1px solid rgba(0, 242, 254, 0.3); backdrop-filter: blur(12px); box-shadow: 0 10px 30px rgba(0,0,0,0.4); display: flex; flex-direction: column; box-sizing: border-box;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.1);">
+                            <span style="color:#fff;font-size:1rem;font-weight:800;display:flex;align-items:center;gap:8px;">
+                                <i class="fa-solid fa-video" style="color:#ff5252;font-size:1.15rem;"></i> 📷 실시간 라이브 CCTV
+                            </span>
+                            <select id="fullwidthCctvSelect" onchange="window.onDashCctvChange(this.value)"
+                                    style="background:rgba(15,23,42,0.95);color:#e2e8f0;border:1px solid rgba(0,242,254,0.4);border-radius:10px;padding:6px 12px;font-size:0.82rem;font-weight:700;outline:none;">
+                                <option value="">-- 다른 위치 CCTV 선택 --</option>
+                            </select>
+                        </div>
+                        <div id="dashCctvContainer" style="width:100%; flex:1;"></div>
+                    </div>
+
+                    <!-- 👉 [오른쪽] 🤿 스킨스쿠버 지수 (18곳) -->
+                    <div id="standaloneScubaSection" style="background: rgba(10, 18, 35, 0.95); border-radius: 18px; padding: 18px; border: 1px solid rgba(0, 242, 254, 0.3); backdrop-filter: blur(12px); box-shadow: 0 10px 30px rgba(0,0,0,0.4); display: flex; flex-direction: column; box-sizing: border-box;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.1);">
+                            <span style="color:#fff;font-size:1rem;font-weight:800;display:flex;align-items:center;gap:8px;">
+                                <i class="fa-solid fa-person-swimming" style="color:#00f2fe;font-size:1.15rem;"></i> 🤿 스킨스쿠버 지수 (18곳)
+                            </span>
+                            <select id="scubaPointSelect" onchange="window.selectScubaPoint(this.value)"
+                                    style="background:rgba(15,23,42,0.95);color:#00f2fe;border:1px solid rgba(0,242,254,0.4);border-radius:10px;padding:6px 12px;font-size:0.82rem;font-weight:700;cursor:pointer;outline:none;">
+                                <option value="SS1">📍 [SS1] 동명항 (강원 속초)</option>
+                                <option value="SS2">📍 [SS2] 남애항 (강원 양양)</option>
+                                <option value="SS3">📍 [SS3] 강문해변 (강원 강릉)</option>
+                                <option value="SS4">📍 [SS4] 오산항 (경북 울진)</option>
+                                <option value="SS5">📍 [SS5] 월포해수욕장 (경북 포항)</option>
+                                <option value="SS6">📍 [SS6] 구조라해수욕장 (경남 거제)</option>
+                                <option value="SS7">📍 [SS7] 미조도 (경남 남해)</option>
+                                <option value="SS8">📍 [SS8] 거문도 (전남 여수)</option>
+                                <option value="SS9">📍 [SS9] 성산일출봉 (제주 서귀포)</option>
+                                <option value="SS10" selected>📍 [SS10] 문섬 (제주 서귀포)</option>
+                                <option value="SS11">📍 [SS11] 홍도 (전남 신안)</option>
+                                <option value="SS12">📍 [SS12] 울릉도 (경북 울릉)</option>
+                                <option value="SS13">📍 [SS13] 어영 (제주 제주시)</option>
+                                <option value="SS14">📍 [SS14] 태종대 (부산 영도)</option>
+                                <option value="SS15">📍 [SS15] 격렬비열도 (충남 태안)</option>
+                                <option value="SS16">📍 [SS16] 추자도 (제주 추자면)</option>
+                                <option value="SS17">📍 [SS17] 욕지도 (경남 통영)</option>
+                                <option value="SS18">📍 [SS18] 추암 (강원 동해)</option>
+                            </select>
+                        </div>
+                        <div id="scubaResultPanel" style="flex:1;"></div>
+                    </div>
+
+                </div>
+
+                <!-- 구 대시보드 컨테이너 (숨김 - 지도 위 카드로 대체됨) -->
+                <div id="unifiedDashboardContainer" style="display:none;"></div>
+
+
+                <!-- 5층: 법적 출처 명시 박스 (화면 맨 밑 배치!) -->
+                <div class="legal-attribution-box" style="margin-top: 10px; background: rgba(0, 242, 254, 0.06); border: 1px solid rgba(0, 242, 254, 0.3); border-radius: 14px; padding: 14px 20px; font-size: 0.85rem; color: #cbd5e1; line-height: 1.6; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);">
+                    <div style="display: flex; align-items: center; gap: 8px; font-weight: 800; color: var(--accent-gold); font-size: 0.95rem; margin-bottom: 6px;">
+                        <i class="fa-solid fa-scale-balanced" style="font-size: 1.15rem;"></i>
+                        <span>⚖️ 법적 출처 명시 & 공공데이터 이용지침 준수 안내</span>
+                    </div>
+                    <p style="margin: 0; font-size: 0.83rem; color: #e2e8f0;">
+                        본 서비스의 실시간 해양 라이브 CCTV 및 기상 정보는 <strong>부산 세이프시티 재난안전포털, KBS 재난포털, 제주특별자치도 재난안전대책본부, 서귀포수협, Playce Camp, 국립해양조사원, 기상청</strong> 등 공식 제공처의 공공데이터 및 공개 라이브 스트리밍을 법적 출처를 명시하여 정보 제공 목적으로 연계 중계하고 있습니다.
+                    </p>
+                </div>
+            </section>
+        </div>
+
+
+         <!-- VIEW 3: Dedicated Ocean Live CCTV View Section (#cctvViewSection) -->
+         <div id="cctvViewSection" class="hidden">
+             <!-- Center Top Ad Banner for CCTV View -->
+             <div class="ad-banner-panel glass-panel" style="margin-bottom: 20px;">
+                 <div class="ad-content">
+                     <a href="https://link.coupang.com/a/fKszBcQl6y" target="_blank" class="center-ad-visual-card">
+                         <img src="right_ad_scuba.jpg" alt="스쿠버다이빙 장비 배경" class="center-ad-bg-img" loading="lazy">
+                         <div class="center-ad-overlay-content">
+                             <span class="center-ad-badge"><i class="fa-solid fa-video"></i> LIVE STREAM PARTNER</span>
+                             <h2 class="center-ad-title">📹 실시간 바다 파도 확인하고 다이빙 장비 특가 세일!</h2>
+                             <p class="center-ad-subtitle">다이빙 컴퓨터, 마스크, 슈트 & 수중 카메라 하우징 특별전</p>
+                         </div>
+                         <div class="center-ad-cta-btn">
+                             <span>다이빙 특가 기획전 보러가기 ➔</span>
+                         </div>
+                     </a>
+                 </div>
+             </div>
+ 
+             <section class="weather-section" id="oceanWeatherSection">
+                 <div class="section-title">
+                     <h2><i class="fa-solid fa-video" style="color: #ff5252;"></i> 전국 44개 해양 실시간 라이브 CCTV</h2>
+                     <p>부산 세이프시티 · KBS 재난포털 · 제주특별자치도 재난본부 · 서귀포수협 · Playce Camp · 국립해양조사원 공식 출처 연계</p>
+                 </div>
+
+                 <!-- ⚖️ 법적 출처 명시 및 공공데이터 저작권 지침 준수 안내 박스 -->
+                 <div class="legal-attribution-box" style="margin-bottom: 20px; background: rgba(0, 242, 254, 0.06); border: 1px solid rgba(0, 242, 254, 0.3); border-radius: 14px; padding: 14px 20px; font-size: 0.85rem; color: #cbd5e1; line-height: 1.6; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);">
+                     <div style="display: flex; align-items: center; gap: 8px; font-weight: 800; color: var(--accent-gold); font-size: 0.95rem; margin-bottom: 6px;">
+                         <i class="fa-solid fa-scale-balanced" style="font-size: 1.15rem;"></i>
+                         <span>⚖️ 법적 출처 명시 & 공공데이터 이용지침 준수 안내</span>
+                     </div>
+                     <p style="margin: 0; font-size: 0.83rem; color: #e2e8f0;">
+                         본 서비스의 실시간 해양 라이브 CCTV 영상은 <strong>부산 세이프시티 재난안전포털, KBS 재난포털, 제주특별자치도 재난안전대책본부, 서귀포수협, Playce Camp, 국립해양조사원</strong> 등 공식 제공처의 공공데이터 및 공개 라이브 스트리밍을 법적 출처를 명시하여 정보 제공 목적으로 연계 중계하고 있습니다.
+                     </p>
+                 </div>
+ 
+                 <!-- Regional Sub Tabs for CCTVs -->
+                 <div class="cctv-region-tabs-bar" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
+                     <button class="sub-tab-btn active" data-cctvregion="all" onclick="filterCctvRegion('all')">
+                         🌐 전국 전체 (44개 CCTV)
+                     </button>
+                     <button class="sub-tab-btn" data-cctvregion="busan_gijang" onclick="filterCctvRegion('busan_gijang')">
+                         부산 기장 / 해운대 / 수영 (12개)
+                     </button>
+                     <button class="sub-tab-btn" data-cctvregion="busan_south" onclick="filterCctvRegion('busan_south')">
+                         부산 남구 / 영도 / 서구 / 강서 (7개)
+                     </button>
+                     <button class="sub-tab-btn" data-cctvregion="donghae" onclick="filterCctvRegion('donghae')">
+                         경북 / 동해 / 울릉도 / 독도 (6개)
+                     </button>
+                     <button class="sub-tab-btn" data-cctvregion="jeju_live" onclick="filterCctvRegion('jeju_live')">
+                         제주도 전역 실시간 CCTV (9개)
+                     </button>
+                     <button class="sub-tab-btn" data-cctvregion="jeonnam_namhae" onclick="filterCctvRegion('jeonnam_namhae')">
+                         전남 / 여수 / 완도 / 창원 (7개)
+                     </button>
+                     <button class="sub-tab-btn" data-cctvregion="seohae" onclick="filterCctvRegion('seohae')">
+                         서해 / 수도권 / 군산 (3개)
+                     </button>
+                 </div>
+ 
+                 <!-- Spot Quick Search Box for CCTVs -->
+                 <div class="filter-item search-box" style="margin-bottom: 20px; max-width: 500px;">
+                     <i class="fa-solid fa-magnifying-glass"></i>
+                     <input type="text" id="cctvSearchInput" placeholder="해양 CCTV 관측 스팟 검색 (예: 해운대, 임랑, 서귀포, 독도, 오륙도)..." oninput="handleCctvSearch(this.value)">
+                 </div>
+ 
+                 <!-- Dynamically rendered CCTV Cards (4-Column Command Center View on PC) -->
+                 <div class="webcam-grid" id="webcamGrid">
+                 </div>
+             </section>
+         </div>
+ 
+     </main>
+
+        <!-- Main Footer & Customer Center -->
+    <footer class="main-footer" style="background: rgba(10, 25, 47, 0.95); color: #94a3b8; padding: 45px 20px 60px; font-size: 0.88rem; border-top: 1px solid rgba(0, 242, 254, 0.2); margin-top: 50px; position: relative; z-index: 10;">
+        <div class="footer-container" style="max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; text-align: center;">
+            
+            <!-- Global Footer Ad Banner: 바다수영 & 해양 장비 특가 기획전 -->
+            <div class="ad-banner-panel glass-panel footer-ad-banner" style="margin-bottom: 8px; width: 100%; box-sizing: border-box;">
+                <div class="ad-content">
+                    <a href="https://link.coupang.com/a/fKq8aVxMvA" target="_blank" class="center-ad-visual-card">
+                        <img src="bottom_ad_openwater.jpg" alt="바다수영 수평선 배경" class="center-ad-bg-img" loading="lazy">
+                        <div class="center-ad-overlay-content">
+                            <span class="center-ad-badge"><i class="fa-solid fa-water"></i> OPEN WATER GEAR</span>
+                            <h2 class="center-ad-title">🌊 입수 전 필수! 바다수영 & 해양 장비 특가 기획전</h2>
+                            <p class="center-ad-subtitle">체온 보호 슈트, 시야 확보 안전부표 & 오픈워터 다이빙 핀 세트</p>
+                        </div>
+                        <div class="center-ad-cta-btn">
+                            <span>바다 장비 기획전 구경 ➔</span>
+                        </div>
+                    </a>
+                </div>
+                <div class="ftc-legal-notice" style="margin-top: 10px; font-size: 0.76rem; color: var(--text-dim); text-align: center; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;">
+                    <span><i class="fa-solid fa-scale-balanced"></i> ※ 본 배너는 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.</span>
+                    <a href="javascript:void(0)" onclick="openInquiryModal('ad')" style="color: var(--accent-gold); font-weight: 800; text-decoration: underline;">
+                        📢 메인/사이드 광고 배너 입점 문의 ➔
+                    </a>
+                </div>
+            </div>
+
+            <!-- 1. 원클릭 문의 및 오류, 제휴·광고 제안 섹션 -->
+            <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(0, 242, 254, 0.25); border-radius: 16px; padding: 20px; max-width: 860px; margin: 0 auto; width: 100%; box-sizing: border-box;">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 1rem; font-weight: 800; color: #00f2fe; margin-bottom: 14px;">
+                    <i class="fa-solid fa-headset"></i> 💌 원클릭 문의 및 오류, 제휴·광고 제안
+                </div>
+                <div class="footer-inquiry-bar" style="display: flex; justify-content: center; flex-wrap: wrap; gap: 10px;">
+                    <button type="button" class="btn btn-secondary" onclick="openInquiryModal('bug')" style="background: rgba(255, 82, 82, 0.15); border: 1px solid #ff5252; color: #ff5252; font-weight: 700; border-radius: 20px; padding: 8px 18px; transition: all 0.2s ease;">
+                        <i class="fa-solid fa-bug"></i> 버그 & 오류 신고
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="openInquiryModal('general')" style="background: rgba(0, 242, 254, 0.15); border: 1px solid #00f2fe; color: #00f2fe; font-weight: 700; border-radius: 20px; padding: 8px 18px; transition: all 0.2s ease;">
+                        <i class="fa-solid fa-circle-question"></i> 문의사항 남기기
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="openInquiryModal('feature')" style="background: rgba(255, 183, 3, 0.15); border: 1px solid #ffb703; color: #ffb703; font-weight: 700; border-radius: 20px; padding: 8px 18px; transition: all 0.2s ease;">
+                        <i class="fa-solid fa-lightbulb"></i> 기능 개선 제안
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="openInquiryModal('ad')" style="background: rgba(0, 230, 118, 0.15); border: 1px solid #00e676; color: #00e676; font-weight: 700; border-radius: 20px; padding: 8px 18px; transition: all 0.2s ease;">
+                        <i class="fa-solid fa-handshake"></i> 제휴·광고 제안
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2. 약관 정책 링크 (이용약관 & 개인정보처리방침) -->
+            <div class="footer-links" style="display: flex; justify-content: center; flex-wrap: wrap; gap: 18px; font-size: 0.88rem; color: #cbd5e1; margin-top: 4px;">
+                <a href="javascript:void(0)" onclick="openTermsModal('terms')" style="color: #cbd5e1; text-decoration: none; transition: color 0.2s ease;">이용약관</a>
+                <span style="color: rgba(255,255,255,0.2);">|</span>
+                <a href="javascript:void(0)" onclick="openTermsModal('privacy')" style="color: #00f2fe; font-weight: 700; text-decoration: none; transition: color 0.2s ease;">개인정보처리방침</a>
+            </div>
+
+            <!-- 3. 서비스 소개, 사업자 정보 & 면책 고지 -->
+            <div class="footer-info" style="font-size: 0.8rem; line-height: 1.8; color: #64748b; max-width: 850px; margin: 0 auto;">
+                <p style="margin-bottom: 6px;">
+                    <strong style="color: #94a3b8; font-size: 0.92rem;">AquaBuddy (아쿠아버디)</strong> | 대한민국 프리다이빙·스쿠버다이빙·수영 다이버 매칭 & 중고장터 & 공인 강사 클래스 플랫폼
+                </p>
+                <p style="margin-bottom: 6px; font-size: 0.78rem; color: #64748b;">
+                    <span>상호명: <strong>AquaBuddy</strong></span> | 
+                    <span>대표: <strong>김동욱</strong></span> | 
+                    <span>주소: <strong>경남 양산시 북정서길 25 104호</strong></span>
+                </p>
+                <p style="margin-bottom: 6px;">
+                    대표 이메일: <a href="mailto:hanmaner@naver.com" style="color: #00f2fe; text-decoration: none;">hanmaner@naver.com</a> | 고객센터 운영시간: 24시간 실시간 온라인 접수 (영업일 기준 순차 처리)
+                </p>
+                <p style="color: #475569; font-size: 0.76rem; margin: 0;">
+                    [면책 고지] 아쿠아버디는 통신판매중개자로서 통신판매의 당사자가 아니며, 회원 간 버디 매칭 및 수중 레저 활동, 직거래 등에서 발생하는 일체의 분쟁 및 안전사고에 대한 책임은 당사자에게 있습니다.
+                </p>
+            </div>
+
+            <!-- 4. 저작권 (Copyright) 문구 & 히든 관리자 3회 클릭 트리거 -->
+            <div class="footer-copyright" style="font-size: 0.78rem; color: #64748b; cursor: pointer; user-select: none; margin-top: 4px;" onclick="handleCopyrightTripleClick()" title="관리자 전용 (hanmaner@naver.com 계정으로 3회 클릭 시 인증창 호출)">
+                Copyright &copy; 2026 <strong>AquaBuddy</strong>. All rights reserved. (Designed with Neon Glassmorphism)
+            </div>
+
+        </div>
+    </footer>
+
+ 
+     
+     <!-- Modal 13: Consolidated Legal Terms & Privacy Modal (#termsModal) -->
+     <div class="modal-overlay hidden" id="termsModal" style="z-index: 4000;">
+         <div class="modal-container glass-panel" style="max-width: 720px; max-height: 85vh; display: flex; flex-direction: column;">
+             <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px;">
+                 <h2 style="font-size: 1.15rem; color: var(--accent-cyan); margin: 0; display: flex; align-items: center; gap: 8px;">
+                     <i class="fa-solid fa-scale-balanced" style="color: var(--accent-gold);"></i> <span id="termsModalHeaderTitle">서비스 이용약관</span>
+                 </h2>
+                 <button type="button" class="close-btn" onclick="closeModal(document.getElementById('termsModal'))" style="background: none; border: none; font-size: 1.4rem; color: #fff; cursor: pointer;">&times;</button>
+             </div>
+
+             <!-- Tab Toggle Buttons -->
+             <div style="display: flex; gap: 10px; margin: 16px 0 12px 0;">
+                 <button type="button" id="termsTabTermsBtn" class="btn btn-primary" onclick="switchTermsTab('terms')" style="flex: 1; padding: 10px 0; font-size: 0.88rem; font-weight: 700; border-radius: 10px; transition: all 0.2s ease;">
+                     <i class="fa-solid fa-file-contract"></i> 서비스 이용약관
+                 </button>
+                 <button type="button" id="termsTabPrivacyBtn" class="btn btn-secondary" onclick="switchTermsTab('privacy')" style="flex: 1; padding: 10px 0; font-size: 0.88rem; font-weight: 700; border-radius: 10px; transition: all 0.2s ease;">
+                     <i class="fa-solid fa-shield-halved"></i> 개인정보처리방침
+                 </button>
+             </div>
+
+             <!-- Content Body Area (Scrollable) -->
+             <div id="termsModalBody" style="flex: 1; overflow-y: auto; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 18px 20px; font-size: 0.84rem; line-height: 1.75; color: #cbd5e1; word-break: break-word; max-height: 52vh;">
+    <!-- 1. 서비스 이용약관 패널 (#termsPanelTerms) -->
+    <div id="termsPanelTerms" class="legal-content-box" style="display: block; line-height: 1.75;">
+        <h3 style="color: var(--accent-cyan); margin-bottom: 16px; font-size: 1.05rem; display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-file-contract" style="color: var(--accent-gold);"></i> AquaBuddy 서비스 이용약관
+        </h3>
+
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px;">
+            <h4 style="color: #00f2fe; margin: 0 0 6px 0; font-size: 0.92rem;"><i class="fa-solid fa-circle-info" style="font-size: 0.8rem;"></i> 제1조 (목적)</h4>
+            <p style="margin: 0; color: #cbd5e1;">
+                <strong>AquaBuddy(아쿠아버디)</strong>는 다이버 매칭, 강사 클래스 연결, 중고 장비 거래를 돕는 플랫폼입니다.
+            </p>
+        </div>
+
+        <div style="background: rgba(255,82,82,0.08); border: 1px solid rgba(255,82,82,0.25); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px;">
+            <h4 style="color: #ff5252; margin: 0 0 6px 0; font-size: 0.92rem;"><i class="fa-solid fa-triangle-exclamation" style="font-size: 0.8rem;"></i> 제2조 (면책 고지)</h4>
+            <p style="margin: 0; color: #cbd5e1;">
+                당사는 <strong>통신판매중개자</strong>로서 회원 간의 <strong>수중 안전사고, 상해, 장비 파손 및 중고거래 사기</strong>에 대해 <strong>일절 법적 책임을 지지 않습니다.</strong>
+            </p>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px;">
+            <h4 style="color: #00f2fe; margin: 0 0 6px 0; font-size: 0.92rem;"><i class="fa-solid fa-user-shield" style="font-size: 0.8rem;"></i> 제3조 (회원의 의무)</h4>
+            <p style="margin: 0; color: #cbd5e1;">
+                안전 수칙 준수 및 매너 존중. <strong>무단불참(노쇼) 및 위험 행동</strong> 시 페널티가 부여되며 <strong>서비스 이용이 정지</strong>될 수 있습니다.
+            </p>
+        </div>
+
+        <div style="background: rgba(255,183,3,0.08); border: 1px solid rgba(255,183,3,0.25); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px;">
+            <h4 style="color: var(--accent-gold); margin: 0 0 6px 0; font-size: 0.92rem;"><i class="fa-solid fa-graduation-cap" style="font-size: 0.8rem;"></i> 제4조 (강사 인증)</h4>
+            <p style="margin: 0; color: #cbd5e1;">
+                강사 회원은 반드시 <strong>실명과 유효한 자격증 사본</strong>을 제출해야 하며 <strong>허위 사실 기재 시 영구 퇴출</strong>됩니다.
+            </p>
+        </div>
+
+ 
+        <p style="font-size: 0.76rem; color: #64748b; margin-top: 14px; text-align: right;">(부칙) 본 약관은 2026년 8월 1일부터 적용됩니다.</p>
+    </div>
+ 
+    <!-- 2. 개인정보처리방침 패널 (#termsPanelPrivacy) -->
+    <div id="termsPanelPrivacy" class="legal-content-box" style="display: none; line-height: 1.75;">
+        <h3 style="color: var(--accent-cyan); margin-bottom: 16px; font-size: 1.05rem; display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-shield-halved" style="color: #00f2fe;"></i> AquaBuddy 개인정보처리방침
+        </h3>
+ 
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px;">
+            <h4 style="color: #00f2fe; margin: 0 0 6px 0; font-size: 0.92rem;"><i class="fa-solid fa-list-check" style="font-size: 0.8rem;"></i> 1. 수집 항목</h4>
+            <p style="margin: 0; color: #cbd5e1;">
+                이메일, 실명, 닉네임, 연락처, 자격증 정보 <strong>(강사는 자격증 사본 추가)</strong>
+            </p>
+        </div>
+ 
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px;">
+            <h4 style="color: #00f2fe; margin: 0 0 6px 0; font-size: 0.92rem;"><i class="fa-solid fa-bullseye" style="font-size: 0.8rem;"></i> 2. 수집 목적</h4>
+            <p style="margin: 0; color: #cbd5e1;">
+                <strong>버디 매칭 신뢰도 확보, 강사 신원 검증, 불량 유저 차단</strong>
+            </p>
+        </div>
+
+        <div style="background: rgba(0,242,254,0.08); border: 1px solid rgba(0,242,254,0.25); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px;">
+            <h4 style="color: #00f2fe; margin: 0 0 6px 0; font-size: 0.92rem;"><i class="fa-solid fa-trash-can" style="font-size: 0.8rem;"></i> 3. 파기 원칙</h4>
+            <p style="margin: 0; color: #cbd5e1;">
+                <strong>회원 탈퇴 시 즉시 파기</strong>됩니다.<br>
+                <span style="color: #94a3b8; font-size: 0.82rem;">(단, 서버 최적화 및 사생활 보호를 위해 유저 간의 <strong>1:1 대화방 채팅 메시지 데이터는 30일 경과 후 자동 영구 삭제</strong>됩니다.)</span>
+            </p>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px;">
+            <h4 style="color: #00f2fe; margin: 0 0 6px 0; font-size: 0.92rem;"><i class="fa-solid fa-user-tie" style="font-size: 0.8rem;"></i> 4. 개인정보 보호책임자</h4>
+            <p style="margin: 0; color: #cbd5e1;">
+                책임자: <strong>김동욱 (AquaBuddy 대표)</strong> | 이메일: <a href="mailto:hanmaner@naver.com" style="color: #00f2fe; text-decoration: underline;">hanmaner@naver.com</a><br>
+                사업장 주소: 경남 양산시 북정서길 25 104호
+            </p>
+        </div>
+
+        <p style="font-size: 0.76rem; color: #64748b; margin-top: 14px; text-align: right;">(부칙) 본 방침은 2026년 8월 1일부터 시행됩니다.</p>
+    </div>
+             </div>
+             <div class="modal-footer" style="margin-top: 16px; text-align: right;">
+                 <button type="button" class="btn btn-primary" onclick="closeModal(document.getElementById('termsModal'))" style="padding: 8px 26px; font-size: 0.88rem; font-weight: 700; border-radius: 10px;">
+                     확인 및 닫기
+                 </button>
+             </div>
+         </div>
+     </div>
+
+     <!-- Modal 12: Unified Customer & Partner Feedback Modal (Consolidated 1 Button Center) -->
+     <div class="modal-overlay hidden" id="inquiryModal" style="z-index: 3900;">
+         <div class="modal-container glass-panel" style="max-width: 520px;">
+             <div class="modal-header">
+                 <h2><i class="fa-solid fa-paper-plane" style="color: var(--accent-gold);"></i> <span id="inquiryModalHeaderTitle">AquaBuddy 통합 고객센터 & 제휴·건의</span></h2>
+                 <button class="close-btn" onclick="closeModal(document.getElementById('inquiryModal'))">&times;</button>
+             </div>
+ 
+             <div style="padding: 10px 0;">
+                 <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5;">
+                     아래 카테고리를 선택하여 <strong>광고 제휴, 사이트 오류 제보, 기능 아이디어 제안, 정보 수정 요청</strong> 메시지를 작성해 주세요! 소중한 의견을 신속히 검토하여 답변드립니다.
+                 </p>
+ 
+                 <form onsubmit="handleSaveInquiry(event)">
+                     <div class="form-group">
+                         <label for="inquiryCategory"><i class="fa-solid fa-list-check"></i> 문의 및 건의 유형 카테고리 선택 *</label>
+                         <select id="inquiryCategory" required style="font-weight: 700; color: var(--accent-cyan);">
+                             <option value="ad">📢 광고 / 파트너십 제휴 문의</option>
+                             <option value="bug">🐞 사이트 오류 / 버그 제보</option>
+                             <option value="feature">💡 새로운 기능 아이디어 제안</option>
+                             <option value="edit">✏️ 정보 / 게시글 수정 요청</option>
+                             <option value="general" selected>💬 기타 건의 및 피드백</option>
+                         </select>
+                     </div>
+ 
+                     <div class="form-row">
+                         <div class="form-group">
+                             <label for="inquiryName"><i class="fa-solid fa-user"></i> 이름 / 업체명 *</label>
+                             <input type="text" id="inquiryName" placeholder="예: 김다이버 또는 딥다이빙샵" required>
+                         </div>
+                         <div class="form-group">
+                             <label for="inquiryContact"><i class="fa-solid fa-phone-volume"></i> 연락처 (이메일/전화번호) *</label>
+                             <input type="text" id="inquiryContact" placeholder="example@naver.com 또는 010-0000-0000" required>
+                         </div>
+                     </div>
+ 
+                     <div class="form-group">
+                         <label for="inquiryImageInput"><i class="fa-solid fa-image"></i> (선택) 화면 캡처 사진 첨부</label>
+                         <input type="file" id="inquiryImageInput" accept="image/*" style="padding: 6px; font-size: 0.85rem;">
+                         <div id="inquiryImagePreview" style="margin-top: 6px;"></div>
+                     </div>
+ 
+                     <div class="form-group">
+                         <label for="inquiryContent"><i class="fa-solid fa-pen-fancy"></i> 상세 메시지 내용 *</label>
+                         <textarea id="inquiryContent" rows="4" placeholder="광고 입점 희망 카테고리, 오류 발생 화면, 제안하시는 기능 등 상세한 내용을 편하게 작성해 주세요!" required></textarea>
+                     </div>
+ 
+                     <div class="modal-footer" style="margin-top: 20px;">
+                         <button type="button" class="btn btn-secondary" onclick="closeModal(document.getElementById('inquiryModal'))">취소</button>
+                         <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, #ffb703, #ff8f00); color: #000; font-weight: 800;">
+                             <i class="fa-solid fa-paper-plane"></i> 메시지 전송하기
+                         </button>
+                     </div>
+                 </form>
+             </div>
+         </div>
+     </div>
+ 
+     <!-- Modal 11: Webmaster 2-Step Security Password Verification Modal -->
+         <!-- Modal: Instructor Certification Application Modal (#instructorAuthModal) -->
+    <div class="modal-overlay hidden" id="instructorAuthModal" style="z-index: 3950;">
+        <div class="modal-container glass-panel" style="max-width: 520px;">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-graduation-cap" style="color: var(--accent-gold);"></i> <span>공인 강사 인증 신청</span></h2>
+                <button class="close-btn" onclick="closeModal(document.getElementById('instructorAuthModal'))">&times;</button>
+            </div>
+
+            <div style="padding: 10px 0;">
+                <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5;">
+                    공인 협회의 강사 자격증 실물 사본을 등록해 주세요. 관리자 심사 승인 시 <strong>실명 및 '공인 강사' 황금 띠지</strong>가 활성화되며 강사 클래스 개설이 가능해집니다.
+                </p>
+
+                <form onsubmit="handleInstructorAuthSubmit(event)">
+                    <div class="form-group" style="margin-bottom: 14px;">
+                        <label for="instAppRealName"><i class="fa-solid fa-id-card"></i> 강사 실명 (본명 필수) *</label>
+                        <input type="text" id="instAppRealName" placeholder="예: 김동욱 (자격증 상의 실명)" required style="font-weight: 700;">
+                    </div>
+
+                    <div class="form-row" style="margin-bottom: 14px;">
+                        <div class="form-group">
+                            <label for="instAppOrg"><i class="fa-solid fa-building-columns"></i> 공인 단체/협회명 *</label>
+                            <select id="instAppOrg" required style="font-weight: 700; color: #ffffff; background: #0f172a;">
+                                <optgroup label="🏊‍♂️ 실내/바다수영 및 인명구조">
+                                    <option value="생활/전문스포츠지도사(수영)">생활/전문스포츠지도사 (수영)</option>
+                                    <option value="대한수영연맹(KSF)">대한수영연맹 (KSF)</option>
+                                    <option value="수상구조사(국가공인)">수상구조사 (국가공인)</option>
+                                    <option value="YMCA 인명구조요원">YMCA 인명구조요원</option>
+                                    <option value="적십자 인명구조요원">적십자 인명구조요원</option>
+                                </optgroup>
+                                <optgroup label="🤿 프리다이빙 전문 협회">
+                                    <option value="AIDA" selected>AIDA (아이다)</option>
+                                    <option value="MOLCHANOVS">MOLCHANOVS (몰차노브)</option>
+                                    <option value="PADI">PADI (패디 프리다이빙)</option>
+                                    <option value="SSI">SSI (스쿠버 스쿨스 프리다이빙)</option>
+                                    <option value="AFIA">AFIA (아피아)</option>
+                                    <option value="KFA">KFA (한국프리다이빙협회)</option>
+                                </optgroup>
+                                <optgroup label="🫧 스쿠버다이빙 전문 협회">
+                                    <option value="PADI (스쿠버)">PADI (패디 스쿠버)</option>
+                                    <option value="SSI (스쿠버)">SSI (스쿠버 스쿨스 스쿠버)</option>
+                                    <option value="NAUI">NAUI (나우이)</option>
+                                    <option value="CMAS">CMAS (세계수중연맹)</option>
+                                    <option value="RAID">RAID (레이드)</option>
+                                    <option value="SDI/TDI">SDI/TDI</option>
+                                    <option value="BSAC">BSAC (비에스에이씨)</option>
+                                    <option value="KUDA">KUDA (대한수중핀수영협회)</option>
+                                </optgroup>
+                                <optgroup label="기타">
+                                    <option value="기타 공인 협회">기타 공인 협회 (직접 기재)</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="instAppCode"><i class="fa-solid fa-barcode"></i> 자격증 번호 / 라이선스 코드 *</label>
+                            <input type="text" id="instAppCode" placeholder="예: KR-AIDA-12345" required style="font-weight: 700;">
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label for="instAppCertInput"><i class="fa-solid fa-certificate"></i> 자격증 실물 사본 사진 첨부 (필수) *</label>
+                        <input type="file" id="instAppCertInput" accept="image/*" style="padding: 6px; font-size: 0.85rem;" onchange="handleInstCertUpload(this)">
+                        <div id="instAppCertPreview" style="margin-top: 8px;"></div>
+                    </div>
+
+                    <div class="modal-footer" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal(document.getElementById('instructorAuthModal'))">취소</button>
+                        <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, var(--accent-gold), #ff8f00); color: #000; font-weight: 900;">
+                            <i class="fa-solid fa-check-to-slot"></i> 강사 인증 심사 제출
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="modal-overlay hidden" id="adminSecurityModal" style="z-index: 3800;">
+         <div class="modal-container glass-panel" style="max-width: 440px;">
+             <div class="modal-header">
+                 <h2><i class="fa-solid fa-lock" style="color: var(--accent-gold);"></i> 웹마스터 암호 인증</h2>
+                 <button class="close-btn" onclick="closeModal(document.getElementById('adminSecurityModal'))">&times;</button>
+             </div>
+             <div style="padding: 10px 0;">
+                 <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 14px;">
+                     웹마스터 전용 보안 암호 4자리를 입력해 주세요.
+                 </p>
+                 <form onsubmit="handleVerifyAdminMasterCode(event)">
+                     <div class="form-group">
+                         <label for="adminSecurityPassInput">🔒 마스터 보안 암호 (4자리)</label>
+                         <input type="password" id="adminSecurityPassInput" maxlength="4" placeholder="마스터 암호 4자리 입력" required autocomplete="off">
+                     </div>
+                     <div class="modal-footer" style="margin-top: 16px;">
+                         <button type="button" class="btn btn-secondary" onclick="closeModal(document.getElementById('adminSecurityModal'))">취소</button>
+                         <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, #ffb703, #ff8f00); color: #000; font-weight:800;">
+                             <i class="fa-solid fa-key"></i> 관리자 대시보드 입장
+                         </button>
+                     </div>
+                 </form>
+             </div>
+         </div>
+     </div>
+ 
+     <!-- Modal 10: Realtime Ocean Live Webcam Stream Player Modal (Slim Compact Height) -->
+     <div class="modal-overlay hidden" id="oceanWebcamModal" style="z-index: 3800;">
+         <div class="modal-container glass-panel modal-lg" style="max-width: 860px; margin-top: 10px; padding: 14px 18px;">
+             <div class="modal-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; padding-bottom: 6px;">
+                 <!-- 쿠팡 API 키 입력 UI 삭제됨 -->
+                 <h2 style="font-size: 1.05rem;"><i class="fa-solid fa-video" style="color: #ff5252;"></i> <span id="webcamModalTitle">바다 실시간 라이브 CCTV</span> <span class="badge-live" style="font-size: 0.65rem; padding: 2px 6px;">🔴 24H LIVE</span></h2>
+                 <button class="close-btn" onclick="closeWebcamModal()" style="background: rgba(255, 82, 82, 0.2); color: #ff5252; border: 1px solid #ff5252; padding: 3px 10px; border-radius: 14px; font-size: 0.78rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                     <i class="fa-solid fa-xmark"></i> 닫기 (EXIT)
+                 </button>
+             </div>
+ 
+             <div style="padding: 0;">
+                 <!-- Webcam Video Stream Box (Screen size kept large!) -->
+                 <div class="webcam-player-container" style="position: relative; width: 100%; height: 420px; background: #000; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--accent-cyan);">
+                                         <iframe id="webcamLiveIframe" src="" loading="lazy" style="width: 100%; height: 100%; border: none; display: none;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    
+                    <video id="webcamHlsVideo" style="width: 100%; height: 100%; object-fit: contain; display: none;" controls autoplay muted playsinline></video>
+
+                    <!-- HTTP CCTV Out-link Fallback Box -->
+                    <div id="webcamHttpFallbackBox" style="display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; box-sizing: border-box; background: rgba(15, 23, 42, 0.95); position: relative; z-index: 5;">
+                        <div style="font-size: 2.6rem; margin-bottom: 12px; color: var(--accent-gold);">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                        <h3 style="font-size: 1.05rem; color: #fff; margin-bottom: 8px; font-weight: 700;">
+                            외부 보안 정책(HTTP) 보호 안내
+                        </h3>
+                        <p style="font-size: 0.88rem; color: #94a3b8; line-height: 1.6; max-width: 480px; margin-bottom: 20px;">
+                            해당 CCTV는 제공처의 보안(HTTP) 정책상 기기의 기본 브라우저(Safari/Chrome)에서 시청할 수 있습니다.
+                        </p>
+                        <a id="webcamHttpOutlinkBtn" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; font-size: 0.95rem; font-weight: 800; border-radius: 12px; background: linear-gradient(135deg, var(--accent-cyan), #00b4d8); color: #000; text-decoration: none; box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3);">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i> <span>🌐 실시간 CCTV 새 창에서 시청하기 ➔</span>
+                        </a>
+                    </div>
+ 
+                     <div class="webcam-overlay-info">
+                         <span class="cam-spot-tag" id="camSpotTag">관측 스팟</span>
+                         <span class="cam-time-tag" id="camTimeTag">24시간 실시간 생중계 STREAM</span>
+                     </div>
+                 </div>
+ 
+                 <!-- Explicit Source Legal Attribution Box -->
+                 <div class="cctv-source-legal-box" style="margin-top: 6px; background: rgba(255, 183, 3, 0.08); padding: 4px 10px; border-radius: 6px; border: 1px dashed var(--accent-gold); font-size: 0.76rem; color: var(--accent-gold); text-align: center;">
+                     <i class="fa-solid fa-scale-balanced"></i> <strong>영상 제공 및 법적 출처:</strong> <strong id="camSourceText" style="color: #ffffff; text-decoration: underline; margin-left: 4px;">공공기관 CCTV</strong> <span style="font-size: 0.72rem; color: #94a3b8; display: block; margin-top: 4px;">(공공데이터 이용지침 및 저작권법을 준수하여 공식 출처를 명시하고 제공합니다)</span>
+                 </div>
+ 
+                 <div class="webcam-metrics-bar" id="webcamMetricsBar" style="margin-top: 6px; background: rgba(0,0,0,0.3); padding: 8px 12px; font-size: 0.78rem; border-radius: var(--radius-sm); border: 1px solid var(--glass-border); display: flex; justify-content: space-around; flex-wrap: wrap; gap: 6px;">
+                 </div>
+ 
+                 <div class="modal-footer" style="margin-top: 8px; text-align: right;">
+                     <button type="button" class="btn btn-secondary" onclick="closeWebcamModal()" style="background: rgba(255, 82, 82, 0.2); color: #ff5252; border-color: rgba(255, 82, 82, 0.5); font-weight: 800; padding: 4px 12px; font-size: 0.78rem;">
+                         <i class="fa-solid fa-xmark"></i> CCTV 관제창 닫기 (EXIT)
+                     </button>
+                 </div>
+             </div>
+         </div>
+     </div>
+                 <!-- Modal 1: Contextual Create & Edit Post Modal -->
+     <div class="modal-overlay hidden" id="createModal">
+         <div class="modal-container glass-panel">
+             <div class="modal-header">
+                 <h2><i class="fa-solid fa-pen-to-square"></i> <span id="modalFormTitle">새 글 작성</span></h2>
+                 <button class="close-btn" id="closeCreateModalBtn">&times;</button>
+             </div>
+             <form id="createPostForm" onsubmit="interceptHostSubmit(event); return false;">
+                 <div class="form-group" id="postCategoryGroup" style="display: none;">
+                     <label for="postCategory">작성 카테고리 *</label>
+                     <select id="postCategory" onchange="handlePostCategoryChange(this.value)">
+                     </select>
+                 </div>
+ 
+                 <div class="form-group">
+                     <label for="postTitle" id="labelTitle">글 제목 *</label>
+                     <input type="text" id="postTitle" placeholder="제목을 입력해 주세요!" required>
+                 </div>
+ 
+                 <div id="instructorFormFields" style="display: none;">
+                     <div class="form-group" style="margin-bottom: 12px;">
+                        <div style="background: rgba(255, 183, 3, 0.08); border: 1px dashed rgba(255, 183, 3, 0.35); border-radius: 10px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                            <span style="font-size: 0.85rem; color: #cbd5e1; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                                <i class="fa-solid fa-building-columns" style="color: var(--accent-gold);"></i> 강사 공인 소속 협회
+                            </span>
+                            <span id="instOrgAutoDisplayText" style="font-size: 0.84rem; color: var(--accent-gold); font-weight: 900; background: rgba(0,0,0,0.45); padding: 4px 12px; border-radius: 8px; border: 1px solid rgba(255,183,3,0.3); display: inline-flex; align-items: center; gap: 4px;">
+                                🏛️ 공인 인증 협회 자동 연동
+                            </span>
+                        </div>
+                        <input type="hidden" id="instOrgInput" value="">
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label for="instSubCategorySelect"><i class="fa-solid fa-layer-group"></i> 전문 강사 세부 채널 선택 *</label>
+                         <select id="instSubCategorySelect" onchange="handleInstSubCategoryChange(this.value)" style="background: rgba(255, 183, 3, 0.1); border: 1px solid var(--accent-gold); color: var(--text-main);">
+                             <option value="swim">🏊‍♂️ 실내수영 강습 & 자세교정</option>
+                             <option value="ocean_swim">🌊 바다수영 & 스노클링</option>
+                             <option value="freediving" selected>🤿 프리다이빙 체험 & 자격증 코스</option>
+                             <option value="scuba">🤿 스쿠버다이빙 체험 & 자격증 코스</option>
+                         </select>
+                     </div>
+
+                     <!-- 강습 코스 유형 알약 모양 버튼 (Pill UI) 그룹 -->
+                     <div class="form-group" style="margin-bottom: 14px;">
+                         <label style="display: flex; align-items: center; justify-content: space-between; font-size: 0.86rem; font-weight: 700; color: var(--accent-gold); margin-bottom: 8px;">
+                             <span><i class="fa-solid fa-graduation-cap"></i> 강습 코스 유형 (Course Type) *</span>
+                             <span id="selectedClassTypeDisplay" style="font-size: 0.8rem; color: #00f2fe; font-weight: 800;">원데이 체험다이빙</span>
+                         </label>
+                         <input type="hidden" id="classType" value="원데이 체험다이빙">
+                         <div class="pill-select-group" id="classTypePillsContainer">
+                             <!-- Dynamically rendered via renderClassTypePills -->
+                         </div>
+                     </div>
+
+                     <div class="form-row">
+                         <div class="form-group" style="grid-column: span 2;">
+                             <label for="classRatio"><i class="fa-solid fa-users"></i> 강습 인원 비율 *</label>
+                             <select id="classRatio">
+                                 <option value="1:1 개인밀착 강습">1:1 개인 밀착 레슨</option>
+                                 <option value="1:2 소수정예 강습" selected>1:2 소수 정예 강습</option>
+                                 <option value="1:3 소수그룹 강습">1:3 소수 그룹 강습</option>
+                                 <option value="1:4 단체 강습">1:4 소규모 단체 강습</option>
+                             </select>
+                         </div>
+                     </div>
+ 
+                     <div class="form-row">
+                         <div class="form-group">
+                             <label for="classFee">수강료 (원, 1인 기준 숫자만 입력) *</label>
+                             <input type="text" inputmode="numeric" id="classFee" placeholder="예: 60000 (숫자만 입력, 무료체험시 0 또는 비워둠)" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                         </div>
+                         <div class="form-group">
+                             <label for="classInclusion">포함 / 미포함 사항 *</label>
+                             <input type="text" id="classInclusion" placeholder="예: 풀장 입장료 포함, 장비 렌탈비 별도">
+                         </div>
+                     </div>
+                 </div>
+ 
+                 <div class="form-row" id="marketPriceRow" style="display: none;">
+                     <div class="form-group">
+                         <label for="postPrice">중고 거래 가격 (원, 숫자만 입력) *</label>
+                         <input type="number" id="postPrice" placeholder="예: 240000" onkeydown="return event.keyCode !== 69 && event.keyCode !== 189" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                     </div>
+                     <div class="form-group" id="dealMethodGroup">
+                         <label for="postDealMethod"><i class="fa-solid fa-handshake"></i> 거래 방법 *</label>
+                         <select id="postDealMethod">
+                             <option value="직거래" selected>직거래 (만나서 거래)</option>
+                             <option value="택배거래">택배 거래 (우체국/택배)</option>
+                             <option value="직거래/택배 둘 다 가능">직거래 / 택배 둘 다 가능</option>
+                         </select>
+                     </div>
+                 </div>
+ 
+                 <!-- 중고장터 전용: 공동구매 옵션 & 목표/현재 수량 입력 -->
+                 <div class="form-group" id="marketGroupBuyContainer" style="display: none; margin-bottom: 14px; background: rgba(0, 230, 118, 0.08); border: 1px dashed #00e676; border-radius: 12px; padding: 14px;">
+                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                         <label for="postIsGroupBuy" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 800; color: #00e676; font-size: 0.92rem; margin: 0;">
+                             <input type="checkbox" id="postIsGroupBuy" onchange="toggleGroupBuyFields(this.checked)" style="width: 18px; height: 18px; accent-color: #00e676; cursor: pointer;">
+                             <span>🛍️ 공동구매 모집으로 등록하기</span>
+                         </label>
+                         <span style="font-size: 0.75rem; color: #a0aec0;">목표 수량 달성 특가</span>
+                     </div>
+
+                     <div id="groupBuyFieldsRow" style="display: none; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                         <div class="form-group" style="margin-bottom: 0;">
+                             <label for="postGroupBuyGoal" style="font-size: 0.82rem; color: #fff;"><i class="fa-solid fa-bullseye"></i> 목표 수량 (개) *</label>
+                             <input type="number" id="postGroupBuyGoal" min="1" max="9999" placeholder="예: 10" value="10" class="form-input" onkeydown="return event.keyCode !== 69 && event.keyCode !== 189" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                         </div>
+                         <div class="form-group" style="margin-bottom: 0;">
+                             <label for="postGroupBuyCurrent" style="font-size: 0.82rem; color: #fff;"><i class="fa-solid fa-user-check"></i> 현재 참여 수량 (개) *</label>
+                             <input type="number" id="postGroupBuyCurrent" min="0" max="9999" placeholder="예: 1" value="1" class="form-input" onkeydown="return event.keyCode !== 69 && event.keyCode !== 189" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                         </div>
+                     </div>
+                 </div>
+
+                 <!-- 버디 모집 전용: 목표 수심 & 요구 레벨 알약 모양 버튼 (Pill UI) -->
+                 <div class="form-group" id="buddyPillOptionsGroup" style="margin-bottom: 16px; background: rgba(0, 242, 254, 0.05); border: 1px solid rgba(0, 242, 254, 0.2); border-radius: 12px; padding: 14px;">
+                     <!-- 1. 목표 수심 (target_depth) Pill UI -->
+                     <div style="margin-bottom: 12px;">
+                         <label style="display: flex; align-items: center; justify-content: space-between; font-size: 0.86rem; font-weight: 700; color: #00f2fe; margin-bottom: 8px;">
+                             <span><i class="fa-solid fa-arrows-up-down"></i> 목표 수심 (Target Depth) *</span>
+                             <span id="selectedDepthDisplay" style="font-size: 0.8rem; color: #ffb703; font-weight: 800;">무관</span>
+                         </label>
+                         <input type="hidden" id="postTargetDepth" value="무관">
+                         <div class="pill-select-group" id="depthPillsContainer">
+                             <button type="button" class="depth-pill-btn active" data-value="무관" onclick="selectDepthPill(this, '무관')">무관</button>
+                             <button type="button" class="depth-pill-btn" data-value="5m 미만" onclick="selectDepthPill(this, '5m 미만')">5m 미만</button>
+                             <button type="button" class="depth-pill-btn" data-value="10m" onclick="selectDepthPill(this, '10m')">10m</button>
+                             <button type="button" class="depth-pill-btn" data-value="20m" onclick="selectDepthPill(this, '20m')">20m</button>
+                             <button type="button" class="depth-pill-btn" data-value="30m" onclick="selectDepthPill(this, '30m')">30m</button>
+                             <button type="button" class="depth-pill-btn" data-value="40m+" onclick="selectDepthPill(this, '40m+')">40m+</button>
+                         </div>
+                     </div>
+
+                     <!-- 2. 요구 레벨 (req_license) Pill UI -->
+                     <div>
+                         <label style="display: flex; align-items: center; justify-content: space-between; font-size: 0.86rem; font-weight: 700; color: #00f2fe; margin-bottom: 8px;">
+                             <span><i class="fa-solid fa-certificate"></i> 요구 레벨 (Required License) *</span>
+                             <span id="selectedLicenseDisplay" style="font-size: 0.8rem; color: #ffb703; font-weight: 800;">자격증 무관</span>
+                         </label>
+                         <input type="hidden" id="postReqLicense" value="자격증 무관">
+                         <div class="pill-select-group" id="licensePillsContainer">
+                             <button type="button" class="license-pill-btn active" data-value="자격증 무관" onclick="selectLicensePill(this, '자격증 무관')">자격증 무관</button>
+                             <button type="button" class="license-pill-btn" data-value="체험/초급 (Level 1)" onclick="selectLicensePill(this, '체험/초급 (Level 1)')">체험/초급(Lv1)</button>
+                             <button type="button" class="license-pill-btn" data-value="중급 (Level 2)" onclick="selectLicensePill(this, '중급 (Level 2)')">중급(Lv2)</button>
+                             <button type="button" class="license-pill-btn" data-value="고급 (Level 3+)" onclick="selectLicensePill(this, '고급 (Level 3+)')">고급(Lv3+)</button>
+                             <button type="button" class="license-pill-btn" data-value="강사급" onclick="selectLicensePill(this, '강사급')">강사급</button>
+                         </div>
+                     </div>
+                 </div>
+                <div class="form-group" id="capacityGroup">
+                       <label for="postCapacity"><i class="fa-solid fa-users"></i> 모집 인원 (직접 숫자 입력) *</label>
+                       <input type="number" id="postCapacity" min="1" max="99" value="4" class="form-input" placeholder="예: 4 (모집할 인원 수 입력)" onkeydown="return event.keyCode !== 69 && event.keyCode !== 189" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                   </div>
+
+                  <div class="form-group" id="imageUploadGroup">
+                      <label for="postImagesInput" id="imageUploadLabel" style="display: flex; align-items: center; justify-content: center; gap: 8px; background: rgba(0, 242, 254, 0.08); border: 2px dashed var(--accent-cyan); padding: 14px; border-radius: 12px; cursor: pointer; color: var(--accent-cyan); font-weight: 800; transition: all 0.2s ease;">
+                          <i class="fa-solid fa-cloud-arrow-up" style="font-size: 1.2rem;"></i> 이미지 업로드 (클릭하여 사진 첨부)
+                      </label>
+                      <input type="file" id="postImagesInput" accept="image/*" multiple style="display: none;">
+                      <div class="image-preview-grid-2x2" id="imagePreviewGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px;"></div>
+                  </div>
+
+                  <div class="form-row" id="locationDateGroup">
+                     <select id="postLocation" style="display: none;">
+                         <option value="K26" selected>K26/해양포인트</option>
+                     </select>
+                     <div class="form-group" id="postDateGroup" style="grid-column: span 2;">
+                         <label for="postDate" id="labelDate">진행 일정 *</label>
+                         <input type="datetime-local" id="postDate">
+                     </div>
+                 </div>
+ 
+                 <div class="form-group" id="mapAddressGroup">
+                     <label for="postMapAddress" id="mapAddressLabel"><i class="fa-solid fa-map-location-dot"></i> 지도 핀 주소 또는 핀 장소명 *</label>
+                     <div style="display: flex; gap: 8px;">
+                         <input type="text" id="postMapAddress" placeholder="예: 양산시 국민체육센터 / 용인 딥스테이션 / 가평 K26" style="flex: 1;">
+                         <button type="button" class="btn btn-secondary" onclick="searchMapAddressInModal()" style="background: rgba(0, 242, 254, 0.15); color: var(--accent-cyan); border-color: rgba(0, 242, 254, 0.4); font-weight: 800; padding: 10px 16px; white-space: nowrap;">
+                             <i class="fa-solid fa-magnifying-glass"></i> 위치 검색
+                         </button>
+                     </div>
+                     <div id="mapSearchResultsContainer" class="hidden" style="margin-top: 8px; max-height: 180px; overflow-y: auto; background: rgba(0, 0, 0, 0.7); border: 1px solid var(--accent-cyan); border-radius: 8px; padding: 6px;"></div>
+                     <div id="modalMapPicker" style="width: 100%; height: 190px; border-radius: 12px; margin-top: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); display: none;"></div>
+                     <small style="color: var(--text-muted); font-size: 0.78rem; display: block; margin-top: 6px;">
+                         💡 팁: 검색창에 위치를 입력 후 [위치 검색]을 누르시거나, 지도를 직접 클릭/핀을 드래그하여 정확한 포인트를 찍으실 수 있습니다.
+                     </small>
+                 </div>
+ 
+                 <div class="form-row" id="userInfoGroup" style="display: none;">
+                     <input type="text" id="userName">
+                     <input type="text" id="userLicense">
+                 </div>
+ 
+                 <!-- 🚗 카풀 제공 옵션 (버디 모집 / 강사 클래스 등 통합 - 여객자동차 운수사업법 준수) -->
+                <div class="form-group" id="carpoolOptionsContainer" style="margin-bottom: 16px; background: rgba(0, 230, 118, 0.06); border: 1px solid rgba(0, 230, 118, 0.3); border-radius: 12px; padding: 14px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                        <label for="postIsCarpool" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 800; color: #00e676; font-size: 0.92rem; margin: 0;">
+                            <input type="checkbox" id="postIsCarpool" onchange="toggleCarpoolFields(this.checked)" style="width: 18px; height: 18px; accent-color: #00e676; cursor: pointer;">
+                            <span>🚗 카풀 제공 (이동 동승 지원)</span>
+                        </label>
+                        <span style="font-size: 0.75rem; color: #a0aec0;">함께 이동할 버디/수강생 모집</span>
+                    </div>
+
+                    <div id="carpoolDetailsRow" style="display: none; margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(0, 230, 118, 0.25);">
+                        <div style="display: flex; gap: 16px; align-items: center; margin-bottom: 10px;">
+                            <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.88rem; color: #fff; font-weight: 700;">
+                                <input type="radio" name="carpoolType" id="carpoolTypeFree" value="free" checked onchange="toggleCarpoolFeeInput('free')" style="accent-color: #00e676; cursor: pointer;">
+                                <span>🎁 무료 카풀</span>
+                            </label>
+                            <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.88rem; color: #fff; font-weight: 700;">
+                                <input type="radio" name="carpoolType" id="carpoolTypeShared" value="shared_cost" onchange="toggleCarpoolFeeInput('shared_cost')" style="accent-color: #00e676; cursor: pointer;">
+                                <span>⛽ 유류비·통행료 분담</span>
+                            </label>
+                        </div>
+
+                        <div id="carpoolFeeGroup" style="display: none; margin-top: 8px;">
+                            <label for="carpoolFee" style="font-size: 0.82rem; color: #00e676; font-weight: 700; display: block; margin-bottom: 4px;">
+                                <i class="fa-solid fa-won-sign"></i> 1인당 실비 분담금 (원) *
+                            </label>
+                            <input type="text" inputmode="numeric" id="carpoolFee" placeholder="예: 10000 (숫자만 입력)" class="form-input" style="width: 100%; box-sizing: border-box;" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                            <small style="color: var(--text-dim); font-size: 0.76rem; display: block; margin-top: 5px; line-height: 1.4;">
+                                * 자가용 유상운송 금지법에 따라 이윤 목적의 요금 수수는 불가하며, 실제 발생한 유류비/통행료의 1/N 실비 분담만 가능합니다.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="postDesc" id="descLabel">상세 내용 및 플랜 *</label>
+                     <textarea id="postDesc" rows="4" placeholder="버디 모임 일정, 수심 계획, 준비물 등 상세 내용을 작성해 주세요!" required></textarea>
+                 </div>
+ 
+                 <div style="display: flex; align-items: center; gap: 8px; margin: 16px 0; background: rgba(255, 183, 3, 0.08); padding: 10px 14px; border-radius: 8px; border: 1px dashed var(--accent-gold);">
+                     <input type="checkbox" id="inlineLiabilityCheck" style="width: 18px; height: 18px; accent-color: var(--accent-gold); cursor: pointer;">
+                     <label for="inlineLiabilityCheck" id="inlineLiabilityCheckLabel" style="font-size: 0.85rem; font-weight: 800; color: #fff; cursor: pointer;">[필수] 본 활동 중 발생하는 안전사고 및 개인 간의 문제에 대해 아쿠아버디 플랫폼은 법적 책임을 지지 않으며, 안전 수칙 준수 면책 방침에 동의합니다.</label>
+                 </div>
+ 
+                 <div class="modal-footer">
+                     <button type="button" class="btn btn-secondary" id="cancelCreateBtn">취소</button>
+                     <button type="button" class="btn btn-primary" onclick="interceptHostSubmit(event)"><i class="fa-solid fa-paper-plane"></i> <span id="submitBtnText">등록하기</span></button>
+                 </div>
+             </form>
+         </div>
+     </div>
+ 
+     <!-- Modal 2: 3-Way User Auth Modal (Login / Signup / Kakao) -->
+     <div class="modal-overlay hidden" id="authModal">
+         <div class="modal-container glass-panel" style="max-width: 480px;">
+             <div class="modal-header">
+                 <h2 id="authModalTitle"><i class="fa-solid fa-user-shield"></i> AquaBuddy 계정 로그인</h2>
+                 <button class="close-btn" id="closeAuthModalBtn">&times;</button>
+             </div>
+             
+             <div style="padding: 10px 0 10px;">
+                 <div class="auth-switch-tabs">
+                     <button class="auth-tab-btn active" id="tabLogin" onclick="switchAuthTab('login')">
+                         로그인
+                     </button>
+                     <button class="auth-tab-btn" id="tabSignup" onclick="switchAuthTab('signup')">
+                         회원가입
+                     </button>
+                     
+                 </div>
+ 
+                 <!-- 1. 로그인 폼 -->
+                 <div id="loginFormBox">
+                     <form id="directLoginForm" onsubmit="handleDirectLogin(event)">
+                         <div class="form-group">
+                             <label for="loginEmailInput"><i class="fa-solid fa-envelope"></i> 이메일 (아이디) *</label>
+                             <input type="email" id="loginEmailInput" placeholder="example@naver.com" required>
+                         </div>
+                         <div class="form-group">
+                             <label for="loginPasswordInput"><i class="fa-solid fa-lock"></i> 비밀번호 *</label>
+                             <input type="password" id="loginPasswordInput" placeholder="비밀번호 입력" required autocomplete="current-password">
+                         </div>
+                         <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; margin-top: 8px;">
+                             <i class="fa-solid fa-right-to-bracket"></i> 로그인
+                         </button>
+                         <div style="display:flex; justify-content:space-between; margin-top: 14px; font-size:0.83rem;">
+                             <a href="javascript:void(0)" onclick="openFindAccountModal()" style="color: var(--text-muted); text-decoration: underline;">
+                                 아이디 / 비밀번호 찾기
+                             </a>
+                             <a href="javascript:void(0)" onclick="switchAuthTab('signup')" style="color: var(--accent-cyan); font-weight: 700;">
+                                 계정이 없으신가요? 회원가입
+                             </a>
+                         </div>
+                     </form>
+ 
+                     <div style="margin-top: 16px; border-top: 1px dashed var(--glass-border); padding-top: 14px; text-align: center;">
+                         <span style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-bottom: 8px;">또는 간편 로그인</span>
+                         
+                     </div>
+                 </div>
+ 
+                 <!-- 2. 회원가입 폼 -->
+                 <div id="signupFormBox" class="hidden">
+                     <form id="directSignupForm" onsubmit="handleDirectSignup(event)">
+                         <div class="form-group">
+                             <label for="signupEmailInput"><i class="fa-solid fa-envelope"></i> 이메일 주소 (아이디) *</label>
+                             <input type="email" id="signupEmailInput" placeholder="example@naver.com" required autocomplete="username">
+                         </div>
+                         <div class="form-group">
+                             <label for="signupPasswordInput"><i class="fa-solid fa-lock"></i> 비밀번호 (6자 이상) *</label>
+                             <input type="password" id="signupPasswordInput" placeholder="비밀번호 입력" required minlength="6" autocomplete="new-password">
+                         </div>
+                         <div class="form-group">
+                             <label for="signupPasswordConfirmInput"><i class="fa-solid fa-lock"></i> 비밀번호 재확인 *</label>
+                             <input type="password" id="signupPasswordConfirmInput" placeholder="비밀번호 한번 더 입력" required minlength="6" autocomplete="new-password">
+                         </div>
+                         <div class="form-group">
+                             <label for="signupRealNameInput"><i class="fa-solid fa-id-card"></i> 이름 (본인 확인/아이디 찾기용) *</label>
+                             <input type="text" id="signupRealNameInput" placeholder="홍길동" required>
+                         </div>
+                         <div class="form-group">
+                              <label for="signupNicknameInput"><i class="fa-solid fa-user"></i> 닉네임 (커뮤니티 활동용) *</label>
+                              <input type="text" id="signupNicknameInput" placeholder="예: 포항딥다이버" required>
+                          </div>
+                        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="signupGenderSelect"><i class="fa-solid fa-venus-mars"></i> 성별 *</label>
+                                <select id="signupGenderSelect" required style="width: 100%; padding: 10px 12px; background: rgba(0,0,0,0.5); border: 1px solid var(--accent-cyan); color: #fff; border-radius: 8px; font-size: 0.9rem;">
+                                    <option value="male" selected>👦 남성</option>
+                                    <option value="female">👧 여성</option>
+                                    <option value="private">🔒 비공개</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="signupAgeGroupSelect"><i class="fa-solid fa-cake-candles"></i> 연령대 *</label>
+                                <select id="signupAgeGroupSelect" required style="width: 100%; padding: 10px 12px; background: rgba(0,0,0,0.5); border: 1px solid var(--accent-cyan); color: #fff; border-radius: 8px; font-size: 0.9rem;">
+                                    <option value="10대">10대</option>
+                                    <option value="20대" selected>20대</option>
+                                    <option value="30대">30대</option>
+                                    <option value="40대">40대</option>
+                                    <option value="50대 이상">50대 이상</option>
+                                    <option value="private">🔒 비공개</option>
+                                </select>
+                            </div>
+                        </div>
+                          <div class="form-group">
+                              <label for="signupLicenseInput"><i class="fa-solid fa-certificate"></i> 자격증 / 라이센스 정보 *</label>
+                              <input type="text" id="signupLicenseInput" placeholder="예: AIDA2, PADI 오픈워터, 초보 프리다이버 등" required>
+                          </div>
+                          <div class="form-group">
+                              <label for="signupPhoneInput"><i class="fa-solid fa-phone"></i> 연락처 (아이디/비밀번호 찾기용) *</label>
+                              <input type="tel" id="signupPhoneInput" placeholder="공백없이 숫자로만 입력" required oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                          </div>
+                          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px; font-weight: 800;">회원가입 완료</button>
+                      </form>
+                  </div>
+              </div>
+          </div>
+      </div>
+
+      <!-- Webmaster Security Modal (#webmasterAuthModal) -->
+          <!-- Modal: Webmaster Admin Command Center Modal (#adminDashboardModal) -->
+    <div class="modal-overlay hidden" id="adminDashboardModal" style="z-index: 9999999;">
+        <div class="modal-container glass-panel" style="max-width: 1050px; width: 95%; max-height: 90vh; display: flex; flex-direction: column; padding: 24px; border: 1px solid var(--accent-gold); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 183, 3, 0.3); padding-bottom: 14px; margin-bottom: 16px;">
+                <h2 style="color: var(--accent-gold); margin: 0; font-size: 1.3rem; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-shield-halved"></i> <span>AquaBuddy 웹마스터 관리자 커맨드 센터</span>
+                </h2>
+                <button class="close-btn" onclick="closeModal(document.getElementById('adminDashboardModal'))" style="background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer;">&times;</button>
+            </div>
+
+            <!-- Admin Navigation Tabs -->
+            <div class="admin-tabs" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 10px;">
+                <button type="button" class="btn btn-secondary active" id="adminTabStats" onclick="switchAdminTab('stats')" style="padding: 8px 14px; font-size: 0.85rem; font-weight: 700; border-radius: 8px;">
+                    <i class="fa-solid fa-chart-line"></i> 종합 현황
+                </button>
+                <button type="button" class="btn btn-secondary" id="adminTabAffiliate" onclick="switchAdminTab('affiliate')" style="padding: 8px 14px; font-size: 0.85rem; font-weight: 700; border-radius: 8px; border-color: rgba(255, 215, 0, 0.4);">
+                    <i class="fa-solid fa-arrow-trend-up" style="color: #ffd700;"></i> 쿠팡/광고 클릭률(CTR) 분석
+                </button>
+                <button type="button" class="btn btn-secondary" id="adminTabInquiries" onclick="switchAdminTab('inquiries')" style="padding: 8px 14px; font-size: 0.85rem; font-weight: 700; border-radius: 8px;">
+                    <i class="fa-solid fa-envelope-open-text"></i> 고객 문의/제휴 <span id="adminInquiriesBadge" class="badge" style="background: #ff5252; color: #fff; font-size: 0.7rem; margin-left: 4px;">0</span>
+                </button>
+                <button type="button" class="btn btn-secondary" id="adminTabInstructors" onclick="switchAdminTab('instructors')" style="padding: 8px 14px; font-size: 0.85rem; font-weight: 700; border-radius: 8px;">
+                    <i class="fa-solid fa-graduation-cap"></i> 강사 인증 심사 <span id="adminInstPendingBadge" class="badge" style="background: var(--accent-gold); color: #000; font-size: 0.7rem; margin-left: 4px;">0</span>
+                </button>
+                <button type="button" class="btn btn-secondary" id="adminTabUsers" onclick="switchAdminTab('users')" style="padding: 8px 14px; font-size: 0.85rem; font-weight: 700; border-radius: 8px;">
+                    <i class="fa-solid fa-users"></i> 회원 DB 관리 <span id="adminUsersCountBadge" class="badge" style="background: var(--accent-cyan); color: #000; font-size: 0.7rem; margin-left: 4px;">0</span>
+                </button>
+                <button type="button" class="btn btn-secondary" id="adminTabPosts" onclick="switchAdminTab('posts')" style="padding: 8px 14px; font-size: 0.85rem; font-weight: 700; border-radius: 8px;">
+                    <i class="fa-solid fa-newspaper"></i> 게시글 관리
+                </button>
+                <button type="button" class="btn btn-secondary" id="adminTabSystem" onclick="switchAdminTab('system')" style="padding: 8px 14px; font-size: 0.85rem; font-weight: 700; border-radius: 8px; border-color: rgba(0, 242, 254, 0.4);">
+                    <i class="fa-solid fa-sliders" style="color: #00f2fe;"></i> 공지 & 시스템 제어
+                </button>
+            </div>
+
+            <!-- Tab Panels Scrollable Body -->
+            <div class="admin-tab-content" style="flex: 1; overflow-y: auto; padding-right: 6px;">
+
+                <!-- Panel 1: Stats -->
+                <div class="admin-panel" id="adminPanelStats" style="display: block;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 20px;">
+                        <div style="background: rgba(0, 242, 254, 0.08); border: 1px solid var(--accent-cyan); border-radius: 12px; padding: 16px; text-align: center;">
+                            <div style="font-size: 0.8rem; color: var(--accent-cyan); font-weight: 700;">총 가입 다이버</div>
+                            <div id="adminStatTotalUsers" style="font-size: 1.6rem; font-weight: 900; color: #fff; margin: 6px 0;">0 명</div>
+                            <div id="adminStatTodayUsers" style="font-size: 0.75rem; color: #a0aec0;">실시간 연동 중</div>
+                        </div>
+                        <div style="background: rgba(255, 82, 82, 0.08); border: 1px solid #ff5252; border-radius: 12px; padding: 16px; text-align: center;">
+                            <div style="font-size: 0.8rem; color: #ff5252; font-weight: 700;">미처리 문의/건의</div>
+                            <div id="adminStatPendingInquiries" style="font-size: 1.6rem; font-weight: 900; color: #fff; margin: 6px 0;">0 건</div>
+                            <div id="adminStatTotalInquiries" style="font-size: 0.75rem; color: #a0aec0;">전체 문의 수집 중</div>
+                        </div>
+                        <div style="background: rgba(255, 183, 3, 0.08); border: 1px solid var(--accent-gold); border-radius: 12px; padding: 16px; text-align: center;">
+                            <div style="font-size: 0.8rem; color: var(--accent-gold); font-weight: 700;">공인 인증 강사</div>
+                            <div id="adminStatInstructors" style="font-size: 1.6rem; font-weight: 900; color: #fff; margin: 6px 0;">0 명</div>
+                            <div id="adminStatPendingCertQueue" style="font-size: 0.75rem; color: #a0aec0;">심사 대기 확인</div>
+                        </div>
+                        <div style="background: rgba(0, 230, 118, 0.08); border: 1px solid #00e676; border-radius: 12px; padding: 16px; text-align: center;">
+                            <div style="font-size: 0.8rem; color: #00e676; font-weight: 700;">전체 등록 게시글</div>
+                            <div id="adminStatTotalPosts" style="font-size: 1.6rem; font-weight: 900; color: #fff; margin: 6px 0;">0 개</div>
+                            <div style="font-size: 0.75rem; color: #a0aec0;">피드 실시간 활성화</div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 14px;">
+                        <button type="button" class="btn btn-primary" onclick="exportUserDbToCsv()" style="background: linear-gradient(135deg, #00e676, #00b0ff); color: #000; font-weight: 800; padding: 8px 16px; border-radius: 8px;">
+                            <i class="fa-solid fa-file-excel"></i> 전체 회원 DB 엑셀(CSV) 다운로드
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Panel 2: Inquiries -->
+                <div class="admin-panel hidden" id="adminPanelInquiries" style="display: none;">
+                    <h3 style="font-size: 1rem; color: #00f2fe; margin-bottom: 12px;"><i class="fa-solid fa-inbox"></i> 실시간 접수된 고객센터 문의 & 광고 제휴 목록</h3>
+                    <div style="overflow-x: auto;">
+                        <table class="table-clean" style="width: 100%; border-collapse: collapse; font-size: 0.82rem;">
+                            <thead>
+                                <tr style="background: rgba(255,255,255,0.06); text-align: left; color: #cbd5e1;">
+                                    <th style="padding: 10px;">유형</th>
+                                    <th style="padding: 10px;">성함/업체명</th>
+                                    <th style="padding: 10px;">연락처</th>
+                                    <th style="padding: 10px;">제목</th>
+                                    <th style="padding: 10px;">내용</th>
+                                    <th style="padding: 10px;">접수일시</th>
+                                    <th style="padding: 10px;">상태/관리</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminInquiriesTbody">
+                                <tr>
+                                    <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">접수된 문의 내역을 불러오는 중...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Panel 3: Instructors -->
+                <div class="admin-panel hidden" id="adminPanelInstructors" style="display: none;">
+                    <h3 style="font-size: 1rem; color: var(--accent-gold); margin-bottom: 12px;"><i class="fa-solid fa-user-graduate"></i> 공인 강사 자격증 실물 심사 대기열</h3>
+                    <div style="overflow-x: auto;">
+                        <table class="table-clean" style="width: 100%; border-collapse: collapse; font-size: 0.82rem;">
+                            <thead>
+                                <tr style="background: rgba(255,255,255,0.06); text-align: left; color: #cbd5e1;">
+                                    <th style="padding: 10px;">강사 실명</th>
+                                    <th style="padding: 10px;">이메일</th>
+                                    <th style="padding: 10px;">공인 단체</th>
+                                    <th style="padding: 10px;">라이선스 번호</th>
+                                    <th style="padding: 10px;">자격증 사본</th>
+                                    <th style="padding: 10px;">신청일시</th>
+                                    <th style="padding: 10px;">심사 승인/반려</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminInstructorQueueTbody">
+                                <tr>
+                                    <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">심사 대기 중인 강사 신청 내역이 없습니다.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Panel 4: Users -->
+                <div class="admin-panel hidden" id="adminPanelUsers" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <h3 style="font-size: 1rem; color: #00f2fe; margin: 0;"><i class="fa-solid fa-users"></i> 등록 회원 데이터베이스</h3>
+                        <button type="button" class="btn btn-secondary" onclick="exportUserDbToCsv()" style="font-size: 0.75rem; padding: 4px 10px;">
+                            <i class="fa-solid fa-download"></i> 엑셀 내보내기
+                        </button>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table class="table-clean" style="width: 100%; border-collapse: collapse; font-size: 0.82rem;">
+                            <thead>
+                                <tr style="background: rgba(255,255,255,0.06); text-align: left; color: #cbd5e1;">
+                                    <th style="padding: 10px;">가입일시</th>
+                                    <th style="padding: 10px;">실명</th>
+                                    <th style="padding: 10px;">닉네임</th>
+                                    <th style="padding: 10px;">이메일</th>
+                                    <th style="padding: 10px;">연락처</th>
+                                    <th style="padding: 10px;">회원/강사 상태</th>
+                                    <th style="padding: 10px;">가입경로</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminUsersTbody">
+                                <tr>
+                                    <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">회원 목록을 불러오는 중...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Panel 5: Posts -->
+                <div class="admin-panel hidden" id="adminPanelPosts" style="display: none;">
+                    <h3 style="font-size: 1rem; color: #00f2fe; margin-bottom: 12px;"><i class="fa-solid fa-file-lines"></i> 등록된 전체 게시글 관리</h3>
+                    <div style="overflow-x: auto;">
+                        <table class="table-clean" style="width: 100%; border-collapse: collapse; font-size: 0.82rem;">
+                            <thead>
+                                <tr style="background: rgba(255,255,255,0.06); text-align: left; color: #cbd5e1;">
+                                    <th style="padding: 10px;">카테고리</th>
+                                    <th style="padding: 10px;">제목</th>
+                                    <th style="padding: 10px;">작성자</th>
+                                    <th style="padding: 10px;">작성시간</th>
+                                    <th style="padding: 10px;">삭제 관리</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminPostsTbody">
+                                <tr>
+                                    <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">게시글 목록을 불러오는 중...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <!-- Panel 6: Coupang & Banner Affiliate CTR Analytics -->
+                <div class="admin-panel hidden" id="adminPanelAffiliate" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <h3 style="font-size: 1.05rem; color: #ffd700; margin: 0; display: flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-arrow-trend-up"></i> 쿠팡 파트너스 & 광고 배너 실시간 성과 분석 (CTR)
+                        </h3>
+                        <button type="button" class="btn btn-secondary" onclick="renderAdminAffiliateStats()" style="padding: 6px 12px; font-size: 0.8rem;">
+                            <i class="fa-solid fa-arrows-rotate"></i> 새로고침
+                        </button>
+                    </div>
+
+                    <!-- 4 Major CTR KPI Cards -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 20px;">
+                        <div class="admin-stat-card glass-panel" style="padding: 16px; border-left: 4px solid var(--accent-cyan); background: rgba(0, 242, 254, 0.05);">
+                            <div style="font-size: 0.8rem; color: var(--text-muted);"><i class="fa-solid fa-eye"></i> 총 배너 노출수 (Impressions)</div>
+                            <div id="affiliateKpiImpressions" style="font-size: 1.5rem; font-weight: 800; color: #fff; margin-top: 6px;">0회</div>
+                        </div>
+                        <div class="admin-stat-card glass-panel" style="padding: 16px; border-left: 4px solid #ff793f; background: rgba(255, 121, 63, 0.05);">
+                            <div style="font-size: 0.8rem; color: var(--text-muted);"><i class="fa-solid fa-arrow-pointer"></i> 총 유효 클릭수 (Clicks)</div>
+                            <div id="affiliateKpiClicks" style="font-size: 1.5rem; font-weight: 800; color: #ff793f; margin-top: 6px;">0회</div>
+                        </div>
+                        <div class="admin-stat-card glass-panel" style="padding: 16px; border-left: 4px solid var(--accent-gold); background: rgba(255, 215, 0, 0.05);">
+                            <div style="font-size: 0.8rem; color: var(--text-muted);"><i class="fa-solid fa-percent"></i> 평균 클릭률 (CTR)</div>
+                            <div id="affiliateKpiCtr" style="font-size: 1.5rem; font-weight: 800; color: var(--accent-gold); margin-top: 6px;">0.00%</div>
+                        </div>
+                        <div class="admin-stat-card glass-panel" style="padding: 16px; border-left: 4px solid #00e676; background: rgba(0, 230, 118, 0.05);">
+                            <div style="font-size: 0.8rem; color: var(--text-muted);"><i class="fa-solid fa-won-sign"></i> 추정 누적 정산 수익</div>
+                            <div id="affiliateKpiRevenue" style="font-size: 1.5rem; font-weight: 800; color: #00e676; margin-top: 6px;">₩0</div>
+                        </div>
+                    </div>
+
+                    <!-- Banner Detail Performance Table -->
+                    <div class="admin-table-container" style="background: rgba(13, 23, 38, 0.7); border-radius: 8px; border: 1px solid var(--glass-border); overflow-x: auto; margin-bottom: 20px;">
+                        <table class="admin-table" style="width: 100%; font-size: 0.85rem; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: rgba(0, 242, 254, 0.1); color: var(--accent-cyan); text-align: left;">
+                                    <th style="padding: 10px;">배너 위치 / 명칭</th>
+                                    <th style="padding: 10px; text-align: center;">노출수 (Imp)</th>
+                                    <th style="padding: 10px; text-align: center;">클릭수 (Click)</th>
+                                    <th style="padding: 10px; text-align: center;">클릭률 (CTR)</th>
+                                    <th style="padding: 10px; text-align: right;">추정 수익</th>
+                                    <th style="padding: 10px; text-align: center;">최근 클릭</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminAffiliateStatsTbody">
+                                <tr>
+                                    <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">통계 데이터를 분석 중입니다...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 4 Dedicated Coupang Partners Link Management Section -->
+                    <div class="glass-panel" style="padding: 20px; border-radius: 12px; border: 1px solid rgba(0, 242, 254, 0.4); background: rgba(0, 242, 254, 0.04); margin-top: 14px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <h4 style="margin: 0; color: var(--accent-cyan); font-size: 1.05rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-link"></i> 4대 핵심 배너별 쿠팡 파트너스 개별 링크 관리
+                            </h4>
+                            <span style="font-size: 0.8rem; color: var(--text-muted);">각 배너마다 서로 다른 기획전/상품 링크를 연결할 수 있습니다.</span>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-bottom: 18px;">
+                            <!-- 1. Top Banner -->
+                            <div style="background: rgba(0,0,0,0.55); border: 1px solid rgba(255, 215, 0, 0.35); border-radius: 10px; padding: 14px;">
+                                <label style="display: block; font-size: 0.84rem; font-weight: 800; color: #ffd700; margin-bottom: 8px;">
+                                    🏆 1. 상단 메인 기획전 배너 (수영/장비)
+                                </label>
+                                <input type="url" id="adLinkInput_bannerMain" placeholder="https://link.coupang.com/..." style="width: 100%; padding: 10px 12px; background: rgba(0,0,0,0.7); border: 1px solid rgba(255,215,0,0.4); color: #fff; border-radius: 6px; font-size: 0.84rem; box-sizing: border-box;">
+                            </div>
+
+                            <!-- 2. Left Floating Banner -->
+                            <div style="background: rgba(0,0,0,0.55); border: 1px solid rgba(0, 242, 254, 0.35); border-radius: 10px; padding: 14px;">
+                                <label style="display: block; font-size: 0.84rem; font-weight: 800; color: #00f2fe; margin-bottom: 8px;">
+                                    📍 2. 좌측 플로팅 배너 (프리다이빙 전용 장비)
+                                </label>
+                                <input type="url" id="adLinkInput_bannerFloatingLeft" placeholder="https://link.coupang.com/..." style="width: 100%; padding: 10px 12px; background: rgba(0,0,0,0.7); border: 1px solid rgba(0,242,254,0.4); color: #fff; border-radius: 6px; font-size: 0.84rem; box-sizing: border-box;">
+                            </div>
+
+                            <!-- 3. Right Floating Banner -->
+                            <div style="background: rgba(0,0,0,0.55); border: 1px solid rgba(255, 121, 63, 0.35); border-radius: 10px; padding: 14px;">
+                                <label style="display: block; font-size: 0.84rem; font-weight: 800; color: #ff793f; margin-bottom: 8px;">
+                                    📍 3. 우측 플로팅 배너 (스쿠버다이빙 전용 장비)
+                                </label>
+                                <input type="url" id="adLinkInput_bannerFloatingRight" placeholder="https://link.coupang.com/..." style="width: 100%; padding: 10px 12px; background: rgba(0,0,0,0.7); border: 1px solid rgba(255,121,63,0.4); color: #fff; border-radius: 6px; font-size: 0.84rem; box-sizing: border-box;">
+                            </div>
+
+                            <!-- 4. Footer Banner -->
+                            <div style="background: rgba(0,0,0,0.55); border: 1px solid rgba(0, 230, 118, 0.35); border-radius: 10px; padding: 14px;">
+                                <label style="display: block; font-size: 0.84rem; font-weight: 800; color: #00e676; margin-bottom: 8px;">
+                                    ⚓ 4. 하단 푸터 기획전 배너 (바다수영/슈트)
+                                </label>
+                                <input type="url" id="adLinkInput_bannerFooter" placeholder="https://link.coupang.com/..." style="width: 100%; padding: 10px 12px; background: rgba(0,0,0,0.7); border: 1px solid rgba(0,230,118,0.4); color: #fff; border-radius: 6px; font-size: 0.84rem; box-sizing: border-box;">
+                            </div>
+                        </div>
+
+                        <div style="text-align: right;">
+                            <button type="button" class="btn btn-primary" onclick="saveAllAdminBannerLinks()" style="padding: 11px 24px; font-weight: 800; font-size: 0.92rem; border-radius: 8px; box-shadow: 0 4px 18px rgba(0, 242, 254, 0.35); cursor: pointer;">
+                                <i class="fa-solid fa-floppy-disk"></i> 💾 4대 배너별 파트너스 링크 일괄 저장 & 즉시 적용
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel 7: Emergency Broadcast & System Control Hub -->
+                <div class="admin-panel hidden" id="adminPanelSystem" style="display: none;">
+                    <h3 style="font-size: 1.05rem; color: #00f2fe; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-sliders"></i> 웹마스터 시스템 제어 & 긴급 공지 센터
+                    </h3>
+
+                    <!-- 1. Emergency Top Notice Broadcaster -->
+                    <div class="glass-panel" style="padding: 18px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #ff5252; background: rgba(255, 82, 82, 0.04);">
+                        <h4 style="margin: 0 0 8px 0; color: #fff; font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-bullhorn" style="color: #ff5252;"></i> 전체 사용자 실시간 상단 긴급 공지 띠배너 발송
+                        </h4>
+                        <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0 0 12px 0;">작성 후 '즉시 발송'을 누르면 모든 사용자의 화면 최상단에 빨간색 띠배너 공지가 실시간으로 활성화됩니다.</p>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <input type="text" id="globalNoticeInput" placeholder="공지 내용 입력 (예: [공지] 8월 20일 새벽 2시~4시 서버 안정화 점검이 진행됩니다.)" style="flex: 1; min-width: 300px; padding: 10px 14px; background: rgba(0,0,0,0.6); border: 1px solid var(--glass-border); color: #fff; border-radius: 6px;">
+                            <button type="button" class="btn btn-primary" onclick="sendGlobalNotice()" style="background: #ff5252; border-color: #ff5252; color: #fff; padding: 10px 18px; font-weight: 700; white-space: nowrap;">
+                                <i class="fa-solid fa-paper-plane"></i> 즉시 발송
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="clearGlobalNotice()" style="padding: 10px 14px; font-weight: 700; white-space: nowrap;">
+                                <i class="fa-solid fa-ban"></i> 공지 해제
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 2. One-Click Database CSV Export Hub -->
+                    <div class="glass-panel" style="padding: 18px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid var(--accent-cyan); background: rgba(0, 242, 254, 0.04);">
+                        <h4 style="margin: 0 0 8px 0; color: #fff; font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-file-csv" style="color: var(--accent-cyan);"></i> 원클릭 데이터베이스 백업 & CSV 다운로드 센터
+                        </h4>
+                        <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0 0 14px 0;">운영 중인 전체 데이터를 엑셀(CSV) 파일로 1초 만에 안전하게 로컬 백업합니다.</p>
+                        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                            <button type="button" class="btn btn-secondary" onclick="exportUserDbToCsv()" style="padding: 10px 16px; font-weight: 700; border-color: var(--accent-cyan); color: var(--accent-cyan);">
+                                <i class="fa-solid fa-users"></i> 회원 DB (CSV) 다운로드
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="exportPostsDbToCsv()" style="padding: 10px 16px; font-weight: 700; border-color: #ffd700; color: #ffd700;">
+                                <i class="fa-solid fa-newspaper"></i> 전체 게시글 DB (CSV) 다운로드
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="exportInquiriesDbToCsv()" style="padding: 10px 16px; font-weight: 700; border-color: #ff758c; color: #ff758c;">
+                                <i class="fa-solid fa-envelope-open-text"></i> 고객 문의/제휴 DB (CSV) 다운로드
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <div class="modal-overlay hidden" id="webmasterAuthModal" style="z-index: 9999999 !important;">
+          <div class="modal-container glass-panel" style="max-width: 440px;">
+              <div class="modal-header">
+                  <h2><i class="fa-solid fa-user-shield" style="color: var(--accent-cyan);"></i> 웹마스터 모드 보안 인증</h2>
+                  <button class="close-btn" onclick="closeModal(document.getElementById('webmasterAuthModal'))">&times;</button>
+              </div>
+              <form onsubmit="handleWebmasterLogin(event)">
+                  <div class="form-group" style="margin-bottom: 16px;">
+                      <label for="webmasterSecretInput" style="display: block; margin-bottom: 6px; font-weight: bold; color: var(--accent-cyan);">
+                          <i class="fa-solid fa-lock"></i> 마스터 보안 암호
+                      </label>
+                      <input type="password" id="webmasterSecretInput" placeholder="마스터 코드를 입력하세요" required autocomplete="off" style="width: 100%; padding: 10px 14px; background: rgba(0, 0, 0, 0.5); border: 1px solid var(--accent-cyan); border-radius: 8px; color: #fff; font-size: 0.95rem; outline: none;">
+                 </div>
+ 
+                 <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                     <button type="button" class="btn btn-secondary" onclick="closeModal(document.getElementById('webmasterAuthModal'))">취소</button>
+                     <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); color: #000; font-weight: 900;">
+                         <i class="fa-solid fa-key"></i> 웹마스터 모드 진입
+                     </button>
+                 </div>
+             </form>
+         </div>
+     </div>
+ 
+     <!-- Certificate Image Preview Modal (#certificateImageModal) -->
+     <div class="modal-overlay hidden" id="certificateImageModal" style="z-index: 10000005 !important;">
+         <div class="modal-container glass-panel" style="max-width: 720px; text-align: center; border: 1px solid var(--accent-gold);">
+             <div class="modal-header">
+                 <h2><i class="fa-solid fa-graduation-cap" style="color: var(--accent-gold);"></i> 강사 실물 자격증 사본 확대 검토</h2>
+                 <button class="close-btn" onclick="closeModal(document.getElementById('certificateImageModal'))">&times;</button>
+             </div>
+             <div style="padding: 20px 0;">
+                 <img id="certPreviewImg" src="" alt="강사 자격증 실물 사본" loading="lazy" style="max-width: 100%; max-height: 60vh; border-radius: var(--radius-sm); border: 2px solid var(--accent-cyan); box-shadow: 0 8px 32px rgba(0,0,0,0.5);">
+             </div>
+             <div style="display: flex; justify-content: center; gap: 12px; margin-top: 10px;">
+                 <button class="btn btn-secondary" onclick="closeModal(document.getElementById('certificateImageModal'))">닫기</button>
+             </div>
+         </div>
+     </div>
+ 
+     <!-- App Configuration & Main Logic Script -->
+     <script src="config.js?v=V503_EXACT_SS_LIST"></script>
+     <script src="app.js?v=V670_NO_GRAY_MAP_TILES"></script>
+     <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container"></div>
+</body>
+ </html>

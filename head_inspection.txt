@@ -1,0 +1,599 @@
+   1: /* ==========================================================================
+   2: AquaBuddy (�ƹ�) - Dynamic Application Logic (v44.0 Unified Inquiries & Ad Partnerships)
+   3: - Restored Responsive Side Banners (1200px Media Query Breakpoint)
+   4: - Unified Customer Feedback & Ad Inquiry Modal (#inquiryModal)
+   5: - Categories: Ad Partnership, Bug Report, Feature Idea, Content Edit, General Feedback
+   6: - Protected Webmaster Admin Dashboard Inquiries Management Table
+   7: ========================================================================== */
+   8: 
+   9: // Load Configuration Credentials
+  10: window.addEventListener('error', function(e) {
+  11: if (e.message && !e.message.includes("ResizeObserver")) {
+  12: 
+  13: 
+  14: // ==================================================
+  15: // ✋ 버디 모임 참가 신청 / 취소 토글 핸들러 (전역 등록)
+  16: // ==================================================
+  17: async function handleToggleJoinPost(postId) {
+  18: if (!currentUser || (!currentUser.email && !currentUser.name && !currentUser.nickname)) {
+  19: showToast("🔑 로그인 후 버디 참가 신청을 진행하실 수 있습니다!");
+  20: const authModal = document.getElementById("authModal");
+  21: if (authModal && typeof openModal === "function") {
+  22: if (typeof switchAuthTab === "function") switchAuthTab('login');
+  23: openModal(authModal);
+  24: }
+  25: return;
+  26: }
+  27: 
+  28: const post = (typeof posts !== 'undefined' && Array.isArray(posts)) ? posts.find(p => String(p.id) === String(postId)) : null;
+  29: if (!post) {
+  30: showToast("⚠️ 게시글을 찾을 수 없습니다.");
+  31: return;
+  32: }
+  33: 
+  34: if (typeof isMyPost === 'function' && isMyPost(post)) {
+  35: showToast("👑 본인이 주최한 모임에는 참가 신청을 할 수 없습니다.");
+  36: return;
+  37: }
+  38: 
+  39: if (!Array.isArray(post.participants)) {
+  40: post.participants = [];
+  41: }
+  42: 
+  43: const myIdentifier = currentUser.nickname || currentUser.name || currentUser.realName || (currentUser.email ? currentUser.email.split('@')[0] : "다이버");
+  44: const myEmail = currentUser.email ? currentUser.email.trim().toLowerCase() : "";
+  45: 
+  46: // 이미 참가 신청했는지 여부 확인
+  47: const existingIndex = post.participants.findIndex(p => {
+  48: if (typeof p === 'object' && p !== null) {
+  49: if (myEmail && p.email && String(p.email).trim().toLowerCase() === myEmail) return true;
+  50: if (p.name && String(p.name).trim().toLowerCase() === myIdentifier.toLowerCase()) return true;
+  51: }
+  52: const pStr = String(p).trim().toLowerCase();
+  53: return pStr === myIdentifier.toLowerCase() || (myEmail && pStr === myEmail);
+  54: });
+  55: 
+  56: // 🔒 상태별 참가/취소 엄격 제한
+  57: if (post.status === "completed") {
+  58: if (existingIndex > -1) {
+  59: showToast("🔒 이미 일정이 완료된 모임은 참가 신청을 취소할 수 없습니다.");
+  60: } else {
+  61: showToast("🔒 이미 일정이 완료된 모임에는 참가 신청을 할 수 없습니다.");
+  62: }
+  63: return;
+  64: }
+  65: 
+  66: if (post.status === "in_progress" && existingIndex === -1) {
+  67: showToast("🔒 이미 진행 중인 모임에는 추가로 참가 신청을 할 수 없습니다.");
+  68: return;
+  69: }
+  70: 
+  71: const capacityVal = parseInt(post.capacity || post.capacityCount || 4, 10);
+  72: 
+  73: if (existingIndex > -1) {
+  74: // 참가 신청 취소
+  75: post.participants.splice(existingIndex, 1);
+  76: post.joinedCount = Math.max(1, (post.participants.length + 1));
+  77: if (post.status === "in_progress" || post.status === "closed") {
+  78: post.status = "recruiting";
+  79: post.statusText = "모집 중";
+  80: }
+  81: showToast("❌ 버디 참가 신청이 취소되었습니다.");
+  82: } else {
+  83: // 신규 참가 신청
+  84: if (post.participants.length + 1 >= capacityVal) {
+  85: showToast("⚠️ 모집 인원이 이미 마감되었습니다!");
+  86: return;
+  87: }
+  88: 
+  89: const participantObj = {
+  90: name: myIdentifier,
+  91: email: myEmail,
+  92: joinedAt: new Date().toISOString()
+  93: };
+  94: post.participants.push(participantObj);
+  95: post.joinedCount = post.participants.length + 1;
+  96: 
+  97: if (post.joinedCount >= capacityVal) {
+  98: post.status = "in_progress";
+  99: post.statusText = "참가자 확정 완료";
+ 100: showToast("🎉 최대 인원이 마감되어 '참가자 확정 완료' 상태로 전환되었습니다!");
+ 101: } else {
+ 102: showToast(`🙋‍♂️ '${post.title}' 모임에 참가 신청이 완료되었습니다!`);
+ 103: }
+ 104: }
+ 105: 
+ 106: // 로컬 저장 및 Supabase DB 반영
+ 107: if (typeof savePosts === 'function') savePosts();
+ 108: if (supabaseClient) {
+ 109: try {
+ 110: await supabaseClient.from('posts').update({
+ 111: participants: post.participants,
+ 112: joined_count: post.joinedCount,
+ 113: status: post.status
+ 114: }).eq('id', post.id);
+ 115: } catch (err) {
+ 116: console.warn("Supabase participants update notice:", err);
+ 117: }
+ 118: }
+ 119: 
+ 120: // 화면 갱신
+ 121: if (typeof filterAndRender === 'function') filterAndRender();
+ 122: if (typeof renderDynamicDetailModal === "function") {
+ 123: renderDynamicDetailModal(post);
+ 124: }
+ 125: }).eq('id', post.id);
+ 126: } catch(e) { console.warn("Supabase approve participant update error:", e); }
+ 127: }
+ 128: 
+ 129: showToast(`✅ '${participantObj.name || "참가자"}'님의 참가를 승인하였습니다!`);
+ 130: if (typeof filterAndRender === 'function') filterAndRender();
+ 131: if (typeof renderDynamicDetailModal === 'function') renderDynamicDetailModal(post);
+ 132: }
+ 133: window.handleApproveParticipant = handleApproveParticipant;
+ 134: 
+ 135: async function handleRejectParticipant(postId, applicantEmailOrName) {
+ 136: const post = (typeof posts !== 'undefined' && Array.isArray(posts)) ? posts.find(p => String(p.id) === String(postId)) : null;
+ 137: if (!post) return;
+ 138: if (!Array.isArray(post.pending_participants)) post.pending_participants = [];
+ 139: 
+ 140: const pIdx = post.pending_participants.findIndex(p => {
+ 141: const pEmail = (typeof p === 'object' && p.email) ? p.email.toLowerCase() : '';
+ 142: const pName = (typeof p === 'object' && p.name) ? p.name.toLowerCase() : String(p).toLowerCase();
+ 143: const target = String(applicantEmailOrName).toLowerCase();
+ 144: return pEmail === target || pName === target;
+ 145: });
+ 146: 
+ 147: if (pIdx === -1) {
+ 148: showToast("⚠️ 대기자 목록에서 사용자를 찾을 수 없습니다.");
+ 149: return;
+ 150: }
+ 151: 
+ 152: const rejected = post.pending_participants.splice(pIdx, 1)[0];
+ 153: if (typeof savePosts === 'function') savePosts();
+ 154: if (supabaseClient) {
+ 155: try {
+ 156: await supabaseClient.from('posts').update({
+ 157: pending_participants: post.pending_participants
+ 158: }).eq('id', post.id);
+ 159: } catch(e) { console.warn("Supabase reject participant update error:", e); }
+ 160: }
+ 161: 
+ 162: showToast(`❌ '${(typeof rejected === 'object' ? rejected.name : rejected) || "신청자"}'님의 참가 신청을 거절하였습니다.`);
+ 163: if (typeof filterAndRender === 'function') filterAndRender();
+ 164: if (typeof renderDynamicDetailModal === 'function') renderDynamicDetailModal(post);
+ 165: }
+ 166: window.handleRejectParticipant = handleRejectParticipant;
+ 167: 
+ 168: 
+ 169: function runWithKakaoMap(callback) {
+ 170: if (typeof window === "undefined") return;
+ 171: if (window.kakao && window.kakao.maps) {
+ 172: if (typeof window.kakao.maps.load === "function") {
+ 173: window.kakao.maps.load(() => {
+ 174: callback();
+ 175: });
+ 176: case "market": return "🛒 중고 다이빙 장비";
+ 177: case "buddy": return "👥 버디 모집";
+ 178: default: return catCode;
+ 179: }
+ 180: }
+ 181: window.getCategoryNameKorean = getCategoryNameKorean;
+ 182: 
+ 183: function updateCreateButtonText(catKey) {
+ 184: const btnTextEls = document.querySelectorAll("#createBtnText, .create-btn-text, #openCreateModalBtn span");
+ 185: let text = "버디 모집하기";
+ 186: .order('created_at', { ascending: false });
+ 187: if (selectError) {
+ 188: console.error('Supabase select error:', selectError);
+ 189: } else {
+ 190: console.log('Supabase select returned', selectData.length, 'posts.');
+ 191: }
+ 192: } catch (e) {
+ 193: console.error('Supabase test exception:', e);
+ 194: }
+ 195: }
+ 196: // Famous Diving & Swimming Spot Coordinates Map Safeguard
+ 197: if (typeof window !== "undefined" && typeof window.FAMOUS_SPOT_COORDS === "undefined") {
+ 198: window.FAMOUS_SPOT_COORDS = {
+ 199: "k26": { title: "가평 K26 잠수풀", lat: 37.7128, lng: 127.5253, address: "경기 가평군 청평면 고성리 26" },
+ 200: 
+ 201: // ==================================================
+ 202: // ✋ 버디 모임 참가 신청 / 취소 토글 핸들러 (전역 등록)
+ 203: // ==================================================
+ 204: async function handleToggleJoinPost(postId) {
+ 205: if (!currentUser || (!currentUser.email && !currentUser.name && !currentUser.nickname)) {
+ 206: showToast("🔑 로그인 후 버디 참가 신청을 진행하실 수 있습니다!");
+ 207: const authModal = document.getElementById("authModal");
+ 208: if (authModal && typeof openModal === "function") {
+ 209: if (typeof switchAuthTab === "function") switchAuthTab('login');
+ 210: openModal(authModal);
+ 211: }
+ 212: return;
+ 213: }
+ 214: 
+ 215: const post = (typeof posts !== 'undefined' && Array.isArray(posts)) ? posts.find(p => String(p.id) === String(postId)) : null;
+ 216: if (!post) {
+ 217: showToast("⚠️ 게시글을 찾을 수 없습니다.");
+ 218: return;
+ 219: }
+ 220: showToast("👑 본인이 주최한 모임에는 참가 신청을 할 수 없습니다.");
+ 221: return;
+ 222: }
+ 223: 
+ 224: if (!Array.isArray(post.participants)) {
+ 225: post.participants = [];
+ 226: }
+ 227: 
+ 228: const myIdentifier = currentUser.nickname || currentUser.name || currentUser.realName || (currentUser.email ? currentUser.email.split('@')[0] : "다이버");
+ 229: const myEmail = currentUser.email ? currentUser.email.trim().toLowerCase() : "";
+ 230: 
+ 231: // 이미 참가 신청했는지 여부 확인
+ 232: const existingIndex = post.participants.findIndex(p => {
+ 233: if (typeof p === 'object' && p !== null) {
+ 234: if (myEmail && p.email && String(p.email).trim().toLowerCase() === myEmail) return true;
+ 235: if (p.name && String(p.name).trim().toLowerCase() === myIdentifier.toLowerCase()) return true;
+ 236: }
+ 237: const pStr = String(p).trim().toLowerCase();
+ 238: return pStr === myIdentifier.toLowerCase() || (myEmail && pStr === myEmail);
+ 239: });
+ 240: 
+ 241: // 🔒 상태별 참가/취소 엄격 제한
+ 242: if (post.status === "completed") {
+ 243: if (existingIndex > -1) {
+ 244: showToast("🔒 이미 일정이 완료된 모임은 참가 신청을 취소할 수 없습니다.");
+ 245: } else {
+ 246: showToast("🔒 이미 일정이 완료된 모임은 참가 신청을 취소할 수 없습니다.");
+ 247: } else {
+ 248: showToast("🔒 이미 일정이 완료된 모임에는 참가 신청을 할 수 없습니다.");
+ 249: }
+ 250: return;
+ 251: }
+ 252: 
+ 253: if (post.status === "in_progress" && existingIndex === -1) {
+ 254: showToast("🔒 이미 진행 중인 모임에는 추가로 참가 신청을 할 수 없습니다.");
+ 255: return;
+ 256: }
+ 257: 
+ 258: const capacityVal = parseInt(post.capacity || post.capacityCount || 4, 10);
+ 259: 
+ 260: if (existingIndex > -1) {
+ 261: // 참가 신청 취소
+ 262: post.participants.splice(existingIndex, 1);
+ 263: post.joinedCount = Math.max(1, (post.participants.length + 1));
+ 264: if (post.status === "in_progress" || post.status === "closed") {
+ 265: post.status = "recruiting";
+ 266: post.statusText = "모집 중";
+ 267: }
+ 268: showToast("❌ 버디 참가 신청이 취소되었습니다.");
+ 269: } else {
+ 270: // 신규 참가 신청
+ 271: if (post.participants.length + 1 >= capacityVal) {
+ 272: showToast("⚠️ 모집 인원이 이미 마감되었습니다!");
+ 273: return;
+ 274: }
+ 275: 
+ 276: const participantObj = {
+ 277: name: myIdentifier,
+ 278: email: myEmail,
+ 279: joinedAt: getKSTIsoString()
+ 280: };
+ 281: post.participants.push(participantObj);
+ 282: post.joinedCount = post.participants.length + 1;
+ 283: 
+ 284: if (post.joinedCount >= capacityVal) {
+ 285: post.status = "in_progress";
+ 286: post.statusText = "참가자 확정 완료";
+ 287: showToast("🎉 최대 인원이 마감되어 '참가자 확정 완료' 상태로 전환되었습니다!");
+ 288: } else {
+ 289: showToast(`🙋‍♂️ '${post.title}' 모임에 참가 신청이 완료되었습니다!`);
+ 290: }
+ 291: }
+ 292: 
+ 293: // 로컬 저장 및 Supabase DB 반영
+ 294: if (typeof savePosts === 'function') savePosts();
+ 295: if (supabaseClient) {
+ 296: try {
+ 297: await supabaseClient.from('posts').update({
+ 298: participants: post.participants,
+ 299: joined_count: post.joinedCount,
+ 300: status: post.status
+ 301: }).eq('id', post.id);
+ 302: } catch (err) {
+ 303: console.warn("Supabase participants update notice:", err);
+ 304: }
+ 305: }
+ 306: 
+ 307: // 화면 갱신
+ 308: if (typeof filterAndRender === 'function') filterAndRender();
+ 309: if (typeof renderDynamicDetailModal === "function") {
+ 310: renderDynamicDetailModal(post);
+ 311: }
+ 312: }
+ 313: window.handleToggleJoinPost = handleToggleJoinPost;
+ 314: 
+ 315: // === updateModalFieldsByCategory: 게시판별 모달 타이틀 및 맞춤 면책 동의 문구 변환 엔진 ===
+ 316: function updateModalFieldsByCategory(catKey) {
+ 317: const modalTitleEl = document.getElementById("createModalTitle") || document.querySelector("#createPostModal h2, #createPostModal h3");
+ 318: const disclaimerLabelEl = document.getElementById("inlineLiabilityCheckLabel") || document.querySelector("label[for='inlineLiabilityCheck']");
+ 319: const descEl = document.getElementById("postDesc");
+ 320: const descLabelEl = document.getElementById("descLabel");
+ 321: 
+ 322: let titleText = "버디 모집글 작성";
+ 323: let disclaimerText = "[필수] 본 활동 중 발생하는 안전사고 및 개인 간의 문제에 대해 아쿠아버디 플랫폼은 법적 책임을 지지 않으며, 안전 수칙 준수 면책 방침에 동의합니다.";
+ 324: let placeholderText = "버디 모임 일정, 수심 계획, 준비물 등 상세 내용을 작성해 주세요!";
+ 325: let descLabelText = "상세 내용 및 플랜 *";
+ 326: 
+ 327: if (catKey === "market") {
+ 328: titleText = "중고 장비 매물 등록";
+ 329: disclaimerText = "[필수] 허위 매물 등록 금지 및 안전한 비대면/직거래 원칙, 플랫폼 분쟁 면책 방침에 동의합니다.";
+ 330: placeholderText = "상세설명을 작성해주세요!";
+ 331: descLabelText = "상세 설명 *";
+ 332: } else if (catKey === "community") {
+ 333: titleText = "자유수다 게시글 작성";
+ 334: disclaimerText = "[필수] 타인 비방, 광고, 욕설 및 커뮤니티 이용 규정을 위반하지 않으며, 이에 대한 책임은 작성자에게 있음에 동의합니다.";
+ 335: placeholderText = "생각과 정보, 궁금증을 작성해주세요";
+ 336: descLabelText = "내용 작성 *";
+ 337: } else if (catKey === "instructor") {
+ 338: titleText = "강사 클래스 개설";
+ 339: disclaimerText = "[필수] 본 활동 중 발생하는 안전사고 및 개인 간의 문제에 대해 아쿠아버디 플랫폼은 법적 책임을 지지 않으며, 안전 수칙 준수 면책 방침에 동의합니다.";
+ 340: placeholderText = "상세 내용 및 교육 커리큘럼을 작성해 주세요!";
+ 341: descLabelText = "상세 내용 및 교육 커리큘럼 *";
+ 342: }
+ 343: 
+ 344: if (modalTitleEl) modalTitleEl.textContent = titleText;
+ 345: if (disclaimerLabelEl) disclaimerLabelEl.textContent = disclaimerText;
+ 346: if (descEl) descEl.placeholder = placeholderText;
+ 347: if (descLabelEl) descLabelEl.textContent = descLabelText;
+ 348: }
+ 349: window.updateModalFieldsByCategory = updateModalFieldsByCategory;
+ 350: 
+ 351: // === formatDesc: 영구 정규식 에러 차단 문자열 변환 엔진 (Regex 사용 0%) ===
+ 352: function formatDesc(str) {
+ 353: if (!str) return "상세 내용이 없습니다.";
+ 354: const safe = typeof escapeHtml === "function" ? escapeHtml(str) : String(str);
+ 355: return safe.split("\n").join("<br>");
+ 356: }
+ 357: window.formatDesc = formatDesc;
+ 358: 
+ 359: // === AquaBuddy Core Engine (v20260812_FORCE_REFRESH_239) ===
+ 360: // === 방탄 환경변수 및 안전 가드 (currentUser ReferenceError 원천 차단) ===
+ 361: if (typeof window.currentUser === 'undefined') window.currentUser = null;
+ 362: var currentUser = window.currentUser || null;
+ 363: 
+ 364: // === getCategoryNameKorean: 카테고리 코드 한글화 변환기 ===
+ 365: function getCategoryNameKorean(catCode) {
+ 366: if (!catCode) return "전체";
+ 367: const c = String(catCode).trim().toLowerCase();
+ 368: switch (c) {
+ 369: case "swimming": return "🏊‍♂️ 실내 수영";
+ 370: case "openwater": return "🌊 바다 수영 / 오픈워터";
+ 371: 
+ 372: .from('banner_clicks')
+ 373: 
+ 374: .insert({
+ 375: 
+ 376: banner_id: bannerId,
+ 377: 
+ 378: banner_name: bannerName,
+ 379: 
+ 380: // ==================================================
+ 381: // ✋ 버디 모임 참가 신청 / 취소 토글 핸들러 (전역 등록)
+ 382: // ==================================================
+ 383: async function handleToggleJoinPost(postId) {
+ 384: if (!currentUser || (!currentUser.email && !currentUser.name && !currentUser.nickname)) {
+ 385: showToast("🔑 로그인 후 버디 참가 신청을 진행하실 수 있습니다!");
+ 386: const authModal = document.getElementById("authModal");
+ 387: if (authModal && typeof openModal === "function") {
+ 388: if (typeof switchAuthTab === "function") switchAuthTab('login');
+ 389: openModal(authModal);
+ 390: }
+ 391: return;
+ 392: }
+ 393: 
+ 394: const post = (typeof posts !== 'undefined' && Array.isArray(posts)) ? posts.find(p => String(p.id) === String(postId)) : null;
+ 395: if (!post) {
+ 396: showToast("⚠️ 게시글을 찾을 수 없습니다.");
+ 397: return;
+ 398: }
+ 399: 
+ 400: if (typeof isMyPost === 'function' && isMyPost(post)) {
+ 401: showToast("👑 본인이 주최한 모임입니다. (주최자 참가 확정 상태)");
+ 402: return;
+ 403: }
+ 404: 
+ 405: if (!Array.isArray(post.participants)) post.participants = [];
+ 406: if (!Array.isArray(post.pending_participants)) post.pending_participants = [];
+ 407: 
+ 408: const myIdentifier = currentUser.nickname || currentUser.name || currentUser.realName || (currentUser.email ? currentUser.email.split('@')[0] : "다이버");
+ 409: const myEmail = currentUser.email ? currentUser.email.trim().toLowerCase() : "";
+ 410: const myGender = currentUser.gender || 'private';
+ 411: const myAgeGroup = currentUser.age_group || currentUser.ageGroup || 'private';
+ 412: 
+ 413: // 1. 이미 참가 확정 상태인지 확인
+ 414: const confirmedIndex = post.participants.findIndex(p => {
+ 415: if (typeof p === 'object' && p !== null) {
+ 416: if (myEmail && p.email && String(p.email).trim().toLowerCase() === myEmail) return true;
+ 417: if (p.name && String(p.name).trim().toLowerCase() === myIdentifier.toLowerCase()) return true;
+ 418: }
+ 419: const pStr = String(p).trim().toLowerCase();
+ 420: return pStr === myIdentifier.toLowerCase() || (myEmail && pStr === myEmail);
+ 421: });
+ 422: 
+ 423: // 2. 이미 승인 대기 중인지 확인
+ 424: const pendingIndex = post.pending_participants.findIndex(p => {
+ 425: if (typeof p === 'object' && p !== null) {
+ 426: if (myEmail && p.email && String(p.email).trim().toLowerCase() === myEmail) return true;
+ 427: if (p.name && String(p.name).trim().toLowerCase() === myIdentifier.toLowerCase()) return true;
+ 428: }
+ 429: const pStr = String(p).trim().toLowerCase();
+ 430: return pStr === myIdentifier.toLowerCase() || (myEmail && pStr === myEmail);
+ 431: });
+ 432: 
+ 433: // 🔒 완료/진행중 상태 제한
+ 434: if (post.status === "completed") {
+ 435: showToast("🔒 이미 일정이 완료된 모임은 참가 신청/취소를 할 수 없습니다.");
+ 436: return;
+ 437: }
+ 438: 
+ 439: if (confirmedIndex > -1) {
+ 440: // 확정된 참가 취소
+ 441: post.participants.splice(confirmedIndex, 1);
+ 442: post.joinedCount = Math.max(1, (post.participants.length + 1));
+ 443: if (post.status === "in_progress" || post.status === "closed") {
+ 444: post.status = "recruiting";
+ 445: post.statusText = "모집 중";
+ 446: }
+ 447: showToast("❌ 버디 참가가 취소되었습니다.");
+ 448: } else if (pendingIndex > -1) {
+ 449: // 대기 중인 신청 취소
+ 450: post.pending_participants.splice(pendingIndex, 1);
+ 451: showToast("❌ 참가 신청 대기가 취소되었습니다.");
+ 452: } else {
+ 453: // 신규 참가 신청 (대기열 접수)
+ 454: const capacityVal = parseInt(post.capacity || post.capacityCount || 4, 10);
+ 455: if (post.participants.length + 1 >= capacityVal) {
+ 456: showToast("⚠️ 모집 인원이 이미 마감되었습니다!");
+ 457: return;
+ 458: }
+ 459: 
+ 460: const applicantObj = {
+ 461: name: myIdentifier,
+ 462: email: myEmail,
+ 463: gender: myGender,
+ 464: age_group: myAgeGroup,
+ 465: requestedAt: getKSTIsoString()
+ 466: };
+ 467: post.pending_participants.push(applicantObj);
+ 468: showToast("🙋‍♂️ 버디 참가 신청이 접수되었습니다! 주최자 승인 후 참가가 확정됩니다.");
+ 469: }
+ 470: 
+ 471: // 저장 및 Supabase 반영
+ 472: if (typeof savePosts === 'function') savePosts();
+ 473: if (supabaseClient) {
+ 474: try {
+ 475: await supabaseClient.from('posts').update({
+ 476: participants: post.participants,
+ 477: pending_participants: post.pending_participants,
+ 478: joined_count: post.joinedCount || (post.participants.length + 1),
+ 479: status: post.status
+ 480: }).eq('id', post.id);
+ 481: } catch (err) {
+ 482: console.warn("Supabase participants/pending update notice:", err);
+ 483: }
+ 484: }
+ 485: 
+ 486: // 화면 갱신
+ 487: if (typeof filterAndRender === 'function') filterAndRender();
+ 488: if (typeof renderDynamicDetailModal === "function") {
+ 489: renderDynamicDetailModal(post);
+ 490: }
+ 491: }
+ 492: window.handleToggleJoinPost = handleToggleJoinPost;
+ 493: 
+ 494: // === updateModalFieldsByCategory: 게시판별 모달 타이틀 및 맞춤 면책 동의 문구 변환 엔진 ===
+ 495: function updateModalFieldsByCategory(catKey) {
+ 496: const modalTitleEl = document.getElementById("createModalTitle") || document.querySelector("#createPostModal h2, #createPostModal h3");
+ 497: const disclaimerLabelEl = document.getElementById("inlineLiabilityCheckLabel") || document.querySelector("label[for='inlineLiabilityCheck']");
+ 498: const descEl = document.getElementById("postDesc");
+ 499: const descLabelEl = document.getElementById("descLabel");
+ 500: 
+ 501: let titleText = "버디 모집글 작성";
+ 502: let disclaimerText = "[필수] 본 활동 중 발생하는 안전사고 및 개인 간의 문제에 대해 아쿠아버디 플랫폼은 법적 책임을 지지 않으며, 안전 수칙 준수 면책 방침에 동의합니다.";
+ 503: let placeholderText = "버디 모임 일정, 수심 계획, 준비물 등 상세 내용을 작성해 주세요!";
+ 504: let descLabelText = "상세 내용 및 플랜 *";
+ 505: 
+ 506: if (catKey === "market") {
+ 507: titleText = "중고 장비 매물 등록";
+ 508: disclaimerText = "[필수] 허위 매물 등록 금지 및 안전한 비대면/직거래 원칙, 플랫폼 분쟁 면책 방침에 동의합니다.";
+ 509: placeholderText = "상세설명을 작성해주세요!";
+ 510: descLabelText = "상세 설명 *";
+ 511: } else if (catKey === "community") {
+ 512: titleText = "자유수다 게시글 작성";
+ 513: disclaimerText = "[필수] 타인 비방, 광고, 욕설 및 커뮤니티 이용 규정을 위반하지 않으며, 이에 대한 책임은 작성자에게 있음에 동의합니다.";
+ 514: placeholderText = "생각과 정보, 궁금증을 작성해주세요";
+ 515: descLabelText = "내용 작성 *";
+ 516: } else if (catKey === "instructor") {
+ 517: titleText = "강사 클래스 개설";
+ 518: disclaimerText = "[필수] 본 활동 중 발생하는 안전사고 및 개인 간의 문제에 대해 아쿠아버디 플랫폼은 법적 책임을 지지 않으며, 안전 수칙 준수 면책 방침에 동의합니다.";
+ 519: placeholderText = "상세 내용 및 교육 커리큘럼을 작성해 주세요!";
+ 520: descLabelText = "상세 내용 및 교육 커리큘럼 *";
+ 521: : "https://ogfzfgsvmjuimjjhaubs.supabase.co";
+ 522: 
+ 523: var SUPABASE_ANON_KEY = (typeof window !== "undefined" && window.AQUA_CONFIG && window.AQUA_CONFIG.supabase)
+ 524: ? window.AQUA_CONFIG.supabase.anonKey
+ 525: : "sb_publishable_yq1u37mBsk6LfPqq428BOA_DKEEqaoW";
+ 526: 
+ 527: // Kakao integration removed per user request
+ 528: 
+ 529: var COUPANG_CUSPE_URL = (typeof window !== "undefined" && window.AQUA_CONFIG && window.AQUA_CONFIG.coupang)
+ 530: ? window.AQUA_CONFIG.coupang.cuspeUrl
+ 531: : "https://link.coupang.com/a/fKqrpaA2Fw";
+ 532: 
+ 533: // Initialize Supabase JS Client with explicit API key headers (No API key found error fix)
+ 534: let supabaseClient = null;
+ 535: if (typeof window !== "undefined" && window.supabase && window.supabase.createClient) {
+ 536: return {
+ 537: id: m.id || `msg-${m.created_at}`,
+ 538: sender: isMyMsg ? 'user' : 'other',
+ 539: author: authorName,
+ 540: var saved = localStorage.getItem('coupangApiKey');
+ 541: 
+ 542: if (saved) {
+ 543: 
+ 544: input.value = saved;
+ 545: 
+ 546: }
+ 547: 
+ 548: }
+ 549: 
+ 550: 
+ 551: // Test Supabase connectivity: insert a dummy post and fetch all posts, logging results.
+ 552: 
+ 553: async function testSupabase() {
+ 554: if (!supabaseClient) {
+ 555: console.warn('Supabase client not initialized.');
+ 556: return;
+ 557: }
+ 558: try {
+ 559: var testData = {
+ 560: author: 'TestUser',
+ 561: content: 'Supabase test entry',
+ 562: created_at: new Date().toISOString()
+ 563: };
+ 564: author: 'TestUser',
+ 565: content: 'Supabase test entry',
+ 566: created_at: new Date().toISOString()
+ 567: };
+ 568: const { data: insertData, error: insertError } = await supabaseClient
+ 569: .from('posts')
+ 570: .insert([testData], { returning: 'representation' });
+ 571: if (insertError) {
+ 572: console.error('Supabase insert error:', insertError);
+ 573: } else {
+ 574: console.log('Supabase insert successful:', insertData);
+ 575: }
+ 576: const { data: selectData, error: selectError } = await supabaseClient
+ 577: .from('posts')
+ 578: .select('*')
+ 579: .order('created_at', { ascending: false });
+ 580: if (selectError) {
+ 581: }];
+ 582: 
+ 583: 
+ 584: function saveCoupangApiKey() {
+ 585: 
+ 586: const input = document.getElementById('coupangApiKey');
+ 587: 
+ 588: if (!input) return;
+ 589: 
+ 590: 
+ 591: // === 최상단 전역 뷰 전환 엔진 (0초 만에 카테고리 클릭 무조건 동작 보장) ===
+ 592: var activeMainView = "buddy";
+ 593: var activeCategory = "all";
+ 594: 
+ 595: function switchMainView(viewName) {
+ 596: activeMainView = viewName;
+ 597: window._activeMainView = viewName;
+ 598: 
+ 599: document.querySelectorAll(".main-nav-btn, .nav-btn, .category-tab-btn, .category-pill").forEach(btn => {

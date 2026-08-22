@@ -1,0 +1,1952 @@
+[
+  {
+    "spot_id": "tide-haeundae",
+    "name": "부산 해운대 해수욕장",
+    "region_cat": "busan",
+    "lat": 35.1587,
+    "lng": 129.1604,
+    "tide_code": "SO_0553",
+    "buoy_code": "TW_0062",
+    "scuba_code": "SS14"
+  },
+  {
+    "spot_id": "tide-spot-001",
+    "name": "인천",
+    "region_cat": "seohae",
+    "lat": 37.45,
+    "lng": 126.63,
+    "tide_code": "DT_0001",
+    "buoy_code": "TW_0076",
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-002",
+    "name": "송공항",
+    "region_cat": "seohae",
+    "lat": 34.85,
+    "lng": 126.2,
+    "tide_code": "SO_0566",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-003",
+    "name": "평택",
+    "region_cat": "seohae",
+    "lat": 36.96,
+    "lng": 126.84,
+    "tide_code": "DT_0002",
+    "buoy_code": "TW_0070",
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-004",
+    "name": "쉬미항",
+    "region_cat": "seohae",
+    "lat": 34.47,
+    "lng": 126.2,
+    "tide_code": "SO_0567",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-005",
+    "name": "영광",
+    "region_cat": "seohae",
+    "lat": 35.27,
+    "lng": 126.51,
+    "tide_code": "DT_0003",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-006",
+    "name": "백야도",
+    "region_cat": "yeosu",
+    "lat": 34.61,
+    "lng": 127.65,
+    "tide_code": "SO_0568",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-007",
+    "name": "제주",
+    "region_cat": "jeju",
+    "lat": 33.51,
+    "lng": 126.52,
+    "tide_code": "DT_0004",
+    "buoy_code": "KG_0028",
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-008",
+    "name": "남포항",
+    "region_cat": "pohang",
+    "lat": 36.04,
+    "lng": 129.38,
+    "tide_code": "SO_0569",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-009",
+    "name": "부산",
+    "region_cat": "busan",
+    "lat": 35.1,
+    "lng": 129.04,
+    "tide_code": "DT_0005",
+    "buoy_code": "TW_0087",
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-010",
+    "name": "광암항",
+    "region_cat": "seohae",
+    "lat": 35.12,
+    "lng": 128.51,
+    "tide_code": "SO_0570",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-011",
+    "name": "묵호",
+    "region_cat": "donghae",
+    "lat": 37.55,
+    "lng": 129.11,
+    "tide_code": "DT_0006",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-012",
+    "name": "거제외포",
+    "region_cat": "yeosu",
+    "lat": 34.93,
+    "lng": 128.71,
+    "tide_code": "SO_0571",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-013",
+    "name": "목포",
+    "region_cat": "seohae",
+    "lat": 34.79,
+    "lng": 126.38,
+    "tide_code": "DT_0007",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-014",
+    "name": "읍천항",
+    "region_cat": "pohang",
+    "lat": 35.69,
+    "lng": 129.47,
+    "tide_code": "SO_0572",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-015",
+    "name": "안산",
+    "region_cat": "seohae",
+    "lat": 37.32,
+    "lng": 126.83,
+    "tide_code": "DT_0008",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-016",
+    "name": "양포항",
+    "region_cat": "pohang",
+    "lat": 35.88,
+    "lng": 129.52,
+    "tide_code": "SO_0573",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-017",
+    "name": "서귀포",
+    "region_cat": "jeju",
+    "lat": 33.24,
+    "lng": 126.56,
+    "tide_code": "DT_0010",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-018",
+    "name": "백사장항",
+    "region_cat": "seohae",
+    "lat": 36.58,
+    "lng": 126.34,
+    "tide_code": "SO_0574",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-019",
+    "name": "후포",
+    "region_cat": "busan",
+    "lat": 35.1587,
+    "lng": 129.1604,
+    "tide_code": "DT_0011",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-020",
+    "name": "화봉리",
+    "region_cat": "busan",
+    "lat": 35.1587,
+    "lng": 129.1604,
+    "tide_code": "SO_0576",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-021",
+    "name": "속초",
+    "region_cat": "donghae",
+    "lat": 38.2097,
+    "lng": 128.6136,
+    "tide_code": "DT_0012",
+    "buoy_code": "TW_0093",
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-022",
+    "name": "가거도",
+    "region_cat": "seohae",
+    "lat": 34.07,
+    "lng": 125.12,
+    "tide_code": "SO_0577",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-023",
+    "name": "울릉도",
+    "region_cat": "dokdo",
+    "lat": 37.4852,
+    "lng": 130.9052,
+    "tide_code": "DT_0013",
+    "buoy_code": "KG_0102",
+    "scuba_code": "SS12"
+  },
+  {
+    "spot_id": "tide-spot-024",
+    "name": "소매물도",
+    "region_cat": "yeosu",
+    "lat": 34.62,
+    "lng": 128.62,
+    "tide_code": "SO_0578",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-025",
+    "name": "통영",
+    "region_cat": "yeosu",
+    "lat": 34.84,
+    "lng": 128.42,
+    "tide_code": "DT_0014",
+    "buoy_code": "TW_0084",
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-026",
+    "name": "강양항",
+    "region_cat": "ulsan",
+    "lat": 35.37,
+    "lng": 129.35,
+    "tide_code": "SO_0581",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-027",
+    "name": "여수",
+    "region_cat": "yeosu",
+    "lat": 34.74,
+    "lng": 127.74,
+    "tide_code": "DT_0016",
+    "buoy_code": "TW_0083",
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-028",
+    "name": "암태도",
+    "region_cat": "seohae",
+    "lat": 34.82,
+    "lng": 126.11,
+    "tide_code": "SO_0631",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-029",
+    "name": "대산",
+    "region_cat": "seohae",
+    "lat": 37.0,
+    "lng": 126.43,
+    "tide_code": "DT_0017",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-030",
+    "name": "천리포항",
+    "region_cat": "seohae",
+    "lat": 36.79,
+    "lng": 126.14,
+    "tide_code": "SO_0699",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-031",
+    "name": "군산",
+    "region_cat": "seohae",
+    "lat": 35.97,
+    "lng": 126.71,
+    "tide_code": "DT_0018",
+    "buoy_code": "TW_0072",
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-032",
+    "name": "호도",
+    "region_cat": "seohae",
+    "lat": 36.3,
+    "lng": 126.26,
+    "tide_code": "SO_0700",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-033",
+    "name": "울산",
+    "region_cat": "ulsan",
+    "lat": 35.5,
+    "lng": 129.37,
+    "tide_code": "DT_0020",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-034",
+    "name": "홍도항",
+    "region_cat": "seohae",
+    "lat": 34.68,
+    "lng": 125.18,
+    "tide_code": "SO_0701",
+    "buoy_code": null,
+    "scuba_code": "SS11"
+  },
+  {
+    "spot_id": "tide-spot-035",
+    "name": "추자도",
+    "region_cat": "seohae",
+    "lat": 33.95,
+    "lng": 126.3,
+    "tide_code": "DT_0021",
+    "buoy_code": null,
+    "scuba_code": "SS16"
+  },
+  {
+    "spot_id": "tide-spot-036",
+    "name": "진도옥도",
+    "region_cat": "seohae",
+    "lat": 34.37,
+    "lng": 126.04,
+    "tide_code": "SO_0702",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-037",
+    "name": "성산포",
+    "region_cat": "jeju",
+    "lat": 33.47,
+    "lng": 126.93,
+    "tide_code": "DT_0022",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-038",
+    "name": "땅끝항",
+    "region_cat": "seohae",
+    "lat": 34.3,
+    "lng": 126.52,
+    "tide_code": "SO_0703",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-039",
+    "name": "장항",
+    "region_cat": "seohae",
+    "lat": 36.0,
+    "lng": 126.69,
+    "tide_code": "DT_0024",
+    "buoy_code": "HB_0001",
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-040",
+    "name": "마량항",
+    "region_cat": "seohae",
+    "lat": 34.38,
+    "lng": 126.82,
+    "tide_code": "SO_0705",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-041",
+    "name": "모슬포",
+    "region_cat": "jeju",
+    "lat": 33.21,
+    "lng": 126.25,
+    "tide_code": "DT_0023",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-042",
+    "name": "소안항",
+    "region_cat": "seohae",
+    "lat": 34.16,
+    "lng": 126.65,
+    "tide_code": "SO_0704",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-043",
+    "name": "보령",
+    "region_cat": "seohae",
+    "lat": 36.35,
+    "lng": 126.59,
+    "tide_code": "DT_0025",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-044",
+    "name": "청산도",
+    "region_cat": "seohae",
+    "lat": 34.17,
+    "lng": 126.87,
+    "tide_code": "SO_0706",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-045",
+    "name": "고흥발포",
+    "region_cat": "yeosu",
+    "lat": 34.48,
+    "lng": 127.27,
+    "tide_code": "DT_0026",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-046",
+    "name": "시산항",
+    "region_cat": "yeosu",
+    "lat": 34.4,
+    "lng": 127.26,
+    "tide_code": "SO_0707",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-047",
+    "name": "완도",
+    "region_cat": "seohae",
+    "lat": 34.31,
+    "lng": 126.75,
+    "tide_code": "DT_0027",
+    "buoy_code": "TW_0078",
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-048",
+    "name": "안도항",
+    "region_cat": "yeosu",
+    "lat": 34.48,
+    "lng": 127.8,
+    "tide_code": "SO_0708",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-049",
+    "name": "진도",
+    "region_cat": "seohae",
+    "lat": 34.48,
+    "lng": 126.26,
+    "tide_code": "DT_0028",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-050",
+    "name": "두문포",
+    "region_cat": "yeosu",
+    "lat": 34.68,
+    "lng": 127.76,
+    "tide_code": "SO_0709",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-051",
+    "name": "거제도",
+    "region_cat": "yeosu",
+    "lat": 34.88,
+    "lng": 128.62,
+    "tide_code": "DT_0029",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-052",
+    "name": "봉우항",
+    "region_cat": "busan",
+    "lat": 35.1587,
+    "lng": 129.1604,
+    "tide_code": "SO_0710",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-053",
+    "name": "거문도",
+    "region_cat": "yeosu",
+    "lat": 34.02,
+    "lng": 127.31,
+    "tide_code": "DT_0031",
+    "buoy_code": null,
+    "scuba_code": "SS8"
+  },
+  {
+    "spot_id": "tide-spot-054",
+    "name": "창선도",
+    "region_cat": "yeosu",
+    "lat": 34.85,
+    "lng": 128.02,
+    "tide_code": "SO_0711",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-055",
+    "name": "강화대교",
+    "region_cat": "seohae",
+    "lat": 37.73,
+    "lng": 126.52,
+    "tide_code": "DT_0032",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-056",
+    "name": "능양항",
+    "region_cat": "yeosu",
+    "lat": 34.78,
+    "lng": 128.64,
+    "tide_code": "SO_0712",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-057",
+    "name": "흑산도",
+    "region_cat": "seohae",
+    "lat": 34.68,
+    "lng": 125.43,
+    "tide_code": "DT_0035",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-058",
+    "name": "대진항",
+    "region_cat": "seohae",
+    "lat": 38.5,
+    "lng": 128.42,
+    "tide_code": "SO_0731",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-059",
+    "name": "대청도",
+    "region_cat": "seohae",
+    "lat": 37.83,
+    "lng": 124.7,
+    "tide_code": "DT_0036",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-060",
+    "name": "남애항",
+    "region_cat": "donghae",
+    "lat": 37.94,
+    "lng": 128.78,
+    "tide_code": "SO_0732",
+    "buoy_code": null,
+    "scuba_code": "SS2"
+  },
+  {
+    "spot_id": "tide-spot-061",
+    "name": "어청도",
+    "region_cat": "seohae",
+    "lat": 36.12,
+    "lng": 125.98,
+    "tide_code": "DT_0037",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-062",
+    "name": "강릉항",
+    "region_cat": "donghae",
+    "lat": 37.77,
+    "lng": 128.95,
+    "tide_code": "SO_0733",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-063",
+    "name": "굴업도",
+    "region_cat": "seohae",
+    "lat": 37.18,
+    "lng": 125.95,
+    "tide_code": "DT_0038",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-064",
+    "name": "궁촌항",
+    "region_cat": "donghae",
+    "lat": 37.33,
+    "lng": 129.27,
+    "tide_code": "SO_0734",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-065",
+    "name": "왕돌초",
+    "region_cat": "pohang",
+    "lat": 36.72,
+    "lng": 129.73,
+    "tide_code": "DT_0039",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-066",
+    "name": "죽변항",
+    "region_cat": "donghae",
+    "lat": 37.05,
+    "lng": 129.42,
+    "tide_code": "SO_0735",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-067",
+    "name": "독도",
+    "region_cat": "dokdo",
+    "lat": 37.2425,
+    "lng": 131.8689,
+    "tide_code": "DT_0903",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-068",
+    "name": "축산항",
+    "region_cat": "pohang",
+    "lat": 36.5,
+    "lng": 129.44,
+    "tide_code": "SO_0736",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-069",
+    "name": "복사초",
+    "region_cat": "seohae",
+    "lat": 34.1,
+    "lng": 126.16,
+    "tide_code": "DT_0041",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-070",
+    "name": "강구항",
+    "region_cat": "pohang",
+    "lat": 36.36,
+    "lng": 129.38,
+    "tide_code": "SO_0737",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-071",
+    "name": "교본초",
+    "region_cat": "busan",
+    "lat": 35.1587,
+    "lng": 129.1604,
+    "tide_code": "DT_0042",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-072",
+    "name": "도장항",
+    "region_cat": "seohae",
+    "lat": 36.0,
+    "lng": 126.69,
+    "tide_code": "SO_0739",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-073",
+    "name": "영흥도",
+    "region_cat": "seohae",
+    "lat": 37.25,
+    "lng": 126.48,
+    "tide_code": "DT_0043",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-074",
+    "name": "보옥항",
+    "region_cat": "seohae",
+    "lat": 34.25,
+    "lng": 126.52,
+    "tide_code": "SO_0740",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-075",
+    "name": "영종대교",
+    "region_cat": "seohae",
+    "lat": 37.55,
+    "lng": 126.55,
+    "tide_code": "DT_0044",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-076",
+    "name": "검산항",
+    "region_cat": "busan",
+    "lat": 35.1587,
+    "lng": 129.1604,
+    "tide_code": "SO_0752",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-077",
+    "name": "쌍정초",
+    "region_cat": "busan",
+    "lat": 35.1587,
+    "lng": 129.1604,
+    "tide_code": "DT_0046",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-078",
+    "name": "하의도웅곡",
+    "region_cat": "seohae",
+    "lat": 34.6,
+    "lng": 126.04,
+    "tide_code": "SO_0753",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-079",
+    "name": "도농탄",
+    "region_cat": "busan",
+    "lat": 35.1587,
+    "lng": 129.1604,
+    "tide_code": "DT_0047",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-080",
+    "name": "평호리",
+    "region_cat": "busan",
+    "lat": 35.1587,
+    "lng": 129.1604,
+    "tide_code": "SO_0754",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-081",
+    "name": "속초등표",
+    "region_cat": "donghae",
+    "lat": 38.205,
+    "lng": 128.61,
+    "tide_code": "DT_0048",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-082",
+    "name": "원동항",
+    "region_cat": "busan",
+    "lat": 35.1587,
+    "lng": 129.1604,
+    "tide_code": "SO_0755",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-083",
+    "name": "광양",
+    "region_cat": "yeosu",
+    "lat": 34.9,
+    "lng": 127.69,
+    "tide_code": "DT_0049",
+    "buoy_code": "TW_0074",
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-084",
+    "name": "사초항",
+    "region_cat": "seohae",
+    "lat": 34.42,
+    "lng": 126.75,
+    "tide_code": "SO_0756",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-085",
+    "name": "태안",
+    "region_cat": "seohae",
+    "lat": 36.75,
+    "lng": 126.29,
+    "tide_code": "DT_0050",
+    "buoy_code": "TW_0082",
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-086",
+    "name": "안남리",
+    "region_cat": "busan",
+    "lat": 35.1587,
+    "lng": 129.1604,
+    "tide_code": "SO_0757",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-087",
+    "name": "서천마량",
+    "region_cat": "seohae",
+    "lat": 36.13,
+    "lng": 126.5,
+    "tide_code": "DT_0051",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-088",
+    "name": "달천도",
+    "region_cat": "yeosu",
+    "lat": 34.8,
+    "lng": 127.56,
+    "tide_code": "SO_0758",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-089",
+    "name": "인천송도",
+    "region_cat": "seohae",
+    "lat": 37.38,
+    "lng": 126.64,
+    "tide_code": "DT_0052",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-090",
+    "name": "장문리",
+    "region_cat": "busan",
+    "lat": 35.1587,
+    "lng": 129.1604,
+    "tide_code": "SO_0759",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-091",
+    "name": "진해",
+    "region_cat": "seohae",
+    "lat": 35.15,
+    "lng": 128.68,
+    "tide_code": "DT_0054",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-092",
+    "name": "오산항",
+    "region_cat": "busan",
+    "lat": 35.1587,
+    "lng": 129.1604,
+    "tide_code": "SO_0760",
+    "buoy_code": null,
+    "scuba_code": "SS4"
+  },
+  {
+    "spot_id": "tide-spot-093",
+    "name": "부산항신항",
+    "region_cat": "busan",
+    "lat": 35.07,
+    "lng": 128.82,
+    "tide_code": "DT_0056",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-094",
+    "name": "녹동항",
+    "region_cat": "yeosu",
+    "lat": 34.52,
+    "lng": 127.15,
+    "tide_code": "SO_0761",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-095",
+    "name": "동해항",
+    "region_cat": "donghae",
+    "lat": 37.49,
+    "lng": 129.14,
+    "tide_code": "DT_0057",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-096",
+    "name": "신안옥도",
+    "region_cat": "seohae",
+    "lat": 34.72,
+    "lng": 126.08,
+    "tide_code": "SO_1248",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-097",
+    "name": "경인항",
+    "region_cat": "seohae",
+    "lat": 37.56,
+    "lng": 126.6,
+    "tide_code": "DT_0058",
+    "buoy_code": "TW_0077",
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-098",
+    "name": "독거도",
+    "region_cat": "seohae",
+    "lat": 34.25,
+    "lng": 126.18,
+    "tide_code": "SO_1249",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-099",
+    "name": "백령도",
+    "region_cat": "seohae",
+    "lat": 37.96,
+    "lng": 124.67,
+    "tide_code": "DT_0059",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-100",
+    "name": "평도",
+    "region_cat": "seohae",
+    "lat": 37.66,
+    "lng": 125.7,
+    "tide_code": "SO_1250",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-101",
+    "name": "연평도",
+    "region_cat": "seohae",
+    "lat": 37.66,
+    "lng": 125.7,
+    "tide_code": "DT_0060",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-102",
+    "name": "낙월도",
+    "region_cat": "seohae",
+    "lat": 35.25,
+    "lng": 126.23,
+    "tide_code": "SO_1251",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-103",
+    "name": "삼천포",
+    "region_cat": "yeosu",
+    "lat": 34.92,
+    "lng": 128.06,
+    "tide_code": "DT_0061",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-104",
+    "name": "외연도항",
+    "region_cat": "seohae",
+    "lat": 36.22,
+    "lng": 126.1,
+    "tide_code": "SO_1252",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-105",
+    "name": "마산",
+    "region_cat": "seohae",
+    "lat": 35.2,
+    "lng": 128.57,
+    "tide_code": "DT_0062",
+    "buoy_code": "TW_0085",
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-106",
+    "name": "상왕등도",
+    "region_cat": "seohae",
+    "lat": 35.66,
+    "lng": 126.1,
+    "tide_code": "SO_1253",
+    "buoy_code": "TW_0079",
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-107",
+    "name": "가덕도",
+    "region_cat": "busan",
+    "lat": 35.02,
+    "lng": 128.83,
+    "tide_code": "DT_0063",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-108",
+    "name": "만재도",
+    "region_cat": "seohae",
+    "lat": 34.2,
+    "lng": 125.46,
+    "tide_code": "SO_1254",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-109",
+    "name": "교동대교",
+    "region_cat": "seohae",
+    "lat": 37.79,
+    "lng": 126.33,
+    "tide_code": "DT_0064",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-110",
+    "name": "상태도",
+    "region_cat": "seohae",
+    "lat": 34.45,
+    "lng": 125.29,
+    "tide_code": "SO_1255",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-111",
+    "name": "덕적도",
+    "region_cat": "seohae",
+    "lat": 37.22,
+    "lng": 126.15,
+    "tide_code": "DT_0065",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-112",
+    "name": "어류정항",
+    "region_cat": "seohae",
+    "lat": 37.68,
+    "lng": 126.34,
+    "tide_code": "SO_1256",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-113",
+    "name": "안흥",
+    "region_cat": "seohae",
+    "lat": 36.67,
+    "lng": 126.13,
+    "tide_code": "DT_0067",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-114",
+    "name": "강화하리",
+    "region_cat": "seohae",
+    "lat": 37.77,
+    "lng": 126.27,
+    "tide_code": "SO_1257",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-115",
+    "name": "위도",
+    "region_cat": "seohae",
+    "lat": 35.6,
+    "lng": 126.24,
+    "tide_code": "DT_0068",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-116",
+    "name": "잠진도",
+    "region_cat": "seohae",
+    "lat": 37.43,
+    "lng": 126.41,
+    "tide_code": "SO_1258",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-117",
+    "name": "포항",
+    "region_cat": "pohang",
+    "lat": 36.04,
+    "lng": 129.38,
+    "tide_code": "DT_0091",
+    "buoy_code": "TW_0089",
+    "scuba_code": "SS5"
+  },
+  {
+    "spot_id": "tide-spot-118",
+    "name": "자월도",
+    "region_cat": "seohae",
+    "lat": 37.25,
+    "lng": 126.33,
+    "tide_code": "SO_1259",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-119",
+    "name": "여호항",
+    "region_cat": "busan",
+    "lat": 35.1587,
+    "lng": 129.1604,
+    "tide_code": "DT_0092",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-120",
+    "name": "방포항",
+    "region_cat": "seohae",
+    "lat": 36.52,
+    "lng": 126.33,
+    "tide_code": "SO_1260",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-121",
+    "name": "소무의도",
+    "region_cat": "seohae",
+    "lat": 37.37,
+    "lng": 126.41,
+    "tide_code": "DT_0093",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-122",
+    "name": "무창포항",
+    "region_cat": "seohae",
+    "lat": 36.25,
+    "lng": 126.53,
+    "tide_code": "SO_1261",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-123",
+    "name": "서거차도",
+    "region_cat": "seohae",
+    "lat": 34.24,
+    "lng": 125.91,
+    "tide_code": "DT_0094",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-124",
+    "name": "격포항",
+    "region_cat": "seohae",
+    "lat": 35.62,
+    "lng": 126.47,
+    "tide_code": "SO_1262",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-125",
+    "name": "이어도",
+    "region_cat": "jeju",
+    "lat": 32.12,
+    "lng": 125.18,
+    "tide_code": "IE_0060",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-126",
+    "name": "구시포항",
+    "region_cat": "seohae",
+    "lat": 35.45,
+    "lng": 126.44,
+    "tide_code": "SO_1263",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-127",
+    "name": "신안가거초",
+    "region_cat": "seohae",
+    "lat": 33.93,
+    "lng": 124.59,
+    "tide_code": "IE_0061",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-128",
+    "name": "계마항",
+    "region_cat": "seohae",
+    "lat": 35.36,
+    "lng": 126.42,
+    "tide_code": "SO_1264",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-129",
+    "name": "옹진소청초",
+    "region_cat": "seohae",
+    "lat": 37.42,
+    "lng": 124.73,
+    "tide_code": "IE_0062",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-130",
+    "name": "송이도",
+    "region_cat": "seohae",
+    "lat": 35.26,
+    "lng": 126.14,
+    "tide_code": "SO_1265",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-131",
+    "name": "미조항",
+    "region_cat": "yeosu",
+    "lat": 34.71,
+    "lng": 128.04,
+    "tide_code": "SO_0326",
+    "buoy_code": null,
+    "scuba_code": "SS7"
+  },
+  {
+    "spot_id": "tide-spot-132",
+    "name": "남열항",
+    "region_cat": "yeosu",
+    "lat": 34.55,
+    "lng": 127.45,
+    "tide_code": "SO_1266",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-133",
+    "name": "벽파진",
+    "region_cat": "seohae",
+    "lat": 34.54,
+    "lng": 126.33,
+    "tide_code": "SO_0537",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-134",
+    "name": "구룡포항",
+    "region_cat": "pohang",
+    "lat": 35.98,
+    "lng": 129.55,
+    "tide_code": "SO_1267",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-135",
+    "name": "안마도",
+    "region_cat": "seohae",
+    "lat": 35.33,
+    "lng": 126.02,
+    "tide_code": "SO_0538",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-136",
+    "name": "궁평항",
+    "region_cat": "seohae",
+    "lat": 37.11,
+    "lng": 126.68,
+    "tide_code": "SO_1268",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-137",
+    "name": "강화외포",
+    "region_cat": "seohae",
+    "lat": 37.7,
+    "lng": 126.38,
+    "tide_code": "SO_0539",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-138",
+    "name": "연도항",
+    "region_cat": "seohae",
+    "lat": 36.08,
+    "lng": 126.43,
+    "tide_code": "SO_1269",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-139",
+    "name": "호산항",
+    "region_cat": "busan",
+    "lat": 35.1587,
+    "lng": 129.1604,
+    "tide_code": "SO_0540",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-140",
+    "name": "삼길포항",
+    "region_cat": "seohae",
+    "lat": 37.0,
+    "lng": 126.45,
+    "tide_code": "SO_1270",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-141",
+    "name": "말도",
+    "region_cat": "seohae",
+    "lat": 35.85,
+    "lng": 126.28,
+    "tide_code": "SO_0547",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-142",
+    "name": "어은돌항",
+    "region_cat": "seohae",
+    "lat": 36.71,
+    "lng": 126.12,
+    "tide_code": "SO_1271",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-143",
+    "name": "우이도",
+    "region_cat": "busan",
+    "lat": 35.1587,
+    "lng": 129.1604,
+    "tide_code": "SO_0548",
+    "buoy_code": "TW_0080",
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-144",
+    "name": "다대포항",
+    "region_cat": "busan",
+    "lat": 35.04,
+    "lng": 128.96,
+    "tide_code": "SO_1272",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-145",
+    "name": "초도",
+    "region_cat": "yeosu",
+    "lat": 34.22,
+    "lng": 127.26,
+    "tide_code": "SO_0549",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-146",
+    "name": "장호항",
+    "region_cat": "donghae",
+    "lat": 37.28,
+    "lng": 129.31,
+    "tide_code": "SO_1273",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-147",
+    "name": "나로도",
+    "region_cat": "yeosu",
+    "lat": 34.46,
+    "lng": 127.48,
+    "tide_code": "SO_0550",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-148",
+    "name": "거진항",
+    "region_cat": "seohae",
+    "lat": 38.44,
+    "lng": 128.46,
+    "tide_code": "SO_1274",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-149",
+    "name": "여서도",
+    "region_cat": "busan",
+    "lat": 35.1587,
+    "lng": 129.1604,
+    "tide_code": "SO_0551",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-150",
+    "name": "공현진항",
+    "region_cat": "donghae",
+    "lat": 38.36,
+    "lng": 128.51,
+    "tide_code": "SO_1275",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-151",
+    "name": "고현항",
+    "region_cat": "yeosu",
+    "lat": 34.89,
+    "lng": 128.62,
+    "tide_code": "SO_0552",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-152",
+    "name": "아야진항",
+    "region_cat": "donghae",
+    "lat": 38.27,
+    "lng": 128.55,
+    "tide_code": "SO_1276",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-154",
+    "name": "화순항",
+    "region_cat": "jeju",
+    "lat": 33.23,
+    "lng": 126.31,
+    "tide_code": "SO_1277",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-155",
+    "name": "영종왕산",
+    "region_cat": "seohae",
+    "lat": 37.45,
+    "lng": 126.37,
+    "tide_code": "SO_0554",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-156",
+    "name": "원평항",
+    "region_cat": "busan",
+    "lat": 35.1587,
+    "lng": 129.1604,
+    "tide_code": "SO_1278",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-157",
+    "name": "서망항",
+    "region_cat": "seohae",
+    "lat": 34.37,
+    "lng": 126.13,
+    "tide_code": "SO_0555",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-158",
+    "name": "어란진항",
+    "region_cat": "seohae",
+    "lat": 34.35,
+    "lng": 126.47,
+    "tide_code": "SO_1279",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-159",
+    "name": "승봉도",
+    "region_cat": "seohae",
+    "lat": 37.16,
+    "lng": 126.3,
+    "tide_code": "SO_0562",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-160",
+    "name": "덕산항",
+    "region_cat": "donghae",
+    "lat": 37.36,
+    "lng": 129.24,
+    "tide_code": "SO_1280",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-161",
+    "name": "울도",
+    "region_cat": "seohae",
+    "lat": 37.03,
+    "lng": 125.99,
+    "tide_code": "SO_0563",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-162",
+    "name": "임원항",
+    "region_cat": "donghae",
+    "lat": 37.23,
+    "lng": 129.34,
+    "tide_code": "SO_1281",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-163",
+    "name": "국화도",
+    "region_cat": "seohae",
+    "lat": 37.03,
+    "lng": 126.52,
+    "tide_code": "SO_0564",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-164",
+    "name": "선재도",
+    "region_cat": "seohae",
+    "lat": 37.23,
+    "lng": 126.53,
+    "tide_code": "SO_1282",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-165",
+    "name": "향화도항",
+    "region_cat": "seohae",
+    "lat": 35.16,
+    "lng": 126.36,
+    "tide_code": "SO_0565",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-166",
+    "name": "사천진항",
+    "region_cat": "donghae",
+    "lat": 37.83,
+    "lng": 128.88,
+    "tide_code": "SO_1283",
+    "buoy_code": null,
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-167",
+    "name": "한수원_고리",
+    "region_cat": "ulsan",
+    "lat": 35.32,
+    "lng": 129.29,
+    "tide_code": null,
+    "buoy_code": "HB_0002",
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-168",
+    "name": "한수원_진하",
+    "region_cat": "ulsan",
+    "lat": 35.38,
+    "lng": 129.35,
+    "tide_code": null,
+    "buoy_code": "HB_0003",
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-169",
+    "name": "감천항",
+    "region_cat": "busan",
+    "lat": 35.07,
+    "lng": 129.0,
+    "tide_code": null,
+    "buoy_code": "TW_0088",
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-170",
+    "name": "한수원_온양",
+    "region_cat": "pohang",
+    "lat": 35.68,
+    "lng": 129.46,
+    "tide_code": null,
+    "buoy_code": "HB_0007",
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-171",
+    "name": "한수원_덕천",
+    "region_cat": "donghae",
+    "lat": 37.08,
+    "lng": 129.41,
+    "tide_code": null,
+    "buoy_code": "HB_0008",
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-172",
+    "name": "송정해수욕장",
+    "region_cat": "busan",
+    "lat": 35.1785,
+    "lng": 129.1995,
+    "tide_code": null,
+    "buoy_code": "TW_0090",
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-173",
+    "name": "한수원_나곡",
+    "region_cat": "donghae",
+    "lat": 37.12,
+    "lng": 129.41,
+    "tide_code": null,
+    "buoy_code": "HB_0009",
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-174",
+    "name": "낙산해수욕장",
+    "region_cat": "donghae",
+    "lat": 38.12,
+    "lng": 128.63,
+    "tide_code": null,
+    "buoy_code": "TW_0091",
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-175",
+    "name": "임랑해수욕장",
+    "region_cat": "ulsan",
+    "lat": 35.318,
+    "lng": 129.264,
+    "tide_code": null,
+    "buoy_code": "TW_0092",
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-176",
+    "name": "대한해협",
+    "region_cat": "yeosu",
+    "lat": 34.5,
+    "lng": 129.5,
+    "tide_code": null,
+    "buoy_code": "KG_0024",
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-177",
+    "name": "남해동부",
+    "region_cat": "yeosu",
+    "lat": 34.5,
+    "lng": 128.5,
+    "tide_code": null,
+    "buoy_code": "KG_0025",
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-178",
+    "name": "망상해수욕장",
+    "region_cat": "donghae",
+    "lat": 37.59,
+    "lng": 129.09,
+    "tide_code": null,
+    "buoy_code": "TW_0094",
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-179",
+    "name": "고래불해수욕장",
+    "region_cat": "pohang",
+    "lat": 36.58,
+    "lng": 129.41,
+    "tide_code": null,
+    "buoy_code": "TW_0095",
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-180",
+    "name": "대천해수욕장",
+    "region_cat": "seohae",
+    "lat": 36.3,
+    "lng": 126.51,
+    "tide_code": null,
+    "buoy_code": "TW_0069",
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-181",
+    "name": "중문해수욕장",
+    "region_cat": "jeju",
+    "lat": 33.245,
+    "lng": 126.412,
+    "tide_code": null,
+    "buoy_code": "TW_0075",
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-182",
+    "name": "생일도",
+    "region_cat": "seohae",
+    "lat": 34.32,
+    "lng": 126.95,
+    "tide_code": null,
+    "buoy_code": "TW_0081",
+    "scuba_code": null
+  },
+  {
+    "spot_id": "tide-spot-183",
+    "name": "동명항",
+    "region_cat": "donghae",
+    "lat": 38.212,
+    "lng": 128.595,
+    "tide_code": null,
+    "buoy_code": null,
+    "scuba_code": "SS1"
+  },
+  {
+    "spot_id": "tide-spot-184",
+    "name": "강문해변",
+    "region_cat": "donghae",
+    "lat": 37.79,
+    "lng": 128.92,
+    "tide_code": null,
+    "buoy_code": null,
+    "scuba_code": "SS3"
+  },
+  {
+    "spot_id": "tide-spot-185",
+    "name": "구조라해수욕장",
+    "region_cat": "yeosu",
+    "lat": 34.81,
+    "lng": 128.68,
+    "tide_code": null,
+    "buoy_code": null,
+    "scuba_code": "SS6"
+  },
+  {
+    "spot_id": "tide-spot-186",
+    "name": "성산일출봉",
+    "region_cat": "jeju",
+    "lat": 33.4625,
+    "lng": 126.9389,
+    "tide_code": null,
+    "buoy_code": null,
+    "scuba_code": "SS9"
+  },
+  {
+    "spot_id": "tide-spot-187",
+    "name": "문섬",
+    "region_cat": "jeju",
+    "lat": 33.2285,
+    "lng": 126.5689,
+    "tide_code": null,
+    "buoy_code": null,
+    "scuba_code": "SS10"
+  },
+  {
+    "spot_id": "tide-spot-188",
+    "name": "어영",
+    "region_cat": "jeju",
+    "lat": 33.518,
+    "lng": 126.489,
+    "tide_code": null,
+    "buoy_code": null,
+    "scuba_code": "SS13"
+  },
+  {
+    "spot_id": "tide-spot-189",
+    "name": "태종대",
+    "region_cat": "busan",
+    "lat": 35.0525,
+    "lng": 129.0889,
+    "tide_code": null,
+    "buoy_code": null,
+    "scuba_code": "SS14"
+  },
+  {
+    "spot_id": "tide-spot-190",
+    "name": "격렬비열도",
+    "region_cat": "seohae",
+    "lat": 36.62,
+    "lng": 125.58,
+    "tide_code": null,
+    "buoy_code": null,
+    "scuba_code": "SS15"
+  },
+  {
+    "spot_id": "tide-spot-191",
+    "name": "욕지도",
+    "region_cat": "yeosu",
+    "lat": 34.63,
+    "lng": 128.25,
+    "tide_code": null,
+    "buoy_code": null,
+    "scuba_code": "SS17"
+  },
+  {
+    "spot_id": "tide-spot-192",
+    "name": "추암",
+    "region_cat": "donghae",
+    "lat": 37.478,
+    "lng": 129.158,
+    "tide_code": null,
+    "buoy_code": null,
+    "scuba_code": "SS18"
+  },
+  {
+    "spot_id": "buoy-kg_0021",
+    "name": "제주남부 부이",
+    "region_cat": "general",
+    "lat": 32.5,
+    "lng": 126.5,
+    "tide_code": null,
+    "buoy_code": "KG_0021",
+    "scuba_code": null
+  },
+  {
+    "spot_id": "buoy-kg_0101",
+    "name": "울릉도북동 부이",
+    "region_cat": "general",
+    "lat": 37.6,
+    "lng": 131.0,
+    "tide_code": null,
+    "buoy_code": "KG_0101",
+    "scuba_code": null
+  },
+  {
+    "spot_id": "buoy-tw_0086",
+    "name": "부산항신항 부이",
+    "region_cat": "general",
+    "lat": 35.07,
+    "lng": 128.82,
+    "tide_code": null,
+    "buoy_code": "TW_0086",
+    "scuba_code": null
+  }
+]

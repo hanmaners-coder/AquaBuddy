@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+.npm/
+
+# Environment & Executables
+*.exe
+ngrok.exe
+ngrok.zip
+
+# Python & SQLite
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+db.sqlite3
+*.db
+
+# Logs & Output files
+*.log
+server.log
+server_stdout.log
+boundary_output.txt
+gaps_summary.txt
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Temp / Local scratch
+scratch/
