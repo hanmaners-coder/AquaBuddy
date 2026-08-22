@@ -15177,12 +15177,10 @@ function initKakaoOceanMap(spot) {
         var pos = new window.kakao.maps.LatLng(lat, lng);
         _lastOceanKakaoPos = pos;
 
-        if (!_oceanKakaoMapObj) {
-            container.innerHTML = ''; // 깨진 DOM 요소 초기화
-            _oceanKakaoMapObj = new window.kakao.maps.Map(container, { center: pos, level: 6 });
-        } else {
-            _oceanKakaoMapObj.setCenter(pos);
-        }
+        // 🌟 지도가 이전에 0px일 때 잘못 생성되어 150px로 갇히는 현상 원천 차단:
+        // 컨테이너가 정상 표출된 상태(offsetWidth > 0)일 때 항상 깨끗하게 새로 지도 인스턴스 생성!
+        container.innerHTML = '';
+        _oceanKakaoMapObj = new window.kakao.maps.Map(container, { center: pos, level: 6 });
 
         // 🌟 지도가 처음 표출되거나 탭 전환 시 회색 박스/깨짐 방지 (다단계 릴레이아웃)
         var refreshMap = function() {

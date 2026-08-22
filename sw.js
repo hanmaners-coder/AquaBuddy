@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v680-resizeobserver-map-fix";
+const CACHE_NAME = "aquabuddy-cache-v690-fresh-map-instance-fix";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
