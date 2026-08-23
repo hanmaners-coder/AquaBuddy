@@ -908,8 +908,13 @@ function switchMainView(viewName) {
             else { cctvSec.style.display = "none"; cctvSec.classList.add("hidden"); }
         }
         if (tideSec) {
-            if (viewName !== "cctv") { tideSec.style.display = "block"; tideSec.classList.remove("hidden"); }
-            else { tideSec.style.display = "none"; tideSec.classList.add("hidden"); }
+            if (viewName !== "cctv") {
+                tideSec.className = "active-tab-section";
+                tideSec.style.display = "";
+            } else {
+                tideSec.className = "offscreen-tab";
+                tideSec.style.display = "";
+            }
         }
 
         // 서브 필터 바 및 홈 전용 섹션들 완전 은폐
@@ -925,11 +930,18 @@ function switchMainView(viewName) {
             if (!currentDashboardSpot && typeof OCEAN_WEATHER_DATA !== "undefined" && OCEAN_WEATHER_DATA.length > 0) {
                 currentDashboardSpot = OCEAN_WEATHER_DATA[0];
             }
-            if (typeof showOceanMapStandbyScreen === "function") {
-                showOceanMapStandbyScreen();
+            if (typeof renderUnifiedSpotDashboard === "function" && currentDashboardSpot) {
+                renderUnifiedSpotDashboard(currentDashboardSpot);
             }
             if (typeof renderWeatherGrid === "function") {
                 renderWeatherGrid(activeTideRegion || "all");
+            }
+            // 🌟 탭 전환 즉시 1회 relayout 및 setCenter 안전장치 호출
+            if (typeof window.kakao !== 'undefined' && window.kakao.maps && _oceanKakaoMapObj) {
+                _oceanKakaoMapObj.relayout();
+                if (_lastOceanKakaoPos) {
+                    _oceanKakaoMapObj.setCenter(_lastOceanKakaoPos);
+                }
             }
         }
         forceScrollToTop();
@@ -939,7 +951,7 @@ function switchMainView(viewName) {
     // 3. 📋 일반 게시판 피드 뷰 (홈 / 버디 / 강사 / 수다방 / 장터 / 내 활동기록 / 제휴)
     document.body.classList.remove("tide-view-active", "category-view-tide");
     if (feedSec) { feedSec.style.display = "block"; feedSec.classList.remove("hidden"); }
-    if (tideSec) { tideSec.style.display = "none"; tideSec.classList.add("hidden"); }
+    if (tideSec) { tideSec.className = "offscreen-tab"; tideSec.style.display = ""; }
     if (cctvSec) { cctvSec.style.display = "none"; cctvSec.classList.add("hidden"); }
 
     if (viewName === "all") {
@@ -4277,6 +4289,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     switchMainView('all');
     if (typeof OCEAN_WEATHER_DATA !== "undefined" && OCEAN_WEATHER_DATA.length > 0) {
         currentDashboardSpot = OCEAN_WEATHER_DATA[0];
+        if (typeof renderUnifiedSpotDashboard === "function") {
+            renderUnifiedSpotDashboard(OCEAN_WEATHER_DATA[0]);
+        }
     }
     renderWeatherGrid(activeTideRegion);
     renderOceanWebcams(activeCctvRegion);
@@ -15132,56 +15147,22 @@ window.renderAdminAffiliateStats = renderAdminAffiliateStats;
 // ─── 1. 카카오 지도 + 실시간 해양 카드 오버레이 ───────────────
 var _oceanKakaoMapObj = null;
 var _customOverlayObj = null;
-var _oceanMapResizeObserver = null;
 var _lastOceanKakaoPos = null;
-
-function showOceanMapStandbyScreen() {
-    var container = document.getElementById('oceanKakaoMap');
-    if (!container) return;
-    _oceanKakaoMapObj = null;
-    if (_customOverlayObj) { _customOverlayObj.setMap(null); _customOverlayObj = null; }
-    container.innerHTML = `
-        <div style="width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; box-sizing: border-box; background: rgba(10, 18, 35, 0.95);">
-            <div style="background: rgba(0, 242, 254, 0.12); width: 68px; height: 68px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; border: 1px solid rgba(0, 242, 254, 0.35); box-shadow: 0 0 20px rgba(0,242,254,0.2);">
-                <i class="fa-solid fa-map-location-dot" style="font-size: 2rem; color: #00f2fe;"></i>
-            </div>
-            <h4 style="color: #fff; font-size: 1.18rem; font-weight: 800; margin-bottom: 8px;">🗺️ 해양 관측 스팟 지도 대기 중</h4>
-            <p style="color: #94a3b8; font-size: 0.88rem; margin: 0; max-width: 400px; line-height: 1.5;">
-                상단의 <strong style="color: #00f2fe; font-weight: 800;">🔥 추천 스팟 (📍해운대, 📍제주 등)</strong>을 클릭하거나<br>검색창에 스팟 이름을 입력하시면 카카오 지도가 즉시 연결됩니다.
-            </p>
-        </div>
-    `;
-}
-window.showOceanMapStandbyScreen = showOceanMapStandbyScreen;
 
 function initKakaoOceanMap(spot) {
     var container = document.getElementById('oceanKakaoMap');
     if (!container) return;
 
-    // 🌟 ResizeObserver로 컨테이너 크기가 0에서 화면 크기로 변하는 순간 자동 relayout
-    if (typeof ResizeObserver !== 'undefined' && container && !_oceanMapResizeObserver) {
-        _oceanMapResizeObserver = new ResizeObserver(function() {
-            if (_oceanKakaoMapObj && container.offsetWidth > 0) {
-                _oceanKakaoMapObj.relayout();
-                if (_lastOceanKakaoPos) {
-                    _oceanKakaoMapObj.setCenter(_lastOceanKakaoPos);
-                }
-            }
-        });
-        _oceanMapResizeObserver.observe(container);
-    }
+    if (!spot) spot = (typeof currentDashboardSpot !== "undefined" && currentDashboardSpot) ? currentDashboardSpot : ((typeof OCEAN_WEATHER_DATA !== "undefined" && OCEAN_WEATHER_DATA.length > 0) ? OCEAN_WEATHER_DATA[0] : null);
+    if (!spot) return;
+    currentDashboardSpot = spot;
+
+    var lat = (spot && typeof spot.lat === 'number') ? spot.lat : 35.1587;
+    var lng = (spot && typeof spot.lng === 'number') ? spot.lng : 129.1604;
 
     var doRender = function() {
         if (typeof window.kakao === 'undefined' || !window.kakao.maps) return;
 
-        // 컨테이너가 아직 화면에 표출 안 됨(width == 0)일 때 지연 렌더링
-        if (container.offsetWidth === 0 || container.offsetHeight === 0) {
-            setTimeout(function() { initKakaoOceanMap(spot); }, 80);
-            return;
-        }
-
-        var lat = (spot && typeof spot.lat === 'number') ? spot.lat : 35.1587;
-        var lng = (spot && typeof spot.lng === 'number') ? spot.lng : 129.1604;
         var pos = new window.kakao.maps.LatLng(lat, lng);
         _lastOceanKakaoPos = pos;
 
@@ -15189,50 +15170,43 @@ function initKakaoOceanMap(spot) {
             container.innerHTML = '';
             _oceanKakaoMapObj = new window.kakao.maps.Map(container, { center: pos, level: 6 });
         } else {
+            _oceanKakaoMapObj.setCenter(pos);
             _oceanKakaoMapObj.relayout();
             _oceanKakaoMapObj.setCenter(pos);
         }
 
-        setTimeout(function() {
-            if (_oceanKakaoMapObj && container.offsetWidth > 0) {
-                _oceanKakaoMapObj.relayout();
-                _oceanKakaoMapObj.setCenter(pos);
-            }
-        }, 100);
-
         if (_customOverlayObj) { _customOverlayObj.setMap(null); _customOverlayObj = null; }
-        if (!spot) return;
 
-        var nm    = spot.name || spot.spot_name || '\uAD00\uCE21 \uC2A4\uD321';
+        var nm    = spot.name || spot.spot_name || '관측 스팟';
         var wT    = spot.waterTemp  || spot.water_temp  || '-';
         var wW    = spot.waveHeight || spot.wave_height || '-';
         var wWd   = spot.windSpeed  || spot.wind_speed  || '-';
         var wA    = spot.airTemp    || spot.air_temp    || '-';
-        var tide  = '\uBB3C\uB54C \uC815\uBCF4 \uC5C6\uC74C';
+        var tide  = '물때 정보 없음';
         if (spot.tideForecast && Array.isArray(spot.tideForecast) && spot.tideForecast.length > 0) {
             tide = spot.tideForecast.slice(0,2).map(function(t){
                 return (t.type||'').split('(')[0] + ':' + (t.time||'').split(',')[0];
             }).join(' / ');
-        } else if (spot.high_tide && spot.high_tide !== '\uC815\uBCF4\uC5C6\uC74C') {
-            tide = '\uB9CC\uC870:' + spot.high_tide.split(',')[0];
+        } else if (spot.high_tide && spot.high_tide !== '정보없음') {
+            tide = '만조:' + spot.high_tide.split(',')[0];
         }
 
         var html = '<div style="display:flex;flex-direction:column;align-items:center;pointer-events:auto;z-index:999999;filter:drop-shadow(0 6px 18px rgba(0,0,0,0.65));">' +
             '<div style="background:rgba(8,16,32,0.95);backdrop-filter:blur(8px);color:#fff;padding:7px 10px;border-radius:12px;border:1.5px solid #00f2fe;box-shadow:0 4px 18px rgba(0,242,254,0.4);max-width:180px;font-family:sans-serif;white-space:nowrap;">' +
             '<div style="display:flex;align-items:center;justify-content:space-between;gap:4px;border-bottom:1px solid rgba(255,255,255,0.12);padding-bottom:3px;margin-bottom:5px;">' +
-            '<strong style="font-size:0.78rem;color:#fff;font-weight:900;overflow:hidden;text-overflow:ellipsis;">\uD83D\uDCCD ' + nm + '</strong>' +
+            '<strong style="font-size:0.78rem;color:#fff;font-weight:900;overflow:hidden;text-overflow:ellipsis;">📍 ' + nm + '</strong>' +
             '<span style="background:rgba(0,230,118,0.25);color:#00e676;font-size:0.58rem;font-weight:900;padding:1px 5px;border-radius:4px;flex-shrink:0;">LIVE</span>' +
             '</div>' +
             '<div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:5px;">' +
-            '<div style="background:rgba(255,255,255,0.06);padding:3px 6px;border-radius:5px;"><span style="color:#94a3b8;font-size:0.58rem;display:block;line-height:1.2;">\uD83C\uDF21\uFE0F \uC218\uC628</span><strong style="color:#00f2fe;font-size:0.76rem;">' + wT + '</strong></div>' +
-            '<div style="background:rgba(255,255,255,0.06);padding:3px 6px;border-radius:5px;"><span style="color:#94a3b8;font-size:0.58rem;display:block;line-height:1.2;">\uD83C\uDF0A \uD30C\uACE0</span><strong style="color:#00f2fe;font-size:0.76rem;">' + wW + '</strong></div>' +
-            '<div style="background:rgba(255,255,255,0.06);padding:3px 6px;border-radius:5px;"><span style="color:#94a3b8;font-size:0.58rem;display:block;line-height:1.2;">\uD83C\uDF2C\uFE0F \uD48D\uC18D</span><strong style="color:#00f2fe;font-size:0.76rem;">' + wWd + '</strong></div>' +
-            '<div style="background:rgba(255,255,255,0.06);padding:3px 6px;border-radius:5px;"><span style="color:#94a3b8;font-size:0.58rem;display:block;line-height:1.2;">\uD83C\uDF21\uFE0F \uAE30\uC628</span><strong style="color:#00f2fe;font-size:0.76rem;">' + wA + '</strong></div>' +
+            '<div style="background:rgba(255,255,255,0.06);padding:3px 6px;border-radius:5px;"><span style="color:#94a3b8;font-size:0.58rem;display:block;line-height:1.2;">🌡️ 수온</span><strong style="color:#00f2fe;font-size:0.76rem;">' + wT + '</strong></div>' +
+            '<div style="background:rgba(255,255,255,0.06);padding:3px 6px;border-radius:5px;"><span style="color:#94a3b8;font-size:0.58rem;display:block;line-height:1.2;">🌊 파고</span><strong style="color:#00f2fe;font-size:0.76rem;">' + wW + '</strong></div>' +
+            '<div style="background:rgba(255,255,255,0.06);padding:3px 6px;border-radius:5px;"><span style="color:#94a3b8;font-size:0.58rem;display:block;line-height:1.2;">🌬️ 풍속</span><strong style="color:#00f2fe;font-size:0.76rem;">' + wWd + '</strong></div>' +
+            '<div style="background:rgba(255,255,255,0.06);padding:3px 6px;border-radius:5px;"><span style="color:#94a3b8;font-size:0.58rem;display:block;line-height:1.2;">🌡️ 기온</span><strong style="color:#00f2fe;font-size:0.76rem;">' + wA + '</strong></div>' +
             '</div>' +
-            '<div style="font-size:0.6rem;color:#cbd5e1;background:rgba(0,242,254,0.08);padding:2px 6px;border-radius:4px;overflow:hidden;text-overflow:ellipsis;">\uD83C\uDF0A ' + tide + '</div>' +
+            '<div style="font-size:0.6rem;color:#cbd5e1;background:rgba(0,242,254,0.08);padding:2px 6px;border-radius:4px;overflow:hidden;text-overflow:ellipsis;">🌊 ' + tide + '</div>' +
             '</div>' +
             '<div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:8px solid #00f2fe;margin-top:-1px;"></div>' +
-            '<div style="font-size:1.3rem;line-height:1;margin-top:-2px;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.6));">\uD83D\uDCCD</div>' +
+            '<div style="font-size:1.3rem;line-height:1;margin-top:-2px;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.6));">📍</div>' +
             '</div>';
 
         _customOverlayObj = new window.kakao.maps.CustomOverlay({ position: pos, content: html, xAnchor: 0.5, yAnchor: 1.0, zIndex: 999999 });

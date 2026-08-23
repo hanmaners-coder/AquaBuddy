@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v720-standby-ui-instant-map-load";
+const CACHE_NAME = "aquabuddy-cache-v740-offscreen-css-kakao-map-lock-fix";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
