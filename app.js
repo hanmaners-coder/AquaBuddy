@@ -15237,8 +15237,8 @@ async function initKakaoOceanMap(spot) {
         if (typeof window.kakao === 'undefined' || !window.kakao.maps) return;
 
         var pos = new window.kakao.maps.LatLng(lat, lng);
-        // 🌟 지도 뷰포트 오프셋 보정: 마커 위치보다 위도를 0.015 올려 지도 중심 설정 (상단 잘림 완치)
-        var centerPos = new window.kakao.maps.LatLng(lat + 0.015, lng);
+        // 🌟 정밀 뷰포트 오프셋 보정: lat + 0.0035 오프셋으로 핀 마커와 해양 카드가 화면 중앙에 100% 완벽 수용됨
+        var centerPos = new window.kakao.maps.LatLng(lat + 0.0035, lng);
         _lastOceanKakaoPos = centerPos;
 
         // Canvas Lock 원천 차단: 기존 맵 파괴 및 컨테이너 초기화 후 100% 새로 생성

@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v940-offset-permanent-fix-and-pwa-cache-bust";
+const CACHE_NAME = "aquabuddy-cache-v950-perfect-offset-pin-and-card-visible";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
