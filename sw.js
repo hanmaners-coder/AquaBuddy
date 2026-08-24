@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v970-home-haeundae-cctv-and-ocean-spot-cta";
+const CACHE_NAME = "aquabuddy-cache-v980-home-cctv-legal-notice";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
