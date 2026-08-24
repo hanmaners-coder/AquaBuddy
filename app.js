@@ -930,18 +930,17 @@ function switchMainView(viewName) {
             if (!currentDashboardSpot && typeof OCEAN_WEATHER_DATA !== "undefined" && OCEAN_WEATHER_DATA.length > 0) {
                 currentDashboardSpot = OCEAN_WEATHER_DATA[0];
             }
-            if (typeof renderUnifiedSpotDashboard === "function" && currentDashboardSpot) {
-                renderUnifiedSpotDashboard(currentDashboardSpot);
-            }
+            // 🌟 탭 진입 초기에는 지도를 자동 로딩하지 않고 안내 배너 표시
+            var placeholder = document.getElementById("oceanMapPlaceholder");
+            var mapBox = document.getElementById("oceanSpotMap");
+            var subTitle = document.getElementById("oceanMapSubTitle");
+            if (placeholder) placeholder.style.display = "flex";
+            if (mapBox) mapBox.style.display = "none";
+            if (subTitle) subTitle.textContent = "📍 스팟을 검색하거나 추천 스팟을 선택하시면 실시간 지도가 열립니다";
+
             if (typeof renderWeatherGrid === "function") {
                 renderWeatherGrid(activeTideRegion || "all");
             }
-            // 🌟 Leaflet 지도 크기 즉시 자동 재보정 (회색 타일 0%)
-            setTimeout(function() {
-                if (_oceanLeafletMapObj && typeof _oceanLeafletMapObj.invalidateSize === 'function') {
-                    _oceanLeafletMapObj.invalidateSize();
-                }
-            }, 60);
         }
         forceScrollToTop();
         return;
@@ -15042,6 +15041,7 @@ var _oceanLeafletMarker = null;
 
 function initLeafletOceanMap(spot) {
     var container = document.getElementById('oceanSpotMap') || document.getElementById('oceanKakaoMap');
+    var placeholder = document.getElementById('oceanMapPlaceholder');
     var subTitle = document.getElementById('oceanMapSubTitle');
     if (!container) return;
 
@@ -15049,7 +15049,12 @@ function initLeafletOceanMap(spot) {
     if (!spot) return;
     currentDashboardSpot = spot;
 
-    if (subTitle) subTitle.textContent = '📍 선택된 스팟에 단일 핀 마커 & 실시간 해양 카드 표시';
+    // 🌟 1. 대기 안내 배너 숨기고 지도 컨테이너 노출
+    if (placeholder) placeholder.style.display = 'none';
+    container.style.display = 'block';
+
+    var nm = spot.name || spot.spot_name || '관측 스팟';
+    if (subTitle) subTitle.innerHTML = '📍 현재 선택된 스팟: <strong style="color:#00f2fe;">' + nm + '</strong> (실시간 관측 핀 & 날씨)';
 
     var lat = (spot && typeof spot.lat === 'number') ? spot.lat : 35.1587;
     var lng = (spot && typeof spot.lng === 'number') ? spot.lng : 129.1604;

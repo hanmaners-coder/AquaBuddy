@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v800-leaflet-ocean-map-full-applied";
+const CACHE_NAME = "aquabuddy-cache-v810-lazy-load-leaflet-ocean-map";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
