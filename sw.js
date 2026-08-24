@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v950-perfect-offset-pin-and-card-visible";
+const CACHE_NAME = "aquabuddy-cache-v960-login-wall-for-ocean-spots";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

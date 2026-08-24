@@ -4298,6 +4298,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     renderWeatherGrid(activeTideRegion);
     renderOceanWebcams(activeCctvRegion);
+    if (typeof selectScubaPoint === 'function') selectScubaPoint('SS9');
     renderAdBanner();
     generateBubbles();
 });
@@ -15305,9 +15306,33 @@ function _startHls(container, cctv) {
     else if (v.canPlayType('application/vnd.apple.mpegurl')) { v.src = cctv.hlsUrl; }
 }
 
-// ─── 3. CCTV 드롭다운 변경 핸들러 ────────────────────────────
+// 🔒 로그인 유도 (Login Wall) 모달 표출 함수
+function showOceanLoginWallModal() {
+    var modal = document.getElementById('oceanLoginWallModal');
+    if (modal && typeof openModal === 'function') {
+        openModal(modal);
+    } else if (modal) {
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+    }
+}
+window.showOceanLoginWallModal = showOceanLoginWallModal;
+
+// ─── 3. CCTV 드롭다운 변경 핸들러 (Login Wall 적용) ────────────────────────────
 function onDashCctvChange(id) {
     if (!id || typeof OCEAN_WEBCAMS_DATA === 'undefined') return;
+
+    var isLogged = typeof currentUser !== 'undefined' && currentUser !== null && 
+                   (currentUser.email || currentUser.name || currentUser.id || currentUser.nickname || currentUser.realName);
+                   
+    var defaultId = 'cam-busan-haeundae-beach';
+    if (!isLogged && id !== defaultId) {
+        var sel = document.getElementById('fullwidthCctvSelect');
+        if (sel) sel.value = defaultId;
+        showOceanLoginWallModal();
+        return;
+    }
+
     var c = OCEAN_WEBCAMS_DATA.find(function(x){ return x.id === id; });
     if (!c) return;
     var b = document.getElementById('dashCctvContainer');
@@ -15317,31 +15342,42 @@ function onDashCctvChange(id) {
 }
 window.onDashCctvChange = onDashCctvChange;
 
-// ─── 4. selectScubaPoint - 18곳 스쿠버 지수 7일 예보 ─────────
+// ─── 4. selectScubaPoint - 18곳 스쿠버 지수 7일 예보 (Default: SS9 성산일출봉 / Login Wall) ─────────
 var _SP = [
-    {code:'SS1', name:'\uB3D9\uBA85\uD56D', region:'\uAC15\uC6D0 \uC18D\uCD08'},
-    {code:'SS2', name:'\uB0A8\uC560\uD56D', region:'\uAC15\uC6D0 \uC591\uC591'},
-    {code:'SS3', name:'\uAC15\uBB38\uD574\uBCC0', region:'\uAC15\uC6D0 \uAC15\uB985'},
-    {code:'SS4', name:'\uC624\uC0B0\uD56D', region:'\uACBD\uBD81 \uC6B8\uC9C4'},
-    {code:'SS5', name:'\uC6D4\uD3EC\uD574\uC218\uC695\uC7A5', region:'\uACBD\uBD81 \uD3EC\uD56D'},
-    {code:'SS6', name:'\uAD6C\uC870\uB77C\uD574\uC218\uC695\uC7A5', region:'\uACBD\uB0A8 \uAC70\uC81C'},
-    {code:'SS7', name:'\uBBF8\uC870\uB3C4', region:'\uACBD\uB0A8 \uB0A8\uD574'},
-    {code:'SS8', name:'\uAC70\uBB38\uB3C4', region:'\uC804\uB0A8 \uC5EC\uC218'},
-    {code:'SS9', name:'\uC131\uC0B0\uC77C\uCD9C\uBD09', region:'\uC81C\uC8FC \uC11C\uADC0\uD3EC'},
-    {code:'SS10', name:'\uBB38\uC12C', region:'\uC81C\uC8FC \uC11C\uADC0\uD3EC'},
-    {code:'SS11', name:'\uD64D\uB3C4', region:'\uC804\uB0A8 \uC2E0\uC548'},
-    {code:'SS12', name:'\uC6B8\uB989\uB3C4', region:'\uACBD\uBD81 \uC6B8\uB989'},
-    {code:'SS13', name:'\uC5B4\uC601', region:'\uC81C\uC8FC \uC81C\uC8FC\uC2DC'},
-    {code:'SS14', name:'\uD0DC\uC885\uB300', region:'\uBD80\uC0B0 \uC601\uB3C4'},
-    {code:'SS15', name:'\uACA9\uB82C\uBE44\uC5F4\uB3C4', region:'\uCDA9\uB0A8 \uD0DC\uC548'},
-    {code:'SS16', name:'\uCD94\uC790\uB3C4', region:'\uC81C\uC8FC \uCD94\uC790'},
-    {code:'SS17', name:'\uC695\uC9C0\uB3C4', region:'\uACBD\uB0A8 \uD1B5\uC601'},
-    {code:'SS18', name:'\uCD94\uC554', region:'\uAC15\uC6D0 \uB3D9\uD574'}
+    {code:'SS1', name:'동명항', region:'강원 속초'},
+    {code:'SS2', name:'남애항', region:'강원 양양'},
+    {code:'SS3', name:'강문해변', region:'강원 강릉'},
+    {code:'SS4', name:'오산항', region:'경북 울진'},
+    {code:'SS5', name:'월포해수욕장', region:'경북 포항'},
+    {code:'SS6', name:'구조라해수욕장', region:'경남 거제'},
+    {code:'SS7', name:'미조도', region:'경남 남해'},
+    {code:'SS8', name:'거문도', region:'전남 여수'},
+    {code:'SS9', name:'성산일출봉', region:'제주 서귀포'},
+    {code:'SS10', name:'문섬', region:'제주 서귀포'},
+    {code:'SS11', name:'홍도', region:'전남 신안'},
+    {code:'SS12', name:'울릉도', region:'경북 울릉'},
+    {code:'SS13', name:'어영', region:'제주 제주시'},
+    {code:'SS14', name:'태종대', region:'부산 영도'},
+    {code:'SS15', name:'격렬비열도', region:'충남 태안'},
+    {code:'SS16', name:'추자도', region:'제주 추자'},
+    {code:'SS17', name:'욕지도', region:'경남 통영'},
+    {code:'SS18', name:'추암', region:'강원 동해'}
 ];
 
 async function selectScubaPoint(pointId, filterDate) {
-    var code  = String(pointId || 'SS10').trim().toUpperCase();
-    var pt    = _SP.find(function(p){ return p.code === code; }) || _SP[0];
+    var code = String(pointId || 'SS9').trim().toUpperCase();
+
+    var isLogged = typeof currentUser !== 'undefined' && currentUser !== null && 
+                   (currentUser.email || currentUser.name || currentUser.id || currentUser.nickname || currentUser.realName);
+                   
+    if (!isLogged && code !== 'SS9') {
+        var sel = document.getElementById('scubaPointSelect');
+        if (sel) sel.value = 'SS9';
+        showOceanLoginWallModal();
+        return;
+    }
+
+    var pt = _SP.find(function(p){ return p.code === code; }) || _SP.find(function(p){ return p.code === 'SS9'; }) || _SP[0];
     var panel = document.getElementById('scubaResultPanel');
     if (!panel) return;
 

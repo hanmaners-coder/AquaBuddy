@@ -960,8 +960,8 @@
                                 <option value="SS6">📍 [SS6] 구조라해수욕장 (경남 거제)</option>
                                 <option value="SS7">📍 [SS7] 미조도 (경남 남해)</option>
                                 <option value="SS8">📍 [SS8] 거문도 (전남 여수)</option>
-                                <option value="SS9">📍 [SS9] 성산일출봉 (제주 서귀포)</option>
-                                <option value="SS10" selected>📍 [SS10] 문섬 (제주 서귀포)</option>
+                                <option value="SS9" selected>📍 [SS9] 성산일출봉 (제주 서귀포)</option>
+                                <option value="SS10">📍 [SS10] 문섬 (제주 서귀포)</option>
                                 <option value="SS11">📍 [SS11] 홍도 (전남 신안)</option>
                                 <option value="SS12">📍 [SS12] 울릉도 (경북 울릉)</option>
                                 <option value="SS13">📍 [SS13] 어영 (제주 제주시)</option>
@@ -1723,7 +1723,34 @@
          </div>
      </div>
  
-     <!-- Modal 2: 3-Way User Auth Modal (Login / Signup / Kakao) -->
+      <!-- 🔒 Modal: Ocean Weather Spot Login Wall Modal -->
+      <div class="modal-overlay hidden" id="oceanLoginWallModal" style="z-index: 999999;">
+          <div class="modal-card glass-panel" style="max-width: 440px; width: 90%; background: rgba(10, 18, 35, 0.96); border: 1.5px solid rgba(0, 242, 254, 0.4); border-radius: 22px; box-shadow: 0 16px 50px rgba(0,0,0,0.8); backdrop-filter: blur(16px); padding: 30px 24px; text-align: center; position: relative;">
+              <button class="close-btn" onclick="closeModal(document.getElementById('oceanLoginWallModal'))" style="position: absolute; top: 16px; right: 18px; background: transparent; border: none; color: #94a3b8; font-size: 1.4rem; cursor: pointer; padding: 4px;">&times;</button>
+              
+              <div style="background: rgba(0, 242, 254, 0.12); width: 68px; height: 68px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; border: 1px solid rgba(0, 242, 254, 0.35); box-shadow: 0 0 24px rgba(0,242,254,0.3);">
+                  <i class="fa-solid fa-lock" style="font-size: 1.9rem; color: #00f2fe;"></i>
+              </div>
+
+              <h3 style="color: #fff; font-size: 1.28rem; font-weight: 900; margin-bottom: 10px;">🔒 로그인이 필요합니다</h3>
+              <p style="color: #cbd5e1; font-size: 0.92rem; line-height: 1.6; margin-bottom: 24px;">
+                  더 많은 해양 관측 스팟과 실시간 라이브 CCTV,<br>스킨스쿠버 종합 지수를 확인하시려면 로그인이 필요합니다.
+              </p>
+
+              <div style="display: flex; gap: 10px; justify-content: center;">
+                  <button onclick="closeModal(document.getElementById('oceanLoginWallModal')); if(typeof switchAuthTab==='function')switchAuthTab('login'); const m=document.getElementById('authModal'); if(m && typeof openModal==='function')openModal(m);" 
+                          style="flex: 1; background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%); color: #0f172a; border: none; padding: 13px 18px; border-radius: 12px; font-weight: 800; font-size: 0.95rem; cursor: pointer; box-shadow: 0 4px 18px rgba(0, 242, 254, 0.4);">
+                      🔑 로그인 / 회원가입
+                  </button>
+                  <button onclick="closeModal(document.getElementById('oceanLoginWallModal'))" 
+                          style="background: rgba(255, 255, 255, 0.08); color: #94a3b8; border: 1px solid rgba(255, 255, 255, 0.15); padding: 13px 18px; border-radius: 12px; font-weight: 700; font-size: 0.9rem; cursor: pointer;">
+                      닫기
+                  </button>
+              </div>
+          </div>
+      </div>
+
+      <!-- Modal 2: 3-Way User Auth Modal (Login / Signup / Kakao) -->
      <div class="modal-overlay hidden" id="authModal">
          <div class="modal-container glass-panel" style="max-width: 480px;">
              <div class="modal-header">
@@ -2196,8 +2223,8 @@
      </div>
  
      <!-- App Configuration & Main Logic Script -->
-     <script src="config.js?v=V950_PERFECT_OFFSET_PIN_AND_CARD_VISIBLE"></script>
-     <script src="app.js?v=V950_PERFECT_OFFSET_PIN_AND_CARD_VISIBLE"></script>
+     <script src="config.js?v=V960_LOGIN_WALL_FOR_OCEAN_SPOTS"></script>
+     <script src="app.js?v=V960_LOGIN_WALL_FOR_OCEAN_SPOTS"></script>
      <!-- Toast Notification Container -->
     <div id="toastContainer" class="toast-container"></div>
 </body>
