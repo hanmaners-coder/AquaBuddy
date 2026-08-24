@@ -15177,15 +15177,17 @@ async function initKakaoOceanMap(spot) {
     if (wWd === '-' || wWd === '정보없음') wWd = '정보 점검 중';
     if (wA === '-' || wA === '정보없음') wA = '정보 점검 중';
 
-    var tide = '조석 정보 수집 중';
-    if (spot.tideForecast && Array.isArray(spot.tideForecast) && spot.tideForecast.length > 0) {
-        tide = spot.tideForecast.slice(0,2).map(function(t){
-            return (t.type||'').split('(')[0] + ':' + (t.time||'').split(',')[0];
-        }).join(' / ');
-    } else if (spot.high_tide && spot.high_tide !== '정보없음') {
-        tide = '만조:' + spot.high_tide.split(',')[0];
-        if (spot.low_tide && spot.low_tide !== '정보없음') tide += ' / 간조:' + spot.low_tide.split(',')[0];
+    var tideHtml = '<div style="font-size:0.68rem;color:#cbd5e1;background:rgba(0,242,254,0.1);padding:4px 8px;border-radius:6px;border:1px solid rgba(0,242,254,0.25);line-height:1.4;word-break:break-all;">';
+    if (spot.high_tide && spot.high_tide !== '정보없음') {
+        tideHtml += '<div style="overflow:hidden;text-overflow:ellipsis;">🌊 <strong>만조:</strong> ' + spot.high_tide + '</div>';
     }
+    if (spot.low_tide && spot.low_tide !== '정보없음') {
+        tideHtml += '<div style="overflow:hidden;text-overflow:ellipsis;">📉 <strong>간조:</strong> ' + spot.low_tide + '</div>';
+    }
+    if ((!spot.high_tide || spot.high_tide === '정보없음') && (!spot.low_tide || spot.low_tide === '정보없음')) {
+        tideHtml += '<div>🌊 ' + tide + '</div>';
+    }
+    tideHtml += '</div>';
 
     var doRender = function() {
         if (typeof window.kakao === 'undefined' || !window.kakao.maps) return;
@@ -15200,22 +15202,22 @@ async function initKakaoOceanMap(spot) {
 
         if (_customOverlayObj) { _customOverlayObj.setMap(null); _customOverlayObj = null; }
 
-        var html = '<div style="display:flex;flex-direction:column;align-items:center;pointer-events:auto;z-index:999999;filter:drop-shadow(0 6px 18px rgba(0,0,0,0.65));">' +
-            '<div style="background:rgba(8,16,32,0.95);backdrop-filter:blur(8px);color:#fff;padding:7px 10px;border-radius:12px;border:1.5px solid #00f2fe;box-shadow:0 4px 18px rgba(0,242,254,0.4);max-width:180px;font-family:sans-serif;white-space:nowrap;">' +
-            '<div style="display:flex;align-items:center;justify-content:space-between;gap:4px;border-bottom:1px solid rgba(255,255,255,0.12);padding-bottom:3px;margin-bottom:5px;">' +
-            '<strong style="font-size:0.78rem;color:#fff;font-weight:900;overflow:hidden;text-overflow:ellipsis;">📍 ' + nm + '</strong>' +
-            '<span style="background:rgba(0,230,118,0.25);color:#00e676;font-size:0.58rem;font-weight:900;padding:1px 5px;border-radius:4px;flex-shrink:0;">LIVE</span>' +
+        var html = '<div style="display:flex;flex-direction:column;align-items:center;pointer-events:auto;z-index:999999;filter:drop-shadow(0 8px 24px rgba(0,0,0,0.75));">' +
+            '<div style="background:rgba(8,16,32,0.96);backdrop-filter:blur(10px);color:#fff;padding:9px 12px;border-radius:14px;border:1.5px solid #00f2fe;box-shadow:0 6px 24px rgba(0,242,254,0.45);width:250px;box-sizing:border-box;font-family:sans-serif;">' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;gap:6px;border-bottom:1px solid rgba(255,255,255,0.15);padding-bottom:5px;margin-bottom:7px;">' +
+            '<strong style="font-size:0.86rem;color:#fff;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📍 ' + nm + '</strong>' +
+            '<span style="background:rgba(0,230,118,0.25);color:#00e676;font-size:0.62rem;font-weight:900;padding:2px 6px;border-radius:4px;flex-shrink:0;border:1px solid rgba(0,230,118,0.4);">LIVE</span>' +
             '</div>' +
-            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:5px;">' +
-            '<div style="background:rgba(255,255,255,0.06);padding:3px 6px;border-radius:5px;"><span style="color:#94a3b8;font-size:0.58rem;display:block;line-height:1.2;">🌡️ 수온</span><strong style="color:#00f2fe;font-size:0.76rem;">' + wT + '</strong></div>' +
-            '<div style="background:rgba(255,255,255,0.06);padding:3px 6px;border-radius:5px;"><span style="color:#94a3b8;font-size:0.58rem;display:block;line-height:1.2;">🌊 파고</span><strong style="color:#00f2fe;font-size:0.76rem;">' + wW + '</strong></div>' +
-            '<div style="background:rgba(255,255,255,0.06);padding:3px 6px;border-radius:5px;"><span style="color:#94a3b8;font-size:0.58rem;display:block;line-height:1.2;">🌬️ 풍속</span><strong style="color:#00f2fe;font-size:0.76rem;">' + wWd + '</strong></div>' +
-            '<div style="background:rgba(255,255,255,0.06);padding:3px 6px;border-radius:5px;"><span style="color:#94a3b8;font-size:0.58rem;display:block;line-height:1.2;">🌡️ 기온</span><strong style="color:#00f2fe;font-size:0.76rem;">' + wA + '</strong></div>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:7px;">' +
+            '<div style="background:rgba(255,255,255,0.06);padding:4px 8px;border-radius:6px;"><span style="color:#94a3b8;font-size:0.62rem;display:block;line-height:1.2;">🌡️ 수온</span><strong style="color:#00f2fe;font-size:0.82rem;">' + wT + '</strong></div>' +
+            '<div style="background:rgba(255,255,255,0.06);padding:4px 8px;border-radius:6px;"><span style="color:#94a3b8;font-size:0.62rem;display:block;line-height:1.2;">🌊 파고</span><strong style="color:#00e676;font-size:0.82rem;">' + wW + '</strong></div>' +
+            '<div style="background:rgba(255,255,255,0.06);padding:4px 8px;border-radius:6px;"><span style="color:#94a3b8;font-size:0.62rem;display:block;line-height:1.2;">🌬️ 풍속</span><strong style="color:#ffb703;font-size:0.82rem;">' + wWd + '</strong></div>' +
+            '<div style="background:rgba(255,255,255,0.06);padding:4px 8px;border-radius:6px;"><span style="color:#94a3b8;font-size:0.62rem;display:block;line-height:1.2;">🌡️ 기온</span><strong style="color:#fff;font-size:0.82rem;">' + wA + '</strong></div>' +
             '</div>' +
-            '<div style="font-size:0.6rem;color:#cbd5e1;background:rgba(0,242,254,0.08);padding:2px 6px;border-radius:4px;overflow:hidden;text-overflow:ellipsis;">🌊 ' + tide + '</div>' +
+            tideHtml +
             '</div>' +
-            '<div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:8px solid #00f2fe;margin-top:-1px;"></div>' +
-            '<div style="font-size:1.3rem;line-height:1;margin-top:-2px;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.6));">📍</div>' +
+            '<div style="width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:9px solid #00f2fe;margin-top:-1px;"></div>' +
+            '<div style="font-size:1.4rem;line-height:1;margin-top:-2px;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.8));">📍</div>' +
             '</div>';
 
         _customOverlayObj = new window.kakao.maps.CustomOverlay({ position: pos, content: html, xAnchor: 0.5, yAnchor: 1.0, zIndex: 999999 });

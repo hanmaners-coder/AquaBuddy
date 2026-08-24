@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v900-supabase-smart-row-merge-haeundae-real-metrics";
+const CACHE_NAME = "aquabuddy-cache-v910-expanded-ocean-card-no-truncation";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
