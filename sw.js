@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v860-kakao-map-supabase-1to1-mapping";
+const CACHE_NAME = "aquabuddy-cache-v870-haeundae-1to1-mapping-proof-fixed";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

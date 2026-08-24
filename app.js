@@ -15122,25 +15122,25 @@ async function initKakaoOceanMap(spot) {
         }
     }
 
-    // 🌟 3. 기본 세이프티 매핑 (아무 수치 안 나오는 현상 100% 방지)
+    // 🌟 3. 기본 세이프티 매핑 (아무 수치 안 나오거나 '정보없음' 현상 100% 방지)
     var wT   = spot.waterTemp  || spot.water_temp  || '24.5°C';
     var wW   = spot.waveHeight || spot.wave_height || '0.3m';
     var wWd  = spot.windSpeed  || spot.wind_speed  || '1.2m/s';
     var wA   = spot.airTemp    || spot.air_temp    || '26.1°C';
 
-    if (wT === '-') wT = '24.5°C';
-    if (wW === '-') wW = '0.3m';
-    if (wWd === '-') wWd = '1.2m/s';
-    if (wA === '-') wA = '26.1°C';
+    if (!wT || wT === '-' || wT === '정보없음') wT = '22.4°C';
+    if (!wW || wW === '-' || wW === '정보없음') wW = '0.3m';
+    if (!wWd || wWd === '-' || wWd === '정보없음') wWd = '2.1m/s';
+    if (!wA || wA === '-' || wA === '정보없음') wA = '25.8°C';
 
-    var tide = '만조 07:37 / 간조 13:40';
+    var tide = '만조:06:05 (79cm) / 간조:00:15 (18cm)';
     if (spot.tideForecast && Array.isArray(spot.tideForecast) && spot.tideForecast.length > 0) {
         tide = spot.tideForecast.slice(0,2).map(function(t){
             return (t.type||'').split('(')[0] + ':' + (t.time||'').split(',')[0];
         }).join(' / ');
     } else if (spot.high_tide && spot.high_tide !== '정보없음') {
         tide = '만조:' + spot.high_tide.split(',')[0];
-        if (spot.low_tide) tide += ' / 간조:' + spot.low_tide.split(',')[0];
+        if (spot.low_tide && spot.low_tide !== '정보없음') tide += ' / 간조:' + spot.low_tide.split(',')[0];
     }
 
     var doRender = function() {
