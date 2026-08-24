@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v910-expanded-ocean-card-no-truncation";
+const CACHE_NAME = "aquabuddy-cache-v920-fix-search-imrang-and-title-header";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

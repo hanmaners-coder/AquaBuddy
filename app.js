@@ -8298,7 +8298,7 @@ function filterTideRegion(regionKey) {
 let tideSearchDebounceTimer = null;
 
 function handleTideSearch(keyword) {
-    var trimmed = (keyword || '').trim().toLowerCase();
+    var trimmed = (keyword || '').trim();
     if (!trimmed) return;
 
     if (typeof tideSearchDebounceTimer !== 'undefined' && tideSearchDebounceTimer) {
@@ -8306,52 +8306,90 @@ function handleTideSearch(keyword) {
     }
 
     tideSearchDebounceTimer = setTimeout(function() {
-        // 1. 등록된 스팟 배열에서 먼저 매칭
+        var cleanKw = trimmed.replace(/\s+/g, '').toLowerCase();
+
+        // 1. 등록된 222개 해양 관측 스팟 배열에서 퍼지/스마트 매칭
         var match = null;
-        if (typeof OCEAN_WEATHER_DATA !== 'undefined') {
+        if (typeof OCEAN_WEATHER_DATA !== 'undefined' && OCEAN_WEATHER_DATA) {
             match = OCEAN_WEATHER_DATA.find(function(s) {
-                return s.name.toLowerCase().includes(trimmed) ||
-                    (s.region && s.region.toLowerCase().includes(trimmed));
+                var sNameClean = (s.name || '').replace(/\s+/g, '').toLowerCase();
+                var sRegionClean = (s.region || s.region_cat || '').replace(/\s+/g, '').toLowerCase();
+                return sNameClean.includes(cleanKw) || cleanKw.includes(sNameClean) ||
+                       sRegionClean.includes(cleanKw) || cleanKw.includes(sRegionClean);
             });
         }
+
         if (match) {
-            if (typeof selectDashboardSpot === 'function') selectDashboardSpot(match.id || match.spot_id);
-            else renderUnifiedSpotDashboard(match);
+            if (typeof selectDashboardSpot === 'function') {
+                selectDashboardSpot(match.id || match.spot_id);
+            } else {
+                renderUnifiedSpotDashboard(match);
+            }
             return;
         }
 
-        // 2. 카카오 장소 검색
-        if (window.kakao && window.kakao.maps && window.kakao.maps.services) {
-            var places = new window.kakao.maps.services.Places();
-            places.keywordSearch(keyword, function(result, status) {
-                if (status === window.kakao.maps.services.Status.OK && result && result.length > 0) {
-                    var place = result[0];
-                    var customSpot = {
-                        id: 'search-' + Date.now(),
-                        name: place.place_name || keyword,
-                        region: place.address_name || place.road_address_name || '대한민국 해역',
-                        lat: parseFloat(place.y),
-                        lng: parseFloat(place.x),
-                        waterTemp: '-', waveHeight: '-', windSpeed: '-', airTemp: '-'
-                    };
-                    renderUnifiedSpotDashboard(customSpot);
-                } else {
-                    var geocoder = new window.kakao.maps.services.Geocoder();
-                    geocoder.addressSearch(keyword, function(geo, gs) {
-                        if (gs === window.kakao.maps.services.Status.OK && geo && geo.length > 0) {
-                            var customSpot = {
-                                id: 'search-' + Date.now(),
-                                name: keyword,
-                                region: geo[0].address_name || '대한민국 해역',
-                                lat: parseFloat(geo[0].y),
-                                lng: parseFloat(geo[0].x),
-                                waterTemp: '-', waveHeight: '-', windSpeed: '-', airTemp: '-'
-                            };
-                            renderUnifiedSpotDashboard(customSpot);
-                        }
-                    });
-                }
-            });
+        // 2. 카카오 장소/주소 검색 API (kakao.maps.load 기반 안전 처리)
+        var doKakaoSearch = function() {
+            if (window.kakao && window.kakao.maps && window.kakao.maps.services) {
+                var places = new window.kakao.maps.services.Places();
+                places.keywordSearch(keyword, function(result, status) {
+                    if (status === window.kakao.maps.services.Status.OK && result && result.length > 0) {
+                        var place = result[0];
+                        var customSpot = {
+                            id: 'search-' + Date.now(),
+                            name: place.place_name || keyword,
+                            region: place.address_name || place.road_address_name || '대한민국 해역',
+                            lat: parseFloat(place.y),
+                            lng: parseFloat(place.x)
+                        };
+                        renderUnifiedSpotDashboard(customSpot);
+                    } else {
+                        var geocoder = new window.kakao.maps.services.Geocoder();
+                        geocoder.addressSearch(keyword, function(geo, gs) {
+                            if (gs === window.kakao.maps.services.Status.OK && geo && geo.length > 0) {
+                                var customSpot = {
+                                    id: 'search-' + Date.now(),
+                                    name: keyword,
+                                    region: geo[0].address_name || '대한민국 해역',
+                                    lat: parseFloat(geo[0].y),
+                                    lng: parseFloat(geo[0].x)
+                                };
+                                renderUnifiedSpotDashboard(customSpot);
+                            } else {
+                                doNominatimSearch();
+                            }
+                        });
+                    }
+                });
+            } else {
+                doNominatimSearch();
+            }
+        };
+
+        // 3. OpenStreetMap Nominatim 글로벌 무료 장소 검색 Fallback
+        var doNominatimSearch = function() {
+            fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(keyword) + '&countrycodes=kr&limit=1', {
+                headers: { 'Accept-Language': 'ko' }
+            }).then(function(r) { return r.json(); })
+              .then(function(results) {
+                  if (results && results.length > 0) {
+                      var place = results[0];
+                      var customSpot = {
+                          id: 'search-' + Date.now(),
+                          name: place.display_name.split(',')[0] || keyword,
+                          region: place.display_name || '대한민국 해역',
+                          lat: parseFloat(place.lat),
+                          lng: parseFloat(place.lon)
+                      };
+                      renderUnifiedSpotDashboard(customSpot);
+                  }
+              }).catch(function(e) { console.warn('[Nominatim Search]', e); });
+        };
+
+        if (window.kakao && window.kakao.maps && typeof window.kakao.maps.load === 'function') {
+            window.kakao.maps.load(doKakaoSearch);
+        } else {
+            doKakaoSearch();
         }
     }, 250);
 }
@@ -8712,13 +8750,22 @@ async function fetchWindyPointForecast(spot) {
 window.fetchWindyPointForecast = fetchWindyPointForecast;
 
 async function selectDashboardSpot(spotId) {
-    const spot = OCEAN_WEATHER_DATA.find(s => s.id === spotId) || OCEAN_WEATHER_DATA[0];
-    
-    // 선택된 스팟으로 지도 및 대시보드 즉시 렌더링
-    renderUnifiedSpotDashboard(spot);
-    const container = document.getElementById("unifiedDashboardContainer");
-    if (container) {
-        container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (!spotId) return;
+    var spot = null;
+    if (typeof OCEAN_WEATHER_DATA !== 'undefined' && OCEAN_WEATHER_DATA) {
+        spot = OCEAN_WEATHER_DATA.find(function(s) {
+            return s.id === spotId || s.spot_id === spotId || (s.name && (s.name.includes(spotId) || spotId.includes(s.name)));
+        });
+    }
+    if (!spot && typeof OCEAN_WEATHER_DATA !== 'undefined' && OCEAN_WEATHER_DATA.length > 0) {
+        spot = OCEAN_WEATHER_DATA[0];
+    }
+    if (spot) {
+        renderUnifiedSpotDashboard(spot);
+        var container = document.getElementById("oceanKakaoMap") || document.getElementById("oceanSpotMap");
+        if (container) {
+            container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
     }
 }
 window.selectDashboardSpot = selectDashboardSpot;
@@ -15177,6 +15224,7 @@ async function initKakaoOceanMap(spot) {
     if (wWd === '-' || wWd === '정보없음') wWd = '정보 점검 중';
     if (wA === '-' || wA === '정보없음') wA = '정보 점검 중';
 
+    var tide = '조석 정보 수집 중';
     var tideHtml = '<div style="font-size:0.68rem;color:#cbd5e1;background:rgba(0,242,254,0.1);padding:4px 8px;border-radius:6px;border:1px solid rgba(0,242,254,0.25);line-height:1.4;word-break:break-all;">';
     if (spot.high_tide && spot.high_tide !== '정보없음') {
         tideHtml += '<div style="overflow:hidden;text-overflow:ellipsis;">🌊 <strong>만조:</strong> ' + spot.high_tide + '</div>';
