@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v930-viewport-offset-and-no-scroll";
+const CACHE_NAME = "aquabuddy-cache-v940-offset-permanent-fix-and-pwa-cache-bust";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
