@@ -15122,18 +15122,18 @@ async function initKakaoOceanMap(spot) {
         }
     }
 
-    // 🌟 3. 기본 세이프티 매핑 (아무 수치 안 나오거나 '정보없음' 현상 100% 방지)
-    var wT   = spot.waterTemp  || spot.water_temp  || '24.5°C';
-    var wW   = spot.waveHeight || spot.wave_height || '0.3m';
-    var wWd  = spot.windSpeed  || spot.wind_speed  || '1.2m/s';
-    var wA   = spot.airTemp    || spot.air_temp    || '26.1°C';
+    // 🌟 3. Supabase DB 1:1 순수 실시간 데이터 매핑 (더미/가짜 수치 0%)
+    var wT   = spot.waterTemp  || spot.water_temp  || '정보 점검 중';
+    var wW   = spot.waveHeight || spot.wave_height || '정보 점검 중';
+    var wWd  = spot.windSpeed  || spot.wind_speed  || '정보 점검 중';
+    var wA   = spot.airTemp    || spot.air_temp    || '정보 점검 중';
 
-    if (!wT || wT === '-' || wT === '정보없음') wT = '22.4°C';
-    if (!wW || wW === '-' || wW === '정보없음') wW = '0.3m';
-    if (!wWd || wWd === '-' || wWd === '정보없음') wWd = '2.1m/s';
-    if (!wA || wA === '-' || wA === '정보없음') wA = '25.8°C';
+    if (wT === '-' || wT === '정보없음') wT = '정보 점검 중';
+    if (wW === '-' || wW === '정보없음') wW = '정보 점검 중';
+    if (wWd === '-' || wWd === '정보없음') wWd = '정보 점검 중';
+    if (wA === '-' || wA === '정보없음') wA = '정보 점검 중';
 
-    var tide = '만조:06:05 (79cm) / 간조:00:15 (18cm)';
+    var tide = '조석 정보 수집 중';
     if (spot.tideForecast && Array.isArray(spot.tideForecast) && spot.tideForecast.length > 0) {
         tide = spot.tideForecast.slice(0,2).map(function(t){
             return (t.type||'').split('(')[0] + ':' + (t.time||'').split(',')[0];
