@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v890-supabase-exact-haeundae-2718-08m-fetch";
+const CACHE_NAME = "aquabuddy-cache-v900-supabase-smart-row-merge-haeundae-real-metrics";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
