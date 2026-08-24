@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v770-cors-defense-and-kakao-map-recreation";
+const CACHE_NAME = "aquabuddy-cache-v800-leaflet-ocean-map-full-applied";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

@@ -909,11 +909,11 @@ function switchMainView(viewName) {
         }
         if (tideSec) {
             if (viewName !== "cctv") {
-                tideSec.className = "active-tab-section";
-                tideSec.style.display = "";
+                tideSec.style.display = "block";
+                tideSec.classList.remove("hidden");
             } else {
-                tideSec.className = "offscreen-tab";
-                tideSec.style.display = "";
+                tideSec.style.display = "none";
+                tideSec.classList.add("hidden");
             }
         }
 
@@ -936,13 +936,12 @@ function switchMainView(viewName) {
             if (typeof renderWeatherGrid === "function") {
                 renderWeatherGrid(activeTideRegion || "all");
             }
-            // 🌟 탭 전환 즉시 1회 relayout 및 setCenter 안전장치 호출
-            if (typeof window.kakao !== 'undefined' && window.kakao.maps && _oceanKakaoMapObj) {
-                _oceanKakaoMapObj.relayout();
-                if (_lastOceanKakaoPos) {
-                    _oceanKakaoMapObj.setCenter(_lastOceanKakaoPos);
+            // 🌟 Leaflet 지도 크기 즉시 자동 재보정 (회색 타일 0%)
+            setTimeout(function() {
+                if (_oceanLeafletMapObj && typeof _oceanLeafletMapObj.invalidateSize === 'function') {
+                    _oceanLeafletMapObj.invalidateSize();
                 }
-            }
+            }, 60);
         }
         forceScrollToTop();
         return;
@@ -951,7 +950,7 @@ function switchMainView(viewName) {
     // 3. 📋 일반 게시판 피드 뷰 (홈 / 버디 / 강사 / 수다방 / 장터 / 내 활동기록 / 제휴)
     document.body.classList.remove("tide-view-active", "category-view-tide");
     if (feedSec) { feedSec.style.display = "block"; feedSec.classList.remove("hidden"); }
-    if (tideSec) { tideSec.className = "offscreen-tab"; tideSec.style.display = ""; }
+    if (tideSec) { tideSec.style.display = "none"; tideSec.classList.add("hidden"); }
     if (cctvSec) { cctvSec.style.display = "none"; cctvSec.classList.add("hidden"); }
 
     if (viewName === "all") {
@@ -15037,14 +15036,12 @@ window.renderAdminAffiliateStats = renderAdminAffiliateStats;
 // AQUA BUDDY - 지도 위 해양 카드 + 2층 CCTV/스쿠버 레이아웃
 // ============================================================
 
-// ─── 1. 카카오 지도 + 실시간 해양 카드 오버레이 ───────────────
-var _oceanKakaoMapObj = null;
-var _customOverlayObj = null;
-var _lastOceanKakaoPos = null;
+// ─── 1. Leaflet.js 실시간 해양 인터랙티브 지도 (전국해양스팟 전용) ───────────────
+var _oceanLeafletMapObj = null;
+var _oceanLeafletMarker = null;
 
-function initKakaoOceanMap(spot) {
-    var container = document.getElementById('oceanKakaoMap');
-    var emptyBox = document.getElementById('oceanMapEmptyState');
+function initLeafletOceanMap(spot) {
+    var container = document.getElementById('oceanSpotMap') || document.getElementById('oceanKakaoMap');
     var subTitle = document.getElementById('oceanMapSubTitle');
     if (!container) return;
 
@@ -15052,70 +15049,93 @@ function initKakaoOceanMap(spot) {
     if (!spot) return;
     currentDashboardSpot = spot;
 
-    // 🌟 1. 대기 화면 숨기고 지도 컨테이너 노출 (display: block)
-    if (emptyBox) emptyBox.style.display = 'none';
-    if (container) container.style.display = 'block';
-    if (subTitle) subTitle.textContent = '📍 선택된 스팟에 단일 핀 마커 & 해양 카드 표시';
+    if (subTitle) subTitle.textContent = '📍 선택된 스팟에 단일 핀 마커 & 실시간 해양 카드 표시';
 
     var lat = (spot && typeof spot.lat === 'number') ? spot.lat : 35.1587;
     var lng = (spot && typeof spot.lng === 'number') ? spot.lng : 129.1604;
 
-    var doRender = function() {
-        if (typeof window.kakao === 'undefined' || !window.kakao.maps) return;
-
-        var pos = new window.kakao.maps.LatLng(lat, lng);
-        _lastOceanKakaoPos = pos;
-
-        // 🌟 2. Canvas Lock 원천 차단: 기존 맵 파괴 및 컨테이너 초기화 후 100% 새로 생성
-        _oceanKakaoMapObj = null;
-        container.innerHTML = '';
-        _oceanKakaoMapObj = new window.kakao.maps.Map(container, { center: pos, level: 6 });
-
-        if (_customOverlayObj) { _customOverlayObj.setMap(null); _customOverlayObj = null; }
-
-        var nm    = spot.name || spot.spot_name || '관측 스팟';
-        var wT    = spot.waterTemp  || spot.water_temp  || '-';
-        var wW    = spot.waveHeight || spot.wave_height || '-';
-        var wWd   = spot.windSpeed  || spot.wind_speed  || '-';
-        var wA    = spot.airTemp    || spot.air_temp    || '-';
-        var tide  = '물때 정보 없음';
-        if (spot.tideForecast && Array.isArray(spot.tideForecast) && spot.tideForecast.length > 0) {
-            tide = spot.tideForecast.slice(0,2).map(function(t){
-                return (t.type||'').split('(')[0] + ':' + (t.time||'').split(',')[0];
-            }).join(' / ');
-        } else if (spot.high_tide && spot.high_tide !== '정보없음') {
-            tide = '만조:' + spot.high_tide.split(',')[0];
-        }
-
-        var html = '<div style="display:flex;flex-direction:column;align-items:center;pointer-events:auto;z-index:999999;filter:drop-shadow(0 6px 18px rgba(0,0,0,0.65));">' +
-            '<div style="background:rgba(8,16,32,0.95);backdrop-filter:blur(8px);color:#fff;padding:7px 10px;border-radius:12px;border:1.5px solid #00f2fe;box-shadow:0 4px 18px rgba(0,242,254,0.4);max-width:180px;font-family:sans-serif;white-space:nowrap;">' +
-            '<div style="display:flex;align-items:center;justify-content:space-between;gap:4px;border-bottom:1px solid rgba(255,255,255,0.12);padding-bottom:3px;margin-bottom:5px;">' +
-            '<strong style="font-size:0.78rem;color:#fff;font-weight:900;overflow:hidden;text-overflow:ellipsis;">📍 ' + nm + '</strong>' +
-            '<span style="background:rgba(0,230,118,0.25);color:#00e676;font-size:0.58rem;font-weight:900;padding:1px 5px;border-radius:4px;flex-shrink:0;">LIVE</span>' +
-            '</div>' +
-            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:5px;">' +
-            '<div style="background:rgba(255,255,255,0.06);padding:3px 6px;border-radius:5px;"><span style="color:#94a3b8;font-size:0.58rem;display:block;line-height:1.2;">🌡️ 수온</span><strong style="color:#00f2fe;font-size:0.76rem;">' + wT + '</strong></div>' +
-            '<div style="background:rgba(255,255,255,0.06);padding:3px 6px;border-radius:5px;"><span style="color:#94a3b8;font-size:0.58rem;display:block;line-height:1.2;">🌊 파고</span><strong style="color:#00f2fe;font-size:0.76rem;">' + wW + '</strong></div>' +
-            '<div style="background:rgba(255,255,255,0.06);padding:3px 6px;border-radius:5px;"><span style="color:#94a3b8;font-size:0.58rem;display:block;line-height:1.2;">🌬️ 풍속</span><strong style="color:#00f2fe;font-size:0.76rem;">' + wWd + '</strong></div>' +
-            '<div style="background:rgba(255,255,255,0.06);padding:3px 6px;border-radius:5px;"><span style="color:#94a3b8;font-size:0.58rem;display:block;line-height:1.2;">🌡️ 기온</span><strong style="color:#00f2fe;font-size:0.76rem;">' + wA + '</strong></div>' +
-            '</div>' +
-            '<div style="font-size:0.6rem;color:#cbd5e1;background:rgba(0,242,254,0.08);padding:2px 6px;border-radius:4px;overflow:hidden;text-overflow:ellipsis;">🌊 ' + tide + '</div>' +
-            '</div>' +
-            '<div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:8px solid #00f2fe;margin-top:-1px;"></div>' +
-            '<div style="font-size:1.3rem;line-height:1;margin-top:-2px;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.6));">📍</div>' +
-            '</div>';
-
-        _customOverlayObj = new window.kakao.maps.CustomOverlay({ position: pos, content: html, xAnchor: 0.5, yAnchor: 1.0, zIndex: 999999 });
-        _customOverlayObj.setMap(_oceanKakaoMapObj);
-    };
-
-    if (window.kakao && window.kakao.maps && typeof window.kakao.maps.load === 'function') {
-        window.kakao.maps.load(doRender);
-    } else {
-        doRender();
+    if (typeof L === 'undefined') {
+        setTimeout(function() { initLeafletOceanMap(spot); }, 80);
+        return;
     }
+
+    // 1. Leaflet 지도 인스턴스 초기화 (없으면 생성, 있으면 뷰 이동)
+    if (!_oceanLeafletMapObj) {
+        container.innerHTML = '';
+        _oceanLeafletMapObj = L.map(container, {
+            center: [lat, lng],
+            zoom: 11,
+            zoomControl: true,
+            attributionControl: false
+        });
+
+        // 🌟 고화질 해양/코스탈 타일 (CartoDB Voyager: 맑고 선명한 바다 색상)
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            maxZoom: 19,
+            subdomains: 'abcd'
+        }).addTo(_oceanLeafletMapObj);
+    } else {
+        _oceanLeafletMapObj.setView([lat, lng], 11, { animate: true });
+    }
+
+    // Leaflet 타일 렌더링 즉시 자동 동기화 (Canvas Lock 0%)
+    setTimeout(function() {
+        if (_oceanLeafletMapObj) _oceanLeafletMapObj.invalidateSize();
+    }, 40);
+
+    // 2. 기존 마커 제거
+    if (_oceanLeafletMarker) {
+        _oceanLeafletMapObj.removeLayer(_oceanLeafletMarker);
+        _oceanLeafletMarker = null;
+    }
+
+    // 3. 실시간 해양 카드 HTML 생성
+    var nm    = spot.name || spot.spot_name || '관측 스팟';
+    var wT    = spot.waterTemp  || spot.water_temp  || '-';
+    var wW    = spot.waveHeight || spot.wave_height || '-';
+    var wWd   = spot.windSpeed  || spot.wind_speed  || '-';
+    var wA    = spot.airTemp    || spot.air_temp    || '-';
+    var tide  = '물때 정보 없음';
+    if (spot.tideForecast && Array.isArray(spot.tideForecast) && spot.tideForecast.length > 0) {
+        tide = spot.tideForecast.slice(0,2).map(function(t){
+            return (t.type||'').split('(')[0] + ':' + (t.time||'').split(',')[0];
+        }).join(' / ');
+    } else if (spot.high_tide && spot.high_tide !== '정보없음') {
+        tide = '만조:' + spot.high_tide.split(',')[0];
+    }
+
+    var cardHtml = `
+        <div style="display:flex;flex-direction:column;align-items:center;pointer-events:auto;filter:drop-shadow(0 6px 18px rgba(0,0,0,0.75));transform:translateY(-10px);">
+            <div style="background:rgba(8,16,32,0.96);backdrop-filter:blur(10px);color:#fff;padding:8px 12px;border-radius:14px;border:1.5px solid #00f2fe;box-shadow:0 4px 20px rgba(0,242,254,0.45);width:190px;font-family:sans-serif;box-sizing:border-box;">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;border-bottom:1px solid rgba(255,255,255,0.12);padding-bottom:4px;margin-bottom:6px;">
+                    <strong style="font-size:0.82rem;color:#fff;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📍 ${nm}</strong>
+                    <span style="background:rgba(0,230,118,0.25);color:#00e676;font-size:0.6rem;font-weight:900;padding:1px 6px;border-radius:4px;flex-shrink:0;border:1px solid rgba(0,230,118,0.4);">LIVE</span>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:6px;">
+                    <div style="background:rgba(255,255,255,0.06);padding:3px 6px;border-radius:6px;"><span style="color:#94a3b8;font-size:0.6rem;display:block;line-height:1.2;">🌡️ 수온</span><strong style="color:#00f2fe;font-size:0.8rem;">${wT}</strong></div>
+                    <div style="background:rgba(255,255,255,0.06);padding:3px 6px;border-radius:6px;"><span style="color:#94a3b8;font-size:0.6rem;display:block;line-height:1.2;">🌊 파고</span><strong style="color:#00e676;font-size:0.8rem;">${wW}</strong></div>
+                    <div style="background:rgba(255,255,255,0.06);padding:3px 6px;border-radius:6px;"><span style="color:#94a3b8;font-size:0.6rem;display:block;line-height:1.2;">🌬️ 풍속</span><strong style="color:#ffb703;font-size:0.8rem;">${wWd}</strong></div>
+                    <div style="background:rgba(255,255,255,0.06);padding:3px 6px;border-radius:6px;"><span style="color:#94a3b8;font-size:0.6rem;display:block;line-height:1.2;">🌡️ 기온</span><strong style="color:#fff;font-size:0.8rem;">${wA}</strong></div>
+                </div>
+                <div style="font-size:0.64rem;color:#cbd5e1;background:rgba(0,242,254,0.08);padding:3px 6px;border-radius:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:1px solid rgba(0,242,254,0.15);">🌊 ${tide}</div>
+            </div>
+            <div style="width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:9px solid #00f2fe;margin-top:-1px;"></div>
+            <div style="font-size:1.4rem;line-height:1;margin-top:-2px;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.8));">📍</div>
+        </div>
+    `;
+
+    var customDivIcon = L.divIcon({
+        className: 'leaflet-ocean-card-marker',
+        html: cardHtml,
+        iconSize: [190, 160],
+        iconAnchor: [95, 160]
+    });
+
+    _oceanLeafletMarker = L.marker([lat, lng], { icon: customDivIcon }).addTo(_oceanLeafletMapObj);
 }
-window.initKakaoOceanMap = initKakaoOceanMap;
+
+window.initLeafletOceanMap = initLeafletOceanMap;
+window.initKakaoOceanMap = initLeafletOceanMap; // 하위 호환성 유지
 
 // ─── 2. renderUnifiedSpotDashboard - 구 대시보드 숨기고 지도+CCTV 업데이트 ─
 
