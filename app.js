@@ -8762,10 +8762,6 @@ async function selectDashboardSpot(spotId) {
     }
     if (spot) {
         renderUnifiedSpotDashboard(spot);
-        var container = document.getElementById("oceanKakaoMap") || document.getElementById("oceanSpotMap");
-        if (container) {
-            container.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
     }
 }
 window.selectDashboardSpot = selectDashboardSpot;
@@ -15241,12 +15237,14 @@ async function initKakaoOceanMap(spot) {
         if (typeof window.kakao === 'undefined' || !window.kakao.maps) return;
 
         var pos = new window.kakao.maps.LatLng(lat, lng);
+        // 🌟 지도 뷰포트 오프셋 보정: 마커 위치보다 위도를 0.015 올려 지도 중심 설정 (상단 잘림 방지)
+        var centerPos = new window.kakao.maps.LatLng(lat + 0.015, lng);
         _lastOceanKakaoPos = pos;
 
         // Canvas Lock 원천 차단: 기존 맵 파괴 및 컨테이너 초기화 후 100% 새로 생성
         _oceanKakaoMapObj = null;
         container.innerHTML = '';
-        _oceanKakaoMapObj = new window.kakao.maps.Map(container, { center: pos, level: 6 });
+        _oceanKakaoMapObj = new window.kakao.maps.Map(container, { center: centerPos, level: 6 });
 
         if (_customOverlayObj) { _customOverlayObj.setMap(null); _customOverlayObj = null; }
 

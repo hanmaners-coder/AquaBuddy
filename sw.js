@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v920-fix-search-imrang-and-title-header";
+const CACHE_NAME = "aquabuddy-cache-v930-viewport-offset-and-no-scroll";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
