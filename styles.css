@@ -1728,14 +1728,3 @@ body.category-view-active .hero-section {
         display: none !important;
     }
 }
-
-/* 🌊 Leaflet Ocean Interactive Map Styles */
-.leaflet-ocean-card-marker {
-    background: transparent !important;
-    border: none !important;
-}
-.leaflet-container {
-    background: #070e17 !important;
-    font-family: inherit !important;
-}
-

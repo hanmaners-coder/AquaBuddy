@@ -203,15 +203,11 @@
      <!-- HLS.js Library for m3u8 Live Video Streaming -->
      <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
  
-     <!-- Leaflet.js Interactive Ocean Map SDK -->
-     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-
-     <!-- Kakao Maps API: Services only (no map rendering, for place search only) -->
-     <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=7c316726691ea5e02f234a85f5a20bab&libraries=services&autoload=false"></script>
+     <!-- Kakao Maps JavaScript API SDK with Services Library -->
+     <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=7c316726691ea5e02f234a85f5a20bab&libraries=services,clusterer"></script>
      
       <!-- Custom CSS -->
-      <link rel="stylesheet" href="styles.css?v=V830_FORCE_CACHE_FLUSH_LEAFLET">
+      <link rel="stylesheet" href="styles.css?v=V503_EXACT_SS_LIST">
      <!-- PWA Manifest and Meta Tags -->
      <link rel="manifest" href="manifest.json">
      <link rel="apple-touch-icon" href="icon-192.png">
@@ -907,28 +903,28 @@
                     </div>
                 </div>
 
-                <!-- 2층: 스팟 선택 전 안내 배너 & 선택/검색 후 리플릿 해양 지도 -->
+                <!-- 2층: 대기 화면 (#oceanMapEmptyState) & 카카오 인터랙티브 지도 (#oceanKakaoMap) -->
                 <div style="background: rgba(15, 23, 42, 0.85); padding: 14px; border-radius: 16px; margin-bottom: 20px; border: 1px solid rgba(0, 242, 254, 0.3); backdrop-filter: blur(10px);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <span style="color: #fff; font-size: 0.95rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
-                            <i class="fa-solid fa-map-location-dot" style="color: #00f2fe;"></i> 🗺️ 전국 해양 관측 지도
+                            <i class="fa-solid fa-map-location-dot" style="color: #00f2fe;"></i> 🗺️ 해양 관측 스팟 지도
                         </span>
-                        <span id="oceanMapSubTitle" style="font-size: 0.78rem; color: #94a3b8;">📍 스팟을 검색하거나 추천 스팟을 선택하시면 실시간 지도가 열립니다</span>
+                        <span id="oceanMapSubTitle" style="font-size: 0.78rem; color: #94a3b8;">📍 스팟을 선택하시면 실시간 지도가 열립니다</span>
                     </div>
 
-                    <!-- 1) 스팟 선택 전 대기 안내 배너 (초기 표시) -->
-                    <div id="oceanMapPlaceholder" style="width: 100%; height: 320px; border-radius: 12px; border: 1.5px dashed rgba(0, 242, 254, 0.35); background: rgba(7, 14, 23, 0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; box-sizing: border-box;">
-                        <div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(0, 242, 254, 0.1); border: 1px solid rgba(0, 242, 254, 0.3); display: flex; align-items: center; justify-content: center; margin-bottom: 12px; box-shadow: 0 0 20px rgba(0, 242, 254, 0.2);">
-                            <i class="fa-solid fa-map-location-dot" style="font-size: 1.7rem; color: #00f2fe;"></i>
+                    <!-- 1) 대기 화면 UI (Empty State) -->
+                    <div id="oceanMapEmptyState" style="width: 100%; height: 380px; border-radius: 12px; overflow: hidden; border: 1px dashed rgba(0, 242, 254, 0.35); background: rgba(10, 18, 35, 0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; box-sizing: border-box; padding: 24px;">
+                        <div style="background: rgba(0, 242, 254, 0.12); width: 68px; height: 68px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; border: 1px solid rgba(0, 242, 254, 0.35); box-shadow: 0 0 20px rgba(0,242,254,0.2);">
+                            <i class="fa-solid fa-map-location-dot" style="font-size: 2rem; color: #00f2fe;"></i>
                         </div>
-                        <h4 style="color: #fff; font-size: 1.12rem; font-weight: 800; margin-bottom: 8px;">원하는 해양 포인트를 검색하거나 추천 스팟을 선택해 주세요 🌊</h4>
-                        <p style="color: #94a3b8; font-size: 0.85rem; margin: 0; max-width: 440px; line-height: 1.6;">
-                            상단의 <strong style="color: #00f2fe;">🔥 추천 스팟 (📍해운대, 📍제주 등)</strong>을 클릭하거나<br>검색창에 스팟 이름을 입력하시면 실시간 해양 지도와 날씨 카드가 즉시 로딩됩니다.
+                        <h4 style="color: #fff; font-size: 1.18rem; font-weight: 800; margin-bottom: 8px;">원하는 해양 포인트를 검색하거나 추천 스팟을 선택해 주세요 🌊</h4>
+                        <p style="color: #94a3b8; font-size: 0.88rem; margin: 0; max-width: 440px; line-height: 1.6;">
+                            상단의 <strong style="color: #00f2fe; font-weight: 800;">🔥 추천 스팟 (📍해운대, 📍제주 등)</strong>을 클릭하거나<br>검색창에 스팟 이름을 입력하시면 100% 꽉 찬 카카오 지도가 즉시 펼쳐집니다.
                         </p>
                     </div>
 
-                    <!-- 2) 실제 리플릿 해양 지도 컨테이너 (스팟 선택/검색 시 노출) -->
-                    <div id="oceanSpotMap" style="display: none; width: 100%; height: 380px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.15); background: #070e17; position: relative; z-index: 10;"></div>
+                    <!-- 2) 실제 카카오 지도 컨테이너 (초기 display: none) -->
+                    <div id="oceanKakaoMap" style="display: none; width: 100%; height: 380px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.15); background: #0f172a; position: relative;"></div>
                 </div>
 
                 <!-- 3층: 지도 밑 나란히 배치 (왼쪽: CCTV / 오른쪽: 스쿠버 지수) -->
@@ -2068,8 +2064,7 @@
                             </h4>
                             <span style="font-size: 0.8rem; color: var(--text-muted);">각 배너마다 서로 다른 기획전/상품 링크를 연결할 수 있습니다.</span>
                         </div>
-      <script src="config.js?v=V830_FORCE_CACHE_FLUSH_LEAFLET"></script>
-      <script src="app.js?v=V830_FORCE_CACHE_FLUSH_LEAFLET"></script>
+
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-bottom: 18px;">
                             <!-- 1. Top Banner -->
                             <div style="background: rgba(0,0,0,0.55); border: 1px solid rgba(255, 215, 0, 0.35); border-radius: 10px; padding: 14px;">
@@ -2201,8 +2196,8 @@
      </div>
  
      <!-- App Configuration & Main Logic Script -->
-      <script src="config.js?v=V830_FORCE_CACHE_FLUSH_LEAFLET"></script>
-      <script src="app.js?v=V830_FORCE_CACHE_FLUSH_LEAFLET"></script>
+     <script src="config.js?v=V503_EXACT_SS_LIST"></script>
+     <script src="app.js?v=V850_SUPABASE_OCEAN_WEATHER_1TO1_MAPPING"></script>
      <!-- Toast Notification Container -->
     <div id="toastContainer" class="toast-container"></div>
 </body>

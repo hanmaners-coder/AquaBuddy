@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v830-force-cache-flush";
+const CACHE_NAME = "aquabuddy-cache-v850-supabase-ocean-weather-1to1-mapping";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -7,13 +7,7 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
-      return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
-        })
-      );
+      return Promise.all(keys.map((k) => caches.delete(k)));
     }).then(() => self.clients.claim())
   );
 });
