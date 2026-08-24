@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v820-full-leaflet-no-kakao-map";
+const CACHE_NAME = "aquabuddy-cache-v830-force-cache-flush";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -7,7 +7,13 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
-      return Promise.all(keys.map((k) => caches.delete(k)));
+      return Promise.all(
+        keys.map((key) => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
+          }
+        })
+      );
     }).then(() => self.clients.claim())
   );
 });

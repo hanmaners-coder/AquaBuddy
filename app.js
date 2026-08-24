@@ -14421,7 +14421,10 @@ if (document.readyState === 'loading') {
 // 댓글 폼 submit 이벤트 위임 (onsubmit이 이미 연결되어 있으므로 별도 click 위임 제거)
 
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("sw.js?v=V503_EXACT_SS_LIST").then(() => console.log("Service Worker registered")).catch(err => console.error("SW registration failed:", err));
+  navigator.serviceWorker.register("sw.js?v=V830_FORCE_CACHE_FLUSH_LEAFLET").then(reg => {
+    console.log("Service Worker registered");
+    if (reg) reg.update();
+  }).catch(err => console.error("SW registration failed:", err));
 }
 
 
