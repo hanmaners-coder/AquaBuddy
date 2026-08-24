@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v740-offscreen-css-kakao-map-lock-fix";
+const CACHE_NAME = "aquabuddy-cache-v770-cors-defense-and-kakao-map-recreation";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

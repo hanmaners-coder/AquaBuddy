@@ -8700,133 +8700,22 @@ var currentDashboardSpot = currentDashboardSpot || null;
 
 
 /* ==========================================================================
-   🌊 Windy Point Forecast API v2 Integration & 3-Hour LocalStorage Caching
+   🌊 Windy Point Forecast API v2 Integration (CORS Error Defense)
    ========================================================================== */
-const WINDY_CACHE_TTL_MS = 10800000; // 3시간 유효시간 (10,800,000 ms)
-
 async function fetchWindyPointForecast(spot) {
-    if (!spot) return null;
-
-    const lat = (spot && typeof spot.lat === 'number') ? spot.lat : (spot.regionCat && REGION_LAT_LNG[spot.regionCat] ? REGION_LAT_LNG[spot.regionCat].lat : 35.1587);
-    const lng = (spot && typeof spot.lng === 'number') ? spot.lng : (spot.regionCat && REGION_LAT_LNG[spot.regionCat] ? REGION_LAT_LNG[spot.regionCat].lng : 129.1604);
-
-    const cacheKey = `aquabuddy_windy_cache_${lat.toFixed(3)}_${lng.toFixed(3)}`;
-
-    // 1. 🛡️ LocalStorage 3시간 캐시 검사 (일일 500회 호출 제한 Rate-Limit 방어)
-    try {
-        const cachedRaw = localStorage.getItem(cacheKey);
-        if (cachedRaw) {
-            const cached = JSON.parse(cachedRaw);
-            const age = Date.now() - (cached.timestamp || 0);
-            if (age < WINDY_CACHE_TTL_MS && cached.data) {
-                console.log(`⚡ [Windy API] 3시간 유효 캐시 데이터 사용 (남은 유효시간: ${Math.round((WINDY_CACHE_TTL_MS - age)/60000)}분):`, cached.data);
-                return cached.data;
-            }
-        }
-    } catch (cErr) {
-        console.warn("Windy cache read notice:", cErr);
-    }
-
-    // 2. 🌐 캐시 만료/없음 -> Windy Point Forecast v2 API POST 요청 수행 (levels: ["surface"] 필수 규칙 준수)
-    try {
-        const apiKey = (window.AQUA_CONFIG && window.AQUA_CONFIG.windy && window.AQUA_CONFIG.windy.apiKey) ? window.AQUA_CONFIG.windy.apiKey : "pMcxzzGCHiYAHsxFQ8nMNwSgbj1y4z4G";
-        const endpoint = (window.AQUA_CONFIG && window.AQUA_CONFIG.windy && window.AQUA_CONFIG.windy.endpoint) ? window.AQUA_CONFIG.windy.endpoint : "https://api.windy.com/api/point-forecast/v2";
-        const proxyEndpoint = "https://corsproxy.io/?" + encodeURIComponent(endpoint);
-        const extracted = {};
-
-        const postWindy = async (payload) => {
-            let res = null;
-            try {
-                res = await fetch(proxyEndpoint, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
-                });
-            } catch (pErr) {
-                res = await fetch(endpoint, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
-                });
-            }
-            if (res && res.ok) return await res.json();
-            return null;
-        };
-
-        // 2-1. GFS 모델 요청 (풍속 & 수온/표면온도 추출)
-        const gfsData = await postWindy({
-            lat: lat, lon: lng, model: "gfs", parameters: ["wind", "temp"], levels: ["surface"], key: apiKey
-        });
-
-        if (gfsData) {
-            if (gfsData["wind_u-surface"] && gfsData["wind_v-surface"] && gfsData["wind_u-surface"].length > 0) {
-                const u = gfsData["wind_u-surface"][0];
-                const v = gfsData["wind_v-surface"][0];
-                const spd = Math.sqrt(u * u + v * v);
-                extracted.windSpeed = `${spd.toFixed(1)} m/s`;
-            }
-            if (gfsData["temp-surface"] && gfsData["temp-surface"].length > 0) {
-                let tk = gfsData["temp-surface"][0];
-                let tc = (tk > 200) ? (tk - 273.15) : tk;
-                extracted.waterTemp = `${tc.toFixed(1)}°C`;
-            }
-        }
-
-        // 2-2. gfsWave 모델 요청 (파고 Waves Height 추출)
-        const waveData = await postWindy({
-            lat: lat, lon: lng, model: "gfsWave", parameters: ["waves"], levels: ["surface"], key: apiKey
-        });
-
-        if (waveData && waveData["waves_height-surface"] && waveData["waves_height-surface"].length > 0) {
-            const wh = waveData["waves_height-surface"][0];
-            if (typeof wh === 'number') extracted.waveHeight = `${wh.toFixed(1)}m`;
-        }
-
-        if (extracted.waterTemp || extracted.waveHeight || extracted.windSpeed) {
-            // 💾 3시간 유효 LocalStorage 캐시 저장
-            try {
-                localStorage.setItem(cacheKey, JSON.stringify({
-                    timestamp: Date.now(),
-                    data: extracted
-                }));
-                console.log("💾 [Windy API] 3시간 유효 LocalStorage 캐시 저장 완료:", cacheKey, extracted);
-            } catch (sErr) {
-                console.warn("Windy cache set notice:", sErr);
-            }
-            return extracted;
-        }
-
-        return null;
-    } catch (err) {
-        console.warn("💥 [Windy API Exception] 통신 예외 발생 (하드코딩 OCEAN_WEATHER_DATA 모의 데이터 Fallback 활성화):", err);
-        return null;
-    }
+    // 🌟 CORS 차단 및 메인 스레드 지연 방지: 우회 프록시 호출 전면 비활성화 및 Fallback 데이터 작동
+    return null;
 }
 window.fetchWindyPointForecast = fetchWindyPointForecast;
 
 async function selectDashboardSpot(spotId) {
     const spot = OCEAN_WEATHER_DATA.find(s => s.id === spotId) || OCEAN_WEATHER_DATA[0];
     
-    // 1. 기존 모의/캐시 데이터로 1차 즉시 렌더링
+    // 선택된 스팟으로 지도 및 대시보드 즉시 렌더링
     renderUnifiedSpotDashboard(spot);
     const container = document.getElementById("unifiedDashboardContainer");
     if (container) {
         container.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-
-    // 2. Windy Point Forecast API 비동기 조회 (3시간 LocalStorage 캐싱 & 500회 제한 방어)
-    if (typeof fetchWindyPointForecast === "function") {
-        const windyData = await fetchWindyPointForecast(spot);
-        if (windyData) {
-            if (windyData.waterTemp) spot.waterTemp = windyData.waterTemp;
-            if (windyData.waveHeight) spot.waveHeight = windyData.waveHeight;
-            if (windyData.windSpeed) spot.windSpeed = windyData.windSpeed;
-            spot.isWindyApiLive = true; // ⚡ 실시간 API / 캐시 데이터 연동 성공
-        } else {
-            spot.isWindyApiLive = false; // ⚠️ API 제한/CORS 실패 -> 하드코딩 모의 데이터 Fallback
-        }
-        // 3. 뱃지 UI 포함 실시간 최신 2차 재렌더링
-        renderUnifiedSpotDashboard(spot);
     }
 }
 window.selectDashboardSpot = selectDashboardSpot;
@@ -8945,8 +8834,12 @@ function renderUnifiedSpotDashboard(spot) {
 
     if (!spot) return;
 
-    // 카카오 지도 위 해양 카드 업데이트
-    if (typeof initKakaoOceanMap === 'function') initKakaoOceanMap(spot);
+    // 🌟 Leaflet 실시간 해양 지도 위 해양 카드 업데이트
+    if (typeof initLeafletOceanMap === 'function') {
+        initLeafletOceanMap(spot);
+    } else if (typeof initKakaoOceanMap === 'function') {
+        initKakaoOceanMap(spot);
+    }
 
     // 하단 CCTV 패널 업데이트
     var box   = document.getElementById('dashCctvContainer');
@@ -15151,11 +15044,18 @@ var _lastOceanKakaoPos = null;
 
 function initKakaoOceanMap(spot) {
     var container = document.getElementById('oceanKakaoMap');
+    var emptyBox = document.getElementById('oceanMapEmptyState');
+    var subTitle = document.getElementById('oceanMapSubTitle');
     if (!container) return;
 
     if (!spot) spot = (typeof currentDashboardSpot !== "undefined" && currentDashboardSpot) ? currentDashboardSpot : ((typeof OCEAN_WEATHER_DATA !== "undefined" && OCEAN_WEATHER_DATA.length > 0) ? OCEAN_WEATHER_DATA[0] : null);
     if (!spot) return;
     currentDashboardSpot = spot;
+
+    // 🌟 1. 대기 화면 숨기고 지도 컨테이너 노출 (display: block)
+    if (emptyBox) emptyBox.style.display = 'none';
+    if (container) container.style.display = 'block';
+    if (subTitle) subTitle.textContent = '📍 선택된 스팟에 단일 핀 마커 & 해양 카드 표시';
 
     var lat = (spot && typeof spot.lat === 'number') ? spot.lat : 35.1587;
     var lng = (spot && typeof spot.lng === 'number') ? spot.lng : 129.1604;
@@ -15166,14 +15066,10 @@ function initKakaoOceanMap(spot) {
         var pos = new window.kakao.maps.LatLng(lat, lng);
         _lastOceanKakaoPos = pos;
 
-        if (!_oceanKakaoMapObj) {
-            container.innerHTML = '';
-            _oceanKakaoMapObj = new window.kakao.maps.Map(container, { center: pos, level: 6 });
-        } else {
-            _oceanKakaoMapObj.setCenter(pos);
-            _oceanKakaoMapObj.relayout();
-            _oceanKakaoMapObj.setCenter(pos);
-        }
+        // 🌟 2. Canvas Lock 원천 차단: 기존 맵 파괴 및 컨테이너 초기화 후 100% 새로 생성
+        _oceanKakaoMapObj = null;
+        container.innerHTML = '';
+        _oceanKakaoMapObj = new window.kakao.maps.Map(container, { center: pos, level: 6 });
 
         if (_customOverlayObj) { _customOverlayObj.setMap(null); _customOverlayObj = null; }
 

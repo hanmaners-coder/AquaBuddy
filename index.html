@@ -879,7 +879,7 @@
  
  
          <!-- VIEW 2: Dedicated Water Tide Table View Section (#tideViewSection) -->
-        <div id="tideViewSection" class="offscreen-tab">
+        <div id="tideViewSection" class="hidden">
             <section class="weather-section">
                 <!-- 1층: 스팟 직접 검색창 & 인기 스팟 퀵 태그 -->
                 <div style="background: rgba(15, 23, 42, 0.85); padding: 18px; border-radius: 16px; margin-bottom: 20px; border: 1px solid rgba(0, 242, 254, 0.25); backdrop-filter: blur(10px);">
@@ -903,15 +903,28 @@
                     </div>
                 </div>
 
-                <!-- 2층: 카카오 인터랙티브 지도 (#oceanKakaoMap) -->
+                <!-- 2층: 대기 화면 (#oceanMapEmptyState) & 카카오 인터랙티브 지도 (#oceanKakaoMap) -->
                 <div style="background: rgba(15, 23, 42, 0.85); padding: 14px; border-radius: 16px; margin-bottom: 20px; border: 1px solid rgba(0, 242, 254, 0.3); backdrop-filter: blur(10px);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <span style="color: #fff; font-size: 0.95rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
                             <i class="fa-solid fa-map-location-dot" style="color: #00f2fe;"></i> 🗺️ 해양 관측 스팟 지도
                         </span>
-                        <span style="font-size: 0.78rem; color: #94a3b8;">📍 선택된 스팟에 단일 핀 마커 & 해양 카드 표시</span>
+                        <span id="oceanMapSubTitle" style="font-size: 0.78rem; color: #94a3b8;">📍 스팟을 선택하시면 실시간 지도가 열립니다</span>
                     </div>
-                    <div id="oceanKakaoMap" style="width: 100%; height: 380px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.15); background: #0f172a; position: relative;"></div>
+
+                    <!-- 1) 대기 화면 UI (Empty State) -->
+                    <div id="oceanMapEmptyState" style="width: 100%; height: 380px; border-radius: 12px; overflow: hidden; border: 1px dashed rgba(0, 242, 254, 0.35); background: rgba(10, 18, 35, 0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; box-sizing: border-box; padding: 24px;">
+                        <div style="background: rgba(0, 242, 254, 0.12); width: 68px; height: 68px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; border: 1px solid rgba(0, 242, 254, 0.35); box-shadow: 0 0 20px rgba(0,242,254,0.2);">
+                            <i class="fa-solid fa-map-location-dot" style="font-size: 2rem; color: #00f2fe;"></i>
+                        </div>
+                        <h4 style="color: #fff; font-size: 1.18rem; font-weight: 800; margin-bottom: 8px;">원하는 해양 포인트를 검색하거나 추천 스팟을 선택해 주세요 🌊</h4>
+                        <p style="color: #94a3b8; font-size: 0.88rem; margin: 0; max-width: 440px; line-height: 1.6;">
+                            상단의 <strong style="color: #00f2fe; font-weight: 800;">🔥 추천 스팟 (📍해운대, 📍제주 등)</strong>을 클릭하거나<br>검색창에 스팟 이름을 입력하시면 100% 꽉 찬 카카오 지도가 즉시 펼쳐집니다.
+                        </p>
+                    </div>
+
+                    <!-- 2) 실제 카카오 지도 컨테이너 (초기 display: none) -->
+                    <div id="oceanKakaoMap" style="display: none; width: 100%; height: 380px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.15); background: #0f172a; position: relative;"></div>
                 </div>
 
                 <!-- 3층: 지도 밑 나란히 배치 (왼쪽: CCTV / 오른쪽: 스쿠버 지수) -->
@@ -2184,7 +2197,7 @@
  
      <!-- App Configuration & Main Logic Script -->
      <script src="config.js?v=V503_EXACT_SS_LIST"></script>
-     <script src="app.js?v=V740_OFFSCREEN_CSS_KAKAO_MAP_LOCK_FIX"></script>
+     <script src="app.js?v=V770_CORS_DEFENSE_AND_KAKAO_MAP_RECREATION"></script>
      <!-- Toast Notification Container -->
     <div id="toastContainer" class="toast-container"></div>
 </body>

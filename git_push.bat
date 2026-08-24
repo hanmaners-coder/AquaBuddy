@@ -1,16 +1,18 @@
 @echo off
-chcp 65001 > nul
-echo ===================================================
-echo 🚀 AquaBuddy 깃허브 자동 업로드 (Git Push)
-echo ===================================================
-echo.
+setlocal enabledelayedexpansion
+title AquaBuddy GitHub Auto Push
 
+echo [1/3] Git add files...
 git add .
-git commit -m "Auto Update: %date% %time%"
+
+echo [2/3] Git commit...
+git commit -m "V780: Leaflet Ocean Map Integration"
+
+echo [3/3] Git push to GitHub...
 git push -u origin main
 
 echo.
 echo ===================================================
-echo ✅ 깃허브 업로드가 성공적으로 완료되었습니다!
+echo [SUCCESS] GitHub Push Finished!
 echo ===================================================
 pause
