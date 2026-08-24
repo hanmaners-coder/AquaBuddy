@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v960-login-wall-for-ocean-spots";
+const CACHE_NAME = "aquabuddy-cache-v970-home-haeundae-cctv-and-ocean-spot-cta";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

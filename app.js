@@ -954,6 +954,7 @@ function switchMainView(viewName) {
     if (tideSec) { tideSec.className = "offscreen-tab"; tideSec.style.display = ""; }
     if (cctvSec) { cctvSec.style.display = "none"; cctvSec.classList.add("hidden"); }
 
+    const homeCctvPanel = document.getElementById("homeHaeundaeCctvPanel");
     if (viewName === "all") {
         document.body.classList.remove("category-view-active");
         if (categoryBar) categoryBar.style.display = "flex";
@@ -963,8 +964,11 @@ function switchMainView(viewName) {
         if (partnershipTeaserBanner) { partnershipTeaserBanner.style.display = "none"; partnershipTeaserBanner.classList.add("hidden"); }
         if (oceanWeatherSection) oceanWeatherSection.style.display = "block";
         if (mainBannerSlider) mainBannerSlider.style.display = "block";
+        if (homeCctvPanel) homeCctvPanel.style.display = "block";
+        if (typeof initHomeHaeundaeCctv === 'function') initHomeHaeundaeCctv();
     } else {
         document.body.classList.add("category-view-active");
+        if (homeCctvPanel) homeCctvPanel.style.display = "none";
         if (categoryBar) categoryBar.style.display = (viewName === "swimming" || viewName === "openwater" || viewName === "freediving" || viewName === "scuba") ? "flex" : "none";
         if (oceanWeatherSection) oceanWeatherSection.style.display = "none";
         if (mainBannerSlider) mainBannerSlider.style.display = "block";
@@ -4299,6 +4303,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderWeatherGrid(activeTideRegion);
     renderOceanWebcams(activeCctvRegion);
     if (typeof selectScubaPoint === 'function') selectScubaPoint('SS9');
+    if (typeof initHomeHaeundaeCctv === 'function') initHomeHaeundaeCctv();
     renderAdBanner();
     generateBubbles();
 });
@@ -15449,5 +15454,15 @@ async function selectScubaPoint(pointId, filterDate) {
 }
 window.selectScubaPoint = selectScubaPoint;
 
-// ─── 5. handleTideSearch & 전역 등록 ────────────────────────────
+// 📷 홈 전용: 해운대 해수욕장 실시간 재난 CCTV 플레이어 초기화 함수
+function initHomeHaeundaeCctv() {
+    var box = document.getElementById('homeCctvVideoBox');
+    if (!box || typeof OCEAN_WEBCAMS_DATA === 'undefined' || !OCEAN_WEBCAMS_DATA) return;
+    var cam = OCEAN_WEBCAMS_DATA.find(function(c) { return c.id === 'cam-busan-haeundae-beach'; }) || OCEAN_WEBCAMS_DATA[0];
+    if (cam) {
+        box.innerHTML = _makeCctvHtml(cam);
+        _startHls(box, cam);
+    }
+}
+window.initHomeHaeundaeCctv = initHomeHaeundaeCctv;
 

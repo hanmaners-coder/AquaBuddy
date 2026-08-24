@@ -811,6 +811,42 @@
                  </div>
              </section>
  
+              <!-- 📷 홈 전용: 해운대 해수욕장 실시간 재난 CCTV & 전국해양스팟 이동 CTA 패널 -->
+              <div id="homeHaeundaeCctvPanel" class="glass-panel" style="background: rgba(10, 18, 35, 0.95); border-radius: 18px; padding: 20px; border: 1.5px solid rgba(0, 242, 254, 0.35); backdrop-filter: blur(12px); box-shadow: 0 10px 30px rgba(0,0,0,0.4); margin-top: 20px; margin-bottom: 24px;">
+                  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; align-items: stretch;">
+                      
+                      <!-- 👈 [왼쪽] 해운대 해수욕장 재난 CCTV 플레이어 -->
+                      <div style="display: flex; flex-direction: column; justify-content: center;">
+                          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                              <span style="color: #fff; font-size: 0.95rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                                  <i class="fa-solid fa-video" style="color: #ff5252; font-size: 1.1rem;"></i> 📷 실시간 해운대 라이브 CCTV
+                              </span>
+                              <span style="background: rgba(0,230,118,0.2); color: #00e676; font-size: 0.68rem; font-weight: 900; padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(0,230,118,0.4);">LIVE</span>
+                          </div>
+                          <div id="homeCctvVideoBox" style="width: 100%; min-height: 250px; border-radius: 14px; overflow: hidden; background: #0f172a; border: 1px solid rgba(0, 242, 254, 0.25);"></div>
+                      </div>
+
+                      <!-- 👉 [오른쪽] 안내 문구 및 전국 해양 스팟 이동 CTA 버튼 -->
+                      <div style="display: flex; flex-direction: column; justify-content: center; background: rgba(15, 23, 42, 0.75); padding: 22px; border-radius: 16px; border: 1px solid rgba(0, 242, 254, 0.2); box-sizing: border-box;">
+                          <div style="background: rgba(0, 242, 254, 0.12); color: #00f2fe; font-size: 0.78rem; font-weight: 800; padding: 4px 10px; border-radius: 6px; display: inline-block; width: fit-content; margin-bottom: 12px; border: 1px solid rgba(0, 242, 254, 0.3);">
+                              🌊 전국 222개 해양 스팟 & 44개 실시간 CCTV
+                          </div>
+                          <h3 style="color: #fff; font-size: 1.2rem; font-weight: 900; line-height: 1.45; margin-bottom: 12px;">
+                              전국 바다 수온 · 파고 · 풍속 · 조석 &<br><span style="color: #00f2fe;">스킨스쿠버 종합 지수</span> 한눈에 확인!
+                          </h3>
+                          <p style="color: #cbd5e1; font-size: 0.9rem; line-height: 1.6; margin-bottom: 20px;">
+                              더 많은 실시간 라이브 CCTV와 스킨스쿠버 지수, 해양 지수(조석, 기온, 수온, 풍속, 파고) 확인하러가기
+                          </p>
+                          <button onclick="switchMainView('tide'); return false;" 
+                                  style="background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%); color: #0f172a; border: none; padding: 14px 20px; border-radius: 14px; font-weight: 900; font-size: 0.96rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 6px 20px rgba(0, 242, 254, 0.4); transition: all 0.2s ease;">
+                              <span>🌊 전국 해양 스팟 & CCTV 더 보러가기</span>
+                              <i class="fa-solid fa-arrow-right"></i>
+                          </button>
+                      </div>
+
+                  </div>
+              </div>
+
              <!-- Balanced Center Main Banner -->
              <div class="ad-banner-panel glass-panel" id="mainBannerSlider">
                  <div class="ad-content" id="adContent">
@@ -2223,8 +2259,8 @@
      </div>
  
      <!-- App Configuration & Main Logic Script -->
-     <script src="config.js?v=V960_LOGIN_WALL_FOR_OCEAN_SPOTS"></script>
-     <script src="app.js?v=V960_LOGIN_WALL_FOR_OCEAN_SPOTS"></script>
+     <script src="config.js?v=V970_HOME_HAEUNDAE_CCTV_AND_OCEAN_SPOT_CTA"></script>
+     <script src="app.js?v=V970_HOME_HAEUNDAE_CCTV_AND_OCEAN_SPOT_CTA"></script>
      <!-- Toast Notification Container -->
     <div id="toastContainer" class="toast-container"></div>
 </body>
