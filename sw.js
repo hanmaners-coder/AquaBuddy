@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v880-pure-supabase-no-dummy-data";
+const CACHE_NAME = "aquabuddy-cache-v890-supabase-exact-haeundae-2718-08m-fetch";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

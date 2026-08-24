@@ -15041,6 +15041,16 @@ var _oceanKakaoMapObj = null;
 var _customOverlayObj = null;
 var _lastOceanKakaoPos = null;
 
+function formatMetricUnit(val, defaultUnit) {
+    if (val === null || val === undefined || val === '' || val === 'null') return null;
+    var str = String(val).trim();
+    if (str === '-' || str === '정보없음' || str === 'null') return null;
+    if (!isNaN(parseFloat(str)) && !str.includes('°C') && !str.includes('m') && !str.includes('m/s')) {
+        return str + defaultUnit;
+    }
+    return str;
+}
+
 // 🌊 Supabase ocean_weather_cache 실시간 1:1 매핑 데이터 로드 함수
 async function loadOceanWeatherCacheFromSupabase() {
     if (typeof supabaseClient === 'undefined' || !supabaseClient) return;
@@ -15057,20 +15067,20 @@ async function loadOceanWeatherCacheFromSupabase() {
                     (x.name && dbItem.spot_name && (x.name.includes(dbItem.spot_name) || dbItem.spot_name.includes(x.name)))
                 );
                 if (s) {
-                    s.water_temp = dbItem.water_temp;
-                    s.waterTemp = dbItem.water_temp;
-                    s.wave_height = dbItem.wave_height;
-                    s.waveHeight = dbItem.wave_height;
-                    s.wind_speed = dbItem.wind_speed;
-                    s.windSpeed = dbItem.wind_speed;
-                    s.air_temp = dbItem.air_temp;
-                    s.airTemp = dbItem.air_temp;
+                    s.water_temp = formatMetricUnit(dbItem.water_temp, '°C');
+                    s.waterTemp = s.water_temp;
+                    s.wave_height = formatMetricUnit(dbItem.wave_height, 'm');
+                    s.waveHeight = s.wave_height;
+                    s.wind_speed = formatMetricUnit(dbItem.wind_speed, ' m/s');
+                    s.windSpeed = s.wind_speed;
+                    s.air_temp = formatMetricUnit(dbItem.air_temp, '°C');
+                    s.airTemp = s.air_temp;
                     s.high_tide = dbItem.high_tide;
                     s.low_tide = dbItem.low_tide;
                     s.scuba_index_grade = dbItem.scuba_index_grade;
                 }
             });
-            console.log(`[Supabase Ocean Cache] ${data.length}개 스팟 1:1 데이터 매핑 완료`);
+            console.log(`[Supabase Ocean Cache] ${data.length}개 스팟 DB 1:1 데이터 매핑 완료`);
         }
     } catch(e) {
         console.warn('[Supabase Ocean Cache Error]', e);
@@ -15097,28 +15107,40 @@ async function initKakaoOceanMap(spot) {
     var lng = (spot && typeof spot.lng === 'number') ? spot.lng : 129.1604;
     var nm  = spot.name || spot.spot_name || '관측 스팟';
 
-    // 🌟 2. Supabase ocean_weather_cache 1:1 실시간 조회 (매핑 수치 없는 경우)
-    if ((!spot.waterTemp || spot.waterTemp === '-') && typeof supabaseClient !== 'undefined' && supabaseClient) {
+    // 🌟 2. Supabase ocean_weather_cache DB 1:1 무조건 직접 조회
+    if (typeof supabaseClient !== 'undefined' && supabaseClient) {
         try {
             var spotId = spot.id || spot.spot_id;
             var cleanName = nm.replace(/부산|울산|거제|포항|경북|경남|강원|제주|해수욕장|해변|포구|항|해상/g, '').trim();
+            
+            // 1순위: spot_id 매칭
             var { data: dbData } = await supabaseClient
                 .from('ocean_weather_cache')
                 .select('*')
-                .or(`spot_id.eq.${spotId},spot_name.ilike.%${cleanName || nm}%`)
+                .eq('spot_id', spotId)
                 .limit(1);
+
+            // 2순위: spot_name 키워드 매칭 (예: 해운대해수욕장)
+            if (!dbData || dbData.length === 0) {
+                var { data: dbData2 } = await supabaseClient
+                    .from('ocean_weather_cache')
+                    .select('*')
+                    .or(`spot_name.ilike.%${cleanName || nm}%,spot_name.ilike.%${nm}%`)
+                    .limit(1);
+                dbData = dbData2;
+            }
 
             if (dbData && dbData.length > 0) {
                 var row = dbData[0];
-                spot.waterTemp = row.water_temp;
-                spot.waveHeight = row.wave_height;
-                spot.windSpeed = row.wind_speed;
-                spot.airTemp = row.air_temp;
-                spot.high_tide = row.high_tide;
-                spot.low_tide = row.low_tide;
+                if (row.water_temp) spot.waterTemp = spot.water_temp = formatMetricUnit(row.water_temp, '°C');
+                if (row.wave_height) spot.waveHeight = spot.wave_height = formatMetricUnit(row.wave_height, 'm');
+                if (row.wind_speed) spot.windSpeed = spot.wind_speed = formatMetricUnit(row.wind_speed, ' m/s');
+                if (row.air_temp) spot.airTemp = spot.air_temp = formatMetricUnit(row.air_temp, '°C');
+                if (row.high_tide) spot.high_tide = row.high_tide;
+                if (row.low_tide) spot.low_tide = row.low_tide;
             }
         } catch(e) {
-            console.warn('[Supabase Spot Fetch]', e);
+            console.warn('[Supabase Spot Fetch Direct]', e);
         }
     }
 
