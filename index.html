@@ -207,8 +207,8 @@
      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
      <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
-     <!-- Kakao Maps JavaScript API SDK with Services Library (For other features) -->
-     <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=7c316726691ea5e02f234a85f5a20bab&libraries=services,clusterer"></script>
+     <!-- Kakao Maps API: Services only (no map rendering, for place search only) -->
+     <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=7c316726691ea5e02f234a85f5a20bab&libraries=services&autoload=false"></script>
      
       <!-- Custom CSS -->
       <link rel="stylesheet" href="styles.css?v=V503_EXACT_SS_LIST">
@@ -2201,7 +2201,7 @@
  
      <!-- App Configuration & Main Logic Script -->
      <script src="config.js?v=V503_EXACT_SS_LIST"></script>
-     <script src="app.js?v=V810_LAZY_LOAD_LEAFLET_OCEAN_MAP"></script>
+     <script src="app.js?v=V820_FULL_LEAFLET_NO_KAKAO_MAP"></script>
      <!-- Toast Notification Container -->
     <div id="toastContainer" class="toast-container"></div>
 </body>

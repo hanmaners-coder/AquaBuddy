@@ -8301,7 +8301,7 @@ function handleTideSearch(keyword) {
     }
 
     tideSearchDebounceTimer = setTimeout(function() {
-        // 1. 등록된 스팟 배열에서 먼저 매칭
+        // 1. 먼저 등록된 192개 해양스팟 배열에서 매칭
         var match = null;
         if (typeof OCEAN_WEATHER_DATA !== 'undefined') {
             match = OCEAN_WEATHER_DATA.find(function(s) {
@@ -8310,45 +8310,30 @@ function handleTideSearch(keyword) {
             });
         }
         if (match) {
-            if (typeof selectDashboardSpot === 'function') selectDashboardSpot(match.id || match.spot_id);
-            else renderUnifiedSpotDashboard(match);
+            if (typeof initLeafletOceanMap === 'function') initLeafletOceanMap(match);
             return;
         }
 
-        // 2. 카카오 장소 검색
-        if (window.kakao && window.kakao.maps && window.kakao.maps.services) {
-            var places = new window.kakao.maps.services.Places();
-            places.keywordSearch(keyword, function(result, status) {
-                if (status === window.kakao.maps.services.Status.OK && result && result.length > 0) {
-                    var place = result[0];
-                    var customSpot = {
-                        id: 'search-' + Date.now(),
-                        name: place.place_name || keyword,
-                        region: place.address_name || place.road_address_name || '대한민국 해역',
-                        lat: parseFloat(place.y),
-                        lng: parseFloat(place.x),
-                        waterTemp: '-', waveHeight: '-', windSpeed: '-', airTemp: '-'
-                    };
-                    renderUnifiedSpotDashboard(customSpot);
-                } else {
-                    var geocoder = new window.kakao.maps.services.Geocoder();
-                    geocoder.addressSearch(keyword, function(geo, gs) {
-                        if (gs === window.kakao.maps.services.Status.OK && geo && geo.length > 0) {
-                            var customSpot = {
-                                id: 'search-' + Date.now(),
-                                name: keyword,
-                                region: geo[0].address_name || '대한민국 해역',
-                                lat: parseFloat(geo[0].y),
-                                lng: parseFloat(geo[0].x),
-                                waterTemp: '-', waveHeight: '-', windSpeed: '-', airTemp: '-'
-                            };
-                            renderUnifiedSpotDashboard(customSpot);
-                        }
-                    });
-                }
-            });
-        }
-    }, 250);
+        // 2. OpenStreetMap Nominatim 무료 장소 검색 (카카오 의존성 완전 제거)
+        fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(keyword) + '&countrycodes=kr&limit=1', {
+            headers: { 'Accept-Language': 'ko' }
+        }).then(function(r) { return r.json(); })
+          .then(function(results) {
+              if (results && results.length > 0) {
+                  var place = results[0];
+                  var customSpot = {
+                      id: 'search-' + Date.now(),
+                      name: place.display_name.split(',')[0] || keyword,
+                      region: place.display_name || '대한민국 해역',
+                      lat: parseFloat(place.lat),
+                      lng: parseFloat(place.lon),
+                      waterTemp: '-', waveHeight: '-', windSpeed: '-', airTemp: '-'
+                  };
+                  if (typeof initLeafletOceanMap === 'function') initLeafletOceanMap(customSpot);
+              }
+          })
+          .catch(function(e) { console.warn('[TideSearch Nominatim]', e); });
+    }, 350);
 }
 
 function filterCctvRegion(regionCategoryKey) {
@@ -8707,13 +8692,12 @@ async function fetchWindyPointForecast(spot) {
 window.fetchWindyPointForecast = fetchWindyPointForecast;
 
 async function selectDashboardSpot(spotId) {
-    const spot = OCEAN_WEATHER_DATA.find(s => s.id === spotId) || OCEAN_WEATHER_DATA[0];
-    
-    // 선택된 스팟으로 지도 및 대시보드 즉시 렌더링
-    renderUnifiedSpotDashboard(spot);
-    const container = document.getElementById("unifiedDashboardContainer");
-    if (container) {
-        container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const spot = (typeof OCEAN_WEATHER_DATA !== 'undefined' && OCEAN_WEATHER_DATA.find(s => s.id === spotId)) || null;
+    if (!spot) return;
+
+    // 🌟 직접 Leaflet 지도 호출 (중간 레이어 없이 즉시 렌더링)
+    if (typeof initLeafletOceanMap === 'function') {
+        initLeafletOceanMap(spot);
     }
 }
 window.selectDashboardSpot = selectDashboardSpot;
