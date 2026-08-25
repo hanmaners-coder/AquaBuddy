@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v980-home-cctv-legal-notice";
+const CACHE_NAME = "aquabuddy-cache-v990-add-psai-and-raid-freediving-orgs";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
