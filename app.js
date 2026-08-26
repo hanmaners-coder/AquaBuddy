@@ -6392,6 +6392,32 @@ function isAuthorBlockedByMe(postOrAuthor, emailArg = '') {
 }
 window.isAuthorBlockedByMe = isAuthorBlockedByMe;
 
+function getDeterministicReferralCode(user) {
+    if (!user) return 'AQUA-FOUNDER';
+    if (user.referral_code) return user.referral_code;
+    if (user.referralCode) return user.referralCode;
+
+    var seed = String(user.id || user.email || user.name || user.nickname || 'AQUABUDDY').trim().toLowerCase();
+    var hash = 0;
+    for (var i = 0; i < seed.length; i++) {
+        hash = (hash << 5) - hash + seed.charCodeAt(i);
+        hash |= 0;
+    }
+    var codeStr = (Math.abs(hash).toString(36) + 'AQUABUDDY').toUpperCase();
+    var code = 'AQUA-' + codeStr.substring(0, 6);
+    user.referral_code = code;
+    user.referralCode = code;
+
+    if (currentUser && (currentUser.email === user.email || currentUser.id === user.id)) {
+        currentUser.referral_code = code;
+        currentUser.referralCode = code;
+    }
+
+    return code;
+}
+window.getDeterministicReferralCode = getDeterministicReferralCode;
+
+
 function renderDynamicProfileModal(user, isSelf = false, contextCategory = 'all') {
     let existing = document.getElementById("dynamicProfileModalOverlay");
     if (existing) existing.remove();
@@ -6700,9 +6726,9 @@ function renderDynamicProfileModal(user, isSelf = false, contextCategory = 'all'
                 </div>
                 <div style="display: flex; gap: 8px; align-items: center;">
                     <div style="flex: 1; background: #0f172a; border: 1px solid rgba(255, 183, 3, 0.5); padding: 8px 12px; border-radius: 8px; font-weight: 900; color: #ffb703; font-size: 1.05rem; letter-spacing: 1px; text-align: center;">
-                        ${escapeHtml(user.referral_code || user.referralCode || ('AQUA-' + (user.id ? String(user.id).slice(0,6).toUpperCase() : Math.random().toString(36).substring(2, 8).toUpperCase())))}
+                        ${escapeHtml(getDeterministicReferralCode(user))}
                     </div>
-                    <button type="button" onclick="navigator.clipboard.writeText('${escapeHtml(user.referral_code || user.referralCode || ('AQUA-' + (user.id ? String(user.id).slice(0,6).toUpperCase() : Math.random().toString(36).substring(2, 8).toUpperCase())))}'); if(typeof showToast==='function')showToast('📋 추천인 코드가 복사되었습니다!');" style="background: linear-gradient(135deg, #ffb703, #fb8500); color: #0f172a; border: none; padding: 9px 14px; border-radius: 8px; font-weight: 900; font-size: 0.85rem; cursor: pointer; white-space: nowrap;">
+                    <button type="button" onclick="navigator.clipboard.writeText('${escapeHtml(getDeterministicReferralCode(user))}'); if(typeof showToast==='function')showToast('📋 추천인 코드가 복사되었습니다!');" style="background: linear-gradient(135deg, #ffb703, #fb8500); color: #0f172a; border: none; padding: 9px 14px; border-radius: 8px; font-weight: 900; font-size: 0.85rem; cursor: pointer; white-space: nowrap;">
                         📋 코드 복사
                     </button>
                 </div>
@@ -6815,13 +6841,26 @@ async function openUserProfileModal(userOrIdentifier, contextCategory = 'all') {
 
     const loggedInUser = (typeof getCurrentLoggedInUser === 'function') ? getCurrentLoggedInUser() : currentUser;
 
-    // 1. 현재 로그인 유저 본인 여부 엄격 판별 (오직 고유 이메일 또는 고유 ID로만 검사)
+    // 1. 현재 로그인 유저 본인 여부 판별 (이메일 / 닉네임 / 실명 대조)
     let isSelfTarget = false;
-    if (loggedInUser && initialUser && isSameUserStrict(loggedInUser, initialUser)) {
-        isSelfTarget = true;
-    } else if (loggedInUser && cleanTarget.includes('@')) {
-        const myEmail = String(loggedInUser.email || '').trim().toLowerCase();
-        if (myEmail && myEmail === cleanTarget.toLowerCase()) {
+    if (loggedInUser) {
+        var myEmail = String(loggedInUser.email || '').trim().toLowerCase();
+        var myNick = String(loggedInUser.nickname || loggedInUser.name || '').trim();
+        var myReal = String(loggedInUser.real_name || loggedInUser.realName || '').trim();
+        
+        var targetEmail = String((initialUser && (initialUser.email || initialUser.user_email)) || (cleanTarget.includes('@') ? cleanTarget : '')).trim().toLowerCase();
+        var targetNick = String((initialUser && (initialUser.nickname || initialUser.name || initialUser.author)) || cleanTarget).trim();
+        var targetReal = String(initialUser && (initialUser.real_name || initialUser.realName) || '').trim();
+
+        if (initialUser && isSameUserStrict(loggedInUser, initialUser)) {
+            isSelfTarget = true;
+        } else if (myEmail && targetEmail && myEmail === targetEmail) {
+            isSelfTarget = true;
+        } else if (myNick && targetNick && myNick.toLowerCase() === targetNick.toLowerCase()) {
+            isSelfTarget = true;
+        } else if (myReal && targetNick && myReal.toLowerCase() === targetNick.toLowerCase()) {
+            isSelfTarget = true;
+        } else if (myNick && targetReal && myNick.toLowerCase() === targetReal.toLowerCase()) {
             isSelfTarget = true;
         }
     }

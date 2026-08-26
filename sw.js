@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1040-founding-member-explicit-sync-for-founder";
+const CACHE_NAME = "aquabuddy-cache-v1050-fix-self-profile-matching-and-deterministic-referral";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
