@@ -6632,7 +6632,8 @@ function renderDynamicProfileModal(user, isSelf = false, contextCategory = 'all'
                 <p style="margin: 0; color: #a0aec0; font-size: 0.85rem;">${isInst ? 'AquaBuddy 공인 강사 인증 회원' : (escapeHtml(user.provider || 'AquaBuddy') + ' 인증 다이버 회원')}</p>
             </div>
 
-            <!-- 🎁 내 고유 추천인 코드 & 공유 복사 박스 -->
+            <!-- 🎁 내 고유 추천인 코드 & 공유 복사 박스 (본인 프로필에만 100% 노출) -->
+            ${isSelf ? `
             <div style="background: rgba(255, 183, 3, 0.08); border: 1px solid rgba(255, 183, 3, 0.35); border-radius: 14px; padding: 14px; margin-bottom: 16px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                     <span style="font-size: 0.88rem; font-weight: 800; color: #ffb703; display: flex; align-items: center; gap: 6px;">
@@ -6649,6 +6650,7 @@ function renderDynamicProfileModal(user, isSelf = false, contextCategory = 'all'
                     </button>
                 </div>
             </div>
+            ` : ''}
 
             <!-- 3. 객관적 활동 지표 (버디 모임 주최 횟수 & 모임 참여 완료 횟수) -->
             <div style="display: flex; gap: 10px; margin-bottom: 16px;">

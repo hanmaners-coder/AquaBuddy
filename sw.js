@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1010-profile-referral-code-and-badges-visible";
+const CACHE_NAME = "aquabuddy-cache-v1020-hide-referral-code-on-other-profiles";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
