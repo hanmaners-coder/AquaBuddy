@@ -4670,6 +4670,16 @@ async function refreshCurrentUserFromCloud() {
                 ? dbUser.user_license
                 : (dbUser.license_info || dbUser.license || savedUser.user_license || savedUser.license_info || savedUser.license || "");
 
+            // 1:1 Supabase DB Referral Code Auto-Repair / Generation
+            var liveRefCode = dbUser.referral_code || savedUser.referral_code || savedUser.referralCode || "";
+            if (!liveRefCode) {
+                var randStr = Math.random().toString(36).substring(2, 8).toUpperCase();
+                liveRefCode = 'AQUA-' + randStr;
+                if (supabaseClient && dbUser.id) {
+                    supabaseClient.from('users').update({ referral_code: liveRefCode }).eq('id', dbUser.id).then(function(){});
+                }
+            }
+
             const updatedUser = {
                 ...savedUser,
                 ...dbUser,
@@ -4690,10 +4700,17 @@ async function refreshCurrentUserFromCloud() {
                 mannerTags: dbUser.manner_tags || savedUser.mannerTags || {},
                 hosted_count: dbUser.hosted_count !== undefined ? dbUser.hosted_count : (savedUser.hosted_count || 0),
                 hostedCount: dbUser.hosted_count !== undefined ? dbUser.hosted_count : (savedUser.hostedCount || 0),
+                host_count: dbUser.host_count !== undefined ? dbUser.host_count : (dbUser.hosted_count !== undefined ? dbUser.hosted_count : (savedUser.host_count || 0)),
                 completed_meets_count: dbUser.completed_meets_count !== undefined ? dbUser.completed_meets_count : (savedUser.completed_meets_count || 0),
                 completedCount: dbUser.completed_meets_count !== undefined ? dbUser.completed_meets_count : (savedUser.completedCount || 0),
                 warning_count: dbUser.warning_count !== undefined ? dbUser.warning_count : (savedUser.warning_count || 0),
-                warningCount: dbUser.warning_count !== undefined ? dbUser.warning_count : (savedUser.warningCount || 0)
+                warningCount: dbUser.warning_count !== undefined ? dbUser.warning_count : (savedUser.warningCount || 0),
+                is_founding_member: dbUser.is_founding_member !== undefined ? dbUser.is_founding_member : (savedUser.is_founding_member || false),
+                isFoundingMember: dbUser.is_founding_member !== undefined ? dbUser.is_founding_member : (savedUser.isFoundingMember || false),
+                referral_code: liveRefCode,
+                referralCode: liveRefCode,
+                referral_count: dbUser.referral_count !== undefined ? dbUser.referral_count : (savedUser.referral_count || 0),
+                is_sns_ambassador: dbUser.is_sns_ambassador !== undefined ? dbUser.is_sns_ambassador : (savedUser.is_sns_ambassador || false)
             };
 
             currentUser = updatedUser;

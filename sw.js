@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1020-hide-referral-code-on-other-profiles";
+const CACHE_NAME = "aquabuddy-cache-v1030-supabase-db-1to1-live-sync-for-referral-and-founding";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
