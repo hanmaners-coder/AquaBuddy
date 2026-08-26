@@ -1897,6 +1897,10 @@
                               <label for="signupPhoneInput"><i class="fa-solid fa-phone"></i> 연락처 (아이디/비밀번호 찾기용) *</label>
                               <input type="tel" id="signupPhoneInput" placeholder="공백없이 숫자로만 입력" required oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                           </div>
+                          <div class="form-group">
+                              <label for="signupReferredByInput"><i class="fa-solid fa-gift" style="color: #ffb703;"></i> 추천인 코드 (선택)</label>
+                              <input type="text" id="signupReferredByInput" placeholder="예: AQUA-A7F93K (초대받은 추천 코드)" style="font-weight: 700; color: #ffb703; border-color: rgba(255, 183, 3, 0.4);">
+                          </div>
                           <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px; font-weight: 800;">회원가입 완료</button>
                       </form>
                   </div>
@@ -2269,8 +2273,8 @@
      </div>
  
      <!-- App Configuration & Main Logic Script -->
-     <script src="config.js?v=V990_ADD_PSAI_AND_RAID_FREEDIVING_ORGS"></script>
-     <script src="app.js?v=V990_ADD_PSAI_AND_RAID_FREEDIVING_ORGS"></script>
+     <script src="config.js?v=V1000_QUEST_BADGES_AND_REFERRAL_SYSTEM"></script>
+     <script src="app.js?v=V1000_QUEST_BADGES_AND_REFERRAL_SYSTEM"></script>
      <!-- Toast Notification Container -->
     <div id="toastContainer" class="toast-container"></div>
 </body>

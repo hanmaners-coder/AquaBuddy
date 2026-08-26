@@ -127,6 +127,43 @@ function getUserDemographicBadge(userOrPostOrName) {
 window.getUserDemographicBadge = getUserDemographicBadge;
 
 // ==========================================================
+// 👑 퀘스트 & 칭호 3D 띠지 뱃지 렌더러 (개국공신 / 슈퍼호스트 / 앰버서더 / 전도사)
+// ==========================================================
+function renderUserBadges(u) {
+    if (!u) return '';
+    var html = '';
+    
+    // 1. 👑 개국공신 (초기 100인)
+    if (u.is_founding_member || u.isFoundingMember) {
+        html += '<span class="badge-ribbon-pill badge-founding" title="아쿠아버디 초기 100인 개국공신">👑 개국공신</span>';
+    }
+    
+    // 2. 👑 호스트 칭호 (10회 주최 캡틴 / 베테랑 / 초보)
+    var hc = parseInt(u.hosted_count || u.hostedCount || u.host_count || u.hostCount || 0, 10);
+    if (hc >= 10) {
+        html += '<span class="badge-ribbon-pill badge-superhost" title="버디 모임 10회 이상 성공 주최">👑 슈퍼 호스트</span>';
+    } else if (hc >= 5) {
+        html += '<span class="badge-ribbon-pill badge-superhost" style="background: linear-gradient(135deg, #ff9100 0%, #ff6d00 100%);" title="버디 모임 5회 이상 성공 주최">⚓ 베테랑 호스트</span>';
+    } else if (hc >= 1) {
+        html += '<span class="badge-ribbon-pill" style="background: rgba(255, 82, 82, 0.15); color: #ff5252; border: 1px solid rgba(255, 82, 82, 0.4);" title="버디 모임 1회 이상 성공 주최">🌱 초보 호스트</span>';
+    }
+
+    // 3. 📣 1기 앰버서더 (SNS 홍보 캠페인 참여자)
+    if (u.is_sns_ambassador || u.isSnsAmbassador) {
+        html += '<span class="badge-ribbon-pill badge-ambassador" title="아쿠아버디 공식 1기 앰버서더">📣 1기 앰버서더</span>';
+    }
+
+    // 4. 🚀 아쿠아 전도사 (추천인 3명 이상 초대)
+    var rc = parseInt(u.referral_count || u.referralCount || 0, 10);
+    if (rc >= 3) {
+        html += '<span class="badge-ribbon-pill badge-evangelist" title="추천인 코드 3명 이상 초대 달성">🚀 아쿠아 전도사</span>';
+    }
+
+    return html;
+}
+window.renderUserBadges = renderUserBadges;
+
+// ==========================================================
 // 👑 주최자 전용 참가 승인 / 반려 핸들러
 // ==========================================================
 async function handleApproveParticipant(postId, applicantEmailOrName) {
@@ -10308,19 +10345,28 @@ async function handleChangePostStatus(postId, targetStatus) {
     const hostName = post.realName || post.real_name || post.nickname || post.userName || post.author || "주최자";
     const pList = Array.isArray(post.participants) ? post.participants : [];
 
-    // [1] 일정완료로 전환 시 -> +1 카운팅 적용 (중복 적용 방지)
+    // [1] 일정완료로 전환 시 -> +1 카운팅 적용 (주최자 외 최소 1명 이상 참가 시에만 주최 실적 인정!)
     if (targetStatus === "completed" && !isMarket && !isCommunity) {
         if (!post.counts_applied) {
-            post.counts_applied = true;
-            if (post.category === "instructor" || post.is_instructor) {
-                await incrementInstructorClassCount(hostEmail, hostName, 1);
+            if (pList && pList.length >= 1) {
+                post.counts_applied = true;
+                if (post.category === "instructor" || post.is_instructor) {
+                    await incrementInstructorClassCount(hostEmail, hostName, 1);
+                } else {
+                    await incrementUserHostCount(hostEmail, hostName, 1);
+                }
+                for (const p of pList) {
+                    const pEmail = typeof p === 'object' ? (p.email || '') : '';
+                    const pName = typeof p === 'object' ? (p.name || p.nickname || '') : String(p);
+                    await incrementParticipantCompletedCount(pEmail, pName, 1);
+                }
+                if (typeof showToast === 'function') {
+                    showToast("🎉 축하합니다! 버디 모집 일정이 완료되어 주최 실적 +1회가 카운트되었습니다!");
+                }
             } else {
-                await incrementUserHostCount(hostEmail, hostName, 1);
-            }
-            for (const p of pList) {
-                const pEmail = typeof p === 'object' ? (p.email || '') : '';
-                const pName = typeof p === 'object' ? (p.name || p.nickname || '') : String(p);
-                await incrementParticipantCompletedCount(pEmail, pName, 1);
+                if (typeof showToast === 'function') {
+                    showToast("모집이 완료 상태로 변경되었습니다. (확정 참가 버디 1명 이상 시 주최 실적이 인정됩니다.)");
+                }
             }
         }
     }
@@ -11473,6 +11519,7 @@ function openDetailModal(postId) {
                     <h3><i class="fa-solid fa-user-circle" style="color: var(--accent-cyan);"></i> ${escapeHtml(authorDisplay)} ${isHost ? '<span style="color: var(--accent-gold); font-size: 0.8rem;">(주최자 - 본인)</span>' : ''} <span style="color: var(--accent-cyan); font-size: 0.88rem; font-weight: 700;">(${escapeHtml(catNameStr)})</span></h3>
                     <div class="detail-badge-list">
                         <span class="detail-badge"><i class="fa-solid fa-certificate"></i> ${escapeHtml(userLicenseDisplay)}</span>
+                        ${typeof renderUserBadges === 'function' ? renderUserBadges(post) : ''}
                         <span class="host-rating-badge" id="detailHostRating_${post.id}"><i class="fa-solid fa-star"></i> 평점 불러오는 중...</span>
                     </div>
                 </div>

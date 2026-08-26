@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v990-add-psai-and-raid-freediving-orgs";
+const CACHE_NAME = "aquabuddy-cache-v1000-quest-badges-and-referral-system";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
