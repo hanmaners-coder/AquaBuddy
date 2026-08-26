@@ -133,11 +133,43 @@ function renderUserBadges(u) {
     if (!u) return '';
     var html = '';
 
-    // Merge with currentUser if matching email
-    var isFounding = u.is_founding_member || u.isFoundingMember || (currentUser && currentUser.email === u.email && (currentUser.is_founding_member || currentUser.isFoundingMember));
-    var isAmbassador = u.is_sns_ambassador || u.isSnsAmbassador || (currentUser && currentUser.email === u.email && (currentUser.is_sns_ambassador || currentUser.isSnsAmbassador));
-    var hc = parseInt(u.hosted_count || u.hostedCount || u.host_count || u.hostCount || (currentUser && currentUser.email === u.email ? (currentUser.hosted_count || currentUser.host_count || 0) : 0), 10);
-    var rc = parseInt(u.referral_count || u.referralCount || (currentUser && currentUser.email === u.email ? (currentUser.referral_count || currentUser.referralCount || 0) : 0), 10);
+    function isTrue(val) {
+        if (val === true || val === 1 || val === '1') return true;
+        if (typeof val === 'string') {
+            var s = val.trim().toLowerCase();
+            return s === 'true' || s === 't' || s === 'y' || s === 'yes';
+        }
+        return false;
+    }
+
+    var email = (u.email || u.userEmail || u.author_email || u.authorEmail || '').trim().toLowerCase();
+    var nick = (u.nickname || u.name || u.author || u.user_nickname || '').trim();
+
+    var isFounding = isTrue(u.is_founding_member) || isTrue(u.isFoundingMember);
+    var isAmbassador = isTrue(u.is_sns_ambassador) || isTrue(u.isSnsAmbassador);
+
+    // Merge with currentUser if matching email / nickname
+    if (currentUser) {
+        var curEmail = (currentUser.email || '').trim().toLowerCase();
+        var curNick = (currentUser.nickname || currentUser.name || '').trim();
+        var curReal = (currentUser.real_name || currentUser.realName || '').trim();
+
+        if (
+            (email && curEmail && email === curEmail) ||
+            (nick && (nick === curNick || nick === curReal || nick === currentUser.name))
+        ) {
+            if (isTrue(currentUser.is_founding_member) || isTrue(currentUser.isFoundingMember)) isFounding = true;
+            if (isTrue(currentUser.is_sns_ambassador) || isTrue(currentUser.isSnsAmbassador)) isAmbassador = true;
+        }
+    }
+
+    // Explicit fallback for founder account hanmaner@hanmail.net / water_log
+    if (email === 'hanmaner@hanmail.net' || email === 'hanmaners@hanmail.net' || nick === 'water_log') {
+        isFounding = true;
+    }
+
+    var hc = parseInt(u.hosted_count || u.hostedCount || u.host_count || u.hostCount || (currentUser && (email === (currentUser.email||'').toLowerCase() || nick === (currentUser.nickname||'')) ? (currentUser.hosted_count || currentUser.host_count || 0) : 0), 10);
+    var rc = parseInt(u.referral_count || u.referralCount || (currentUser && (email === (currentUser.email||'').toLowerCase() || nick === (currentUser.nickname||'')) ? (currentUser.referral_count || currentUser.referralCount || 0) : 0), 10);
 
     // 1. 👑 개국공신 (초기 100인)
     if (isFounding) {
@@ -4670,13 +4702,21 @@ async function refreshCurrentUserFromCloud() {
                 ? dbUser.user_license
                 : (dbUser.license_info || dbUser.license || savedUser.user_license || savedUser.license_info || savedUser.license || "");
 
-            // 1:1 Supabase DB Referral Code Auto-Repair / Generation
+            // 1:1 Supabase DB Referral Code & Founding Member Auto-Repair
             var liveRefCode = dbUser.referral_code || savedUser.referral_code || savedUser.referralCode || "";
             if (!liveRefCode) {
                 var randStr = Math.random().toString(36).substring(2, 8).toUpperCase();
                 liveRefCode = 'AQUA-' + randStr;
                 if (supabaseClient && dbUser.id) {
                     supabaseClient.from('users').update({ referral_code: liveRefCode }).eq('id', dbUser.id).then(function(){});
+                }
+            }
+
+            var isFoundingVal = dbUser.is_founding_member;
+            if (userEmail === 'hanmaner@hanmail.net' || userEmail === 'hanmaners@hanmail.net') {
+                isFoundingVal = true;
+                if (supabaseClient && dbUser.id) {
+                    supabaseClient.from('users').update({ is_founding_member: true }).eq('id', dbUser.id).then(function(){});
                 }
             }
 
