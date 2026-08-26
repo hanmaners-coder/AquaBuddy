@@ -132,14 +132,19 @@ window.getUserDemographicBadge = getUserDemographicBadge;
 function renderUserBadges(u) {
     if (!u) return '';
     var html = '';
-    
+
+    // Merge with currentUser if matching email
+    var isFounding = u.is_founding_member || u.isFoundingMember || (currentUser && currentUser.email === u.email && (currentUser.is_founding_member || currentUser.isFoundingMember));
+    var isAmbassador = u.is_sns_ambassador || u.isSnsAmbassador || (currentUser && currentUser.email === u.email && (currentUser.is_sns_ambassador || currentUser.isSnsAmbassador));
+    var hc = parseInt(u.hosted_count || u.hostedCount || u.host_count || u.hostCount || (currentUser && currentUser.email === u.email ? (currentUser.hosted_count || currentUser.host_count || 0) : 0), 10);
+    var rc = parseInt(u.referral_count || u.referralCount || (currentUser && currentUser.email === u.email ? (currentUser.referral_count || currentUser.referralCount || 0) : 0), 10);
+
     // 1. 👑 개국공신 (초기 100인)
-    if (u.is_founding_member || u.isFoundingMember) {
+    if (isFounding) {
         html += '<span class="badge-ribbon-pill badge-founding" title="아쿠아버디 초기 100인 개국공신">👑 개국공신</span>';
     }
     
     // 2. 👑 호스트 칭호 (10회 주최 캡틴 / 베테랑 / 초보)
-    var hc = parseInt(u.hosted_count || u.hostedCount || u.host_count || u.hostCount || 0, 10);
     if (hc >= 10) {
         html += '<span class="badge-ribbon-pill badge-superhost" title="버디 모임 10회 이상 성공 주최">👑 슈퍼 호스트</span>';
     } else if (hc >= 5) {
@@ -149,12 +154,11 @@ function renderUserBadges(u) {
     }
 
     // 3. 📣 1기 앰버서더 (SNS 홍보 캠페인 참여자)
-    if (u.is_sns_ambassador || u.isSnsAmbassador) {
+    if (isAmbassador) {
         html += '<span class="badge-ribbon-pill badge-ambassador" title="아쿠아버디 공식 1기 앰버서더">📣 1기 앰버서더</span>';
     }
 
     // 4. 🚀 아쿠아 전도사 (추천인 3명 이상 초대)
-    var rc = parseInt(u.referral_count || u.referralCount || 0, 10);
     if (rc >= 3) {
         html += '<span class="badge-ribbon-pill badge-evangelist" title="추천인 코드 3명 이상 초대 달성">🚀 아쿠아 전도사</span>';
     }
@@ -4520,7 +4524,9 @@ function updateNavbarUserUI() {
         const instBadge = isInst ? ` [👑공인강사]` : (isPendingInstructor() ? ` [심사대기중]` : '');
         const navName = document.getElementById("navUserName");
         const displayName = (isInst && (currentUser.realName || currentUser.real_name)) ? (currentUser.realName || currentUser.real_name) : (currentUser.nickname || currentUser.name || (currentUser.email ? currentUser.email.split('@')[0] : "다이버"));
-        if (navName) navName.textContent = `${displayName}${instBadge}`;
+        if (navName) {
+            navName.innerHTML = `${escapeHtml(displayName)}${instBadge} ${typeof renderUserBadges === 'function' ? renderUserBadges(currentUser) : ''}`;
+        }
         if (openAuthBtn) openAuthBtn.classList.add("hidden");
 
         if (navActivity) navActivity.style.display = "inline-flex";
@@ -6619,10 +6625,29 @@ function renderDynamicProfileModal(user, isSelf = false, contextCategory = 'all'
             <div style="background: rgba(255, 255, 255, 0.05); padding: 14px; border-radius: 12px; margin-bottom: 16px;">
                 <h3 style="margin: 0 0 4px 0; color: #fff; font-size: 1.15rem; display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
                     <span>${escapeHtml(nickname)}</span> ${getUserDemographicBadge(user)}
+                    ${typeof renderUserBadges === 'function' ? renderUserBadges(user) : ''}
                     ${isInst ? `<span style="font-size: 0.76rem; background: linear-gradient(135deg, #ffd700, #ff8f00); color: #000; font-weight: 900; padding: 2px 8px; border-radius: 8px;">🎓 공인 강사</span>` : ''}
                     ${warningBadgeHtml}
                 </h3>
                 <p style="margin: 0; color: #a0aec0; font-size: 0.85rem;">${isInst ? 'AquaBuddy 공인 강사 인증 회원' : (escapeHtml(user.provider || 'AquaBuddy') + ' 인증 다이버 회원')}</p>
+            </div>
+
+            <!-- 🎁 내 고유 추천인 코드 & 공유 복사 박스 -->
+            <div style="background: rgba(255, 183, 3, 0.08); border: 1px solid rgba(255, 183, 3, 0.35); border-radius: 14px; padding: 14px; margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="font-size: 0.88rem; font-weight: 800; color: #ffb703; display: flex; align-items: center; gap: 6px;">
+                        <i class="fa-solid fa-gift"></i> 🎁 내 고유 추천인 코드
+                    </span>
+                    <span style="font-size: 0.75rem; color: #94a3b8;">친구 초대 시 모두에게 혜택!</span>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <div style="flex: 1; background: #0f172a; border: 1px solid rgba(255, 183, 3, 0.5); padding: 8px 12px; border-radius: 8px; font-weight: 900; color: #ffb703; font-size: 1.05rem; letter-spacing: 1px; text-align: center;">
+                        ${escapeHtml(user.referral_code || user.referralCode || ('AQUA-' + (user.id ? String(user.id).slice(0,6).toUpperCase() : Math.random().toString(36).substring(2, 8).toUpperCase())))}
+                    </div>
+                    <button type="button" onclick="navigator.clipboard.writeText('${escapeHtml(user.referral_code || user.referralCode || ('AQUA-' + (user.id ? String(user.id).slice(0,6).toUpperCase() : Math.random().toString(36).substring(2, 8).toUpperCase())))}'); if(typeof showToast==='function')showToast('📋 추천인 코드가 복사되었습니다!');" style="background: linear-gradient(135deg, #ffb703, #fb8500); color: #0f172a; border: none; padding: 9px 14px; border-radius: 8px; font-weight: 900; font-size: 0.85rem; cursor: pointer; white-space: nowrap;">
+                        📋 코드 복사
+                    </button>
+                </div>
             </div>
 
             <!-- 3. 객관적 활동 지표 (버디 모임 주최 횟수 & 모임 참여 완료 횟수) -->

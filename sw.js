@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1000-quest-badges-and-referral-system";
+const CACHE_NAME = "aquabuddy-cache-v1010-profile-referral-code-and-badges-visible";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
