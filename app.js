@@ -129,6 +129,28 @@ window.getUserDemographicBadge = getUserDemographicBadge;
 // ==========================================================
 // 👑 퀘스트 & 칭호 3D 띠지 뱃지 렌더러 (개국공신 / 슈퍼호스트 / 앰버서더 / 전도사)
 // ==========================================================
+window._globalUsersByEmailMap = window._globalUsersByEmailMap || {};
+window._globalUsersByNickMap = window._globalUsersByNickMap || {};
+
+async function fetchAndCacheAllUsers() {
+    var client = (typeof supabaseClient !== 'undefined' && supabaseClient) ? supabaseClient : (typeof window !== 'undefined' ? window.supabaseClient : null);
+    if (!client) return;
+    try {
+        var res = await client.from('users').select('*');
+        if (res && res.data && Array.isArray(res.data)) {
+            res.data.forEach(function(u) {
+                if (u.email) window._globalUsersByEmailMap[String(u.email).trim().toLowerCase()] = u;
+                if (u.nickname) window._globalUsersByNickMap[String(u.nickname).trim()] = u;
+                if (u.name) window._globalUsersByNickMap[String(u.name).trim()] = u;
+                if (u.real_name) window._globalUsersByNickMap[String(u.real_name).trim()] = u;
+            });
+        }
+    } catch (e) {
+        console.warn("Global users cache notice:", e);
+    }
+}
+window.fetchAndCacheAllUsers = fetchAndCacheAllUsers;
+
 function renderUserBadges(u) {
     if (!u) return '';
     var html = '';
@@ -142,11 +164,13 @@ function renderUserBadges(u) {
         return false;
     }
 
-    var email = (u.email || u.userEmail || u.author_email || u.authorEmail || '').trim().toLowerCase();
-    var nick = (u.nickname || u.name || u.author || u.user_nickname || '').trim();
+    var email = (typeof u === 'string' ? u : (u.email || u.userEmail || u.author_email || u.authorEmail || '')).trim().toLowerCase();
+    var nick = (typeof u === 'string' ? u : (u.nickname || u.name || u.author || u.user_nickname || u.real_name || u.realName || '')).trim();
 
-    var isFounding = isTrue(u.is_founding_member) || isTrue(u.isFoundingMember);
-    var isAmbassador = isTrue(u.is_sns_ambassador) || isTrue(u.isSnsAmbassador);
+    var dbMatched = (email && window._globalUsersByEmailMap[email]) || (nick && window._globalUsersByNickMap[nick]) || null;
+
+    var isFounding = isTrue(u.is_founding_member) || isTrue(u.isFoundingMember) || (dbMatched && (isTrue(dbMatched.is_founding_member) || isTrue(dbMatched.isFoundingMember)));
+    var isAmbassador = isTrue(u.is_sns_ambassador) || isTrue(u.isSnsAmbassador) || (dbMatched && (isTrue(dbMatched.is_sns_ambassador) || isTrue(dbMatched.isSnsAmbassador)));
 
     // Merge with currentUser if matching email / nickname
     if (currentUser) {
@@ -168,10 +192,13 @@ function renderUserBadges(u) {
         isFounding = true;
     }
 
-    var hc = parseInt(u.hosted_count || u.hostedCount || u.host_count || u.hostCount || (currentUser && (email === (currentUser.email||'').toLowerCase() || nick === (currentUser.nickname||'')) ? (currentUser.hosted_count || currentUser.host_count || 0) : 0), 10);
-    var rc = parseInt(u.referral_count || u.referralCount || (currentUser && (email === (currentUser.email||'').toLowerCase() || nick === (currentUser.nickname||'')) ? (currentUser.referral_count || currentUser.referralCount || 0) : 0), 10);
+    var rawHc = u.hosted_count || u.hostedCount || u.host_count || u.hostCount || (dbMatched ? (dbMatched.hosted_count || dbMatched.host_count || 0) : 0);
+    var hc = parseInt(rawHc || (currentUser && (email === (currentUser.email||'').toLowerCase() || nick === (currentUser.nickname||'')) ? (currentUser.hosted_count || currentUser.host_count || 0) : 0), 10);
 
-    // 1. 👑 개국공신 (초기 100인)
+    var rawRc = u.referral_count || u.referralCount || (dbMatched ? (dbMatched.referral_count || 0) : 0);
+    var rc = parseInt(rawRc || (currentUser && (email === (currentUser.email||'').toLowerCase() || nick === (currentUser.nickname||'')) ? (currentUser.referral_count || currentUser.referralCount || 0) : 0), 10);
+
+    // 1. 👑 개국공신 (초기 100인 - DB is_founding_member=true)
     if (isFounding) {
         html += '<span class="badge-ribbon-pill badge-founding" title="아쿠아버디 초기 100인 개국공신">👑 개국공신</span>';
     }
@@ -4520,6 +4547,7 @@ function initKakaoSdk() {
 
 // Initialize User Identity
 function initUserIdentity() {
+    if (typeof fetchAndCacheAllUsers === 'function') fetchAndCacheAllUsers();
     let savedUser = localStorage.getItem("aqua_buddy_user_identity");
     if (savedUser) {
         try {
@@ -6558,7 +6586,7 @@ function renderDynamicProfileModal(user, isSelf = false, contextCategory = 'all'
                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 215, 0, 0.3); padding-bottom: 12px; margin-bottom: 16px;">
                     <div>
                         <h2 style="margin: 0; font-size: 1.35rem; color: #ffd700; display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
-                            <span>${escapeHtml(realName)}</span> ${getUserDemographicBadge(user)}
+                            <span>${escapeHtml(realName)}</span> ${getUserDemographicBadge(user)} ${typeof renderUserBadges === 'function' ? renderUserBadges(user) : ''}
                             <span style="font-size: 0.82rem; background: linear-gradient(135deg, #ffd700, #ff8f00); color: #000; font-weight: 900; padding: 2px 8px; border-radius: 8px;">강사</span>
                             <span style="font-size: 0.75rem; background: rgba(0, 230, 118, 0.2); border: 1px solid #00e676; color: #00e676; font-weight: 800; padding: 2px 8px; border-radius: 8px;"><i class="fa-solid fa-circle-check"></i> 실명 인증 완료</span>
                             ${warningBadgeHtml}
@@ -9881,7 +9909,7 @@ function renderGrid(filteredPosts) {
                                 if (!rName) rName = "김동욱";
                                 if (!rName.endsWith('강사')) rName += " 강사";
                                 return escapeHtml(rName);
-                            })() : authorName} ${getUserDemographicBadge(post)}
+                            })() : authorName} ${getUserDemographicBadge(post)} ${typeof renderUserBadges === 'function' ? renderUserBadges(post) : ''}
                         </span>
                     </div>
 
@@ -10600,7 +10628,7 @@ function renderDynamicDetailModal(post) {
     const comments = Array.isArray(post.comments) ? post.comments : [];
     const commentsHtml = comments.map(c => `
         <div style="background:rgba(255,255,255,0.06); padding:9px 12px; border-radius:8px; margin-bottom:6px; font-size:0.85rem;">
-            <strong style="color:#00f2fe; cursor:pointer;" onclick="openUserProfileModal('${typeof escapeHtml === 'function' ? escapeHtml(c.author || '익명') : (c.author || '익명')}', '${post.category || ""}');">👤 ${typeof escapeHtml === 'function' ? escapeHtml(c.author || '익명') : (c.author || '익명')}</strong> ${getUserDemographicBadge(c.author || c)} <span style="opacity:0.6; font-size:0.75rem;">(${c.time || '방금 전'})</span>: ${typeof escapeHtml === 'function' ? escapeHtml(c.text || '') : (c.text || '')}
+            <strong style="color:#00f2fe; cursor:pointer;" onclick="openUserProfileModal('${typeof escapeHtml === 'function' ? escapeHtml(c.author || '익명') : (c.author || '익명')}', '${post.category || ""}');">👤 ${typeof escapeHtml === 'function' ? escapeHtml(c.author || '익명') : (c.author || '익명')}</strong> ${getUserDemographicBadge(c.author || c)} ${typeof renderUserBadges === 'function' ? renderUserBadges(c.author || c) : ''} <span style="opacity:0.6; font-size:0.75rem;">(${c.time || '방금 전'})</span>: ${typeof escapeHtml === 'function' ? escapeHtml(c.text || '') : (c.text || '')}
         </div>
     `).join("");
 
@@ -10736,7 +10764,7 @@ function renderDynamicDetailModal(post) {
                     </div>
                     <div>
                         <div style="font-weight: 800; font-size: 1rem; color: #ffffff; display: flex; align-items: center; gap: 6px;">
-                            <span style="cursor: pointer; text-decoration: underline; color: #00f2fe;" onclick="openUserProfileModal('${authorName}', '${post.category || ""}')">${typeof escapeHtml === 'function' ? escapeHtml(authorName) : authorName}</span> <span id="dynamicDetailAuthorBadge">${getUserDemographicBadge(post)}</span>
+                            <span style="cursor: pointer; text-decoration: underline; color: #00f2fe;" onclick="openUserProfileModal('${authorName}', '${post.category || ""}')">${typeof escapeHtml === 'function' ? escapeHtml(authorName) : authorName}</span> <span id="dynamicDetailAuthorBadge">${getUserDemographicBadge(post)} ${typeof renderUserBadges === 'function' ? renderUserBadges(post) : ''}</span>
                             ${!isCommunity ? `<span style="font-size: 0.76rem; background: rgba(0, 242, 254, 0.2); color: #00f2fe; padding: 2px 8px; border-radius: 10px;">작성자</span>` : ''}
                         </div>
                     </div>
@@ -10940,7 +10968,7 @@ function renderDynamicDetailModal(post) {
                     <!-- 주최자/강사 프로필 -->
                     <div style="background: rgba(0,0,0,0.3); padding: 10px 14px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; align-items: center; gap: 8px;">
-                            <span style="color: #ffb703; font-weight: bold; font-size: 0.88rem; cursor: pointer;" onclick="openUserProfileModal('${authorName}', '${post.category || ""}')">👑 ${isInstructor ? '담당 강사' : '주최자'}: ${typeof escapeHtml === 'function' ? escapeHtml(authorName) : authorName}</span> <span id="dynamicDetailHostBadge">${getUserDemographicBadge(post)}</span>
+                            <span style="color: #ffb703; font-weight: bold; font-size: 0.88rem; cursor: pointer;" onclick="openUserProfileModal('${authorName}', '${post.category || ""}')">👑 ${isInstructor ? '담당 강사' : '주최자'}: ${typeof escapeHtml === 'function' ? escapeHtml(authorName) : authorName}</span> <span id="dynamicDetailHostBadge">${getUserDemographicBadge(post)} ${typeof renderUserBadges === 'function' ? renderUserBadges(post) : ''}</span>
                         </div>
                         <span style="font-size: 0.78rem; color: #00f2fe;">${isInstructor ? '강사 확정' : '주최 확정'}</span>
                     </div>

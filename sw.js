@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1050-fix-self-profile-matching-and-deterministic-referral";
+const CACHE_NAME = "aquabuddy-cache-v1060-global-user-db-cache-and-all-card-badges";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
