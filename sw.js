@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1080-prevent-completion-toggle-exploit";
+const CACHE_NAME = "aquabuddy-cache-v1090-auto-sync-completed-status-for-evaluated-posts";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

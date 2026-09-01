@@ -12410,10 +12410,14 @@ async function submitMannerEvaluation() {
         }
     }
 
-    // [3. 게시글 evaluated_users에 기록 및 post.manner_locked = true (상태 변경 락)]
+    // [3. 게시글 evaluated_users에 기록 및 post.manner_locked = true, status = 'completed' 자동 동기화]
     if (post) {
         post.manner_locked = true;
         post.has_evaluated = true;
+        post.status = "completed";
+        post.statusText = (post.category === "market" ? "거래 완료" : "일정 완료");
+        post.counts_applied = true;
+
         const myEmail = currentUser ? (currentUser.email || currentUser.name || 'user') : 'user';
         if (!Array.isArray(post.evaluated_users)) post.evaluated_users = [];
         if (!post.evaluated_users.includes(myEmail.toLowerCase())) {
@@ -12428,8 +12432,11 @@ async function submitMannerEvaluation() {
         if (supabaseClient) {
             try {
                 await supabaseClient.from('posts').update({
+                    status: "completed",
+                    status_text: (post.category === "market" ? "거래 완료" : "일정 완료"),
                     manner_locked: true,
-                    evaluated_users: post.evaluated_users
+                    evaluated_users: post.evaluated_users,
+                    counts_applied: true
                 }).eq('id', post.id);
             } catch(e) {
                 console.warn('Supabase post manner_locked update notice:', e);
