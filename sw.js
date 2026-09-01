@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1070-strict-instructor-class-count-require-participant";
+const CACHE_NAME = "aquabuddy-cache-v1080-prevent-completion-toggle-exploit";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
