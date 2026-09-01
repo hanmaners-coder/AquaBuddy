@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1090-auto-sync-completed-status-for-evaluated-posts";
+const CACHE_NAME = "aquabuddy-cache-v1100-isolate-buddy-subfilter-per-category";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
