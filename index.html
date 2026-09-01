@@ -804,9 +804,12 @@
                      </div>
                  </div>
  
-                 <div class="filter-action-row">
+                 <div class="filter-action-row" style="display: flex; gap: 10px; flex-wrap: wrap;">
                      <button class="btn btn-secondary reset-btn-clean" id="resetFiltersBtn">
                          <i class="fa-solid fa-rotate-right"></i> 필터 초기화
+                     </button>
+                     <button type="button" class="btn btn-primary" id="manualFeedRefreshBtn" onclick="manualRefreshFeed()" style="background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); color: #000; font-weight: 900; gap: 6px; box-shadow: 0 4px 12px rgba(0, 242, 254, 0.3); border: none;">
+                         <i class="fa-solid fa-arrows-rotate"></i> 최신글 새로고침
                      </button>
                  </div>
              </section>
@@ -2273,8 +2276,8 @@
      </div>
  
      <!-- App Configuration & Main Logic Script -->
-     <script src="config.js?v=V1120_MOBILE_CACHE_CLEAR"></script>
-     <script src="app.js?v=V1120_MOBILE_CACHE_CLEAR"></script>
+     <script src="config.js?v=V1130_POSTS_REALTIME_SYNC_AND_MANUAL_REFRESH_BTN"></script>
+     <script src="app.js?v=V1130_POSTS_REALTIME_SYNC_AND_MANUAL_REFRESH_BTN"></script>
      <!-- Toast Notification Container -->
     <div id="toastContainer" class="toast-container"></div>
 </body>
