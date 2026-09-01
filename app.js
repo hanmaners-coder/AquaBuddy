@@ -9612,6 +9612,14 @@ function filterAndRender(resetPagination = true) {
             return typeof isMyPost === 'function' && isMyPost(post);
         }
 
+        // 버디 탐색 종목 서브 필터링 적용 (all이 아닌 경우 해당 종목 필터 적용)
+        if (typeof activeBuddySubFilter !== 'undefined' && activeBuddySubFilter !== "all") {
+            let isMatch = (cat === activeBuddySubFilter);
+            if (activeBuddySubFilter === "swimming" && (cat === "swimming" || cat === "pool")) isMatch = true;
+            if (activeBuddySubFilter === "openwater" && (cat === "openwater" || cat === "sea" || cat === "ocean_swim")) isMatch = true;
+            if (!isMatch) return false;
+        }
+
         if (activeCategory === "instructor") {
             if (cat !== "instructor") return false;
             if (typeof activeInstructorSubFilter !== 'undefined' && activeInstructorSubFilter !== "all") {
@@ -9619,14 +9627,7 @@ function filterAndRender(resetPagination = true) {
                 if (subCat !== activeInstructorSubFilter) return false;
             }
         } else if (activeCategory === "buddy") {
-            if (typeof activeBuddySubFilter !== 'undefined' && activeBuddySubFilter !== "all") {
-                let isMatch = (cat === activeBuddySubFilter);
-                if (activeBuddySubFilter === "swimming" && (cat === "swimming" || cat === "pool")) isMatch = true;
-                if (activeBuddySubFilter === "openwater" && (cat === "openwater" || cat === "sea" || cat === "ocean_swim")) isMatch = true;
-                if (!isMatch) return false;
-            } else {
-                if (cat === "market" || cat === "community" || cat === "instructor") return false;
-            }
+            if (cat === "market" || cat === "community" || cat === "instructor") return false;
         } else if (activeCategory === "swimming") {
             if (cat !== "swimming" && cat !== "pool") return false;
         } else if (activeCategory === "openwater") {
