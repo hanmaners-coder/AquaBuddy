@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1110-fix-buddy-subfilter-pill-execution";
+const CACHE_NAME = "aquabuddy-cache-v1120-mobile-cache-clear";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
