@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1190-allow-reapplication-and-approval-flow";
+const CACHE_NAME = "aquabuddy-cache-v1200-instructor-rejection-notice-system";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

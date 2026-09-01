@@ -4697,6 +4697,40 @@ function openInstructorAuthModal() {
         if (realNameInput && (!realNameInput.value || realNameInput.value === "다이버")) {
             realNameInput.value = currentUser.realName || currentUser.real_name || currentUser.name || "";
         }
+
+        // 🚨 심사 반려 유저인 경우 반려 사유 알림 배너 표출
+        if (currentUser && (currentUser.instructor_status === 'rejected' || currentUser.instructorStatus === 'rejected')) {
+            let rejBox = document.getElementById("instAppRejectionBanner");
+            const modalContainer = modal.querySelector(".modal-container") || modal;
+            if (!rejBox && modalContainer) {
+                rejBox = document.createElement("div");
+                rejBox.id = "instAppRejectionBanner";
+                const modalHeader = modalContainer.querySelector(".modal-header");
+                if (modalHeader && modalHeader.nextSibling) {
+                    modalContainer.insertBefore(rejBox, modalHeader.nextSibling);
+                } else {
+                    modalContainer.insertBefore(rejBox, modalContainer.firstChild);
+                }
+            }
+            if (rejBox) {
+                const reason = currentUser.rejection_reason || currentUser.rejectionReason || "제출된 자격증 서류 보완 필요";
+                rejBox.innerHTML = `
+                    <div style="background: rgba(255, 82, 82, 0.14); border: 1.5px solid #ff5252; border-radius: 12px; padding: 14px 16px; margin: 12px 0 16px 0; box-shadow: 0 0 20px rgba(255, 82, 82, 0.2);">
+                        <div style="color: #ff5252; font-weight: 900; font-size: 0.95rem; display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                            <i class="fa-solid fa-circle-xmark"></i> ⚠️ 강사 자격증 심사 반려 안내
+                        </div>
+                        <div style="font-size: 0.86rem; color: #ffebee; line-height: 1.5;">
+                            <strong>[반려 사유]:</strong> ${typeof escapeHtml === 'function' ? escapeHtml(reason) : reason}<br>
+                            <span style="opacity: 0.85; font-size: 0.8rem; margin-top: 4px; display: inline-block;">* 자격증 사본 및 신원 정보를 보완하신 후 아래 양식에서 재신청해 주시면 재심사가 진행됩니다.</span>
+                        </div>
+                    </div>
+                `;
+            }
+        } else {
+            const existingRej = document.getElementById("instAppRejectionBanner");
+            if (existingRej) existingRej.remove();
+        }
+
         if (typeof openModal === "function") openModal(modal);
     }
 }
@@ -4756,7 +4790,7 @@ async function refreshCurrentUserFromCloud() {
                 }
             }
 
-            // 🛡️ 심사 반려 유저 강사 권한 자동 박탈 보정
+            // 🛡️ 심사 반려 유저 강사 권한 자동 박탈 보정 및 토스트 팝업 알림
             if (dbUser.instructor_status === 'rejected' || dbUser.instructorStatus === 'rejected') {
                 dbUser.is_instructor = false;
                 dbUser.isInstructor = false;
@@ -4766,6 +4800,16 @@ async function refreshCurrentUserFromCloud() {
                 savedUser.role = 'user';
                 if (supabaseClient && dbUser.id && (dbUser.is_instructor === true || dbUser.role === 'instructor')) {
                     supabaseClient.from('users').update({ is_instructor: false, role: 'user' }).eq('id', dbUser.id).then(function(){});
+                }
+
+                if (!window._hasShownRejectionNoticeToast) {
+                    window._hasShownRejectionNoticeToast = true;
+                    setTimeout(function() {
+                        const rReason = dbUser.rejection_reason || dbUser.rejectionReason || "서류 보완 필요";
+                        if (typeof showToast === 'function') {
+                            showToast("❌ [강사 심사 반려 안내] 사유: \"" + rReason + "\" (자격증 재신청 가능)");
+                        }
+                    }, 1200);
                 }
             }
 
@@ -6530,8 +6574,8 @@ function renderDynamicProfileModal(user, isSelf = false, contextCategory = 'all'
         }
     }
 
-    // 🎓 강사 권한 판별 (심사 반려된 경우 강사 권한 무효화)
     const isInstRejected = (user.instructor_status === 'rejected' || user.instructorStatus === 'rejected');
+    const rejectionReasonText = user.rejection_reason || user.rejectionReason || "제출된 자격증 서류 보완 필요";
     const isInst = !isInstRejected && !!(
         user.instructor_status === 'approved' || user.instructorStatus === 'approved' ||
         user.isApprovedInstructor === true || user.isApprovedInstructor === 'true' ||
