@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1120-mobile-cache-clear";
+const CACHE_NAME = "aquabuddy-cache-v1130-posts-realtime-sync-and-manual-refresh-btn";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

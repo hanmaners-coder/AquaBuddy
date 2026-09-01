@@ -14750,6 +14750,36 @@ if ("serviceWorker" in navigator) {
 // ==================================================
 let _globalRealtimeChannel = null;
 
+async function manualRefreshFeed() {
+    const btn = document.getElementById("manualFeedRefreshBtn");
+    if (btn) {
+        const icon = btn.querySelector("i");
+        if (icon) icon.classList.add("fa-spin");
+    }
+
+    try {
+        if (typeof loadPosts === 'function') {
+            await loadPosts();
+        } else if (typeof filterAndRender === 'function') {
+            filterAndRender();
+        }
+        if (typeof showToast === 'function') {
+            showToast("🔄 최신 게시글과 참가 상태가 새로고침되었습니다!");
+        }
+    } catch(e) {
+        console.warn("Manual feed refresh notice:", e);
+    } finally {
+        setTimeout(function() {
+            if (btn) {
+                const icon = btn.querySelector("i");
+                if (icon) icon.classList.remove("fa-spin");
+            }
+        }, 600);
+    }
+}
+window.manualRefreshFeed = manualRefreshFeed;
+
+
 function initGlobalRealtimeSubscriptions() {
     if (!supabaseClient || _globalRealtimeChannel) return;
 
@@ -14807,6 +14837,33 @@ function initGlobalRealtimeSubscriptions() {
                 console.log('[REALTIME INQUIRY RECEIVED]', payload.new);
                 if (typeof isAdminAuthenticated !== 'undefined' && isAdminAuthenticated && typeof showToast === 'function') {
                     showToast('📩 [관리자] 새로운 문의가 등록되었습니다!');
+                }
+            })
+            // 6. posts (모집글 상태 변경, 참가 신청/승인/취소, 일정 완료 실시간 0.1초 동기화)
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'posts'
+            }, async (payload) => {
+                if (!payload) return;
+                console.log('⚡ [REALTIME POST CHANGE RECEIVED]', payload.eventType, payload.new);
+                
+                try {
+                    if (typeof loadPosts === 'function') {
+                        await loadPosts();
+                    } else if (typeof filterAndRender === 'function') {
+                        filterAndRender();
+                    }
+                    
+                    const dynamicOverlay = document.getElementById("dynamicDetailModalOverlay");
+                    if (dynamicOverlay && payload.new && payload.new.id) {
+                        const updatedPostId = String(payload.new.id);
+                        if (typeof openDetailModal === 'function') {
+                            openDetailModal(updatedPostId);
+                        }
+                    }
+                } catch(err) {
+                    console.warn("Realtime post update exception:", err);
                 }
             })
             // 5. users (프로필 데이터 실시간 동기화 - 매너 뱃지, 참여/주최 횟수 등)
