@@ -4697,6 +4697,40 @@ function openInstructorAuthModal() {
         if (realNameInput && (!realNameInput.value || realNameInput.value === "다이버")) {
             realNameInput.value = currentUser.realName || currentUser.real_name || currentUser.name || "";
         }
+
+        // 🚨 심사 반려 유저인 경우 반려 사유 알림 배너 표출
+        if (currentUser && (currentUser.instructor_status === 'rejected' || currentUser.instructorStatus === 'rejected')) {
+            let rejBox = document.getElementById("instAppRejectionBanner");
+            const modalContainer = modal.querySelector(".modal-container") || modal;
+            if (!rejBox && modalContainer) {
+                rejBox = document.createElement("div");
+                rejBox.id = "instAppRejectionBanner";
+                const modalHeader = modalContainer.querySelector(".modal-header");
+                if (modalHeader && modalHeader.nextSibling) {
+                    modalContainer.insertBefore(rejBox, modalHeader.nextSibling);
+                } else {
+                    modalContainer.insertBefore(rejBox, modalContainer.firstChild);
+                }
+            }
+            if (rejBox) {
+                const reason = currentUser.rejection_reason || currentUser.rejectionReason || "제출된 자격증 서류 보완 필요";
+                rejBox.innerHTML = `
+                    <div style="background: rgba(255, 82, 82, 0.14); border: 1.5px solid #ff5252; border-radius: 12px; padding: 14px 16px; margin: 12px 0 16px 0; box-shadow: 0 0 20px rgba(255, 82, 82, 0.2);">
+                        <div style="color: #ff5252; font-weight: 900; font-size: 0.95rem; display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                            <i class="fa-solid fa-circle-xmark"></i> ⚠️ 강사 자격증 심사 반려 안내
+                        </div>
+                        <div style="font-size: 0.86rem; color: #ffebee; line-height: 1.5;">
+                            <strong>[반려 사유]:</strong> ${typeof escapeHtml === 'function' ? escapeHtml(reason) : reason}<br>
+                            <span style="opacity: 0.85; font-size: 0.8rem; margin-top: 4px; display: inline-block;">* 자격증 사본 및 신원 정보를 보완하신 후 아래 양식에서 재신청해 주시면 재심사가 진행됩니다.</span>
+                        </div>
+                    </div>
+                `;
+            }
+        } else {
+            const existingRej = document.getElementById("instAppRejectionBanner");
+            if (existingRej) existingRej.remove();
+        }
+
         if (typeof openModal === "function") openModal(modal);
     }
 }
@@ -4753,6 +4787,29 @@ async function refreshCurrentUserFromCloud() {
                 liveRefCode = typeof getDeterministicReferralCode === 'function' ? getDeterministicReferralCode(dbUser) : ('AQUA-' + (dbUser.email || 'USER').substring(0, 4).toUpperCase());
                 if (supabaseClient && dbUser.id) {
                     supabaseClient.from('users').update({ referral_code: liveRefCode }).eq('id', dbUser.id).then(function(){});
+                }
+            }
+
+            // 🛡️ 심사 반려 유저 강사 권한 자동 박탈 보정 및 토스트 팝업 알림
+            if (dbUser.instructor_status === 'rejected' || dbUser.instructorStatus === 'rejected') {
+                dbUser.is_instructor = false;
+                dbUser.isInstructor = false;
+                dbUser.role = 'user';
+                savedUser.is_instructor = false;
+                savedUser.isInstructor = false;
+                savedUser.role = 'user';
+                if (supabaseClient && dbUser.id && (dbUser.is_instructor === true || dbUser.role === 'instructor')) {
+                    supabaseClient.from('users').update({ is_instructor: false, role: 'user' }).eq('id', dbUser.id).then(function(){});
+                }
+
+                if (!window._hasShownRejectionNoticeToast) {
+                    window._hasShownRejectionNoticeToast = true;
+                    setTimeout(function() {
+                        const rReason = dbUser.rejection_reason || dbUser.rejectionReason || "서류 보완 필요";
+                        if (typeof showToast === 'function') {
+                            showToast("❌ [강사 심사 반려 안내] 사유: \"" + rReason + "\" (자격증 재신청 가능)");
+                        }
+                    }, 1200);
                 }
             }
 
@@ -5741,6 +5798,8 @@ async function approveInstructorCertDemo(identifier) {
         try {
             const updatePayload = {
                 instructor_status: 'approved',
+                is_instructor: true,
+                role: 'instructor',
                 user_license: '공인 강사',
                 license_info: '공인 강사'
             };
@@ -5774,6 +5833,9 @@ async function approveInstructorCertDemo(identifier) {
         if (key.toLowerCase() === targetEmail || usersMap[key].name === identifier || usersMap[key].realName === identifier) {
             usersMap[key].instructorStatus = "approved";
             usersMap[key].instructor_status = "approved";
+            usersMap[key].is_instructor = true;
+            usersMap[key].isInstructor = true;
+            usersMap[key].role = "instructor";
             usersMap[key].isApprovedInstructor = true;
             delete usersMap[key].rejectionReason;
             nameToDisplay = usersMap[key].realName || usersMap[key].name || identifier;
@@ -5785,6 +5847,9 @@ async function approveInstructorCertDemo(identifier) {
     if (currentUser && (currentUser.email.toLowerCase() === targetEmail || currentUser.name === identifier)) {
         currentUser.instructorStatus = "approved";
         currentUser.instructor_status = "approved";
+        currentUser.is_instructor = true;
+        currentUser.isInstructor = true;
+        currentUser.role = "instructor";
         currentUser.isApprovedInstructor = true;
         delete currentUser.rejectionReason;
         safeLocalStorageSet("aqua_buddy_user_identity", JSON.stringify(currentUser));
@@ -5818,6 +5883,8 @@ async function rejectInstructorCertDemo(identifier) {
         try {
             const updatePayload = {
                 instructor_status: 'rejected',
+                is_instructor: false,
+                role: 'user',
                 rejection_reason: finalReason
             };
 
@@ -6507,18 +6574,13 @@ function renderDynamicProfileModal(user, isSelf = false, contextCategory = 'all'
         }
     }
 
-    // 🎓 강사 권한 판별
-    const isInst = !!(
-        user.is_instructor === true || user.is_instructor === 'true' ||
-        user.isInstructor === true || user.isInstructor === 'true' ||
-        user.isApprovedInstructor === true || user.isApprovedInstructor === 'true' ||
+    const isInstRejected = (user.instructor_status === 'rejected' || user.instructorStatus === 'rejected');
+    const rejectionReasonText = user.rejection_reason || user.rejectionReason || "제출된 자격증 서류 보완 필요";
+    const isInst = !isInstRejected && !!(
         user.instructor_status === 'approved' || user.instructorStatus === 'approved' ||
-        user.role === 'instructor' ||
-        (user.provider && (user.provider.includes("강사") || user.provider.includes("검증"))) ||
-        (user.instructor_org || user.instructorOrg || user.instructor_code || user.instructorCode) ||
-        (user.license_info && (user.license_info.includes("강사") || user.license_info.includes("Instructor") || user.license_info.includes("지도자"))) ||
-        (user.license && (user.license.includes("강사") || user.license.includes("Instructor") || user.license.includes("지도자"))) ||
-        (user.sports_license || user.freediving_license || user.scuba_license)
+        user.isApprovedInstructor === true || user.isApprovedInstructor === 'true' ||
+        (user.is_instructor === true && user.instructor_status !== 'rejected') ||
+        (user.role === 'instructor' && user.instructor_status !== 'rejected')
     );
 
     const warningCount = parseInt(user.warning_count || user.warningCount || 0, 10);
@@ -7152,7 +7214,7 @@ function renderDynamicEditProfileModal(user) {
     const licenseVal = user.license_info || user.license || user.user_license || "";
     const genderVal = user.gender || "private";
     const ageGroupVal = user.age_group || user.ageGroup || "20대";
-    const isApprovedInst = (user.instructor_status === 'approved' || user.instructorStatus === 'approved' || user.is_instructor || user.isInstructor);
+    const isApprovedInst = (user.instructor_status === 'approved' || user.instructorStatus === 'approved') && user.instructor_status !== 'rejected';
 
     const overlay = document.createElement("div");
     overlay.id = "dynamicEditProfileModalOverlay";
