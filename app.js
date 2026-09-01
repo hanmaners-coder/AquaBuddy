@@ -10744,6 +10744,9 @@ function renderDynamicDetailModal(post) {
                 </div>
                 
                 <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-left: auto;">
+                    <button type="button" class="btn btn-secondary btn-sm" style="background: rgba(0, 242, 254, 0.15); border: 1px solid #00f2fe; color: #00f2fe; padding: 6px 10px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 4px;" onclick="refreshCurrentDetailModal('${post.id}')" title="게시글 실시간 상태 새로고침">
+                        <i class="fa-solid fa-arrows-rotate"></i> 새로고침
+                    </button>
                     <button type="button" class="btn btn-secondary btn-sm" style="background: rgba(255, 82, 82, 0.12); border: 1px solid #ff5252; color: #ff5252; padding: 6px 10px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 4px;" onclick="openPostReportModal('${post.id}')" title="해당 게시글 사기/비매너 신고">
                         <i class="fa-solid fa-bullhorn"></i> 신고
                     </button>
@@ -14804,6 +14807,32 @@ function broadcastPostUpdate(postId) {
 window.broadcastPostUpdate = broadcastPostUpdate;
 
 
+async function refreshCurrentDetailModal(postId) {
+    if (!postId) return;
+    const btnIcon = document.querySelector("#dynamicDetailModalOverlay i.fa-arrows-rotate");
+    if (btnIcon) btnIcon.classList.add("fa-spin");
+
+    try {
+        if (typeof loadPosts === 'function') await loadPosts();
+        const freshPost = (posts || []).find(p => String(p.id) === String(postId));
+        if (freshPost && typeof renderDynamicDetailModal === 'function') {
+            renderDynamicDetailModal(freshPost);
+        }
+        if (typeof showToast === 'function') {
+            showToast("🔄 게시글 참가 현황과 상태가 실시간으로 갱신되었습니다!");
+        }
+    } catch(e) {
+        console.warn("Refresh detail modal exception:", e);
+    } finally {
+        setTimeout(function() {
+            const freshIcon = document.querySelector("#dynamicDetailModalOverlay i.fa-arrows-rotate");
+            if (freshIcon) freshIcon.classList.remove("fa-spin");
+        }, 500);
+    }
+}
+window.refreshCurrentDetailModal = refreshCurrentDetailModal;
+
+
 function initGlobalRealtimeSubscriptions() {
     if (!supabaseClient || _globalRealtimeChannel) return;
 
@@ -14884,8 +14913,8 @@ function initGlobalRealtimeSubscriptions() {
                 }
 
                 const dynamicOverlay = document.getElementById("dynamicDetailModalOverlay");
-                if (dynamicOverlay && typeof openDetailModal === 'function') {
-                    openDetailModal(postIdStr);
+                if (dynamicOverlay && typeof refreshCurrentDetailModal === 'function') {
+                    refreshCurrentDetailModal(postIdStr);
                 }
             })
             // 6. posts (모집글 상태 변경, 참가 신청/승인/취소, 일정 완료 실시간 0.1초 동기화)
