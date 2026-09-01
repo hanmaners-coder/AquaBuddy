@@ -12093,8 +12093,28 @@ function finishBuddySchedule(postId) {
 }
 
 async function reopenBuddySchedule(postId) {
+    if (typeof handleChangePostStatus === 'function') {
+        return await handleChangePostStatus(postId, 'recruiting');
+    }
     const post = posts.find(p => String(p.id) === String(postId));
     if (!post) return;
+
+    if (post.status === "completed" && post.counts_applied) {
+        post.counts_applied = false;
+        const hostEmail = (post.authorEmail || post.author_email || post.userEmail || post.email || "").trim().toLowerCase();
+        const hostName = post.realName || post.real_name || post.nickname || post.author || "주최자";
+        const pList = Array.isArray(post.participants) ? post.participants : [];
+        if (post.category === "instructor" || post.is_instructor) {
+            await incrementInstructorClassCount(hostEmail, hostName, -1);
+        } else {
+            await incrementUserHostCount(hostEmail, hostName, -1);
+        }
+        for (const p of pList) {
+            const pEmail = typeof p === 'object' ? (p.email || '') : '';
+            const pName = typeof p === 'object' ? (p.name || p.nickname || '') : String(p);
+            await incrementParticipantCompletedCount(pEmail, pName, -1);
+        }
+    }
 
     post.status = "recruiting";
     post.statusText = "모집 중";
@@ -12102,7 +12122,7 @@ async function reopenBuddySchedule(postId) {
 
     if (supabaseClient) {
         try {
-            await supabaseClient.from('posts').update({ status: 'recruiting', statusText: '모집 중' }).eq('id', postId);
+            await supabaseClient.from('posts').update({ status: 'recruiting', statusText: '모집 중', counts_applied: false }).eq('id', postId);
         } catch(e) {
             console.warn("Supabase posts status update notice:", e);
         }
@@ -12110,7 +12130,7 @@ async function reopenBuddySchedule(postId) {
 
     filterAndRender();
     openDetailModal(postId);
-    showToast("🔄 모집 상태가 '모집 중'으로 다시 변경되었습니다!");
+    showToast("🔄 모집 상태가 '모집 중'으로 변경되었습니다. (이전 완료 실적 -1차감 차감 반영)");
 }
 window.reopenBuddySchedule = reopenBuddySchedule;
 window.reopenBuddyPost = reopenBuddySchedule;
