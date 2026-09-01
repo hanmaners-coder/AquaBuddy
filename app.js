@@ -5754,6 +5754,8 @@ async function approveInstructorCertDemo(identifier) {
         try {
             const updatePayload = {
                 instructor_status: 'approved',
+                is_instructor: true,
+                role: 'instructor',
                 user_license: '공인 강사',
                 license_info: '공인 강사'
             };
@@ -5787,6 +5789,9 @@ async function approveInstructorCertDemo(identifier) {
         if (key.toLowerCase() === targetEmail || usersMap[key].name === identifier || usersMap[key].realName === identifier) {
             usersMap[key].instructorStatus = "approved";
             usersMap[key].instructor_status = "approved";
+            usersMap[key].is_instructor = true;
+            usersMap[key].isInstructor = true;
+            usersMap[key].role = "instructor";
             usersMap[key].isApprovedInstructor = true;
             delete usersMap[key].rejectionReason;
             nameToDisplay = usersMap[key].realName || usersMap[key].name || identifier;
@@ -5798,6 +5803,9 @@ async function approveInstructorCertDemo(identifier) {
     if (currentUser && (currentUser.email.toLowerCase() === targetEmail || currentUser.name === identifier)) {
         currentUser.instructorStatus = "approved";
         currentUser.instructor_status = "approved";
+        currentUser.is_instructor = true;
+        currentUser.isInstructor = true;
+        currentUser.role = "instructor";
         currentUser.isApprovedInstructor = true;
         delete currentUser.rejectionReason;
         safeLocalStorageSet("aqua_buddy_user_identity", JSON.stringify(currentUser));

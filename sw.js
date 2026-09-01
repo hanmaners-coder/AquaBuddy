@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1180-revoke-rejected-instructor-permissions-guard";
+const CACHE_NAME = "aquabuddy-cache-v1190-allow-reapplication-and-approval-flow";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
