@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1130-posts-realtime-sync-and-manual-refresh-btn";
+const CACHE_NAME = "aquabuddy-cache-v1140-instant-websocket-broadcast-for-post-status-and-participants";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

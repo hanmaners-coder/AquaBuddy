@@ -268,6 +268,7 @@ async function handleApproveParticipant(postId, applicantEmailOrName) {
     }
 
     if (typeof savePosts === 'function') savePosts();
+    if (typeof broadcastPostUpdate === 'function') broadcastPostUpdate(post.id);
     if (supabaseClient) {
         try {
             await supabaseClient.from('posts').update({
@@ -14780,6 +14781,29 @@ async function manualRefreshFeed() {
 window.manualRefreshFeed = manualRefreshFeed;
 
 
+function broadcastPostUpdate(postId) {
+    if (!postId) return;
+    const postIdStr = String(postId);
+    const post = (typeof posts !== 'undefined' && Array.isArray(posts)) ? posts.find(p => String(p.id) === postIdStr) : null;
+    
+    if (typeof _globalRealtimeChannel !== 'undefined' && _globalRealtimeChannel) {
+        try {
+            _globalRealtimeChannel.send({
+                type: 'broadcast',
+                event: 'post_updated',
+                payload: {
+                    postId: postIdStr,
+                    postData: post || null
+                }
+            });
+        } catch(e) {
+            console.warn("Broadcast post update notice:", e);
+        }
+    }
+}
+window.broadcastPostUpdate = broadcastPostUpdate;
+
+
 function initGlobalRealtimeSubscriptions() {
     if (!supabaseClient || _globalRealtimeChannel) return;
 
@@ -14837,6 +14861,31 @@ function initGlobalRealtimeSubscriptions() {
                 console.log('[REALTIME INQUIRY RECEIVED]', payload.new);
                 if (typeof isAdminAuthenticated !== 'undefined' && isAdminAuthenticated && typeof showToast === 'function') {
                     showToast('📩 [관리자] 새로운 문의가 등록되었습니다!');
+                }
+            })
+            // 0. WebSocket Broadcast (참가확정, 일정완료, 인원변경 0.05초 초고속 즉시 동기화)
+            .on('broadcast', { event: 'post_updated' }, async (payload) => {
+                if (!payload || !payload.payload) return;
+                const pInfo = payload.payload;
+                const postIdStr = String(pInfo.postId);
+                console.log("⚡ [INSTANT BROADCAST POST UPDATED]", postIdStr, pInfo);
+
+                if (pInfo.postData && typeof posts !== 'undefined' && Array.isArray(posts)) {
+                    const idx = posts.findIndex(p => String(p.id) === postIdStr);
+                    if (idx !== -1) {
+                        posts[idx] = { ...posts[idx], ...pInfo.postData };
+                    }
+                }
+
+                if (typeof loadPosts === 'function') {
+                    await loadPosts();
+                } else if (typeof filterAndRender === 'function') {
+                    filterAndRender();
+                }
+
+                const dynamicOverlay = document.getElementById("dynamicDetailModalOverlay");
+                if (dynamicOverlay && typeof openDetailModal === 'function') {
+                    openDetailModal(postIdStr);
                 }
             })
             // 6. posts (모집글 상태 변경, 참가 신청/승인/취소, 일정 완료 실시간 0.1초 동기화)
