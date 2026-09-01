@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1140-instant-websocket-broadcast-for-post-status-and-participants";
+const CACHE_NAME = "aquabuddy-cache-v1150-add-detail-modal-refresh-button-and-auto-rerender";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
