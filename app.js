@@ -6532,12 +6532,13 @@ function renderDynamicProfileModal(user, isSelf = false, contextCategory = 'all'
     const completedInstPostsCount = (typeof posts !== 'undefined' && Array.isArray(posts)) ? posts.filter(p => 
         (p.category === 'instructor' || p.is_instructor) && 
         p.status === 'completed' &&
+        Array.isArray(p.participants) && p.participants.length >= 1 &&
         ((user.email && (p.email === user.email || p.author_email === user.email || p.userEmail === user.email || p.author === user.email)) ||
          (user.name && (p.author === user.name || p.real_name === user.name || p.realName === user.name)) ||
          (user.nickname && (p.nickname === user.nickname || p.author === user.nickname)) ||
          (user.real_name && (p.real_name === user.real_name || p.author === user.real_name)))
     ).length : 0;
-    const classCount = Math.max(parseInt(user.instructor_class_count || user.classCount || 0, 10), completedInstPostsCount);
+    const classCount = completedInstPostsCount > 0 ? Math.max(parseInt(user.instructor_class_count || user.classCount || 0, 10), completedInstPostsCount) : 0;
 
     const detailedLicenses = [
         user.sports_license || user.sportsLicense,
@@ -10516,7 +10517,7 @@ async function handleChangePostStatus(postId, targetStatus) {
                 }
             } else {
                 if (typeof showToast === 'function') {
-                    showToast("모집이 완료 상태로 변경되었습니다. (확정 참가 버디 1명 이상 시 주최 실적이 인정됩니다.)");
+                    showToast("클래스가 완료 상태로 변경되었습니다. (수강생 1명 이상 참가 완료 시 강사 클래스 실적이 인정됩니다.)");
                 }
             }
         }
@@ -12070,6 +12071,9 @@ function confirmBuddyMatch(postId) {
 }
 
 function finishBuddySchedule(postId) {
+    if (typeof handleChangePostStatus === 'function') {
+        return handleChangePostStatus(postId, 'completed');
+    }
     const post = posts.find(p => String(p.id) === String(postId));
     if (!post) return;
 
@@ -12085,7 +12089,7 @@ function finishBuddySchedule(postId) {
 
     filterAndRender();
     openDetailModal(postId);
-    showToast("🎉 모임 일정이 최종 완료되었습니다!");
+    showToast("🎉 일정이 완료 상태로 변경되었습니다.");
 }
 
 async function reopenBuddySchedule(postId) {
@@ -12377,10 +12381,7 @@ async function submitMannerEvaluation() {
             const updatePayload = {};
             updatePayload[targetCol] = currentTags;
 
-            if (isInstructorClass) {
-                const curClassCount = parseInt(uData?.instructor_class_count || 0, 10);
-                updatePayload['instructor_class_count'] = Math.max(1, curClassCount);
-            }
+            // Do NOT force instructor_class_count to 1 on evaluation tags
 
             await supabaseClient.from('users').update(updatePayload).eq('email', currentMannerTargetEmail.toLowerCase());
             console.log(`✨ [EVALUATION TAG] '${currentMannerTargetEmail}' 유저의 '${targetCol}'에 '${currentMannerSelectedTag}' 태그 부여 완료!`);

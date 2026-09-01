@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1060-global-user-db-cache-and-all-card-badges";
+const CACHE_NAME = "aquabuddy-cache-v1070-strict-instructor-class-count-require-participant";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
