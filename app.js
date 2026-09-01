@@ -10744,9 +10744,6 @@ function renderDynamicDetailModal(post) {
                 </div>
                 
                 <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-left: auto;">
-                    <button type="button" class="btn btn-secondary btn-sm" style="background: rgba(0, 242, 254, 0.15); border: 1px solid #00f2fe; color: #00f2fe; padding: 6px 10px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 4px;" onclick="refreshCurrentDetailModal('${post.id}')" title="게시글 실시간 상태 새로고침">
-                        <i class="fa-solid fa-arrows-rotate"></i> 새로고침
-                    </button>
                     <button type="button" class="btn btn-secondary btn-sm" style="background: rgba(255, 82, 82, 0.12); border: 1px solid #ff5252; color: #ff5252; padding: 6px 10px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 4px;" onclick="openPostReportModal('${post.id}')" title="해당 게시글 사기/비매너 신고">
                         <i class="fa-solid fa-bullhorn"></i> 신고
                     </button>
@@ -10944,8 +10941,11 @@ function renderDynamicDetailModal(post) {
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
                     <div>
                         <h4 style="margin: 0; color: #00f2fe; font-size: 1rem;"><i class="fa-solid fa-users"></i> ${isInstructor ? '클래스 수강생 모집 현황' : '버디 모집 현황 및 참가자 목록'}</h4>
-                        <div style="font-size: 0.82rem; color: #a0aec0; margin-top: 2px;">
-                            현재 확정 인원: <strong style="color: #00f2fe;">${currentParticipantsCount} / ${capacityVal}명</strong>
+                        <div style="font-size: 0.82rem; color: #a0aec0; margin-top: 4px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <span>현재 확정 인원: <strong style="color: #00f2fe;">${currentParticipantsCount} / ${capacityVal}명</strong></span>
+                            <button type="button" onclick="refreshCurrentDetailModal('${post.id}')" style="background: rgba(0, 242, 254, 0.18); border: 1px solid #00f2fe; color: #00f2fe; padding: 3px 10px; border-radius: 12px; font-weight: 800; font-size: 0.78rem; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 8px rgba(0,242,254,0.25);" title="실시간 수강생 및 버디 참가 현황 새로고침">
+                                <i class="fa-solid fa-arrows-rotate"></i> 명단 새로고침
+                            </button>
                         </div>
                     </div>
 
