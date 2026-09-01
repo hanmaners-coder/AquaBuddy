@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1160-relocate-refresh-button-to-participant-status-section";
+const CACHE_NAME = "aquabuddy-cache-v1170-fix-referral-code-supabase-1to1-sync";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
