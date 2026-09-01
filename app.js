@@ -4756,6 +4756,19 @@ async function refreshCurrentUserFromCloud() {
                 }
             }
 
+            // 🛡️ 심사 반려 유저 강사 권한 자동 박탈 보정
+            if (dbUser.instructor_status === 'rejected' || dbUser.instructorStatus === 'rejected') {
+                dbUser.is_instructor = false;
+                dbUser.isInstructor = false;
+                dbUser.role = 'user';
+                savedUser.is_instructor = false;
+                savedUser.isInstructor = false;
+                savedUser.role = 'user';
+                if (supabaseClient && dbUser.id && (dbUser.is_instructor === true || dbUser.role === 'instructor')) {
+                    supabaseClient.from('users').update({ is_instructor: false, role: 'user' }).eq('id', dbUser.id).then(function(){});
+                }
+            }
+
             var isFoundingVal = dbUser.is_founding_member;
             if (userEmail === 'hanmaner@hanmail.net' || userEmail === 'hanmaners@hanmail.net') {
                 isFoundingVal = true;
@@ -5818,6 +5831,8 @@ async function rejectInstructorCertDemo(identifier) {
         try {
             const updatePayload = {
                 instructor_status: 'rejected',
+                is_instructor: false,
+                role: 'user',
                 rejection_reason: finalReason
             };
 
@@ -6507,18 +6522,13 @@ function renderDynamicProfileModal(user, isSelf = false, contextCategory = 'all'
         }
     }
 
-    // 🎓 강사 권한 판별
-    const isInst = !!(
-        user.is_instructor === true || user.is_instructor === 'true' ||
-        user.isInstructor === true || user.isInstructor === 'true' ||
-        user.isApprovedInstructor === true || user.isApprovedInstructor === 'true' ||
+    // 🎓 강사 권한 판별 (심사 반려된 경우 강사 권한 무효화)
+    const isInstRejected = (user.instructor_status === 'rejected' || user.instructorStatus === 'rejected');
+    const isInst = !isInstRejected && !!(
         user.instructor_status === 'approved' || user.instructorStatus === 'approved' ||
-        user.role === 'instructor' ||
-        (user.provider && (user.provider.includes("강사") || user.provider.includes("검증"))) ||
-        (user.instructor_org || user.instructorOrg || user.instructor_code || user.instructorCode) ||
-        (user.license_info && (user.license_info.includes("강사") || user.license_info.includes("Instructor") || user.license_info.includes("지도자"))) ||
-        (user.license && (user.license.includes("강사") || user.license.includes("Instructor") || user.license.includes("지도자"))) ||
-        (user.sports_license || user.freediving_license || user.scuba_license)
+        user.isApprovedInstructor === true || user.isApprovedInstructor === 'true' ||
+        (user.is_instructor === true && user.instructor_status !== 'rejected') ||
+        (user.role === 'instructor' && user.instructor_status !== 'rejected')
     );
 
     const warningCount = parseInt(user.warning_count || user.warningCount || 0, 10);
@@ -7152,7 +7162,7 @@ function renderDynamicEditProfileModal(user) {
     const licenseVal = user.license_info || user.license || user.user_license || "";
     const genderVal = user.gender || "private";
     const ageGroupVal = user.age_group || user.ageGroup || "20대";
-    const isApprovedInst = (user.instructor_status === 'approved' || user.instructorStatus === 'approved' || user.is_instructor || user.isInstructor);
+    const isApprovedInst = (user.instructor_status === 'approved' || user.instructorStatus === 'approved') && user.instructor_status !== 'rejected';
 
     const overlay = document.createElement("div");
     overlay.id = "dynamicEditProfileModalOverlay";

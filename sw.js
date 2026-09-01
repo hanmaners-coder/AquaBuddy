@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1170-fix-referral-code-supabase-1to1-sync";
+const CACHE_NAME = "aquabuddy-cache-v1180-revoke-rejected-instructor-permissions-guard";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
