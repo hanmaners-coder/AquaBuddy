@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1150-add-detail-modal-refresh-button-and-auto-rerender";
+const CACHE_NAME = "aquabuddy-cache-v1160-relocate-refresh-button-to-participant-status-section";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
