@@ -4750,8 +4750,7 @@ async function refreshCurrentUserFromCloud() {
             // 1:1 Supabase DB Referral Code & Founding Member Auto-Repair
             var liveRefCode = dbUser.referral_code || savedUser.referral_code || savedUser.referralCode || "";
             if (!liveRefCode) {
-                var randStr = Math.random().toString(36).substring(2, 8).toUpperCase();
-                liveRefCode = 'AQUA-' + randStr;
+                liveRefCode = typeof getDeterministicReferralCode === 'function' ? getDeterministicReferralCode(dbUser) : ('AQUA-' + (dbUser.email || 'USER').substring(0, 4).toUpperCase());
                 if (supabaseClient && dbUser.id) {
                     supabaseClient.from('users').update({ referral_code: liveRefCode }).eq('id', dbUser.id).then(function(){});
                 }
@@ -4894,6 +4893,8 @@ async function saveUserProfileToSupabase(userData, isExplicitEdit = false) {
         const userPhone = (userData.phone && userData.phone !== "010-0000-0000") ? userData.phone : (userData.phone || '');
         const instCode = userData.instructorCode || userData.instructor_code || "";
 
+        const refCode = typeof getDeterministicReferralCode === 'function' ? getDeterministicReferralCode(userData) : ('AQUA-' + userEmail.substring(0, 4).toUpperCase());
+
         const payload = {
             email: userEmail,
             nickname: userNick,
@@ -4907,7 +4908,10 @@ async function saveUserProfileToSupabase(userData, isExplicitEdit = false) {
             rejection_reason: userData.rejection_reason || userData.rejectionReason || "",
             cert_image: userData.cert_image || userData.certImage || "",
             gender: userData.gender || 'private',
-            age_group: userData.age_group || userData.ageGroup || 'private'
+            age_group: userData.age_group || userData.ageGroup || 'private',
+            referral_code: refCode,
+            referral_count: (userData.referral_count !== undefined && userData.referral_count !== null) ? userData.referral_count : (userData.referralCount || 0),
+            referred_by: userData.referred_by || userData.referredBy || ""
         };
 
         // 🔒 [개인정보 보안] DB users 테이블에 비밀번호 평문 전송 완전 제거
@@ -6456,6 +6460,12 @@ function getDeterministicReferralCode(user) {
     if (currentUser && (currentUser.email === user.email || currentUser.id === user.id)) {
         currentUser.referral_code = code;
         currentUser.referralCode = code;
+    }
+
+    if (typeof supabaseClient !== 'undefined' && supabaseClient && user.email) {
+        try {
+            supabaseClient.from('users').update({ referral_code: code }).eq('email', user.email.toLowerCase()).then(function(){});
+        } catch(e) {}
     }
 
     return code;
