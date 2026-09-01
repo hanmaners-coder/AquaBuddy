@@ -949,7 +949,23 @@ window.forceScrollToTop = forceScrollToTop;
 
 function switchMainView(viewName) {
     if (!viewName) viewName = "all";
-    if (viewName === "home" || viewName === "feed" || viewName === "buddy") viewName = "all";
+    if (viewName === "home" || viewName === "feed") viewName = "all";
+    
+    // 메인 카테고리 전환 시 서브 필터 격리 보장
+    if (viewName !== "buddy") {
+        activeBuddySubFilter = "all";
+        document.querySelectorAll("#buddySubFilterBar .sub-tab-btn").forEach(function(btn) {
+            if (btn.dataset.buddysub === "all") btn.classList.add("active");
+            else btn.classList.remove("active");
+        });
+    }
+    if (viewName !== "instructor") {
+        activeInstructorSubFilter = "all";
+        document.querySelectorAll("#instructorSubFilterBar .sub-tab-btn").forEach(function(btn) {
+            if (btn.dataset.instsub === "all") btn.classList.add("active");
+            else btn.classList.remove("active");
+        });
+    }
 
     activeMainView = viewName;
     window._activeMainView = viewName;
@@ -9596,24 +9612,26 @@ function filterAndRender(resetPagination = true) {
             return typeof isMyPost === 'function' && isMyPost(post);
         }
 
-        if (typeof activeBuddySubFilter !== 'undefined' && activeBuddySubFilter !== "all") {
-            let isMatch = (cat === activeBuddySubFilter);
-            if (activeBuddySubFilter === "swimming" && (cat === "swimming" || cat === "pool")) isMatch = true;
-            if (activeBuddySubFilter === "openwater" && (cat === "openwater" || cat === "sea")) isMatch = true;
-            if (!isMatch) return false;
-        }
-
         if (activeCategory === "instructor") {
             if (cat !== "instructor") return false;
             if (typeof activeInstructorSubFilter !== 'undefined' && activeInstructorSubFilter !== "all") {
                 const subCat = typeof getPostInstSubCategory === 'function' ? getPostInstSubCategory(post) : '';
                 if (subCat !== activeInstructorSubFilter) return false;
             }
+        } else if (activeCategory === "buddy") {
+            if (typeof activeBuddySubFilter !== 'undefined' && activeBuddySubFilter !== "all") {
+                let isMatch = (cat === activeBuddySubFilter);
+                if (activeBuddySubFilter === "swimming" && (cat === "swimming" || cat === "pool")) isMatch = true;
+                if (activeBuddySubFilter === "openwater" && (cat === "openwater" || cat === "sea" || cat === "ocean_swim")) isMatch = true;
+                if (!isMatch) return false;
+            } else {
+                if (cat === "market" || cat === "community" || cat === "instructor") return false;
+            }
         } else if (activeCategory === "swimming") {
             if (cat !== "swimming" && cat !== "pool") return false;
         } else if (activeCategory === "openwater") {
             if (cat !== "openwater" && cat !== "sea" && cat !== "ocean_swim") return false;
-        } else if (activeCategory === "freediving" || activeCategory === "buddy") {
+        } else if (activeCategory === "freediving") {
             if (cat !== "freediving" && cat !== "buddy" && cat !== "openwater" && cat !== "scuba" && cat !== "swimming") return false;
         } else if (activeCategory === "scuba") {
             if (cat !== "scuba") return false;
