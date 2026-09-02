@@ -16466,7 +16466,7 @@ window.selectScubaPoint = selectScubaPoint;
 function initHomeHaeundaeCctv() {
     var box = document.getElementById('homeCctvVideoBox');
     if (!box || typeof OCEAN_WEBCAMS_DATA === 'undefined' || !OCEAN_WEBCAMS_DATA) return;
-    var cam = OCEAN_WEBCAMS_DATA.find(function(c) { return c.id === 'cam-busan-gwangalli-beach'; }) || OCEAN_WEBCAMS_DATA[0];
+    var cam = OCEAN_WEBCAMS_DATA.find(function(c) { return c.id === 'cam-busan-haeundae-beach'; }) || OCEAN_WEBCAMS_DATA[0];
     if (cam) {
         box.innerHTML = _makeCctvHtml(cam);
         _startHls(box, cam);
