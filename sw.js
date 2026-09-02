@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1260-add-mof-coast-portal-legal-notice";
+const CACHE_NAME = "aquabuddy-cache-v1270-split-home-haeundae-and-spots-gwangalli-cctv";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
