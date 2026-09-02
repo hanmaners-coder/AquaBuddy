@@ -9,10 +9,6 @@ ALTER TABLE public.ocean_weather_cache
 ADD COLUMN IF NOT EXISTS sunrise TEXT,
 ADD COLUMN IF NOT EXISTS sunset TEXT;
 
-ALTER TABLE public.ocean_spots 
-ADD COLUMN IF NOT EXISTS sunrise TEXT,
-ADD COLUMN IF NOT EXISTS sunset TEXT;
-
 -- 2. 365개 전국 해양 & 해수욕장 스팟 전체 UPSERT
 INSERT INTO public.ocean_weather_cache (
     spot_id, spot_name, region_cat, lat, lng, tide_code, buoy_code, scuba_code,
