@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1250-group-cctv-dropdown-by-region-and-alphabetical";
+const CACHE_NAME = "aquabuddy-cache-v1260-add-mof-coast-portal-legal-notice";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
