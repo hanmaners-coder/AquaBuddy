@@ -1404,10 +1404,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/0_0.jpg?1788305312524",
         source: "해양수산부 연안포털",
-        status: "연안 침식 모니터링 24h 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "21.8°C",
         wind: "2.9 m/s",
-        desc: "경북 영덕 고래불해수욕장 실시간 파도 및 해변 침식 라이브 CCTV"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
     {
         id: "cam-coast-gujora",
@@ -1417,10 +1417,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/2_0.jpg?1788305345311",
         source: "해양수산부 연안포털",
-        status: "실시간 해상 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "23.1°C",
         wind: "2.5 m/s",
-        desc: "거제 구조라해수욕장 실시간 파도 및 해변 라이브 CCTV"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
     {
         id: "cam-coast-namhangjin",
@@ -1430,10 +1430,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/4_0.jpg?1788305364199",
         source: "해양수산부 연안포털",
-        status: "동해 서핑/파도 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "20.9°C",
         wind: "3.4 m/s",
-        desc: "강릉 남항진해변 실시간 해상 CCTV 모니터링"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
     {
         id: "cam-coast-sangju",
@@ -1443,10 +1443,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/9_0.jpg?1788305380017",
         source: "해양수산부 연안포털",
-        status: "남해 파도/수영 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "23.5°C",
         wind: "2.2 m/s",
-        desc: "남해 상주은모래비치 실시간 파도 및 해상 라이브 CCTV"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
     {
         id: "cam-coast-najeong",
@@ -1456,10 +1456,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/17_0.jpg?1788305614425",
         source: "해양수산부 연안포털",
-        status: "동해 해상 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "21.6°C",
         wind: "3.0 m/s",
-        desc: "경주 나정고운모래해변 실시간 해상 및 입수 상태 CCTV"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
     {
         id: "cam-coast-gangmun",
@@ -1469,10 +1469,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/51_0.jpg?1788305659100",
         source: "해양수산부 연안포털",
-        status: "강문 다이빙/파도 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "20.8°C",
         wind: "3.5 m/s",
-        desc: "강릉 강문해수욕장 실시간 파도 및 다이빙 포인트 CCTV"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
     {
         id: "cam-coast-gyeongpo",
@@ -1482,10 +1482,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/52_0.jpg?1788305689965",
         source: "해양수산부 연안포털",
-        status: "경포 해상 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "20.7°C",
         wind: "3.6 m/s",
-        desc: "강릉 경포해수욕장 실시간 해변 및 파도 라이브 CCTV"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
     {
         id: "cam-coast-sodol",
@@ -1495,10 +1495,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/53_0.jpg?1788305730264",
         source: "해양수산부 연안포털",
-        status: "소돌 다이빙포인트 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "20.6°C",
         wind: "3.3 m/s",
-        desc: "강릉 소돌해변 실시간 바다 수영 및 다이빙 포인트 CCTV"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
     {
         id: "cam-coast-yeomjeon",
@@ -1508,10 +1508,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/54_0.jpg?1788305766815",
         source: "해양수산부 연안포털",
-        status: "염전해변 해상 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "20.9°C",
         wind: "3.2 m/s",
-        desc: "강릉 염전해변 실시간 연안 모니터링 CCTV"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
     {
         id: "cam-coast-yeongjin",
@@ -1521,10 +1521,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/55_0.jpg?1788305838006",
         source: "해양수산부 연안포털",
-        status: "영진 방파제/해변 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "20.7°C",
         wind: "3.4 m/s",
-        desc: "강릉 영진해수욕장 실시간 파도 및 입수 상태 CCTV"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
     {
         id: "cam-coast-jeongdongjin",
@@ -1534,10 +1534,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/56_0.jpg?1788305922540",
         source: "해양수산부 연안포털",
-        status: "정동진 해상 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "21.0°C",
         wind: "3.1 m/s",
-        desc: "강릉 정동진해수욕장 실시간 파도 및 해변 침식 라이브 CCTV"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
     {
         id: "cam-coast-gonghyeonjin2",
@@ -1547,10 +1547,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/57_0.jpg?1788305979958",
         source: "해양수산부 연안포털",
-        status: "고성 해상 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "20.1°C",
         wind: "3.7 m/s",
-        desc: "고성 공현진2리해수욕장 실시간 바다 및 파도 CCTV"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
     {
         id: "cam-coast-gyoam",
@@ -1560,10 +1560,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/58_0.jpg?1788306006158",
         source: "해양수산부 연안포털",
-        status: "교암 다이빙포인트 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "20.2°C",
         wind: "3.6 m/s",
-        desc: "고성 교암해수욕장 실시간 다이빙 및 해상 CCTV"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
     {
         id: "cam-coast-bongpo",
@@ -1573,10 +1573,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/59_0.jpg?1788306062426",
         source: "해양수산부 연안포털",
-        status: "봉포 서핑/해변 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "20.3°C",
         wind: "3.5 m/s",
-        desc: "고성 봉포해수욕장 실시간 파도 및 서핑 포인트 CCTV"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
     {
         id: "cam-coast-chodo",
@@ -1586,10 +1586,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/60_0.jpg?1788306113505",
         source: "해양수산부 연안포털",
-        status: "최북단 초도해변 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "19.9°C",
         wind: "3.8 m/s",
-        desc: "고성 초도해변 실시간 해상 안전 CCTV 모니터링"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
     {
         id: "cam-coast-seonyudo",
@@ -1599,10 +1599,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/61_0.jpg?1788306185805",
         source: "해양수산부 연안포털",
-        status: "서해 선유도 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "22.8°C",
         wind: "2.7 m/s",
-        desc: "군산 선유도해수욕장 실시간 해변 및 물때 CCTV"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
     {
         id: "cam-coast-hamaengbang",
@@ -1612,10 +1612,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/62_0.jpg?1788306242084",
         source: "해양수산부 연안포털",
-        status: "하맹방 해상 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "21.1°C",
         wind: "3.2 m/s",
-        desc: "삼척 하맹방해수욕장 실시간 파도 및 연안 침식 모니터링"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
     {
         id: "cam-coast-daecheon",
@@ -1625,10 +1625,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/63_0.jpg?1788306287670",
         source: "해양수산부 연안포털",
-        status: "대천 해변 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "23.2°C",
         wind: "2.6 m/s",
-        desc: "보령 대천해수욕장 실시간 바다 및 물때 모니터링 CCTV"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
     {
         id: "cam-coast-wonpyeong",
@@ -1638,10 +1638,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/65_0.jpg?1788306340028",
         source: "해양수산부 연안포털",
-        status: "원평 다이빙포인트 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "21.2°C",
         wind: "3.1 m/s",
-        desc: "삼척 원평해수욕장 실시간 파도 및 해상 라이브 CCTV"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
     {
         id: "cam-coast-sinyangseopji",
@@ -1651,10 +1651,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/66_0.jpg?1788306489729",
         source: "해양수산부 연안포털",
-        status: "제주 동부 파도/윈드서핑 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "24.5°C",
         wind: "2.4 m/s",
-        desc: "제주 동부 신양섭지해수욕장 실시간 해상 CCTV"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
     {
         id: "cam-coast-jungmun",
@@ -1664,10 +1664,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/67_0.jpg?1788306569247",
         source: "해양수산부 연안포털",
-        status: "중문 서핑/다이빙 파도 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "24.8°C",
         wind: "2.3 m/s",
-        desc: "제주 남부 중문색달해수욕장 실시간 파도 및 서핑 포인트 CCTV"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
     {
         id: "cam-coast-yeongrang",
@@ -1677,10 +1677,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/69_0.jpg?1788306657547",
         source: "해양수산부 연안포털",
-        status: "속초 해상 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "20.5°C",
         wind: "3.5 m/s",
-        desc: "속초 영랑해변 실시간 파도 및 연안 침식 모니터링 CCTV"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
     {
         id: "cam-coast-daegwang",
@@ -1690,10 +1690,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/71_0.jpg?1788306747886",
         source: "해양수산부 연안포털",
-        status: "신안 백사장 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "23.0°C",
         wind: "2.5 m/s",
-        desc: "신안 임자도 대광해수욕장 실시간 해변 CCTV"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
     {
         id: "cam-coast-bangameori",
@@ -1703,10 +1703,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/72_0.jpg?1788306835155",
         source: "해양수산부 연안포털",
-        status: "대부도 방아머리 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "22.5°C",
         wind: "2.8 m/s",
-        desc: "안산 대부도 방아머리해변 실시간 물때 및 바다 CCTV"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
     {
         id: "cam-coast-janggol",
@@ -1716,10 +1716,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/73_0.jpg?1788306843384",
         source: "해양수산부 연안포털",
-        status: "자월도 장골해변 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "22.3°C",
         wind: "2.9 m/s",
-        desc: "인천 옹진군 자월도 장골해수욕장 실시간 해상 CCTV"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
     {
         id: "cam-coast-jeongja",
@@ -1729,10 +1729,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/74_0.jpg?1788306956304",
         source: "해양수산부 연안포털",
-        status: "정자몽돌해변 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "21.9°C",
         wind: "3.0 m/s",
-        desc: "울산 북구 정자해수욕장 실시간 파도 및 해변 라이브 CCTV"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
     {
         id: "cam-coast-jinha",
@@ -1742,10 +1742,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/75_0.jpg?1788307029455",
         source: "해양수산부 연안포털",
-        status: "진하 윈드서핑/다이빙 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "22.1°C",
         wind: "2.9 m/s",
-        desc: "울산 울주군 진하해수욕장 실시간 파도 및 해상 CCTV"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
     {
         id: "cam-coast-wolsongjeong",
@@ -1755,10 +1755,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/76_0.jpg?1788307085602",
         source: "해양수산부 연안포털",
-        status: "울진 월송정 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "21.4°C",
         wind: "3.1 m/s",
-        desc: "경북 울진 월송정해수욕장 실시간 파도 및 해상 CCTV"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
     {
         id: "cam-coast-kkotji",
@@ -1768,10 +1768,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/78_0.jpg?1788307120071",
         source: "해양수산부 연안포털",
-        status: "안면도 꽃지 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "22.9°C",
         wind: "2.6 m/s",
-        desc: "충남 태안 안면도 꽃지해수욕장 실시간 일몰/해변 CCTV"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
     {
         id: "cam-coast-manlipo",
@@ -1781,10 +1781,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/79_0.jpg?1788307155923",
         source: "해양수산부 연안포털",
-        status: "만리포 서핑/파도 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "22.8°C",
         wind: "2.7 m/s",
-        desc: "충남 태안 만리포해수욕장 실시간 파도 및 서핑 포인트 CCTV"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
     {
         id: "cam-coast-songdo",
@@ -1794,10 +1794,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/80_0.jpg?1788307250484",
         source: "해양수산부 연안포털",
-        status: "부산 송도 해상 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "22.6°C",
         wind: "2.8 m/s",
-        desc: "부산 서구 송도해수욕장 실시간 파도 및 해수욕장 CCTV"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
     {
         id: "cam-coast-haeundae",
@@ -1807,10 +1807,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/81_0.jpg?1788307263511",
         source: "해양수산부 연안포털",
-        status: "해운대 연안 모니터링 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "22.4°C",
         wind: "2.9 m/s",
-        desc: "부산 해운대해수욕장 실시간 연안 침식 모니터링 라이브 CCTV"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
     {
         id: "cam-coast-bongpyeong",
@@ -1820,10 +1820,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/82_0.jpg?1788307310795",
         source: "해양수산부 연안포털",
-        status: "울진 봉평 해상 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "21.3°C",
         wind: "3.2 m/s",
-        desc: "경북 울진 봉평해수욕장 실시간 파도 및 해변 CCTV"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
     {
         id: "cam-coast-geumeumri",
@@ -1833,10 +1833,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/84_0.jpg?1788307340963",
         source: "해양수산부 연안포털",
-        status: "울진 금음리 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "21.5°C",
         wind: "3.1 m/s",
-        desc: "경북 울진 금음리해수욕장 실시간 파도 및 해상 CCTV"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
     {
         id: "cam-coast-ondong",
@@ -1846,10 +1846,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/86_0.jpg?1788308851199",
         source: "해양수산부 연안포털",
-        status: "신안 온동해변 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "23.1°C",
         wind: "2.4 m/s",
-        desc: "전남 신안 온동해변 실시간 연안 모니터링 CCTV"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
     {
         id: "cam-coast-jangsa",
@@ -1859,10 +1859,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/87_0.jpg?1788308882580",
         source: "해양수산부 연안포털",
-        status: "영덕 장사 해상 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "21.7°C",
         wind: "3.0 m/s",
-        desc: "경북 영덕 장사해수욕장 실시간 파도 및 해변 라이브 CCTV"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
     {
         id: "cam-coast-munam",
@@ -1872,10 +1872,10 @@ var OCEAN_WEBCAMS_DATA = [
         thumb: "hero.jpg",
         embedUrl: "https://coast.mof.go.kr/serviceGateway.jsp?http://10.176.62.134:9001/tilemapApi.do?url=http://220.95.232.18:8080/img/88_0.jpg?1788309020727",
         source: "해양수산부 연안포털",
-        status: "문암 스노클/다이빙 라이브",
+        status: "📸 실시간 스냅사진 제공",
         waterTemp: "21.0°C",
         wind: "3.3 m/s",
-        desc: "강원 삼척 문암해변 실시간 바다 수영 및 다이빙 포인트 CCTV"
+        desc: "해양수산부 연안포털 실시간 해변 현장 스냅사진 모니터링"
     },
 
     // 1. 부산 기장 / 해운대 / 수영 권역 (12개)
@@ -9434,12 +9434,12 @@ function openWebcamModal(camId) {
             const titleEl = fallbackBox.querySelector("h3");
             const descEl = fallbackBox.querySelector("p");
 
-            if (titleEl) titleEl.innerHTML = '<i class="fa-solid fa-water" style="color: #00f2fe;"></i> 해양수산부 연안포털 실시간 CCTV';
-            if (descEl) descEl.textContent = '해당 CCTV는 제공처(연안포털)의 보안 정책(SAMEORIGIN)에 따라 새 창에서 쾌적하게 24시간 시청하실 수 있습니다.';
+            if (titleEl) titleEl.innerHTML = '<i class="fa-solid fa-camera" style="color: #00f2fe;"></i> 해양수산부 연안포털 실시간 해변 스냅사진';
+            if (descEl) descEl.textContent = '해당 스팟은 해양수산부 연안포털 연안침식 모니터링 시스템의 실시간 스냅사진 관측 데이터입니다. 새 창에서 현장 스냅사진을 확인하실 수 있습니다.';
             if (outlinkBtn) {
                 outlinkBtn.href = embedUrl;
                 outlinkBtn.target = "_blank";
-                outlinkBtn.innerHTML = '<i class="fa-solid fa-arrow-up-right-from-square"></i> <span>🌊 연안포털 실시간 CCTV 새 창에서 시청하기 ➔</span>';
+                outlinkBtn.innerHTML = '<i class="fa-solid fa-arrow-up-right-from-square"></i> <span>📸 연안포털 실시간 스냅사진 새 창에서 보기 ➔</span>';
             }
         }
     }
@@ -16298,10 +16298,11 @@ function _makeCctvHtml(cctv) {
     var isHttp  = (em||hl).startsWith('http://');
     if (isKbs || isCoast || isHttp || (!em && !hl)) {
         var url = em || hl || 'https://d.kbs.co.kr';
-        var icon = isCoast ? '🌊' : '🔗';
-        var label = isCoast ? '\uD574\uC591\uC218\uC0B0\uBD80 \uC5F0\uC548\uD3EC\uD138 \uC2E4\uC2DC\uAC04 CCTV \uC0C8 \uCC3D\uC5D0\uC11C \uBCF4\uAE30 \u27A4' : '\uC0C8 \uCC3D\uC5D0\uC11C \uC2E4\uC2DC\uAC04 \uC601\uC0C1 \uBCF4\uAE30 \u27A4';
-        var desc = isCoast ? '\uD574\uC591\uC218\uC0B0\uBD80 \uC5F0\uC548\uD3EC\uD138 \uBCF4\uC548\uC815\uCC45(SAMEORIGIN)\uC5D0 \uC758\uD574 \uC0C8 \uCC3D\uC5D0\uC11C \uC2DC\uCCAD\uD558\uC2E4 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' : '\uBCF4\uC548 \uC815\uCC45\uC0C1 \uC9C1\uC811 \uC784\uBCA0\uB4DC\uAC00 \uC81C\uD55C\uB429\uB2C8\uB2E4. \uC0C8 \uCC3D\uC5D0\uC11C \uACE0\uD654\uC9C8\uB85C \uC2DC\uCCAD\uD558\uC138\uC694.';
-        return '<div style="width:100%;min-height:320px;border-radius:14px;background:rgba(15,23,42,0.95);border:1px solid rgba(0,242,254,0.3);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:22px;box-sizing:border-box;"><i class="fa-solid fa-water" style="font-size:2.2rem;color:#00f2fe;margin-bottom:10px;"></i><h4 style="color:#fff;font-size:0.95rem;font-weight:800;margin:0 0 6px 0;">' + cctv.name + '</h4><p style="font-size:0.8rem;color:#94a3b8;margin:0 0 14px 0;max-width:320px;line-height:1.5;">' + desc + '</p><a href="' + url + '" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;font-size:0.88rem;font-weight:900;border-radius:10px;background:linear-gradient(135deg,#00f2fe,#4facfe);color:#000;text-decoration:none;">' + icon + ' ' + label + '</a></div>';
+        var icon = isCoast ? '📸' : '🔗';
+        var label = isCoast ? '해양수산부 연안포털 실시간 해변 스냅사진 보기 ➔' : '새 창에서 실시간 영상 보기 ➔';
+        var desc = isCoast ? '해양수산부 연안포털 연안침식 모니터링 시스템을 통해 현장 실시간 해변 스냅사진을 새 창에서 확인하실 수 있습니다.' : '보안 정책상 직접 임베드가 제한됩니다. 새 창에서 고화질로 시청하세요.';
+        var topIcon = isCoast ? '<i class="fa-solid fa-camera" style="font-size:2.2rem;color:#00f2fe;margin-bottom:10px;"></i>' : '<i class="fa-solid fa-tower-broadcast" style="font-size:2.2rem;color:#ff5252;margin-bottom:10px;"></i>';
+        return '<div style="width:100%;min-height:320px;border-radius:14px;background:rgba(15,23,42,0.95);border:1px solid rgba(0,242,254,0.3);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:22px;box-sizing:border-box;">' + topIcon + '<h4 style="color:#fff;font-size:0.95rem;font-weight:800;margin:0 0 6px 0;">' + cctv.name + '</h4><p style="font-size:0.8rem;color:#94a3b8;margin:0 0 14px 0;max-width:320px;line-height:1.5;">' + desc + '</p><a href="' + url + '" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;font-size:0.88rem;font-weight:900;border-radius:10px;background:linear-gradient(135deg,#00f2fe,#4facfe);color:#000;text-decoration:none;">' + icon + ' ' + label + '</a></div>';
     }
     if (hl && hl.startsWith('https://') && hl.includes('.m3u8')) {
         return '<div style="width:100%;min-height:320px;border-radius:14px;overflow:hidden;background:#000;position:relative;"><video id="dashHlsVideo_' + cctv.id + '" controls autoplay muted playsinline style="width:100%;height:320px;object-fit:contain;background:#000;"></video><div style="position:absolute;top:10px;left:10px;background:rgba(0,0,0,0.75);padding:4px 10px;border-radius:6px;color:#00e676;font-weight:700;font-size:0.76rem;">\uD83D\uDD34 LIVE - ' + cctv.name + '</div></div>';

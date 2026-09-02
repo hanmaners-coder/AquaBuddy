@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1270-split-home-haeundae-and-spots-gwangalli-cctv";
+const CACHE_NAME = "aquabuddy-cache-v1280-update-coast-portal-to-realtime-snapshot-notice";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
