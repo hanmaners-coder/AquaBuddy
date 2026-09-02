@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1310-integrate-kma-nationwide-beaches-db";
+const CACHE_NAME = "aquabuddy-cache-v1320-spot-specific-real-sun-data";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
