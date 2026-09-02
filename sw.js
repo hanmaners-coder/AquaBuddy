@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1280-update-coast-portal-to-realtime-snapshot-notice";
+const CACHE_NAME = "aquabuddy-cache-v1290-slim-ocean-card-with-sun-info";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

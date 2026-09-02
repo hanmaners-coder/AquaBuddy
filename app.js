@@ -16158,6 +16158,53 @@ async function loadOceanWeatherCacheFromSupabase() {
 }
 window.loadOceanWeatherCacheFromSupabase = loadOceanWeatherCacheFromSupabase;
 
+async // 🌅 대한민국 전역 실시간 천문학적 일출·일몰 정밀 계산 알고리즘
+function getSunTimes(lat, lng, date) {
+    if (!lat || !lng) {
+        lat = 35.1537;
+        lng = 129.1184;
+    }
+    date = date || new Date();
+    var dayOfYear = Math.floor((date - new Date(date.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+    var zenith = 90.833;
+    var D2R = Math.PI / 180;
+    var R2D = 180 / Math.PI;
+    var lngHour = lng / 15;
+    
+    function calcTime(isSunrise) {
+        var t = isSunrise ? dayOfYear + ((6 - lngHour) / 24) : dayOfYear + ((18 - lngHour) / 24);
+        var M = (0.9856 * t) - 3.289;
+        var L = M + (1.916 * Math.sin(M * D2R)) + (0.020 * Math.sin(2 * M * D2R)) + 282.634;
+        L = (L % 360 + 360) % 360;
+        var RA = R2D * Math.atan(0.91764 * Math.tan(L * D2R));
+        RA = (RA % 360 + 360) % 360;
+        var Lquadrant  = (Math.floor(L/90)) * 90;
+        var RAquadrant = (Math.floor(RA/90)) * 90;
+        RA = RA + (Lquadrant - RAquadrant);
+        RA = RA / 15;
+        var sinDec = 0.39782 * Math.sin(L * D2R);
+        var cosDec = Math.cos(Math.asin(sinDec));
+        var cosH = (Math.cos(zenith * D2R) - (sinDec * Math.sin(lat * D2R))) / (cosDec * Math.cos(lat * D2R));
+        if (cosH > 1) return "정보없음";
+        if (cosH < -1) return "정보없음";
+        var H = isSunrise ? (360 - R2D * Math.acos(cosH)) / 15 : (R2D * Math.acos(cosH)) / 15;
+        var T = H + RA - (0.06571 * t) - 6.622;
+        var UT = (T - lngHour) % 24;
+        var KST = (UT + 9) % 24;
+        if (KST < 0) KST += 24;
+        var hours = Math.floor(KST);
+        var mins = Math.round((KST - hours) * 60);
+        if (mins === 60) { hours = (hours + 1) % 24; mins = 0; }
+        return (hours < 10 ? "0" + hours : hours) + ":" + (mins < 10 ? "0" + mins : mins);
+    }
+
+    return {
+        sunrise: calcTime(true),
+        sunset: calcTime(false)
+    };
+}
+window.getSunTimes = getSunTimes;
+
 async function initKakaoOceanMap(spot) {
     var container = document.getElementById('oceanKakaoMap');
     var emptyBox = document.getElementById('oceanMapEmptyState');
@@ -16258,19 +16305,27 @@ async function initKakaoOceanMap(spot) {
 
         if (_customOverlayObj) { _customOverlayObj.setMap(null); _customOverlayObj = null; }
 
-        var html = '<div style="display:flex;flex-direction:column;align-items:center;pointer-events:auto;z-index:999999;filter:drop-shadow(0 8px 24px rgba(0,0,0,0.75));">' +
-            '<div style="background:rgba(8,16,32,0.96);backdrop-filter:blur(10px);color:#fff;padding:9px 12px;border-radius:14px;border:1.5px solid #00f2fe;box-shadow:0 6px 24px rgba(0,242,254,0.45);width:250px;box-sizing:border-box;font-family:sans-serif;">' +
-            '<div style="display:flex;align-items:center;justify-content:space-between;gap:6px;border-bottom:1px solid rgba(255,255,255,0.15);padding-bottom:5px;margin-bottom:7px;">' +
-            '<strong style="font-size:0.86rem;color:#fff;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📍 ' + nm + '</strong>' +
-            '<span style="background:rgba(0,230,118,0.25);color:#00e676;font-size:0.62rem;font-weight:900;padding:2px 6px;border-radius:4px;flex-shrink:0;border:1px solid rgba(0,230,118,0.4);">LIVE</span>' +
-            '</div>' +
-            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:7px;">' +
-            '<div style="background:rgba(255,255,255,0.06);padding:4px 8px;border-radius:6px;"><span style="color:#94a3b8;font-size:0.62rem;display:block;line-height:1.2;">🌡️ 수온</span><strong style="color:#00f2fe;font-size:0.82rem;">' + wT + '</strong></div>' +
-            '<div style="background:rgba(255,255,255,0.06);padding:4px 8px;border-radius:6px;"><span style="color:#94a3b8;font-size:0.62rem;display:block;line-height:1.2;">🌊 파고</span><strong style="color:#00e676;font-size:0.82rem;">' + wW + '</strong></div>' +
-            '<div style="background:rgba(255,255,255,0.06);padding:4px 8px;border-radius:6px;"><span style="color:#94a3b8;font-size:0.62rem;display:block;line-height:1.2;">🌬️ 풍속</span><strong style="color:#ffb703;font-size:0.82rem;">' + wWd + '</strong></div>' +
-            '<div style="background:rgba(255,255,255,0.06);padding:4px 8px;border-radius:6px;"><span style="color:#94a3b8;font-size:0.62rem;display:block;line-height:1.2;">🌡️ 기온</span><strong style="color:#fff;font-size:0.82rem;">' + wA + '</strong></div>' +
-            '</div>' +
-            tideHtml +
+            var sunTimes = (typeof getSunTimes === 'function') ? getSunTimes(lat, lng) : { sunrise: '05:58', sunset: '18:48' };
+            var sunHtml = '<div style="font-size:0.68rem;color:#ffb703;background:rgba(255,183,3,0.08);padding:3px 8px;border-radius:6px;border:1px solid rgba(255,183,3,0.25);display:flex;align-items:center;justify-content:space-between;font-weight:700;margin-top:4px;">' +
+                '<span>🌅 <strong>일출</strong> ' + sunTimes.sunrise + '</span>' +
+                '<span style="color:rgba(255,255,255,0.25);">|</span>' +
+                '<span>🌇 <strong>일몰</strong> ' + sunTimes.sunset + '</span>' +
+                '</div>';
+
+            var html = '<div style="display:flex;flex-direction:column;align-items:center;pointer-events:auto;z-index:999999;filter:drop-shadow(0 8px 24px rgba(0,0,0,0.75));">' +
+                '<div style="background:rgba(8,16,32,0.96);backdrop-filter:blur(10px);color:#fff;padding:9px 12px;border-radius:14px;border:1.5px solid #00f2fe;box-shadow:0 6px 24px rgba(0,242,254,0.45);width:250px;box-sizing:border-box;font-family:sans-serif;">' +
+                '<div style="display:flex;align-items:center;justify-content:space-between;gap:6px;border-bottom:1px solid rgba(255,255,255,0.15);padding-bottom:5px;margin-bottom:6px;">' +
+                '<strong style="font-size:0.86rem;color:#fff;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📍 ' + nm + '</strong>' +
+                '<span style="background:rgba(0,230,118,0.25);color:#00e676;font-size:0.62rem;font-weight:900;padding:2px 6px;border-radius:4px;flex-shrink:0;border:1px solid rgba(0,230,118,0.4);">LIVE</span>' +
+                '</div>' +
+                '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:5px;">' +
+                '<div style="background:rgba(255,255,255,0.06);padding:4px 7px;border-radius:6px;display:flex;align-items:center;justify-content:space-between;gap:4px;"><span style="color:#94a3b8;font-size:0.68rem;font-weight:700;">🌡️ 수온</span><strong style="color:#00f2fe;font-size:0.82rem;font-weight:900;">' + wT + '</strong></div>' +
+                '<div style="background:rgba(255,255,255,0.06);padding:4px 7px;border-radius:6px;display:flex;align-items:center;justify-content:space-between;gap:4px;"><span style="color:#94a3b8;font-size:0.68rem;font-weight:700;">🌊 파고</span><strong style="color:#00e676;font-size:0.82rem;font-weight:900;">' + wW + '</strong></div>' +
+                '<div style="background:rgba(255,255,255,0.06);padding:4px 7px;border-radius:6px;display:flex;align-items:center;justify-content:space-between;gap:4px;"><span style="color:#94a3b8;font-size:0.68rem;font-weight:700;">🌬️ 풍속</span><strong style="color:#ffb703;font-size:0.82rem;font-weight:900;">' + wWd + '</strong></div>' +
+                '<div style="background:rgba(255,255,255,0.06);padding:4px 7px;border-radius:6px;display:flex;align-items:center;justify-content:space-between;gap:4px;"><span style="color:#94a3b8;font-size:0.68rem;font-weight:700;">🌡️ 기온</span><strong style="color:#fff;font-size:0.82rem;font-weight:900;">' + wA + '</strong></div>' +
+                '</div>' +
+                tideHtml +
+                sunHtml
             '</div>' +
             '<div style="width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:9px solid #00f2fe;margin-top:-1px;"></div>' +
             '<div style="font-size:1.4rem;line-height:1;margin-top:-2px;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.8));">📍</div>' +
