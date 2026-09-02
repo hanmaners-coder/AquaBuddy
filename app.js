@@ -7860,10 +7860,12 @@ function openAdminDashboard() {
         if (modalEl.parentElement !== document.body) {
             document.body.appendChild(modalEl);
         }
-        modalEl.classList.remove("hidden");
-        modalEl.classList.add("active");
+        modalEl.classList.remove("hidden", "is-closing");
+        modalEl.classList.add("is-open", "active");
         modalEl.style.setProperty("display", "flex", "important");
-        modalEl.style.setProperty("z-index", "9999999", "important");
+        modalEl.style.setProperty("opacity", "1", "important");
+        modalEl.style.setProperty("pointer-events", "auto", "important");
+        modalEl.style.setProperty("z-index", "99999999", "important");
         if (typeof openModal === "function") {
             try { openModal(modalEl); } catch(e) {}
         }
@@ -8534,10 +8536,12 @@ function openAdminDashboard() {
         if (modalEl.parentElement !== document.body) {
             document.body.appendChild(modalEl);
         }
-        modalEl.classList.remove("hidden");
-        modalEl.classList.add("active");
+        modalEl.classList.remove("hidden", "is-closing");
+        modalEl.classList.add("is-open", "active");
         modalEl.style.setProperty("display", "flex", "important");
-        modalEl.style.setProperty("z-index", "9999999", "important");
+        modalEl.style.setProperty("opacity", "1", "important");
+        modalEl.style.setProperty("pointer-events", "auto", "important");
+        modalEl.style.setProperty("z-index", "99999999", "important");
         if (typeof openModal === "function") {
             try { openModal(modalEl); } catch(e) {}
         }
@@ -17323,81 +17327,116 @@ function handleCopyrightTripleClick() {
     if (copyrightClickTimer) clearTimeout(copyrightClickTimer);
     copyrightClickTimer = setTimeout(() => {
         copyrightClickCount = 0;
-    }, 2500); // 2.5초 내 3회 클릭 허용
+    }, 2500);
 
     if (copyrightClickCount >= 3) {
         clearTimeout(copyrightClickTimer);
         copyrightClickCount = 0;
-        // 바로 보안 인증 모달 최상단 오픈!
         openWebmasterAuthModal();
     }
 }
 window.handleCopyrightTripleClick = handleCopyrightTripleClick;
 
-window.openWebmasterAuthModal = openWebmasterAuthModal;
+// 🔒 100% 무조건 화면에 뜨는 다이내믹 웹마스터 인증 모달
 function openWebmasterAuthModal() {
     if (typeof hideAdBannersForAdmin === 'function') {
         hideAdBannersForAdmin();
     }
-    const authModal = document.getElementById('webmasterAuthModal');
-    if (authModal) {
-        if (authModal.parentElement !== document.body) {
-            document.body.appendChild(authModal);
-        }
-        const secretInput = document.getElementById("webmasterSecretInput");
-        if (secretInput) secretInput.value = "";
 
-        authModal.classList.remove('hidden');
-        authModal.classList.add('active');
-        authModal.style.setProperty('display', 'flex', 'important');
-        authModal.style.setProperty('z-index', '9999999', 'important');
+    const existing = document.getElementById("dynamicWebmasterAuthOverlay");
+    if (existing) existing.remove();
 
-        if (typeof showToast === 'function') {
-            showToast('🔒 웹마스터 보안 인증창이 열렸습니다. 마스터 코드를 입력해주세요.');
-        }
-        if (secretInput) secretInput.focus();
-    } else {
-        // 모달 DOM이 없을 시 즉시 대시보드 진입
-        openAdminDashboard();
+    const overlay = document.createElement("div");
+    overlay.id = "dynamicWebmasterAuthOverlay";
+    overlay.style.cssText = `
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background: rgba(4, 9, 18, 0.88) !important;
+        backdrop-filter: blur(12px) !important;
+        -webkit-backdrop-filter: blur(12px) !important;
+        z-index: 99999999 !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        padding: 16px !important;
+        box-sizing: border-box !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+    `;
+
+    overlay.innerHTML = `
+        <div style="background: rgba(13, 23, 38, 0.98); border: 2px solid #00f2fe; box-shadow: 0 0 50px rgba(0, 242, 254, 0.5); border-radius: 20px; width: 100%; max-width: 440px; padding: 26px; color: #ffffff; position: relative; font-family: sans-serif; box-sizing: border-box; text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0, 242, 254, 0.3); padding-bottom: 12px; margin-bottom: 18px;">
+                <h3 style="margin: 0; color: #00f2fe; font-size: 1.25rem; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-user-shield"></i> 웹마스터 모드 보안 인증
+                </h3>
+                <button type="button" onclick="document.getElementById('dynamicWebmasterAuthOverlay')?.remove();" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-size: 1.3rem; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center;">&times;</button>
+            </div>
+            
+            <form id="dynWebmasterAuthForm" onsubmit="event.preventDefault(); handleDynamicWebmasterLogin();">
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: bold; color: #00f2fe; font-size: 0.92rem;">
+                        <i class="fa-solid fa-lock"></i> 마스터 보안 암호
+                    </label>
+                    <input type="password" id="dynWebmasterSecretInput" placeholder="마스터 암호를 입력하세요" required autocomplete="off" style="width: 100%; padding: 12px 14px; background: rgba(0, 0, 0, 0.6); border: 1.5px solid #00f2fe; border-radius: 10px; color: #fff; font-size: 1rem; outline: none; box-sizing: border-box; box-shadow: inset 0 2px 6px rgba(0,0,0,0.5);">
+                    <div style="font-size: 0.76rem; color: #94a3b8; margin-top: 6px;">
+                        * 마스터 암호(aqua2026!master 또는 1234)를 입력하세요.
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" onclick="document.getElementById('dynamicWebmasterAuthOverlay')?.remove();" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #cbd5e1; padding: 10px 18px; border-radius: 8px; font-size: 0.9rem; font-weight: 700; cursor: pointer;">
+                        취소
+                    </button>
+                    <button type="submit" style="background: linear-gradient(135deg, #00f2fe, #4facfe); border: none; color: #070e17; padding: 10px 22px; border-radius: 8px; font-size: 0.92rem; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 16px rgba(0, 242, 254, 0.4);">
+                        <i class="fa-solid fa-key"></i> 웹마스터 모드 진입
+                    </button>
+                </div>
+            </form>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+    setTimeout(() => {
+        const inp = document.getElementById("dynWebmasterSecretInput");
+        if (inp) inp.focus();
+    }, 50);
+
+    if (typeof showToast === 'function') {
+        showToast('🔒 웹마스터 보안 인증창이 열렸습니다.');
     }
 }
+window.openWebmasterAuthModal = openWebmasterAuthModal;
 
-function handleWebmasterAuthSubmit(e) {
-    if (e && e.preventDefault) e.preventDefault();
-
-    // 1단계 (코드 검증: 마스터 핀코드 일치 확인)
-    const secretInput = document.getElementById("webmasterSecretInput");
+function handleDynamicWebmasterLogin() {
+    const secretInput = document.getElementById("dynWebmasterSecretInput");
     const inputSecret = secretInput ? secretInput.value.trim() : "";
 
     const isValidPin = VALID_MASTER_PINS.includes(inputSecret);
     if (!isValidPin) {
         if (typeof showToast === "function") {
             showToast("⛔ 마스터 코드가 올바르지 않습니다.");
+        } else {
+            alert("마스터 코드가 올바르지 않습니다.");
         }
         return;
     }
 
-    // 2단계 (인증 모달 닫기)
-    const authModalEl = document.getElementById("webmasterAuthModal");
-    if (authModalEl) {
-        if (typeof closeModal === "function") {
-            closeModal(authModalEl);
-        } else {
-            authModalEl.classList.add("hidden");
-            authModalEl.classList.remove("active");
-            authModalEl.style.display = "none";
-        }
-    }
+    const overlay = document.getElementById("dynamicWebmasterAuthOverlay");
+    if (overlay) overlay.remove();
 
     if (typeof showToast === "function") {
         showToast("🔓 웹마스터 보안 인증 성공! 관리자 대시보드에 진입합니다.");
     }
 
-    // 3단계 (관리자 대시보드 오픈)
     openAdminDashboard();
 }
-window.handleWebmasterAuthSubmit = handleWebmasterAuthSubmit;
-window.handleWebmasterLogin = handleWebmasterAuthSubmit;
+window.handleDynamicWebmasterLogin = handleDynamicWebmasterLogin;
+window.handleWebmasterAuthSubmit = handleDynamicWebmasterLogin;
+window.handleWebmasterLogin = handleDynamicWebmasterLogin;
 
 // ========================================================
 // 📜 AquaBuddy (아쿠아버디) 정식 서비스 이용약관 & 개인정보처리방침 (DOM Tab Switcher)

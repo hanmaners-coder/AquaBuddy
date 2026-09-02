@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1510-webmaster-admin-mode-instant-access";
+const CACHE_NAME = "aquabuddy-cache-v1520-dynamic-webmaster-auth-modal-failsafe";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
