@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1450-bulletproof-cors-safe-scuba-index-engine";
+const CACHE_NAME = "aquabuddy-cache-v1460-scuba-index-instant-zero-delay-render-sync";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

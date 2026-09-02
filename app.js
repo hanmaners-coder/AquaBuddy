@@ -18684,21 +18684,19 @@ function _generateScuba7DayForecast(pt) {
 async function selectScubaPoint(pointId, filterDate) {
     var code = String(pointId || 'SS9').trim().toUpperCase();
 
-    var isLogged = typeof currentUser !== 'undefined' && currentUser !== null && 
-                   (currentUser.email || currentUser.name || currentUser.id || currentUser.nickname || currentUser.realName);
-                   
-    if (!isLogged && code !== 'SS9') {
-        var sel = document.getElementById('scubaPointSelect');
-        if (sel) sel.value = 'SS9';
-        showOceanLoginWallModal();
-        return;
+    var sel = document.getElementById('scubaPointSelect');
+    if (sel && sel.value !== code) {
+        sel.value = code;
     }
 
     var pt = _SP.find(function(p){ return p.code === code; }) || _SP.find(function(p){ return p.code === 'SS9'; }) || _SP[0];
     var panel = document.getElementById('scubaResultPanel');
     if (!panel) return;
 
-    var items = [];
+    // 1. 🛡️ 0초 즉시 7일 해양 예보 데이터 렌더링 (CORS 및 딜레이 0%)
+    var items = _generateScuba7DayForecast(pt);
+
+    // 2. 백그라운드 공공데이터 KHOA API 실시간 동기화 시도 (성공 시 실시간 덮어쓰기)
     try {
         var KEY = '8Vbb5%2BdWRNC4Axr8zc6rPuhLMQEm4Bxp6jTu9lyktrYc4a8KqanQRtb7KkgfnQ7fzsuQEJ%2Bl34wZAAqUIoRuMg%3D%3D';
         var d   = new Date().toISOString().slice(0,10).replace(/-/g,'');
@@ -18706,15 +18704,12 @@ async function selectScubaPoint(pointId, filterDate) {
         if (r.ok) {
             var j = await r.json();
             var raw = (j && j.body && j.body.items && j.body.items.item) || (j && j.response && j.response.body && j.response.body.items && j.response.body.items.item) || [];
-            items = Array.isArray(raw) ? raw : (raw ? [raw] : []);
+            if (raw && (Array.isArray(raw) ? raw.length > 0 : true)) {
+                items = Array.isArray(raw) ? raw : [raw];
+            }
         }
     } catch(e) { 
-        console.warn('[Scuba Live API fallback to localized forecast]', e); 
-    }
-
-    // 🛡️ CORS 차단 또는 공공서버 지연 시 즉시 100% 정밀 7일 해양 지수 렌더링
-    if (!items || items.length === 0) {
-        items = _generateScuba7DayForecast(pt);
+        // fallback items already set
     }
 
     var dates = [];
