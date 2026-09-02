@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1400-design-system-and-micro-interactions";
+const CACHE_NAME = "aquabuddy-cache-v1410-perfect-auth-navbar-visibility-sync";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

@@ -1374,6 +1374,37 @@ body.category-view-active .hero-section {
 
 .modal-lg { max-width: 800px; }
 
+/* 🌟 Universal Utility Classes */
+.hidden { display: none !important; }
+
+/* 🌟 CSS Off-screen Tab Rendering for Instant Map Display (Zero Gray Tiles) */
+.offscreen-tab {
+    position: absolute !important;
+    left: -9999px !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 1200px !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    z-index: -999 !important;
+}
+
+.active-tab-section {
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    width: 100% !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+    z-index: 1 !important;
+}
+
 /* 🌟 View Transition Animation (Smooth Fade & Spring Slide) */
 .view-transition-fade {
     animation: viewFadeSlide 0.25s var(--ease-spring) forwards;

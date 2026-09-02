@@ -7161,8 +7161,13 @@ function updateNavbarUserUI() {
     const navActivity = document.getElementById("navLinkActivity");
     const tabActivity = document.querySelector('.tab-btn[data-category="activity_log"]');
 
-    if (currentUser && (currentUser.nickname || currentUser.name || currentUser.email)) {
-        if (userNav) userNav.classList.remove("hidden");
+    const isLoggedIn = !!(currentUser && (currentUser.nickname || currentUser.name || currentUser.email || currentUser.id || currentUser.realName || currentUser.real_name));
+
+    if (isLoggedIn) {
+        if (userNav) {
+            userNav.classList.remove("hidden");
+            userNav.style.display = "inline-flex";
+        }
         const isInst = isVerifiedInstructor();
         const instBadge = isInst ? ` [👑공인강사]` : (isPendingInstructor() ? ` [심사대기중]` : '');
         const navName = document.getElementById("navUserName");
@@ -7170,13 +7175,22 @@ function updateNavbarUserUI() {
         if (navName) {
             navName.innerHTML = `${escapeHtml(displayName)}${instBadge} ${typeof renderUserBadges === 'function' ? renderUserBadges(currentUser) : ''}`;
         }
-        if (openAuthBtn) openAuthBtn.classList.add("hidden");
+        if (openAuthBtn) {
+            openAuthBtn.classList.add("hidden");
+            openAuthBtn.style.display = "none";
+        }
 
         if (navActivity) navActivity.style.display = "inline-flex";
         if (tabActivity) tabActivity.style.display = "inline-flex";
     } else {
-        if (userNav) userNav.classList.add("hidden");
-        if (openAuthBtn) openAuthBtn.classList.remove("hidden");
+        if (userNav) {
+            userNav.classList.add("hidden");
+            userNav.style.display = "none";
+        }
+        if (openAuthBtn) {
+            openAuthBtn.classList.remove("hidden");
+            openAuthBtn.style.display = "inline-flex";
+        }
 
         if (navActivity) navActivity.style.display = "none";
         if (tabActivity) tabActivity.style.display = "none";
