@@ -9413,10 +9413,27 @@ function openWebcamModal(camId) {
     const embedUrl = (cam.embedUrl || "").trim();
     const hlsUrl = (cam.hlsUrl || "").trim();
     const isKbs = embedUrl.includes("kbs.co.kr") || hlsUrl.includes("kbs.co.kr") || (cam.source && cam.source.includes("KBS"));
+    const isCoast = embedUrl.includes("coast.mof.go.kr") || (cam.source && cam.source.includes("연안포털"));
     const isHttpOnly = (embedUrl || hlsUrl).startsWith("http://");
 
+    // ★ [0. 해양수산부 연안포털 CCTV]: SAMEORIGIN 프레임 연결거부 방지 전용 Out-link & 이미지 뷰어 UI
+    if (isCoast) {
+        if (fallbackBox) {
+            fallbackBox.style.display = "flex";
+            const titleEl = fallbackBox.querySelector("h3");
+            const descEl = fallbackBox.querySelector("p");
+
+            if (titleEl) titleEl.innerHTML = '<i class="fa-solid fa-water" style="color: #00f2fe;"></i> 해양수산부 연안포털 실시간 CCTV';
+            if (descEl) descEl.textContent = '해당 CCTV는 제공처(연안포털)의 보안 정책(SAMEORIGIN)에 따라 새 창에서 쾌적하게 24시간 시청하실 수 있습니다.';
+            if (outlinkBtn) {
+                outlinkBtn.href = embedUrl;
+                outlinkBtn.target = "_blank";
+                outlinkBtn.innerHTML = '<i class="fa-solid fa-arrow-up-right-from-square"></i> <span>🌊 연안포털 실시간 CCTV 새 창에서 시청하기 ➔</span>';
+            }
+        }
+    }
     // ★ [1. KBS 재난감시 CCTV]: CORS 차단 및 만료 토큰 문제 완벽 방지를 위해 전용 새 창 열기 Out-link UI 제공
-    if (isKbs) {
+    else if (isKbs) {
         if (fallbackBox) {
             fallbackBox.style.display = "flex";
             const titleEl = fallbackBox.querySelector("h3");
