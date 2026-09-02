@@ -2468,6 +2468,17 @@ var OCEAN_WEBCAMS_DATA = [
 // 46 Specific Marine Diving/Swimming Tide Spots Dataset
 var OCEAN_WEATHER_DATA = [
     {
+        "spot_id": "tide-gwangalli",
+        "id": "tide-gwangalli",
+        "name": "부산 광안리 해수욕장",
+        "region_cat": "busan",
+        "lat": 35.1537,
+        "lng": 129.1184,
+        "tide_code": "SO_0553",
+        "buoy_code": "TW_0062",
+        "scuba_code": "SS14"
+    },
+    {
         "spot_id": "tide-haeundae",
         "id": "tide-haeundae",
         "name": "부산 해운대 해수욕장",
@@ -9679,12 +9690,53 @@ function renderUnifiedSpotDashboard(spot) {
             return clean && (c.name.includes(clean) || nm.includes(c.name.replace(/CCTV|부산|기장군|해수욕장/g, '').trim()));
         }) || null;
     }
+    if (!match && typeof OCEAN_WEBCAMS_DATA !== 'undefined') {
+        match = OCEAN_WEBCAMS_DATA.find(function(c) { return c.id === 'cam-busan-gwangalli-beach'; }) || OCEAN_WEBCAMS_DATA[0];
+    }
 
     if (sel && typeof OCEAN_WEBCAMS_DATA !== 'undefined') {
-        sel.innerHTML = '<option value="">다른 위치 CCTV 선택 --</option>' +
-            OCEAN_WEBCAMS_DATA.map(function(c) {
-                return '<option value="' + c.id + '"' + (match && c.id === match.id ? ' selected' : '') + '>' + c.name + '</option>';
-            }).join('');
+        var regionGroups = [
+            { label: "🏖️ 부산 / 기장 권역", matchFn: function(c){ return c.regionCategory === 'busan_gijang' || c.regionCategory === 'busan_south' || (c.region && c.region.includes('부산')) || (c.name && c.name.includes('부산')); } },
+            { label: "🌊 강원 / 동해 / 강릉 / 속초 / 고성 / 삼척 권역", matchFn: function(c){ return c.regionCategory === 'gangwon' || c.regionCategory === 'donghae' || (c.region && (c.region.includes('강원') || c.region.includes('강릉') || c.region.includes('속초') || c.region.includes('고성') || c.region.includes('삼척') || c.region.includes('동해'))); } },
+            { label: "🌅 경북 / 영덕 / 울진 / 포항 / 경주 / 독도 권역", matchFn: function(c){ return (c.region && (c.region.includes('경북') || c.region.includes('영덕') || c.region.includes('울진') || c.region.includes('경주') || c.region.includes('포항') || c.region.includes('울릉') || c.region.includes('독도'))) || (c.name && (c.name.includes('영덕') || c.name.includes('울진') || c.name.includes('포항') || c.name.includes('경주'))); } },
+            { label: "⛵ 경남 / 거제 / 남해 / 통영 / 창원 권역", matchFn: function(c){ return (c.region && (c.region.includes('경남') || c.region.includes('거제') || c.region.includes('남해') || c.region.includes('통영') || c.region.includes('창원'))) || (c.name && (c.name.includes('거제') || c.name.includes('남해') || c.name.includes('통영'))); } },
+            { label: "🐬 울산 권역", matchFn: function(c){ return c.regionCategory === 'ulsan' || (c.region && c.region.includes('울산')) || (c.name && c.name.includes('울산')); } },
+            { label: "🏝️ 제주도 전역 (서귀포 / 제주시)", matchFn: function(c){ return c.regionCategory === 'jeju' || c.regionCategory === 'jeju_live' || (c.region && c.region.includes('제주')) || (c.name && c.name.includes('제주')); } },
+            { label: "🐚 전남 / 전북 / 여수 / 신안 / 군산 / 완도 권역", matchFn: function(c){ return c.regionCategory === 'jeolla' || c.regionCategory === 'jeonnam_namhae' || (c.region && (c.region.includes('전남') || c.region.includes('전북') || c.region.includes('여수') || c.region.includes('신안') || c.region.includes('군산') || c.region.includes('완도'))) || (c.name && (c.name.includes('신안') || c.name.includes('군산') || c.name.includes('여수') || c.name.includes('완도'))); } },
+            { label: "🌅 충남 / 태안 / 보령 / 서해 권역", matchFn: function(c){ return c.regionCategory === 'chungcheong' || c.regionCategory === 'seohae' || (c.region && (c.region.includes('충남') || c.region.includes('태안') || c.region.includes('보령') || c.region.includes('서해'))) || (c.name && (c.name.includes('태안') || c.name.includes('보령'))); } },
+            { label: "🏙️ 수도권 / 경기 / 인천 권역", matchFn: function(c){ return c.regionCategory === 'seoul' || c.regionCategory === 'incheon' || (c.region && (c.region.includes('경기') || c.region.includes('인천') || c.region.includes('안산') || c.region.includes('옹진'))) || (c.name && (c.name.includes('안산') || c.name.includes('인천') || c.name.includes('장골'))); } }
+        ];
+
+        var usedIds = {};
+        var optionsHtml = '<option value="">📍 지역별 실시간 CCTV 선택 (가나다순 정렬) --</option>';
+
+        regionGroups.forEach(function(grp) {
+            var items = OCEAN_WEBCAMS_DATA.filter(function(c) {
+                if (usedIds[c.id]) return false;
+                return grp.matchFn(c);
+            });
+            if (items.length > 0) {
+                items.forEach(function(c){ usedIds[c.id] = true; });
+                items.sort(function(a, b){ return (a.name || '').localeCompare(b.name || '', 'ko-KR'); });
+                optionsHtml += '<optgroup label="' + grp.label + ' (' + items.length + '곳)">';
+                items.forEach(function(c) {
+                    optionsHtml += '<option value="' + c.id + '"' + (match && c.id === match.id ? ' selected' : '') + '>' + c.name + '</option>';
+                });
+                optionsHtml += '</optgroup>';
+            }
+        });
+
+        var remain = OCEAN_WEBCAMS_DATA.filter(function(c){ return !usedIds[c.id]; });
+        if (remain.length > 0) {
+            remain.sort(function(a, b){ return (a.name || '').localeCompare(b.name || '', 'ko-KR'); });
+            optionsHtml += '<optgroup label="📍 기타 전국 해양 CCTV (' + remain.length + '곳)">';
+            remain.forEach(function(c) {
+                optionsHtml += '<option value="' + c.id + '"' + (match && c.id === match.id ? ' selected' : '') + '>' + c.name + '</option>';
+            });
+            optionsHtml += '</optgroup>';
+        }
+
+        sel.innerHTML = optionsHtml;
     }
 
     if (box) {
@@ -16286,7 +16338,7 @@ function onDashCctvChange(id) {
     var isLogged = typeof currentUser !== 'undefined' && currentUser !== null && 
                    (currentUser.email || currentUser.name || currentUser.id || currentUser.nickname || currentUser.realName);
                    
-    var defaultId = 'cam-busan-haeundae-beach';
+    var defaultId = 'cam-busan-gwangalli-beach';
     if (!isLogged && id !== defaultId) {
         var sel = document.getElementById('fullwidthCctvSelect');
         if (sel) sel.value = defaultId;
@@ -16414,7 +16466,7 @@ window.selectScubaPoint = selectScubaPoint;
 function initHomeHaeundaeCctv() {
     var box = document.getElementById('homeCctvVideoBox');
     if (!box || typeof OCEAN_WEBCAMS_DATA === 'undefined' || !OCEAN_WEBCAMS_DATA) return;
-    var cam = OCEAN_WEBCAMS_DATA.find(function(c) { return c.id === 'cam-busan-haeundae-beach'; }) || OCEAN_WEBCAMS_DATA[0];
+    var cam = OCEAN_WEBCAMS_DATA.find(function(c) { return c.id === 'cam-busan-gwangalli-beach'; }) || OCEAN_WEBCAMS_DATA[0];
     if (cam) {
         box.innerHTML = _makeCctvHtml(cam);
         _startHls(box, cam);
