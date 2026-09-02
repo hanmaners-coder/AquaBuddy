@@ -9090,13 +9090,18 @@ window.isAuthorBlockedByMe = isAuthorBlockedByMe;
 
 function getDeterministicReferralCode(user) {
     if (!user) return 'AQUA-FOUNDER';
-    if (user.referral_code) return user.referral_code;
-    if (user.referralCode) return user.referralCode;
+    if (user.referral_code && typeof user.referral_code === 'string' && user.referral_code.startsWith('AQUA-')) {
+        return user.referral_code;
+    }
+    if (user.referralCode && typeof user.referralCode === 'string' && user.referralCode.startsWith('AQUA-')) {
+        return user.referralCode;
+    }
 
-    var seed = String(user.id || user.email || user.name || user.nickname || 'AQUABUDDY').trim().toLowerCase();
+    // 🔒 100% 불변(Immutable) 시드: 사용자의 고유 이메일(아이디)을 단일 기준으로 영구 고정!
+    var email = (user.email || (currentUser ? currentUser.email : '') || user.name || user.nickname || 'AQUABUDDY').trim().toLowerCase();
     var hash = 0;
-    for (var i = 0; i < seed.length; i++) {
-        hash = (hash << 5) - hash + seed.charCodeAt(i);
+    for (var i = 0; i < email.length; i++) {
+        hash = (hash << 5) - hash + email.charCodeAt(i);
         hash |= 0;
     }
     var codeStr = (Math.abs(hash).toString(36) + 'AQUABUDDY').toUpperCase();
@@ -9104,14 +9109,16 @@ function getDeterministicReferralCode(user) {
     user.referral_code = code;
     user.referralCode = code;
 
-    if (currentUser && (currentUser.email === user.email || currentUser.id === user.id)) {
+    if (currentUser && (currentUser.email === user.email || !currentUser.referral_code)) {
         currentUser.referral_code = code;
         currentUser.referralCode = code;
+        safeLocalStorageSet('currentUser', JSON.stringify(currentUser));
+        safeLocalStorageSet('aqua_buddy_user_identity', JSON.stringify(currentUser));
     }
 
     if (typeof supabaseClient !== 'undefined' && supabaseClient && user.email) {
         try {
-            supabaseClient.from('users').update({ referral_code: code }).eq('email', user.email.toLowerCase()).then(function(){});
+            supabaseClient.from('users').update({ referral_code: code }).eq('email', email).then(function(){});
         } catch(e) {}
     }
 

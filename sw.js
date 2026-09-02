@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1420-referral-code-full-validation-and-credit-sync";
+const CACHE_NAME = "aquabuddy-cache-v1430-immutable-email-anchored-referral-codes";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
