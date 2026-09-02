@@ -17313,12 +17313,7 @@ const WEBMASTER_ADMIN_EMAILS = [
     "hanmaner@hanmail.net",
     "hanmaners@naver.com"
 ];
-const VALID_MASTER_PINS = [
-    "aqua2026!master",
-    "aqua2026",
-    "1234",
-    "admin"
-];
+const WEBMASTER_PIN_CODE = "aqua2026!master";
 let copyrightClickCount = 0;
 let copyrightClickTimer = null;
 
@@ -17382,8 +17377,8 @@ function openWebmasterAuthModal() {
                         <i class="fa-solid fa-lock"></i> 마스터 보안 암호
                     </label>
                     <input type="password" id="dynWebmasterSecretInput" placeholder="마스터 암호를 입력하세요" required autocomplete="off" style="width: 100%; padding: 12px 14px; background: rgba(0, 0, 0, 0.6); border: 1.5px solid #00f2fe; border-radius: 10px; color: #fff; font-size: 1rem; outline: none; box-sizing: border-box; box-shadow: inset 0 2px 6px rgba(0,0,0,0.5);">
-                    <div style="font-size: 0.76rem; color: #94a3b8; margin-top: 6px;">
-                        * 마스터 암호(aqua2026!master 또는 1234)를 입력하세요.
+                    <div style="font-size: 0.76rem; color: #64748b; margin-top: 6px;">
+                        * 최고 관리자 전용 2차 보안 인증 구역입니다.
                     </div>
                 </div>
 
@@ -17415,8 +17410,7 @@ function handleDynamicWebmasterLogin() {
     const secretInput = document.getElementById("dynWebmasterSecretInput");
     const inputSecret = secretInput ? secretInput.value.trim() : "";
 
-    const isValidPin = VALID_MASTER_PINS.includes(inputSecret);
-    if (!isValidPin) {
+    if (inputSecret !== WEBMASTER_PIN_CODE) {
         if (typeof showToast === "function") {
             showToast("⛔ 마스터 코드가 올바르지 않습니다.");
         } else {
