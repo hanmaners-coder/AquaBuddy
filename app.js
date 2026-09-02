@@ -1053,6 +1053,12 @@ function switchMainView(viewName) {
             if (typeof renderWeatherGrid === "function") {
                 renderWeatherGrid(activeTideRegion || "all");
             }
+            // 🌟 스킨스쿠버 지수 성산일출봉(SS9) 기본 자동 표출
+            if (typeof selectScubaPoint === 'function') {
+                var sSel = document.getElementById('scubaPointSelect');
+                var sCode = (sSel && sSel.value) ? sSel.value : 'SS9';
+                selectScubaPoint(sCode);
+            }
             // 🌟 탭 전환 즉시 1회 relayout 및 setCenter 안전장치 호출
             if (typeof window.kakao !== 'undefined' && window.kakao.maps && _oceanKakaoMapObj) {
                 _oceanKakaoMapObj.relayout();
@@ -11833,6 +11839,14 @@ function renderUnifiedSpotDashboard(spot) {
         box.innerHTML = _makeCctvHtml(match);
         _startHls(box, match);
     }
+
+    // 🤿 스킨스쿠버 지수 자동 연동 (스팟에 scuba_code가 있으면 해당 스팟, 없으면 성산일출봉 SS9)
+    if (typeof selectScubaPoint === 'function') {
+        var targetScuba = (spot && spot.scuba_code) ? spot.scuba_code : 'SS9';
+        var scubaSel = document.getElementById('scubaPointSelect');
+        if (scubaSel && spot && spot.scuba_code) scubaSel.value = targetScuba;
+        selectScubaPoint(targetScuba);
+    }
 }
 window.renderUnifiedSpotDashboard = renderUnifiedSpotDashboard;
 
@@ -18619,4 +18633,17 @@ function initHomeHaeundaeCctv() {
     }
 }
 window.initHomeHaeundaeCctv = initHomeHaeundaeCctv;
+
+// 🌟 페이지 로드 및 탭 진입 시 성산일출봉(SS9) 스쿠버 지수 자동 로드
+if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof selectScubaPoint === 'function') selectScubaPoint('SS9');
+        });
+    } else {
+        setTimeout(function() {
+            if (typeof selectScubaPoint === 'function') selectScubaPoint('SS9');
+        }, 150);
+    }
+}
 

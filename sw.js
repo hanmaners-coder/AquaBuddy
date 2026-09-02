@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1350-update-hero-and-search-stats-to-365-beaches";
+const CACHE_NAME = "aquabuddy-cache-v1360-auto-render-seongsan-scuba-index";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
