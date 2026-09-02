@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1320-spot-specific-real-sun-data";
+const CACHE_NAME = "aquabuddy-cache-v1350-update-hero-and-search-stats-to-365-beaches";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
