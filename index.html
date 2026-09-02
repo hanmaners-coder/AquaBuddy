@@ -1170,6 +1170,8 @@
                 <a href="javascript:void(0)" onclick="openTermsModal('terms')" style="color: #cbd5e1; text-decoration: none; transition: color 0.2s ease;">이용약관</a>
                 <span style="color: rgba(255,255,255,0.2);">|</span>
                 <a href="javascript:void(0)" onclick="openTermsModal('privacy')" style="color: #00f2fe; font-weight: 700; text-decoration: none; transition: color 0.2s ease;">개인정보처리방침</a>
+                <span style="color: rgba(255,255,255,0.15);">|</span>
+                <a href="javascript:void(0)" onclick="openWebmasterAuthModal()" style="color: rgba(255,255,255,0.35); font-size: 0.78rem; text-decoration: none; transition: color 0.2s ease;" title="웹마스터 관리자 보안 인증"><i class="fa-solid fa-user-shield"></i> 관리자</a>
             </div>
 
             <!-- 3. 서비스 소개, 사업자 정보 & 면책 고지 -->
@@ -1191,7 +1193,7 @@
             </div>
 
             <!-- 4. 저작권 (Copyright) 문구 & 히든 관리자 3회 클릭 트리거 -->
-            <div class="footer-copyright" style="font-size: 0.78rem; color: #64748b; cursor: pointer; user-select: none; margin-top: 4px;" onclick="handleCopyrightTripleClick()" title="관리자 전용 (hanmaner@naver.com 계정으로 3회 클릭 시 인증창 호출)">
+            <div class="footer-copyright" style="font-size: 0.78rem; color: #64748b; cursor: pointer; user-select: none; margin-top: 4px;" onclick="handleCopyrightTripleClick()" title="웹마스터 관리자 모드 (연속 3회 클릭 시 보안 인증창 호출)">
                 Copyright &copy; 2026 <strong>AquaBuddy</strong>. All rights reserved. (Designed with Neon Glassmorphism)
             </div>
 
@@ -2276,8 +2278,8 @@
      </div>
  
      <!-- App Configuration & Main Logic Script -->
-     <script src="config.js?v=V1500_STRICT_EMAIL_AUTHOR_PROFILE_MATCHING_AND_REALNAME_SYNC"></script>
-     <script src="app.js?v=V1500_STRICT_EMAIL_AUTHOR_PROFILE_MATCHING_AND_REALNAME_SYNC"></script>
+     <script src="config.js?v=V1510_WEBMASTER_ADMIN_MODE_INSTANT_ACCESS"></script>
+     <script src="app.js?v=V1510_WEBMASTER_ADMIN_MODE_INSTANT_ACCESS"></script>
      <!-- Toast Notification Container -->
     <div id="toastContainer" class="toast-container"></div>
 </body>

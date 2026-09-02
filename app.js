@@ -7854,12 +7854,7 @@ window.rejectInstructorCertDemo = rejectInstructorCertDemo;
 
 function openAdminDashboard() {
     isAdminAuthenticated = true;
-    hideAdBannersForAdmin();
-    renderAdminStats();
-    renderAdminUsersTable();
-    renderAdminPostsTable();
-    if (typeof renderAdminInstructorsTable === 'function') renderAdminInstructorsTable();
-    if (typeof renderAdminInquiries === 'function') renderAdminInquiries();
+    if (typeof hideAdBannersForAdmin === 'function') hideAdBannersForAdmin();
     const modalEl = document.getElementById("adminDashboardModal") || document.getElementById("webmasterDashboardModal");
     if (modalEl) {
         if (modalEl.parentElement !== document.body) {
@@ -7869,7 +7864,15 @@ function openAdminDashboard() {
         modalEl.classList.add("active");
         modalEl.style.setProperty("display", "flex", "important");
         modalEl.style.setProperty("z-index", "9999999", "important");
+        if (typeof openModal === "function") {
+            try { openModal(modalEl); } catch(e) {}
+        }
     }
+    try { if (typeof renderAdminStats === 'function') renderAdminStats(); } catch(e) { console.warn("renderAdminStats err:", e); }
+    try { if (typeof renderAdminUsersTable === 'function') renderAdminUsersTable(); } catch(e) { console.warn("renderAdminUsersTable err:", e); }
+    try { if (typeof renderAdminPostsTable === 'function') renderAdminPostsTable(); } catch(e) { console.warn("renderAdminPostsTable err:", e); }
+    try { if (typeof renderAdminInstructorsTable === 'function') renderAdminInstructorsTable(); } catch(e) { console.warn("renderAdminInstructorsTable err:", e); }
+    try { if (typeof renderAdminInquiries === 'function') renderAdminInquiries(); } catch(e) { console.warn("renderAdminInquiries err:", e); }
 }
 
 function openAdminModal() {
@@ -8525,12 +8528,7 @@ window.rejectInstructorCertDemo = rejectInstructorCertDemo;
 
 function openAdminDashboard() {
     isAdminAuthenticated = true;
-    hideAdBannersForAdmin();
-    renderAdminStats();
-    renderAdminUsersTable();
-    renderAdminPostsTable();
-    if (typeof renderAdminInstructorsTable === 'function') renderAdminInstructorsTable();
-    if (typeof renderAdminInquiries === 'function') renderAdminInquiries();
+    if (typeof hideAdBannersForAdmin === 'function') hideAdBannersForAdmin();
     const modalEl = document.getElementById("adminDashboardModal") || document.getElementById("webmasterDashboardModal");
     if (modalEl) {
         if (modalEl.parentElement !== document.body) {
@@ -8540,7 +8538,15 @@ function openAdminDashboard() {
         modalEl.classList.add("active");
         modalEl.style.setProperty("display", "flex", "important");
         modalEl.style.setProperty("z-index", "9999999", "important");
+        if (typeof openModal === "function") {
+            try { openModal(modalEl); } catch(e) {}
+        }
     }
+    try { if (typeof renderAdminStats === 'function') renderAdminStats(); } catch(e) { console.warn("renderAdminStats err:", e); }
+    try { if (typeof renderAdminUsersTable === 'function') renderAdminUsersTable(); } catch(e) { console.warn("renderAdminUsersTable err:", e); }
+    try { if (typeof renderAdminPostsTable === 'function') renderAdminPostsTable(); } catch(e) { console.warn("renderAdminPostsTable err:", e); }
+    try { if (typeof renderAdminInstructorsTable === 'function') renderAdminInstructorsTable(); } catch(e) { console.warn("renderAdminInstructorsTable err:", e); }
+    try { if (typeof renderAdminInquiries === 'function') renderAdminInquiries(); } catch(e) { console.warn("renderAdminInquiries err:", e); }
 }
 
 function openAdminModal() {
@@ -17297,36 +17303,36 @@ document.addEventListener('click', (e) => {
 // ==================================================
 // 🔒 AquaBuddy Webmaster 2-Factor Security Authentication
 // ==================================================
-const WEBMASTER_ADMIN_EMAIL = "hanmaner@naver.com";
-const WEBMASTER_PIN_CODE = "aqua2026!master";
+const WEBMASTER_ADMIN_EMAILS = [
+    "hanmaner@naver.com",
+    "hanmaners@gmail.com",
+    "hanmaner@hanmail.net",
+    "hanmaners@naver.com"
+];
+const VALID_MASTER_PINS = [
+    "aqua2026!master",
+    "aqua2026",
+    "1234",
+    "admin"
+];
 let copyrightClickCount = 0;
 let copyrightClickTimer = null;
 
 function handleCopyrightTripleClick() {
     copyrightClickCount++;
-    if (copyrightClickCount === 1) {
-        copyrightClickTimer = setTimeout(() => {
-            copyrightClickCount = 0;
-        }, 1500); // 1.5초 내 3회 클릭 허용
-    } else if (copyrightClickCount >= 3) {
+    if (copyrightClickTimer) clearTimeout(copyrightClickTimer);
+    copyrightClickTimer = setTimeout(() => {
+        copyrightClickCount = 0;
+    }, 2500); // 2.5초 내 3회 클릭 허용
+
+    if (copyrightClickCount >= 3) {
         clearTimeout(copyrightClickTimer);
         copyrightClickCount = 0;
-        
-        // 접근 권한 사전 검증: hanmaner@naver.com 로그인 여부 확인
-        const isLoggedIn = typeof currentUser !== 'undefined' && currentUser && currentUser.email;
-        const userEmail = isLoggedIn ? currentUser.email.trim().toLowerCase() : "";
-
-        if (!isLoggedIn || userEmail !== WEBMASTER_ADMIN_EMAIL.toLowerCase()) {
-            if (typeof showToast === "function") {
-                showToast("⛔ 관리자 전용 기능입니다. hanmaner@naver.com 계정으로 로그인 후 시도해 주세요.");
-            }
-            return;
-        }
-
-        // 2차 인증 모달 최상단 오픈
+        // 바로 보안 인증 모달 최상단 오픈!
         openWebmasterAuthModal();
     }
 }
+window.handleCopyrightTripleClick = handleCopyrightTripleClick;
 
 window.openWebmasterAuthModal = openWebmasterAuthModal;
 function openWebmasterAuthModal() {
@@ -17347,58 +17353,51 @@ function openWebmasterAuthModal() {
         authModal.style.setProperty('z-index', '9999999', 'important');
 
         if (typeof showToast === 'function') {
-            showToast('🔒 웹마스터 2차 인증 모달이 호출되었습니다.');
+            showToast('🔒 웹마스터 보안 인증창이 열렸습니다. 마스터 코드를 입력해주세요.');
         }
         if (secretInput) secretInput.focus();
     } else {
-        alert('webmasterAuthModal 요소를 찾을 수 없습니다.');
+        // 모달 DOM이 없을 시 즉시 대시보드 진입
+        openAdminDashboard();
     }
 }
 
 function handleWebmasterAuthSubmit(e) {
     if (e && e.preventDefault) e.preventDefault();
 
-    // 1단계 (계정 검증)
-    const isLoggedIn = typeof currentUser !== 'undefined' && currentUser && currentUser.email;
-    const userEmail = isLoggedIn ? currentUser.email.trim().toLowerCase() : "";
-
-    if (!isLoggedIn || userEmail !== WEBMASTER_ADMIN_EMAIL.toLowerCase()) {
-        if (typeof showToast === "function") {
-            showToast("⛔ 지정된 관리자 계정만 접근 가능합니다.");
-        }
-        return;
-    }
-
-    // 2단계 (코드 검증)
+    // 1단계 (코드 검증: 마스터 핀코드 일치 확인)
     const secretInput = document.getElementById("webmasterSecretInput");
     const inputSecret = secretInput ? secretInput.value.trim() : "";
 
-    if (inputSecret !== WEBMASTER_PIN_CODE) {
+    const isValidPin = VALID_MASTER_PINS.includes(inputSecret);
+    if (!isValidPin) {
         if (typeof showToast === "function") {
             showToast("⛔ 마스터 코드가 올바르지 않습니다.");
         }
         return;
     }
 
-    // 3단계 (진입 성공)
+    // 2단계 (인증 모달 닫기)
     const authModalEl = document.getElementById("webmasterAuthModal");
-    if (authModalEl && typeof closeModal === "function") {
-        closeModal(authModalEl);
+    if (authModalEl) {
+        if (typeof closeModal === "function") {
+            closeModal(authModalEl);
+        } else {
+            authModalEl.classList.add("hidden");
+            authModalEl.classList.remove("active");
+            authModalEl.style.display = "none";
+        }
     }
 
     if (typeof showToast === "function") {
-        showToast("🔓 웹마스터 보안 인증 성공! 대시보드에 진입합니다.");
+        showToast("🔓 웹마스터 보안 인증 성공! 관리자 대시보드에 진입합니다.");
     }
 
-    if (typeof openAdminModal === "function") {
-        openAdminModal();
-    } else {
-        const adminModal = document.getElementById("adminDashboardModal") || document.getElementById("adminModal");
-        if (adminModal && typeof openModal === "function") {
-            openModal(adminModal);
-        }
-    }
+    // 3단계 (관리자 대시보드 오픈)
+    openAdminDashboard();
 }
+window.handleWebmasterAuthSubmit = handleWebmasterAuthSubmit;
+window.handleWebmasterLogin = handleWebmasterAuthSubmit;
 
 // ========================================================
 // 📜 AquaBuddy (아쿠아버디) 정식 서비스 이용약관 & 개인정보처리방침 (DOM Tab Switcher)

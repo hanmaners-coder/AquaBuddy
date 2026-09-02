@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1500-strict-email-author-profile-matching-and-realname-sync";
+const CACHE_NAME = "aquabuddy-cache-v1510-webmaster-admin-mode-instant-access";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
