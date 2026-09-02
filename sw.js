@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1230-fix-coast-cctv-dashboard-iframe-block";
+const CACHE_NAME = "aquabuddy-cache-v1240-set-gwangalli-beach-default-cctv";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

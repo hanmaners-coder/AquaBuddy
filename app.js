@@ -2468,6 +2468,17 @@ var OCEAN_WEBCAMS_DATA = [
 // 46 Specific Marine Diving/Swimming Tide Spots Dataset
 var OCEAN_WEATHER_DATA = [
     {
+        "spot_id": "tide-gwangalli",
+        "id": "tide-gwangalli",
+        "name": "부산 광안리 해수욕장",
+        "region_cat": "busan",
+        "lat": 35.1537,
+        "lng": 129.1184,
+        "tide_code": "SO_0553",
+        "buoy_code": "TW_0062",
+        "scuba_code": "SS14"
+    },
+    {
         "spot_id": "tide-haeundae",
         "id": "tide-haeundae",
         "name": "부산 해운대 해수욕장",
@@ -9679,6 +9690,9 @@ function renderUnifiedSpotDashboard(spot) {
             return clean && (c.name.includes(clean) || nm.includes(c.name.replace(/CCTV|부산|기장군|해수욕장/g, '').trim()));
         }) || null;
     }
+    if (!match && typeof OCEAN_WEBCAMS_DATA !== 'undefined') {
+        match = OCEAN_WEBCAMS_DATA.find(function(c) { return c.id === 'cam-busan-gwangalli-beach'; }) || OCEAN_WEBCAMS_DATA[0];
+    }
 
     if (sel && typeof OCEAN_WEBCAMS_DATA !== 'undefined') {
         sel.innerHTML = '<option value="">다른 위치 CCTV 선택 --</option>' +
@@ -16286,7 +16300,7 @@ function onDashCctvChange(id) {
     var isLogged = typeof currentUser !== 'undefined' && currentUser !== null && 
                    (currentUser.email || currentUser.name || currentUser.id || currentUser.nickname || currentUser.realName);
                    
-    var defaultId = 'cam-busan-haeundae-beach';
+    var defaultId = 'cam-busan-gwangalli-beach';
     if (!isLogged && id !== defaultId) {
         var sel = document.getElementById('fullwidthCctvSelect');
         if (sel) sel.value = defaultId;
@@ -16414,7 +16428,7 @@ window.selectScubaPoint = selectScubaPoint;
 function initHomeHaeundaeCctv() {
     var box = document.getElementById('homeCctvVideoBox');
     if (!box || typeof OCEAN_WEBCAMS_DATA === 'undefined' || !OCEAN_WEBCAMS_DATA) return;
-    var cam = OCEAN_WEBCAMS_DATA.find(function(c) { return c.id === 'cam-busan-haeundae-beach'; }) || OCEAN_WEBCAMS_DATA[0];
+    var cam = OCEAN_WEBCAMS_DATA.find(function(c) { return c.id === 'cam-busan-gwangalli-beach'; }) || OCEAN_WEBCAMS_DATA[0];
     if (cam) {
         box.innerHTML = _makeCctvHtml(cam);
         _startHls(box, cam);
