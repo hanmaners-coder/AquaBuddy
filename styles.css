@@ -7,21 +7,53 @@
    ========================================================================== */
 
 :root {
-    --bg-dark: #070e17;
-    --panel-bg: rgba(13, 27, 42, 0.75);
-    --glass-border: rgba(0, 242, 254, 0.18);
-    --text-main: #f0f6fc;
-    --text-muted: #8b949e;
-    --text-dim: #6e7681;
+    /* 🌊 Primary Brand Colors */
+    --primary: #00f2fe;
+    --primary-hover: #38bdf8;
+    --primary-glow: rgba(0, 242, 254, 0.22);
+    --secondary: #4facfe;
 
+    /* 🎨 Semantic Accent Palette */
     --accent-cyan: #00f2fe;
     --accent-blue: #4facfe;
-    --accent-gold: #ffb703;
-    --accent-amber: #ff8f00;
+    --accent-gold: #fbbf24;
+    --accent-amber: #f59e0b;
+    --accent-purple: #818cf8;
+    --accent-rose: #fb7185;
+    --accent-emerald: #10b981;
 
-    --radius-sm: 8px;
-    --radius-md: 14px;
+    /* 🌌 Surfaces & Backgrounds */
+    --bg-dark: #070e17;
+    --bg-surface: rgba(13, 27, 42, 0.78);
+    --bg-surface-elevated: rgba(15, 23, 42, 0.94);
+    --panel-bg: rgba(13, 27, 42, 0.78);
+    --glass-border: rgba(0, 242, 254, 0.16);
+    --border-subtle: rgba(255, 255, 255, 0.08);
+
+    /* 📝 Typography & Text */
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --text-dim: #64748b;
+
+    /* 📐 Unified Border Radius */
+    --radius-xs: 6px;
+    --radius-sm: 10px;
+    --radius-md: 16px;
     --radius-lg: 24px;
+    --radius-pill: 9999px;
+
+    /* 🌑 Flat & Modern Ambient Shadows */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.12);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.25), 0 1px 3px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.15);
+    --shadow-modal: 0 24px 48px -12px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(0, 242, 254, 0.22);
+    --shadow-glow: 0 0 20px rgba(0, 242, 254, 0.25);
+
+    /* ⚡ Fluid Micro-interaction Timing */
+    --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+    --duration-fast: 0.15s;
+    --duration-normal: 0.24s;
+    --duration-smooth: 0.32s;
 }
 
 html, body {
@@ -1280,51 +1312,34 @@ body.category-view-active .hero-section {
     font-weight: 800;
 }
 
-/* Modals System */
-.modal-overlay {
+/* Modals System (Framer-Motion-Style Micro-interactions) */
+.modal-overlay, .modal-backdrop {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.86);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    width: 100vw;
+    height: 100vh;
+    background: rgba(4, 9, 18, 0.82);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     z-index: 3500 !important;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 16px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.24s var(--ease-spring), backdrop-filter 0.24s ease;
 }
 
-.hidden { display: none !important; }
-
-/* 🌟 CSS Off-screen Tab Rendering for Instant Map Display (Zero Gray Tiles) */
-.offscreen-tab {
-    position: absolute !important;
-    left: -9999px !important;
-    top: 0 !important;
-    width: 100% !important;
-    max-width: 1200px !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-    height: 0 !important;
-    overflow: hidden !important;
-    z-index: -999 !important;
-}
-
-.active-tab-section {
-    position: relative !important;
-    left: auto !important;
-    top: auto !important;
-    width: 100% !important;
-    visibility: visible !important;
+.modal-overlay.is-open, .modal-backdrop.is-open {
     opacity: 1 !important;
     pointer-events: auto !important;
-    height: auto !important;
-    overflow: visible !important;
-    z-index: 1 !important;
+}
+
+.modal-overlay.is-closing, .modal-backdrop.is-closing {
+    opacity: 0 !important;
+    pointer-events: none !important;
 }
 
 .modal-container {
@@ -1335,9 +1350,69 @@ body.category-view-active .hero-section {
     padding: 24px;
     position: relative;
     word-break: keep-all;
+    background: var(--bg-surface-elevated) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: var(--radius-lg) !important;
+    box-shadow: var(--shadow-modal) !important;
+    color: var(--text-main);
+    transform: translateY(18px) scale(0.96);
+    opacity: 0;
+    transition: transform 0.28s var(--ease-spring), opacity 0.22s ease, box-shadow 0.28s ease;
+}
+
+.modal-overlay.is-open .modal-container,
+.modal-backdrop.is-open .modal-container {
+    transform: translateY(0) scale(1) !important;
+    opacity: 1 !important;
+}
+
+.modal-overlay.is-closing .modal-container,
+.modal-backdrop.is-closing .modal-container {
+    transform: translateY(14px) scale(0.96) !important;
+    opacity: 0 !important;
 }
 
 .modal-lg { max-width: 800px; }
+
+/* 🌟 View Transition Animation (Smooth Fade & Spring Slide) */
+.view-transition-fade {
+    animation: viewFadeSlide 0.25s var(--ease-spring) forwards;
+}
+
+@keyframes viewFadeSlide {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 🌟 Global Micro-interactions on Buttons, Badges, and Cards */
+button, .btn, .nav-item, .category-pill, .badge, .action-btn, .btn-vibrant-action {
+    transition: transform 0.18s var(--ease-spring), box-shadow 0.18s ease, background 0.18s ease, border-color 0.18s ease, color 0.18s ease !important;
+}
+
+button:hover, .btn:hover, .action-btn:hover {
+    transform: translateY(-1.5px);
+}
+
+button:active, .btn:active, .action-btn:active, .category-pill:active {
+    transform: scale(0.97) translateY(0) !important;
+}
+
+.feed-card, .weather-card, .webcam-card, .stat-card {
+    transition: transform 0.22s var(--ease-spring), box-shadow 0.22s ease, border-color 0.22s ease !important;
+}
+
+.feed-card:hover, .weather-card:hover, .webcam-card:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: var(--shadow-lg) !important;
+    border-color: rgba(0, 242, 254, 0.35) !important;
+}
+
 
 .modal-header {
     display: flex;

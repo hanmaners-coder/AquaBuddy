@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1360-auto-render-seongsan-scuba-index";
+const CACHE_NAME = "aquabuddy-cache-v1400-design-system-and-micro-interactions";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

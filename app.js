@@ -1073,7 +1073,7 @@ function switchMainView(viewName) {
 
     // 3. 📋 일반 게시판 피드 뷰 (홈 / 버디 / 강사 / 수다방 / 장터 / 내 활동기록 / 제휴)
     document.body.classList.remove("tide-view-active", "category-view-tide");
-    if (feedSec) { feedSec.style.display = "block"; feedSec.classList.remove("hidden"); }
+    if (feedSec) { feedSec.style.display = "block"; feedSec.classList.remove("hidden"); feedSec.classList.add("view-transition-fade"); }
     if (tideSec) { tideSec.className = "offscreen-tab"; tideSec.style.display = ""; }
     if (cctvSec) { cctvSec.style.display = "none"; cctvSec.classList.add("hidden"); }
 
@@ -16461,50 +16461,23 @@ function openModal(modal) {
         console.error("openModal: Target modal element not found!", modal);
         return;
     }
-    targetEl.classList.remove("hidden");
+    targetEl.classList.remove("hidden", "is-closing");
     targetEl.style.setProperty("display", "flex", "important");
     targetEl.style.setProperty("position", "fixed", "important");
     targetEl.style.setProperty("top", "0px", "important");
     targetEl.style.setProperty("left", "0px", "important");
     targetEl.style.setProperty("width", "100vw", "important");
     targetEl.style.setProperty("height", "100vh", "important");
-    if (targetEl.id === "authModal") {
-        targetEl.style.setProperty("z-index", "9999999", "important");
-    } else {
-        targetEl.style.setProperty("z-index", "999999", "important");
-    }
-    targetEl.style.setProperty("pointer-events", "auto", "important");
-    targetEl.style.setProperty("opacity", "1", "important");
-    targetEl.style.setProperty("visibility", "visible", "important");
-    targetEl.style.setProperty("background", "rgba(0, 0, 0, 0.95)", "important");
+    targetEl.style.setProperty("z-index", targetEl.id === "authModal" ? "9999999" : "999999", "important");
     targetEl.style.setProperty("justify-content", "center", "important");
     targetEl.style.setProperty("align-items", "center", "important");
-    targetEl.style.backdropFilter = "none";
-    targetEl.style.webkitBackdropFilter = "none";
 
-    const innerContainer = targetEl.querySelector(".modal-container");
-    if (innerContainer) {
-        innerContainer.style.setProperty("display", "block", "important");
-        innerContainer.style.setProperty("visibility", "visible", "important");
-        innerContainer.style.setProperty("opacity", "1", "important");
-        innerContainer.style.setProperty("background", "#0d1b2a", "important");
-        innerContainer.style.setProperty("border", "2px solid #00f2fe", "important");
-        innerContainer.style.setProperty("box-shadow", "0 0 50px rgba(0, 242, 254, 0.5)", "important");
-        innerContainer.style.setProperty("color", "#ffffff", "important");
-        innerContainer.style.setProperty("position", "relative", "important");
-        innerContainer.style.setProperty("z-index", "1000000", "important");
-        innerContainer.style.setProperty("margin", "auto", "important");
-        innerContainer.style.setProperty("max-height", "90vh", "important");
-        innerContainer.style.setProperty("overflow-y", "auto", "important");
-    }
-
-    const modalBodyEl = targetEl.querySelector(".modal-body");
-    if (modalBodyEl) {
-        modalBodyEl.style.setProperty("display", "block", "important");
-        modalBodyEl.style.setProperty("visibility", "visible", "important");
-        modalBodyEl.style.setProperty("opacity", "1", "important");
-        modalBodyEl.style.setProperty("color", "#ffffff", "important");
-    }
+    // Trigger smooth micro-interaction entry transition
+    requestAnimationFrame(function() {
+        requestAnimationFrame(function() {
+            targetEl.classList.add("is-open");
+        });
+    });
 }
 
 function closeModal(modal) {
@@ -16513,8 +16486,17 @@ function closeModal(modal) {
         targetEl = document.getElementById(modal);
     }
     if (!targetEl) return;
-    targetEl.classList.add("hidden");
-    targetEl.style.setProperty("display", "none", "important");
+
+    targetEl.classList.remove("is-open");
+    targetEl.classList.add("is-closing");
+
+    setTimeout(function() {
+        if (targetEl.classList.contains("is-closing")) {
+            targetEl.classList.add("hidden");
+            targetEl.style.setProperty("display", "none", "important");
+            targetEl.classList.remove("is-closing");
+        }
+    }, 220);
 
     if (targetEl.id === "authModal") {
         if (typeof resetAuthForm === "function") resetAuthForm();
