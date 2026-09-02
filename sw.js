@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1460-scuba-index-instant-zero-delay-render-sync";
+const CACHE_NAME = "aquabuddy-cache-v1470-syntax-error-fix-scuba-index-perfect-render";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

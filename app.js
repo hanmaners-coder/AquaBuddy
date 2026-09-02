@@ -18337,8 +18337,7 @@ async function loadOceanWeatherCacheFromSupabase() {
     }
 }
 window.loadOceanWeatherCacheFromSupabase = loadOceanWeatherCacheFromSupabase;
-
-async // 🌅 대한민국 전역 실시간 천문학적 일출·일몰 정밀 계산 알고리즘
+// 🌅 대한민국 전역 실시간 천문학적 일출·일몰 정밀 계산 알고리즘
 function getSunTimes(lat, lng, date) {
     if (!lat || !lng) {
         lat = 35.1537;
@@ -18626,6 +18625,7 @@ var _SP = [
     {code:'SS17', name:'욕지도', region:'경남 통영', baseTemp:27.2, baseWave:0.4, baseFlow:0.3, grade:'매우좋음', tide:'중조기'},
     {code:'SS18', name:'추암', region:'강원 동해', baseTemp:23.7, baseWave:1.0, baseFlow:0.4, grade:'보통', tide:'중조기'}
 ];
+window._SP = _SP;
 
 function _generateScuba7DayForecast(pt) {
     var items = [];
