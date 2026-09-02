@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1240-set-gwangalli-beach-default-cctv";
+const CACHE_NAME = "aquabuddy-cache-v1250-group-cctv-dropdown-by-region-and-alphabetical";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
