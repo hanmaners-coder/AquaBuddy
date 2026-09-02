@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1300-prioritize-haeundae-disaster-live-cctv";
+const CACHE_NAME = "aquabuddy-cache-v1310-integrate-kma-nationwide-beaches-db";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
