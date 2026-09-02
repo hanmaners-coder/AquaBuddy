@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1430-immutable-email-anchored-referral-codes";
+const CACHE_NAME = "aquabuddy-cache-v1440-coastal-portal-direct-video-service-link";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

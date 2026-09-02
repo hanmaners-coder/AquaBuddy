@@ -11588,11 +11588,27 @@ function openWebcamModal(camId) {
                 outlinkBtn.href = embedUrl;
                 outlinkBtn.target = "_blank";
                 outlinkBtn.innerHTML = '<i class="fa-solid fa-arrow-up-right-from-square"></i> <span>📸 연안포털 실시간 스냅사진 새 창에서 보기 ➔</span>';
+
+                // 연안포털 실시간 영상 서비스 바로가기 보조 버튼
+                let extraCoastBtn = document.getElementById("webcamExtraCoastMediaBtn");
+                if (!extraCoastBtn) {
+                    extraCoastBtn = document.createElement("a");
+                    extraCoastBtn.id = "webcamExtraCoastMediaBtn";
+                    extraCoastBtn.target = "_blank";
+                    extraCoastBtn.rel = "noopener noreferrer";
+                    extraCoastBtn.style.cssText = "margin-top: 8px; display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; font-size: 0.88rem; font-weight: 800; border-radius: 10px; background: rgba(0, 242, 254, 0.12); color: #00f2fe; border: 1px solid rgba(0, 242, 254, 0.4); text-decoration: none;";
+                    outlinkBtn.parentNode.insertBefore(extraCoastBtn, outlinkBtn.nextSibling);
+                }
+                extraCoastBtn.href = "https://coast.mof.go.kr/coastScene/coastMediaService.do";
+                extraCoastBtn.innerHTML = '<i class="fa-solid fa-video"></i> <span>🎥 해양수산부 연안포털 실시간 영상 서비스 바로가기 ➔</span>';
+                extraCoastBtn.style.display = "inline-flex";
             }
         }
     }
     // ★ [1. KBS 재난감시 CCTV]: CORS 차단 및 만료 토큰 문제 완벽 방지를 위해 전용 새 창 열기 Out-link UI 제공
     else if (isKbs) {
+        const extraCoastBtn = document.getElementById("webcamExtraCoastMediaBtn");
+        if (extraCoastBtn) extraCoastBtn.style.display = "none";
         if (fallbackBox) {
             fallbackBox.style.display = "flex";
             const titleEl = fallbackBox.querySelector("h3");
@@ -11608,6 +11624,8 @@ function openWebcamModal(camId) {
     }
     // ★ [2. 비보안 HTTP 링크]: 기본 브라우저 새 창 열기 Out-link UI 제공
     else if (isHttpOnly) {
+        const extraCoastBtn = document.getElementById("webcamExtraCoastMediaBtn");
+        if (extraCoastBtn) extraCoastBtn.style.display = "none";
         const rawUrl = embedUrl || hlsUrl;
         if (fallbackBox) {
             fallbackBox.style.display = "flex";
@@ -18519,7 +18537,21 @@ function _makeCctvHtml(cctv) {
         var label = isCoast ? '해양수산부 연안포털 실시간 해변 스냅사진 보기 ➔' : '새 창에서 실시간 영상 보기 ➔';
         var desc = isCoast ? '해양수산부 연안포털 연안침식 모니터링 시스템을 통해 현장 실시간 해변 스냅사진을 새 창에서 확인하실 수 있습니다.' : '보안 정책상 직접 임베드가 제한됩니다. 새 창에서 고화질로 시청하세요.';
         var topIcon = isCoast ? '<i class="fa-solid fa-camera" style="font-size:2.2rem;color:#00f2fe;margin-bottom:10px;"></i>' : '<i class="fa-solid fa-tower-broadcast" style="font-size:2.2rem;color:#ff5252;margin-bottom:10px;"></i>';
-        return '<div style="width:100%;min-height:320px;border-radius:14px;background:rgba(15,23,42,0.95);border:1px solid rgba(0,242,254,0.3);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:22px;box-sizing:border-box;">' + topIcon + '<h4 style="color:#fff;font-size:0.95rem;font-weight:800;margin:0 0 6px 0;">' + cctv.name + '</h4><p style="font-size:0.8rem;color:#94a3b8;margin:0 0 14px 0;max-width:320px;line-height:1.5;">' + desc + '</p><a href="' + url + '" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;font-size:0.88rem;font-weight:900;border-radius:10px;background:linear-gradient(135deg,#00f2fe,#4facfe);color:#000;text-decoration:none;">' + icon + ' ' + label + '</a></div>';
+        
+        var extraMediaBtn = '';
+        if (isCoast) {
+            extraMediaBtn = '<a href="https://coast.mof.go.kr/coastScene/coastMediaService.do" target="_blank" rel="noopener noreferrer" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 18px;font-size:0.84rem;font-weight:800;border-radius:10px;background:rgba(0,242,254,0.12);color:#00f2fe;border:1px solid rgba(0,242,254,0.4);text-decoration:none;transition:all 0.2s ease;">🎥 해양수산부 연안포털 실시간 영상 확인하기 ➔</a>';
+        }
+
+        return '<div style="width:100%;min-height:320px;border-radius:14px;background:rgba(15,23,42,0.95);border:1px solid rgba(0,242,254,0.3);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:22px;box-sizing:border-box;">' +
+            topIcon +
+            '<h4 style="color:#fff;font-size:0.95rem;font-weight:800;margin:0 0 6px 0;">' + cctv.name + '</h4>' +
+            '<p style="font-size:0.8rem;color:#94a3b8;margin:0 0 14px 0;max-width:340px;line-height:1.5;">' + desc + '</p>' +
+            '<div style="display:flex;flex-direction:column;gap:9px;align-items:center;width:100%;max-width:380px;">' +
+                '<a href="' + url + '" target="_blank" rel="noopener noreferrer" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 18px;font-size:0.86rem;font-weight:900;border-radius:10px;background:linear-gradient(135deg,#00f2fe,#4facfe);color:#000;text-decoration:none;">' + icon + ' ' + label + '</a>' +
+                extraMediaBtn +
+            '</div>' +
+        '</div>';
     }
     if (hl && hl.startsWith('https://') && hl.includes('.m3u8')) {
         return '<div style="width:100%;min-height:320px;border-radius:14px;overflow:hidden;background:#000;position:relative;"><video id="dashHlsVideo_' + cctv.id + '" controls autoplay muted playsinline style="width:100%;height:320px;object-fit:contain;background:#000;"></video><div style="position:absolute;top:10px;left:10px;background:rgba(0,0,0,0.75);padding:4px 10px;border-radius:6px;color:#00e676;font-weight:700;font-size:0.76rem;">\uD83D\uDD34 LIVE - ' + cctv.name + '</div></div>';
