@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1220-fix-coast-portal-cctv-sameorigin-frame-block";
+const CACHE_NAME = "aquabuddy-cache-v1230-fix-coast-cctv-dashboard-iframe-block";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
