@@ -9677,25 +9677,24 @@ async function openUserProfileModal(userOrIdentifier, contextCategory = 'all') {
     const loggedInUser = (typeof getCurrentLoggedInUser === 'function') ? getCurrentLoggedInUser() : currentUser;
 
     // 1. 현재 로그인 유저 본인 여부 판별 (이메일 / 닉네임 / 실명 대조)
+    // 1. 현재 로그인 유저 본인 여부 판별 (고유 이메일, 고유 ID, 고유 닉네임 기준 엄격 대조)
     let isSelfTarget = false;
     if (loggedInUser) {
         var myEmail = String(loggedInUser.email || '').trim().toLowerCase();
-        var myNick = String(loggedInUser.nickname || loggedInUser.name || '').trim();
-        var myReal = String(loggedInUser.real_name || loggedInUser.realName || '').trim();
+        var myId = String(loggedInUser.id || '').trim().toLowerCase();
+        var myNick = String(loggedInUser.nickname || loggedInUser.name || '').trim().toLowerCase();
         
         var targetEmail = String((initialUser && (initialUser.email || initialUser.user_email)) || (cleanTarget.includes('@') ? cleanTarget : '')).trim().toLowerCase();
-        var targetNick = String((initialUser && (initialUser.nickname || initialUser.name || initialUser.author)) || cleanTarget).trim();
-        var targetReal = String(initialUser && (initialUser.real_name || initialUser.realName) || '').trim();
+        var targetId = String((initialUser && (initialUser.id || initialUser.user_id)) || '').trim().toLowerCase();
+        var targetNick = String((initialUser && (initialUser.nickname || initialUser.name)) || (!cleanTarget.includes('@') ? cleanTarget : '')).trim().toLowerCase();
 
         if (initialUser && isSameUserStrict(loggedInUser, initialUser)) {
             isSelfTarget = true;
         } else if (myEmail && targetEmail && myEmail === targetEmail) {
             isSelfTarget = true;
-        } else if (myNick && targetNick && myNick.toLowerCase() === targetNick.toLowerCase()) {
+        } else if (myId && targetId && myId === targetId) {
             isSelfTarget = true;
-        } else if (myReal && targetNick && myReal.toLowerCase() === targetNick.toLowerCase()) {
-            isSelfTarget = true;
-        } else if (myNick && targetReal && myNick.toLowerCase() === targetReal.toLowerCase()) {
+        } else if (myNick && targetNick && myNick === targetNick) {
             isSelfTarget = true;
         }
     }
@@ -9717,7 +9716,7 @@ async function openUserProfileModal(userOrIdentifier, contextCategory = 'all') {
         warning_count: 0
     };
 
-    // 3. 🌐 [DB 최우선화] Supabase DB에서 최신 유저 프로필 직접 조회 (로컬 캐시 오염 100% 방지)
+    // 3. 🌐 [DB 최우선화] Supabase DB에서 최신 유저 프로필 직접 조회 (이메일 1순위 -> 닉네임 2순위)
     if (typeof supabaseClient !== 'undefined' && supabaseClient) {
         try {
             let dbUserData = null;
@@ -9726,24 +9725,8 @@ async function openUserProfileModal(userOrIdentifier, contextCategory = 'all') {
                 dbUserData = data;
             }
             if (!dbUserData) {
-                const myEmail = (loggedInUser && loggedInUser.email) ? String(loggedInUser.email).trim().toLowerCase() : '';
-                let query = supabaseClient.from('users').select('*').eq('nickname', cleanTarget);
-                if (myEmail) {
-                    query = query.neq('email', myEmail);
-                }
-                const { data } = await query.limit(1).maybeSingle();
+                const { data } = await supabaseClient.from('users').select('*').eq('nickname', cleanTarget).limit(1).maybeSingle();
                 dbUserData = data;
-            }
-            if (!dbUserData) {
-                try {
-                    const myEmail = (loggedInUser && loggedInUser.email) ? String(loggedInUser.email).trim().toLowerCase() : '';
-                    let query = supabaseClient.from('users').select('*').eq('real_name', cleanTarget);
-                    if (myEmail) {
-                        query = query.neq('email', myEmail);
-                    }
-                    const { data } = await query.limit(1).maybeSingle();
-                    dbUserData = data;
-                } catch (e) {}
             }
 
             if (dbUserData) {
@@ -13593,6 +13576,9 @@ function renderDynamicDetailModal(post) {
     const isPartnership = post.category === "partnership" || post.category === "tour" || post.category === "partner";
 
     const authorName = isInstructor ? (post.realName || post.real_name || post.userName || post.user_name || post.author || "검증 강사") : (post.userName || post.user_name || post.nickname || post.author || "다이버");
+    const authorTarget = (post.author && String(post.author).includes('@')) 
+        ? String(post.author).trim().toLowerCase() 
+        : (post.author_email || post.email || post.user_email || (post.user_name || post.nickname || authorName));
     const categoryKorean = (typeof getCategoryNameKorean === 'function') ? getCategoryNameKorean(post.categoryName || post.category) : (post.category || '일반');
 
     // 카테고리별 상태 뱃지 분기
@@ -13756,12 +13742,12 @@ function renderDynamicDetailModal(post) {
             <!-- 2. 작성자 프로필 연동 카드 -->
             <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 14px; padding: 14px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                 <div style="display: flex; align-items: center; gap: 12px;">
-                    <div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #00f2fe, #4facfe); display: flex; align-items: center; justify-content: center; color: #000; font-size: 1.2rem; font-weight: bold; cursor: pointer;" onclick="openUserProfileModal('${authorName}', '${post.category || ""}')">
+                    <div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #00f2fe, #4facfe); display: flex; align-items: center; justify-content: center; color: #000; font-size: 1.2rem; font-weight: bold; cursor: pointer;" onclick="openUserProfileModal('${authorTarget}', '${post.category || ""}')">
                         <i class="fa-solid fa-user"></i>
                     </div>
                     <div>
                         <div style="font-weight: 800; font-size: 1rem; color: #ffffff; display: flex; align-items: center; gap: 6px;">
-                            <span style="cursor: pointer; text-decoration: underline; color: #00f2fe;" onclick="openUserProfileModal('${authorName}', '${post.category || ""}')">${typeof escapeHtml === 'function' ? escapeHtml(authorName) : authorName}</span> <span id="dynamicDetailAuthorBadge">${getUserDemographicBadge(post)} ${typeof renderUserBadges === 'function' ? renderUserBadges(post) : ''}</span>
+                            <span style="cursor: pointer; text-decoration: underline; color: #00f2fe;" onclick="openUserProfileModal('${authorTarget}', '${post.category || ""}')">${typeof escapeHtml === 'function' ? escapeHtml(authorName) : authorName}</span> <span id="dynamicDetailAuthorBadge">${getUserDemographicBadge(post)} ${typeof renderUserBadges === 'function' ? renderUserBadges(post) : ''}</span>
                             ${!isCommunity ? `<span style="font-size: 0.76rem; background: rgba(0, 242, 254, 0.2); color: #00f2fe; padding: 2px 8px; border-radius: 10px;">작성자</span>` : ''}
                         </div>
                     </div>
@@ -13968,7 +13954,7 @@ function renderDynamicDetailModal(post) {
                     <!-- 주최자/강사 프로필 -->
                     <div style="background: rgba(0,0,0,0.3); padding: 10px 14px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; align-items: center; gap: 8px;">
-                            <span style="color: #ffb703; font-weight: bold; font-size: 0.88rem; cursor: pointer;" onclick="openUserProfileModal('${authorName}', '${post.category || ""}')">👑 ${isInstructor ? '담당 강사' : '주최자'}: ${typeof escapeHtml === 'function' ? escapeHtml(authorName) : authorName}</span> <span id="dynamicDetailHostBadge">${getUserDemographicBadge(post)} ${typeof renderUserBadges === 'function' ? renderUserBadges(post) : ''}</span>
+                            <span style="color: #ffb703; font-weight: bold; font-size: 0.88rem; cursor: pointer;" onclick="openUserProfileModal('${authorTarget}', '${post.category || ""}')">👑 ${isInstructor ? '담당 강사' : '주최자'}: ${typeof escapeHtml === 'function' ? escapeHtml(authorName) : authorName}</span> <span id="dynamicDetailHostBadge">${getUserDemographicBadge(post)} ${typeof renderUserBadges === 'function' ? renderUserBadges(post) : ''}</span>
                         </div>
                         <span style="font-size: 0.78rem; color: #00f2fe;">${isInstructor ? '강사 확정' : '주최 확정'}</span>
                     </div>
