@@ -9686,9 +9686,33 @@ function renderUnifiedSpotDashboard(spot) {
     var match = null;
 
     if (typeof OCEAN_WEBCAMS_DATA !== 'undefined' && OCEAN_WEBCAMS_DATA) {
-        match = OCEAN_WEBCAMS_DATA.find(function(c) {
-            return clean && (c.name.includes(clean) || nm.includes(c.name.replace(/CCTV|부산|기장군|해수욕장/g, '').trim()));
-        }) || null;
+        // 1순위: 해운대/광안리/송정/임랑/송도 등 실시간 라이브 영상 우선 매핑
+        if (nm.includes('해운대') || clean.includes('해운대')) {
+            match = OCEAN_WEBCAMS_DATA.find(function(c) { return c.id === 'cam-busan-haeundae-beach'; }) || null;
+        } else if (nm.includes('광안리') || clean.includes('광안리')) {
+            match = OCEAN_WEBCAMS_DATA.find(function(c) { return c.id === 'cam-busan-gwangalli-beach'; }) || null;
+        } else if (nm.includes('송정') || clean.includes('송정')) {
+            match = OCEAN_WEBCAMS_DATA.find(function(c) { return c.id === 'cam-busan-songjeong-bp'; }) || null;
+        } else if (nm.includes('임랑') || clean.includes('임랑')) {
+            match = OCEAN_WEBCAMS_DATA.find(function(c) { return c.id === 'cam-busan-imlang-beach'; }) || null;
+        } else if (nm.includes('송도') || clean.includes('송도')) {
+            match = OCEAN_WEBCAMS_DATA.find(function(c) { return c.id === 'cam-busan-songdo-park'; }) || null;
+        }
+
+        // 2순위: 실시간 동영상(HLS / 세이프시티 등 라이브 스트림) 우선 매칭 (연안포털 스냅샷보다 동영상 우선)
+        if (!match) {
+            match = OCEAN_WEBCAMS_DATA.find(function(c) {
+                var isLiveStream = !c.embedUrl.includes('coast.mof.go.kr') && (c.hlsUrl || c.embedUrl.includes('safecity') || c.embedUrl.includes('kbs'));
+                return isLiveStream && clean && (c.name.includes(clean) || nm.includes(c.name.replace(/CCTV|부산|기장군|해수욕장|재난/g, '').trim()));
+            }) || null;
+        }
+
+        // 3순위: 일반 매칭
+        if (!match) {
+            match = OCEAN_WEBCAMS_DATA.find(function(c) {
+                return clean && (c.name.includes(clean) || nm.includes(c.name.replace(/CCTV|부산|기장군|해수욕장|재난/g, '').trim()));
+            }) || null;
+        }
     }
     if (!match && typeof OCEAN_WEBCAMS_DATA !== 'undefined') {
         match = OCEAN_WEBCAMS_DATA.find(function(c) { return c.id === 'cam-busan-gwangalli-beach'; }) || OCEAN_WEBCAMS_DATA[0];

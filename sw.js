@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1290-slim-ocean-card-with-sun-info";
+const CACHE_NAME = "aquabuddy-cache-v1300-prioritize-haeundae-disaster-live-cctv";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
