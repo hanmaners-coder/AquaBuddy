@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1470-syntax-error-fix-scuba-index-perfect-render";
+const CACHE_NAME = "aquabuddy-cache-v1480-profile-external-sns-link-integration";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

@@ -7431,7 +7431,9 @@ async function refreshCurrentUserFromCloud() {
                 referral_code: liveRefCode,
                 referralCode: liveRefCode,
                 referral_count: dbUser.referral_count !== undefined ? dbUser.referral_count : (savedUser.referral_count || 0),
-                is_sns_ambassador: dbUser.is_sns_ambassador !== undefined ? dbUser.is_sns_ambassador : (savedUser.is_sns_ambassador || false)
+                is_sns_ambassador: dbUser.is_sns_ambassador !== undefined ? dbUser.is_sns_ambassador : (savedUser.is_sns_ambassador || false),
+                sns_link: dbUser.sns_link || savedUser.sns_link || savedUser.snsLink || "",
+                snsLink: dbUser.sns_link || savedUser.sns_link || savedUser.snsLink || ""
             };
 
             currentUser = updatedUser;
@@ -7510,7 +7512,9 @@ async function saveUserProfileToSupabase(userData, isExplicitEdit = false) {
                 user_license: (existingUser.user_license !== undefined && existingUser.user_license !== null) ? existingUser.user_license : (userData.user_license || ""),
                 instructor_code: existingUser.instructor_code || userData.instructor_code || "",
                 instructor_status: existingUser.instructor_status || userData.instructor_status || "none",
-                instructorStatus: existingUser.instructor_status || userData.instructor_status || "none"
+                instructorStatus: existingUser.instructor_status || userData.instructor_status || "none",
+                sns_link: existingUser.sns_link || userData.sns_link || userData.snsLink || "",
+                snsLink: existingUser.sns_link || userData.sns_link || userData.snsLink || ""
             };
 
             currentUser = restoredUser;
@@ -7548,7 +7552,8 @@ async function saveUserProfileToSupabase(userData, isExplicitEdit = false) {
             age_group: userData.age_group || userData.ageGroup || 'private',
             referral_code: refCode,
             referral_count: (userData.referral_count !== undefined && userData.referral_count !== null) ? userData.referral_count : (userData.referralCount || 0),
-            referred_by: userData.referred_by || userData.referredBy || ""
+            referred_by: userData.referred_by || userData.referredBy || "",
+            sns_link: userData.sns_link || userData.snsLink || (existingUser ? existingUser.sns_link : "") || ""
         };
 
         // 🔒 [개인정보 보안] DB users 테이블에 비밀번호 평문 전송 완전 제거
@@ -9127,6 +9132,126 @@ function getDeterministicReferralCode(user) {
 window.getDeterministicReferralCode = getDeterministicReferralCode;
 
 
+
+// 🌐 다이버 프로필 외부 링크 (인스타그램, 리틀리, 스레드, 유튜브, 블로그 등) 파서 및 렌더러
+function parseSnsLink(raw) {
+    if (!raw) return null;
+    var str = String(raw).trim();
+    if (!str) return null;
+
+    // A. 인스타그램 (아이디 또는 URL)
+    var isInsta = str.includes('instagram.com') || str.startsWith('@') || (!str.includes('http') && !str.includes('/') && !str.includes('.'));
+    if (isInsta) {
+        var handle = str.replace(/^@/, '').replace(/https?:\/\/(www\.)?instagram\.com\//i, '').replace(/\/$/, '').trim();
+        if (handle) {
+            return {
+                type: 'instagram',
+                url: 'https://www.instagram.com/' + handle,
+                label: '@' + handle,
+                title: 'Instagram',
+                icon: 'fa-brands fa-instagram',
+                bg: 'linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045)',
+                border: 'none',
+                textColor: '#ffffff'
+            };
+        }
+    }
+
+    // B. 리틀리 (수강신청 / 포트폴리오)
+    if (str.includes('litt.ly')) {
+        var url = str.startsWith('http') ? str : ('https://' + str);
+        var handle = url.replace(/https?:\/\/(www\.)?litt\.ly\//i, '').replace(/\/$/, '').trim();
+        return {
+            type: 'littly',
+            url: url,
+            label: 'litt.ly/' + handle,
+            title: '리틀리 포트폴리오',
+            icon: 'fa-solid fa-link',
+            bg: 'linear-gradient(135deg, #00f2fe, #4facfe)',
+            border: 'none',
+            textColor: '#070e17'
+        };
+    }
+
+    // C. 스레드 (Threads)
+    if (str.includes('threads.net')) {
+        var url = str.startsWith('http') ? str : ('https://' + str);
+        return {
+            type: 'threads',
+            url: url,
+            label: 'Threads',
+            title: '스레드 채널',
+            icon: 'fa-brands fa-threads',
+            bg: 'linear-gradient(135deg, #18181b, #27272a)',
+            border: '1px solid rgba(255,255,255,0.25)',
+            textColor: '#ffffff'
+        };
+    }
+
+    // D. 유튜브 (YouTube)
+    if (str.includes('youtube.com') || str.includes('youtu.be')) {
+        var url = str.startsWith('http') ? str : ('https://' + str);
+        return {
+            type: 'youtube',
+            url: url,
+            label: 'YouTube',
+            title: '유튜브 채널',
+            icon: 'fa-brands fa-youtube',
+            bg: 'linear-gradient(135deg, #e11d48, #be123c)',
+            border: 'none',
+            textColor: '#ffffff'
+        };
+    }
+
+    // E. 네이버 블로그 또는 일반 웹사이트
+    var fullUrl = str.startsWith('http') ? str : ('https://' + str);
+    var domain = '';
+    try {
+        domain = new URL(fullUrl).hostname.replace(/^www\./, '');
+    } catch(e) {
+        domain = str.substring(0, 20);
+    }
+    return {
+        type: 'web',
+        url: fullUrl,
+        label: domain || '공식 채널',
+        title: '공식 링크',
+        icon: 'fa-solid fa-arrow-up-right-from-square',
+        bg: 'rgba(0, 242, 254, 0.12)',
+        border: '1px solid rgba(0, 242, 254, 0.45)',
+        textColor: '#00f2fe'
+    };
+}
+window.parseSnsLink = parseSnsLink;
+
+function formatSnsLinkButtonHtml(user, isSelf) {
+    if (!user) return '';
+    var raw = user.sns_link || user.snsLink || '';
+    var sns = parseSnsLink(raw);
+
+    if (sns) {
+        return '<div style="margin-top: 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">' +
+            '<a href="' + escapeHtml(sns.url) + '" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 7px; padding: 7px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 800; text-decoration: none; background: ' + sns.bg + '; color: ' + sns.textColor + '; ' + (sns.border ? 'border: ' + sns.border + ';' : '') + ' box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: transform 0.2s ease;">' +
+                '<i class="' + sns.icon + '" style="font-size: 0.95rem;"></i>' +
+                '<span>' + escapeHtml(sns.title) + ': ' + escapeHtml(sns.label) + '</span>' +
+                '<i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.68rem; opacity: 0.85;"></i>' +
+            '</a>' +
+            (isSelf ? '<button type="button" onclick="openEditProfileModal();" title="링크 변경" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color: #94a3b8; padding: 6px 10px; border-radius: 14px; font-size: 0.75rem; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">✏️ 변경</button>' : '') +
+        '</div>';
+    }
+
+    if (isSelf) {
+        return '<div style="margin-top: 10px;">' +
+            '<button type="button" onclick="openEditProfileModal();" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; font-size: 0.8rem; font-weight: 700; border-radius: 20px; border: 1px dashed rgba(0, 242, 254, 0.45); color: #00f2fe; background: rgba(0, 242, 254, 0.06); cursor: pointer; transition: all 0.2s ease;">' +
+                '<i class="fa-brands fa-instagram"></i> <span>➕ 내 인스타그램 / 외부 링크 등록</span>' +
+            '</button>' +
+        '</div>';
+    }
+
+    return '';
+}
+window.formatSnsLinkButtonHtml = formatSnsLinkButtonHtml;
+
 function renderDynamicProfileModal(user, isSelf = false, contextCategory = 'all') {
     let existing = document.getElementById("dynamicProfileModalOverlay");
     if (existing) existing.remove();
@@ -9418,6 +9543,9 @@ function renderDynamicProfileModal(user, isSelf = false, contextCategory = 'all'
                     ${warningBadgeHtml}
                 </h3>
                 <p style="margin: 0; color: #a0aec0; font-size: 0.85rem;">${isInst ? 'AquaBuddy 공인 강사 인증 회원' : (escapeHtml(user.provider || 'AquaBuddy') + ' 인증 다이버 회원')}</p>
+                
+                <!-- 🌐 외부 링크 / 인스타그램 버튼 영역 (닉네임 바로 아래!) -->
+                ${typeof formatSnsLinkButtonHtml === 'function' ? formatSnsLinkButtonHtml(user, isSelf) : ''}
             </div>
 
             <!-- 🎁 내 고유 추천인 코드 & 공유 복사 박스 (본인 프로필에만 100% 노출) -->
@@ -9801,6 +9929,7 @@ function renderDynamicEditProfileModal(user) {
     const licenseVal = user.license_info || user.license || user.user_license || "";
     const genderVal = user.gender || "private";
     const ageGroupVal = user.age_group || user.ageGroup || "20대";
+    const snsLinkVal = user.sns_link || user.snsLink || "";
     const isApprovedInst = (user.instructor_status === 'approved' || user.instructorStatus === 'approved') && user.instructor_status !== 'rejected';
 
     const overlay = document.createElement("div");
@@ -9894,6 +10023,17 @@ function renderDynamicEditProfileModal(user) {
                     <textarea id="dynEditLicense" rows="3" required placeholder="예: AIDA2, PADI 오픈워터, 초보 프리다이버 등" style="width: 100%; background: rgba(0,0,0,0.5); border: 1px solid #00f2fe; color: #fff; padding: 10px 12px; border-radius: 8px; font-size: 0.88rem; outline: none; box-sizing: border-box;">${typeof escapeHtml === 'function' ? escapeHtml(licenseVal) : licenseVal}</textarea>
                 </div>
 
+                <!-- 6. 인스타그램 / 공식 외부 링크 (선택 1개) -->
+                <div>
+                    <label style="display: block; font-size: 0.85rem; color: #00f2fe; margin-bottom: 4px; font-weight: bold;">
+                        <i class="fa-brands fa-instagram" style="color: #ff69b4;"></i> 인스타그램 / 공식 외부 채널 링크 (1개 등록)
+                    </label>
+                    <input type="text" id="dynEditSnsLink" value="${typeof escapeHtml === 'function' ? escapeHtml(snsLinkVal) : snsLinkVal}" placeholder="예: @my_dive_id 또는 https://litt.ly/myname" style="width: 100%; background: rgba(0,0,0,0.5); border: 1px solid #00f2fe; color: #fff; padding: 10px 12px; border-radius: 8px; font-size: 0.9rem; outline: none; box-sizing: border-box;">
+                    <span style="font-size: 0.74rem; color: #94a3b8; margin-top: 3px; display: block;">
+                        * 인스타 아이디(@아이디)나 리틀리, 유튜브, 블로그 등 원하시는 링크 1개를 자유롭게 입력하세요. 프로필에 예쁜 버튼으로 노출됩니다!
+                    </span>
+                </div>
+
                 <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px;">
                     <button type="button" onclick="document.getElementById('dynamicEditProfileModalOverlay').remove();" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 10px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.9rem;">
                         취소
@@ -9920,6 +10060,7 @@ async function handleDynamicSaveProfile(e) {
     const licEl = document.getElementById("dynEditLicense");
     const genderEl = document.getElementById("dynEditGender");
     const ageGroupEl = document.getElementById("dynEditAgeGroup");
+    const snsEl = document.getElementById("dynEditSnsLink");
 
     const realName = realNameEl ? realNameEl.value.trim() : (currentUser.real_name || currentUser.realName || "");
     const nick = nickEl ? nickEl.value.trim() : "";
@@ -10001,6 +10142,9 @@ async function handleDynamicSaveProfile(e) {
     currentUser.gender = gender;
     currentUser.age_group = ageGroup;
     currentUser.ageGroup = ageGroup;
+    const snsLink = snsEl ? snsEl.value.trim() : "";
+    currentUser.sns_link = snsLink;
+    currentUser.snsLink = snsLink;
 
     safeLocalStorageSet("aqua_buddy_user_identity", JSON.stringify(currentUser));
     localStorage.setItem("currentUser", JSON.stringify(currentUser));
@@ -10022,6 +10166,8 @@ async function handleDynamicSaveProfile(e) {
             gender: gender,
             age_group: ageGroup,
             ageGroup: ageGroup,
+            sns_link: snsLink,
+            snsLink: snsLink,
             provider: currentUser.provider || "홈페이지 회원",
             instructorStatus: currentUser.instructorStatus || currentUser.instructor_status || "none",
             instructor_status: currentUser.instructorStatus || currentUser.instructor_status || "none"
@@ -10035,6 +10181,12 @@ async function handleDynamicSaveProfile(e) {
 
     const editOverlay = document.getElementById("dynamicEditProfileModalOverlay");
     if (editOverlay) editOverlay.remove();
+
+    // 내 프로필 모달이 열려 있었다면 즉시 새 링크로 새로고침
+    const profileOverlay = document.getElementById("dynamicProfileModalOverlay");
+    if (profileOverlay && typeof renderDynamicProfileModal === 'function') {
+        renderDynamicProfileModal(currentUser, true);
+    }
 
     updateNavbarUserUI();
     if (typeof filterAndRender === 'function') filterAndRender();
