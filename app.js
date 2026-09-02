@@ -9394,6 +9394,8 @@ function renderDynamicProfileModal(user, isSelf = false, contextCategory = 'all'
                             ${warningBadgeHtml}
                         </h2>
                         <div style="font-size: 0.82rem; color: #cbd5e1; margin-top: 4px;">${isSelf ? '💳 내 프로필 & 계정 정보' : '🤿 공인 레슨 강사 프로필 카드'}</div>
+                        <!-- 🌐 강사 실명 바로 아래 외부 링크 / 리틀리 / 인스타그램 노출 -->
+                        ${typeof formatSnsLinkButtonHtml === 'function' ? formatSnsLinkButtonHtml(user, isSelf) : ''}
                     </div>
                     <button onclick="document.getElementById('dynamicProfileModalOverlay').remove()" style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.1); color: #94a3b8; font-weight: bold; font-size: 1.2rem; border-radius: 8px; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;">&times;</button>
                 </div>
