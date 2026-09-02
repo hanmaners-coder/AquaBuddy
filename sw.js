@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1200-instructor-rejection-notice-system";
+const CACHE_NAME = "aquabuddy-cache-v1210-merge-37-new-coast-portal-cctvs";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
