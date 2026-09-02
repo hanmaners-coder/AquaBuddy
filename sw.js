@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1440-coastal-portal-direct-video-service-link";
+const CACHE_NAME = "aquabuddy-cache-v1450-bulletproof-cors-safe-scuba-index-engine";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
