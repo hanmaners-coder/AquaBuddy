@@ -10345,6 +10345,8 @@ async function handleDirectSignup(e) {
     const ageGroup = document.getElementById("signupAgeGroupSelect") ? document.getElementById("signupAgeGroupSelect").value : "";
     const license = document.getElementById("signupLicenseInput") ? document.getElementById("signupLicenseInput").value.trim() : "";
     const phone = document.getElementById("signupPhoneInput") ? document.getElementById("signupPhoneInput").value.trim().replace(/[^0-9]/g, "") : "";
+    const refInputEl = document.getElementById("signupReferredByInput");
+    const referredByCode = refInputEl ? refInputEl.value.trim().toUpperCase() : "";
 
     // 🔒 모든 입력칸 공란 검사 (하나라도 비어있으면 가입 차단)
     if (!email || !email.includes("@")) {
@@ -10400,6 +10402,39 @@ async function handleDirectSignup(e) {
         const el = document.getElementById("signupPhoneInput");
         if (el) el.focus();
         return;
+    }
+
+    // 🎁 [추천인 코드 정밀 검증 및 초대자 매칭]
+    let inviterUser = null;
+    if (referredByCode && supabaseClient) {
+        try {
+            // 1. 추천인 고유 코드 (AQUA-XXXXXX) 일치 검사
+            let { data: inviterByCode } = await supabaseClient
+                .from('users')
+                .select('id, nickname, email, referral_code, referral_count')
+                .ilike('referral_code', referredByCode)
+                .maybeSingle();
+
+            if (inviterByCode) {
+                inviterUser = inviterByCode;
+            } else {
+                // 2. 닉네임 또는 이메일로 입력한 경우에도 유연하게 매칭
+                let { data: inviterByNick } = await supabaseClient
+                    .from('users')
+                    .select('id, nickname, email, referral_code, referral_count')
+                    .or(`nickname.ilike.${referredByCode},email.ilike.${referredByCode}`)
+                    .maybeSingle();
+                if (inviterByNick) inviterUser = inviterByNick;
+            }
+        } catch(refErr) {
+            console.warn("추천인 코드 조회 오류:", refErr);
+        }
+
+        if (!inviterUser) {
+            alert(`⚠️ 입력하신 추천인 코드('${referredByCode}')를 가진 회원을 찾을 수 없습니다.\n\n추천인 코드를 다시 확인해 주시거나, 추천인이 없다면 해당 칸을 비워주세요.`);
+            if (refInputEl) refInputEl.focus();
+            return;
+        }
     }
 
     // 🔍 [DB 최우선화] Supabase users 테이블 직접 조회하여 이메일 & 닉네임 중복 검사
@@ -10499,8 +10534,17 @@ async function handleDirectSignup(e) {
             instructor_status: "none",
             instructorStatus: "none",
             isApprovedInstructor: false,
+            referred_by: inviterUser ? (inviterUser.nickname || inviterUser.email) : "",
+            referredBy: inviterUser ? (inviterUser.nickname || inviterUser.email) : "",
+            referral_count: 0,
+            referralCount: 0,
             createdAt: getKSTIsoString()
         };
+        // 신규 유저 고유 레퍼럴 코드 즉시 발급
+        if (typeof getDeterministicReferralCode === 'function') {
+            candidateUserObj.referral_code = getDeterministicReferralCode(candidateUserObj);
+            candidateUserObj.referralCode = candidateUserObj.referral_code;
+        }
 
         // C. Supabase DB users 테이블 insert 수행
         const dbRes = await saveUserProfileToSupabase(candidateUserObj, true);
@@ -10509,6 +10553,17 @@ async function handleDirectSignup(e) {
         if (dbRes && dbRes.error) {
             // DB 삽입 실패시 즉시 예외 던져서 LocalStorage 저장 및 억지 로그인 방지
             throw new Error("users_pkey error / " + (dbRes.error.message || "DB 저장 실패"));
+        }
+
+        // 🎁 추천인 초대 카운트 DB 1 증가 반영
+        if (inviterUser && supabaseClient) {
+            try {
+                const nextCount = (inviterUser.referral_count || 0) + 1;
+                await supabaseClient.from('users').update({ referral_count: nextCount }).eq('id', inviterUser.id);
+                console.log(`🎉 추천인 '${inviterUser.nickname}'님 추천수 증가 성공: ${nextCount}`);
+            } catch(incErr) {
+                console.warn("추천수 증가 실패:", incErr);
+            }
         }
 
         // D. 💥 DB insert 100% 성공(error === null) 한 직후에만 LocalStorage 저장 및 세션 활성화!
