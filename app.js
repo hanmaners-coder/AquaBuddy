@@ -9913,18 +9913,7 @@ function validatePostForm() {
             return false;
         }
 
-        // 수강료
-        const classFeeEl = document.getElementById("classFee");
-        const classFeeVal = classFeeEl ? classFeeEl.value.trim() : "";
-        if (classFeeVal === "") {
-            if (typeof showToast === "function") showToast("⚠️ [수강료]를 입력해 주세요! (무료 체험일 경우 0 입력)");
-            if (classFeeEl) {
-                highlightInvalidInput(classFeeEl);
-                classFeeEl.focus();
-                try { classFeeEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e) {}
-            }
-            return false;
-        }
+        // 수강료는 비워둘 경우 '수강료 문의'로 자동 표출되므로 필수 검증 제외 (선택 항목)
 
         // 포함 / 미포함 사항
         const classInclusionEl = document.getElementById("classInclusion");

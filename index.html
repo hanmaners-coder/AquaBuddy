@@ -1595,8 +1595,8 @@
  
                      <div class="form-row">
                          <div class="form-group">
-                             <label for="classFee">수강료 (원, 1인 기준 숫자만 입력) *</label>
-                             <input type="text" inputmode="numeric" id="classFee" placeholder="예: 60000 (숫자만 입력, 무료체험시 0 또는 비워둠)" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                             <label for="classFee">수강료 (원, 비워두면 '수강료 문의'로 등록)</label>
+                             <input type="text" inputmode="numeric" id="classFee" placeholder="예: 60000 (비워두면 '수강료 문의'로 자동 표시)" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                          </div>
                          <div class="form-group">
                              <label for="classInclusion">포함 / 미포함 사항 *</label>
@@ -2276,8 +2276,8 @@
      </div>
  
      <!-- App Configuration & Main Logic Script -->
-     <script src="config.js?v=V1540_POST_FORM_STRICT_VALIDATION_TOAST_GUIDE"></script>
-     <script src="app.js?v=V1540_POST_FORM_STRICT_VALIDATION_TOAST_GUIDE"></script>
+     <script src="config.js?v=V1550_FEE_OPTIONAL_AUTO_INQUIRY_MODE"></script>
+     <script src="app.js?v=V1550_FEE_OPTIONAL_AUTO_INQUIRY_MODE"></script>
      <!-- Toast Notification Container -->
     <div id="toastContainer" class="toast-container"></div>
 </body>
