@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1530-secure-hidden-webmaster-auth-complete";
+const CACHE_NAME = "aquabuddy-cache-v1540-post-form-strict-validation-toast-guide";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

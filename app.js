@@ -9853,11 +9853,220 @@ function handleSendInstructorInquiry(e) {
     showToast("✉️ 강사님께 1:1 문의 메시지가 전달되었습니다. 답변을 기다려 주세요!");
 }
 
+// 🎨 미입력 필드 네온 레드 하이라이트 효과
+function highlightInvalidInput(el) {
+    if (!el) return;
+    try {
+        el.style.transition = "all 0.25s ease";
+        el.style.borderColor = "#ff5252";
+        el.style.boxShadow = "0 0 14px rgba(255, 82, 82, 0.75)";
+        setTimeout(() => {
+            el.style.borderColor = "";
+            el.style.boxShadow = "";
+        }, 2600);
+    } catch(e) {}
+}
+window.highlightInvalidInput = highlightInvalidInput;
+
+// 🔍 게시글 등록 시 필수 입력 항목 전수 검증 함수 (누락 시 해당 필드 안내 토스트 및 포커스)
+function validatePostForm() {
+    const selCat = document.getElementById("postCategory") ? document.getElementById("postCategory").value : "";
+    let category = selCat;
+    if (!category || category === "") {
+        if (typeof activeCategory !== "undefined" && activeCategory && activeCategory !== "all" && activeCategory !== "home") {
+            category = activeCategory;
+        } else {
+            category = "freediving";
+        }
+    }
+
+    const isInstructor = category === "instructor";
+    const isMarket = category === "market";
+    const isCommunity = category === "community";
+    const isBuddy = !isInstructor && !isMarket && !isCommunity;
+
+    // 1. 글 제목 (공통 필수)
+    const titleEl = document.getElementById("postTitle");
+    const title = titleEl ? titleEl.value.trim() : "";
+    if (!title) {
+        if (typeof showToast === "function") showToast("⚠️ [글 제목]을 입력해 주세요!");
+        if (titleEl) {
+            highlightInvalidInput(titleEl);
+            titleEl.focus();
+            try { titleEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e) {}
+        }
+        return false;
+    }
+
+    // 2. 강사 클래스 모집글 전용 필수 항목 검증
+    if (isInstructor) {
+        // 코스 유형
+        const classTypeEl = document.getElementById("classType");
+        const classType = classTypeEl ? classTypeEl.value.trim() : "";
+        if (!classType) {
+            if (typeof showToast === "function") showToast("⚠️ [강습 코스 유형]을 선택해 주세요!");
+            const container = document.getElementById("classTypePillsContainer");
+            if (container) {
+                highlightInvalidInput(container);
+                try { container.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e) {}
+            }
+            return false;
+        }
+
+        // 수강료
+        const classFeeEl = document.getElementById("classFee");
+        const classFeeVal = classFeeEl ? classFeeEl.value.trim() : "";
+        if (classFeeVal === "") {
+            if (typeof showToast === "function") showToast("⚠️ [수강료]를 입력해 주세요! (무료 체험일 경우 0 입력)");
+            if (classFeeEl) {
+                highlightInvalidInput(classFeeEl);
+                classFeeEl.focus();
+                try { classFeeEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e) {}
+            }
+            return false;
+        }
+
+        // 포함 / 미포함 사항
+        const classInclusionEl = document.getElementById("classInclusion");
+        const classInclusion = classInclusionEl ? classInclusionEl.value.trim() : "";
+        if (!classInclusion) {
+            if (typeof showToast === "function") showToast("⚠️ [포함 / 미포함 사항]을 입력해 주세요! (예: 풀장비 포함, 입장료 별도 등)");
+            if (classInclusionEl) {
+                highlightInvalidInput(classInclusionEl);
+                classInclusionEl.focus();
+                try { classInclusionEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e) {}
+            }
+            return false;
+        }
+    }
+
+    // 3. 중고장터 전용 필수 항목 검증
+    if (isMarket) {
+        const priceEl = document.getElementById("postPrice");
+        const priceVal = priceEl ? priceEl.value.trim() : "";
+        if (priceVal === "") {
+            if (typeof showToast === "function") showToast("⚠️ [중고 거래 가격]을 입력해 주세요! (가격협의 시 0 입력)");
+            if (priceEl) {
+                highlightInvalidInput(priceEl);
+                priceEl.focus();
+                try { priceEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e) {}
+            }
+            return false;
+        }
+
+        const isGroupBuy = document.getElementById("postIsGroupBuy") ? document.getElementById("postIsGroupBuy").checked : false;
+        if (isGroupBuy) {
+            const goalEl = document.getElementById("postGroupBuyGoal");
+            const goalVal = goalEl ? goalEl.value.trim() : "";
+            if (!goalVal || parseInt(goalVal, 10) <= 0) {
+                if (typeof showToast === "function") showToast("⚠️ [공동구매 목표 수량]을 1개 이상 입력해 주세요!");
+                if (goalEl) {
+                    highlightInvalidInput(goalEl);
+                    goalEl.focus();
+                    try { goalEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e) {}
+                }
+                return false;
+            }
+        }
+    }
+
+    // 4. 버디 모집 & 강사 클래스 공통 필수 항목 (모집 인원, 진행 일정, 장소/위치, 카풀 실비 분담금)
+    if (isBuddy || isInstructor) {
+        // 모집 인원
+        const capEl = document.getElementById("postCapacity");
+        const capVal = capEl ? parseInt(capEl.value, 10) : 0;
+        if (!capVal || capVal < 1) {
+            if (typeof showToast === "function") showToast("⚠️ [모집 인원]을 1명 이상 숫자로 입력해 주세요!");
+            if (capEl) {
+                highlightInvalidInput(capEl);
+                capEl.focus();
+                try { capEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e) {}
+            }
+            return false;
+        }
+
+        // 진행 일정
+        const dateEl = document.getElementById("postDate");
+        const dateVal = dateEl ? dateEl.value.trim() : "";
+        if (!dateVal) {
+            if (typeof showToast === "function") showToast(isInstructor ? "⚠️ [강습 진행 일정(일시)]을 선택해 주세요!" : "⚠️ [버디 모임 진행 일정(일시)]을 선택해 주세요!");
+            if (dateEl) {
+                highlightInvalidInput(dateEl);
+                dateEl.focus();
+                try { dateEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e) {}
+            }
+            return false;
+        }
+
+        // 지도 핀 주소 또는 핀 장소명
+        const mapEl = document.getElementById("postMapAddress");
+        const mapVal = mapEl ? mapEl.value.trim() : "";
+        if (!mapVal) {
+            if (typeof showToast === "function") showToast(isInstructor ? "⚠️ [강습 장소(지도 핀 위치 또는 장소명)]를 입력해 주세요!" : "⚠️ [모임 장소(지도 핀 위치 또는 장소명)]를 입력해 주세요!");
+            if (mapEl) {
+                highlightInvalidInput(mapEl);
+                mapEl.focus();
+                try { mapEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e) {}
+            }
+            return false;
+        }
+
+        // 카풀 제공 옵션 체크 시
+        const isCarpool = document.getElementById("postIsCarpool") ? document.getElementById("postIsCarpool").checked : false;
+        if (isCarpool) {
+            const carpoolRadio = document.querySelector('input[name="carpoolType"]:checked');
+            const carpoolType = carpoolRadio ? carpoolRadio.value : 'free';
+            if (carpoolType === 'shared_cost' || carpoolType === 'paid') {
+                const feeEl = document.getElementById("carpoolFee");
+                const feeVal = feeEl ? feeEl.value.trim() : "";
+                if (!feeVal || parseInt(feeVal, 10) <= 0) {
+                    if (typeof showToast === "function") showToast("⚠️ [1인당 카풀 실비 분담금]을 입력해 주세요!");
+                    if (feeEl) {
+                        highlightInvalidInput(feeEl);
+                        feeEl.focus();
+                        try { feeEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e) {}
+                    }
+                    return false;
+                }
+            }
+        }
+    }
+
+    // 5. 상세 내용 및 설명 (공통 필수)
+    const descEl = document.getElementById("postDesc");
+    const desc = descEl ? descEl.value.trim() : "";
+    if (!desc) {
+        if (typeof showToast === "function") {
+            if (isInstructor) {
+                showToast("⚠️ [강습 상세 내용 및 커리큘럼 플랜]을 작성해 주세요!");
+            } else if (isMarket) {
+                showToast("⚠️ [상품 상태 및 거래 안내]를 작성해 주세요!");
+            } else {
+                showToast("⚠️ [상세 내용 및 모임 플랜]을 작성해 주세요!");
+            }
+        }
+        if (descEl) {
+            highlightInvalidInput(descEl);
+            descEl.focus();
+            try { descEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e) {}
+        }
+        return false;
+    }
+
+    return true;
+}
+window.validatePostForm = validatePostForm;
+
 let pendingHostSubmitEvent = null;
 
 function interceptHostSubmit(e) {
     if (e && e.preventDefault) e.preventDefault();
     pendingHostSubmitEvent = e;
+
+    // 🌟 [미입력 항목 즉각 차단 및 토스트 알림]
+    if (!validatePostForm()) {
+        return;
+    }
 
     const inlineCheck = document.getElementById("inlineLiabilityCheck");
     if (inlineCheck && inlineCheck.checked) {
@@ -15989,22 +16198,14 @@ async function handleSavePost(e) {
         return;
     }
 
+    if (!validatePostForm()) {
+        return;
+    }
+
     const titleEl = document.getElementById("postTitle");
     const descEl = document.getElementById("postDesc");
     const title = titleEl ? titleEl.value.trim() : "";
     const desc = descEl ? descEl.value.trim() : "";
-
-    if (!title) {
-        showToast("⚠️ 글 제목을 입력해 주세요!");
-        if (titleEl) titleEl.focus();
-        return;
-    }
-
-    if (!desc) {
-        showToast("⚠️ 상세 내용 및 설명을 입력해 주세요!");
-        if (descEl) descEl.focus();
-        return;
-    }
 
     const selCat = document.getElementById("postCategory") ? document.getElementById("postCategory").value : "";
     let category = selCat;
