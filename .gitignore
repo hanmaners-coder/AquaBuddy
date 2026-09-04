@@ -36,3 +36,11 @@ do_push.py
 # OS metadata
 .DS_Store
 Thumbs.db
+
+# Video Studio & Media Exports (Isolated from Web App)
+promo_studio/
+*.mp4
+*.mov
+*.wav
+*.mp3
+
