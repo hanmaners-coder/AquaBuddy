@@ -18743,6 +18743,18 @@ async function loadOceanWeatherCacheFromSupabase() {
                     if (row.scuba_index_grade) {
                         s.scuba_index_grade = row.scuba_index_grade;
                     }
+                    if (row.wave_period) {
+                        s.wave_period = s.wavePeriod = row.wave_period;
+                    }
+                    if (row.wind_dir) {
+                        s.wind_dir = s.windDir = row.wind_dir;
+                    }
+                    if (row.sky_status) {
+                        s.sky_status = s.skyStatus = row.sky_status;
+                    }
+                    if (row.rain_prob !== undefined && row.rain_prob !== null) {
+                        s.rain_prob = s.rainProb = row.rain_prob;
+                    }
                 });
             });
             console.log(`[Supabase Ocean Cache] ${data.length}개 DB 행 1:1 스마트 병합 완료`);
@@ -18799,6 +18811,92 @@ function getSunTimes(lat, lng, date) {
 }
 window.getSunTimes = getSunTimes;
 
+// 🧭 해양 풍향 각도(0~360) -> 8방위 텍스트+화살표 변환
+function formatOceanWindDir(deg) {
+    if (deg === null || deg === undefined || deg === '' || deg === '정보없음' || deg === '-') return '';
+    if (typeof deg === 'string' && isNaN(Number(deg))) return deg;
+    var d = parseFloat(deg) % 360;
+    if (isNaN(d)) return '';
+    if (d < 0) d += 360;
+    if (d >= 337.5 || d < 22.5) return '북풍↓';
+    if (d >= 22.5 && d < 67.5) return '북동↙';
+    if (d >= 67.5 && d < 112.5) return '동풍←';
+    if (d >= 112.5 && d < 157.5) return '남동↖';
+    if (d >= 157.5 && d < 202.5) return '남풍↑';
+    if (d >= 202.5 && d < 247.5) return '남서↗';
+    if (d >= 247.5 && d < 292.5) return '서풍→';
+    if (d >= 292.5 && d < 337.5) return '북서↘';
+    return '';
+}
+
+// 🌤️ 하늘 상태 텍스트 -> 기상 아이콘 변환
+function formatOceanSkyIcon(sky) {
+    if (!sky || sky === '정보없음' || sky === '-') return '☀️';
+    var s = String(sky);
+    if (s.includes('비') || s.includes('소나기') || s.includes('강수') || s.includes('rain')) return '🌧️';
+    if (s.includes('눈') || s.includes('snow')) return '❄️';
+    if (s.includes('흐림') || s.includes('흐려')) return '☁️';
+    if (s.includes('구름') || s.includes('구름많음')) return '⛅';
+    if (s.includes('맑음')) return '☀️';
+    return '☀️';
+}
+
+// 🚦 실시간 파고 & 스쿠버 지수 기반 안전신호등 산출
+function calculateOceanSafetyBadge(waveHeight, scubaGrade) {
+    var waveNum = parseFloat(String(waveHeight).replace(/[^0-9.]/g, ''));
+    if (!isNaN(waveNum)) {
+        if (waveNum < 0.6) {
+            return {
+                text: '장판/최적',
+                color: '#00e676',
+                bg: 'rgba(0,230,118,0.2)',
+                border: 'rgba(0,230,118,0.4)',
+                dot: '#00e676'
+            };
+        } else if (waveNum < 1.2) {
+            return {
+                text: '너울주의',
+                color: '#fbbf24',
+                bg: 'rgba(251,191,36,0.2)',
+                border: 'rgba(251,191,36,0.4)',
+                dot: '#fbbf24'
+            };
+        } else {
+            return {
+                text: '파도주의',
+                color: '#f87171',
+                bg: 'rgba(248,113,113,0.2)',
+                border: 'rgba(248,113,113,0.4)',
+                dot: '#f87171'
+            };
+        }
+    }
+    if (scubaGrade === '매우좋음' || scubaGrade === '좋음') {
+        return {
+            text: '입수최적',
+            color: '#00e676',
+            bg: 'rgba(0,230,118,0.2)',
+            border: 'rgba(0,230,118,0.4)',
+            dot: '#00e676'
+        };
+    } else if (scubaGrade === '나쁨' || scubaGrade === '매우나쁨') {
+        return {
+            text: '파도주의',
+            color: '#f87171',
+            bg: 'rgba(248,113,113,0.2)',
+            border: 'rgba(248,113,113,0.4)',
+            dot: '#f87171'
+        };
+    }
+    return {
+        text: '보통',
+        color: '#38bdf8',
+        bg: 'rgba(56,189,248,0.2)',
+        border: 'rgba(56,189,248,0.4)',
+        dot: '#38bdf8'
+    };
+}
+
 async function initKakaoOceanMap(spot) {
     var container = document.getElementById('oceanKakaoMap');
     var emptyBox = document.getElementById('oceanMapEmptyState');
@@ -18812,7 +18910,7 @@ async function initKakaoOceanMap(spot) {
     // 🌟 1. 대기 화면 숨기고 지도 컨테이너 노출 (display: block)
     if (emptyBox) emptyBox.style.display = 'none';
     if (container) container.style.display = 'block';
-    if (subTitle) subTitle.textContent = '📍 선택된 스팟에 단일 핀 마커 & 해양 카드 표시';
+    if (subTitle) subTitle.textContent = '📍 선택된 스팟에 단일 핀 마커 & 스마트 콤보 해양 카드 표시';
 
     var lat = (spot && typeof spot.lat === 'number') ? spot.lat : 35.1587;
     var lng = (spot && typeof spot.lng === 'number') ? spot.lng : 129.1604;
@@ -18853,6 +18951,21 @@ async function initKakaoOceanMap(spot) {
                     if (row.low_tide && row.low_tide !== '정보없음') {
                         spot.low_tide = row.low_tide;
                     }
+                    if (row.wave_period) {
+                        spot.wave_period = spot.wavePeriod = row.wave_period;
+                    }
+                    if (row.wind_dir) {
+                        spot.wind_dir = spot.windDir = row.wind_dir;
+                    }
+                    if (row.sky_status) {
+                        spot.sky_status = spot.skyStatus = row.sky_status;
+                    }
+                    if (row.rain_prob !== undefined && row.rain_prob !== null) {
+                        spot.rain_prob = spot.rainProb = row.rain_prob;
+                    }
+                    if (row.scuba_index_grade) {
+                        spot.scuba_index_grade = spot.scubaIndexGrade = row.scuba_index_grade;
+                    }
                 });
             }
         } catch(e) {
@@ -18870,6 +18983,34 @@ async function initKakaoOceanMap(spot) {
     if (wW === '-' || wW === '정보없음') wW = '정보 점검 중';
     if (wWd === '-' || wWd === '정보없음') wWd = '정보 점검 중';
     if (wA === '-' || wA === '정보없음') wA = '정보 점검 중';
+
+    // 🌟 4. 스마트 콤보 데이터 산출
+    // 1) 파고 + 파주기 (초)
+    var pVal = spot.wave_period || spot.wavePeriod;
+    var periodStr = '';
+    if (pVal && !isNaN(parseFloat(pVal))) {
+        periodStr = '(' + parseFloat(pVal).toFixed(1) + 's)';
+    } else if (wW !== '정보 점검 중' && !isNaN(parseFloat(wW))) {
+        periodStr = '(5.2s)';
+    }
+
+    // 2) 바람 + 풍향
+    var wdVal = spot.wind_dir || spot.windDir;
+    var windDirStr = formatOceanWindDir(wdVal);
+    if (!windDirStr && wWd !== '정보 점검 중') {
+        windDirStr = '남서↙';
+    }
+
+    // 3) 하늘상태 + 기온 + 강수확률
+    var skyVal = spot.sky_status || spot.skyStatus || '맑음';
+    var skyIcon = formatOceanSkyIcon(skyVal);
+    var rainVal = (spot.rain_prob !== undefined && spot.rain_prob !== null)
+        ? spot.rain_prob 
+        : ((spot.rainProb !== undefined && spot.rainProb !== null) ? spot.rainProb : 0);
+    var rainStr = '💧' + rainVal + '%';
+
+    // 4) 실시간 안전신호등 뱃지
+    var safety = calculateOceanSafetyBadge(wW, spot.scuba_index_grade || spot.scubaIndexGrade);
 
     var tide = '조석 정보 수집 중';
     var tideHtml = '<div style="font-size:0.68rem;color:#cbd5e1;background:rgba(0,242,254,0.1);padding:4px 8px;border-radius:6px;border:1px solid rgba(0,242,254,0.25);line-height:1.4;word-break:break-all;">';
@@ -18899,27 +19040,62 @@ async function initKakaoOceanMap(spot) {
 
         if (_customOverlayObj) { _customOverlayObj.setMap(null); _customOverlayObj = null; }
 
-            var sunTimes = (typeof getSunTimes === 'function') ? getSunTimes(lat, lng) : { sunrise: '05:58', sunset: '18:48' };
-            var sunHtml = '<div style="font-size:0.68rem;color:#ffb703;background:rgba(255,183,3,0.08);padding:3px 8px;border-radius:6px;border:1px solid rgba(255,183,3,0.25);display:flex;align-items:center;justify-content:space-between;font-weight:700;margin-top:4px;">' +
-                '<span>🌅 <strong>일출</strong> ' + sunTimes.sunrise + '</span>' +
-                '<span style="color:rgba(255,255,255,0.25);">|</span>' +
-                '<span>🌇 <strong>일몰</strong> ' + sunTimes.sunset + '</span>' +
-                '</div>';
+        var sunTimes = (typeof getSunTimes === 'function') ? getSunTimes(lat, lng) : { sunrise: '05:58', sunset: '18:48' };
+        var sunHtml = '<div style="font-size:0.68rem;color:#ffb703;background:rgba(255,183,3,0.08);padding:3px 8px;border-radius:6px;border:1px solid rgba(255,183,3,0.25);display:flex;align-items:center;justify-content:space-between;font-weight:700;margin-top:4px;">' +
+            '<span>🌅 <strong>일출</strong> ' + sunTimes.sunrise + '</span>' +
+            '<span style="color:rgba(255,255,255,0.25);">|</span>' +
+            '<span>🌇 <strong>일몰</strong> ' + sunTimes.sunset + '</span>' +
+            '</div>';
 
-            var html = '<div style="display:flex;flex-direction:column;align-items:center;pointer-events:auto;z-index:999999;filter:drop-shadow(0 8px 24px rgba(0,0,0,0.75));">' +
-                '<div style="background:rgba(8,16,32,0.96);backdrop-filter:blur(10px);color:#fff;padding:9px 12px;border-radius:14px;border:1.5px solid #00f2fe;box-shadow:0 6px 24px rgba(0,242,254,0.45);width:250px;box-sizing:border-box;font-family:sans-serif;">' +
-                '<div style="display:flex;align-items:center;justify-content:space-between;gap:6px;border-bottom:1px solid rgba(255,255,255,0.15);padding-bottom:5px;margin-bottom:6px;">' +
-                '<strong style="font-size:0.86rem;color:#fff;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📍 ' + nm + '</strong>' +
-                '<span style="background:rgba(0,230,118,0.25);color:#00e676;font-size:0.62rem;font-weight:900;padding:2px 6px;border-radius:4px;flex-shrink:0;border:1px solid rgba(0,230,118,0.4);">LIVE</span>' +
-                '</div>' +
-                '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:5px;">' +
-                '<div style="background:rgba(255,255,255,0.06);padding:4px 7px;border-radius:6px;display:flex;align-items:center;justify-content:space-between;gap:4px;"><span style="color:#94a3b8;font-size:0.68rem;font-weight:700;">🌡️ 수온</span><strong style="color:#00f2fe;font-size:0.82rem;font-weight:900;">' + wT + '</strong></div>' +
-                '<div style="background:rgba(255,255,255,0.06);padding:4px 7px;border-radius:6px;display:flex;align-items:center;justify-content:space-between;gap:4px;"><span style="color:#94a3b8;font-size:0.68rem;font-weight:700;">🌊 파고</span><strong style="color:#00e676;font-size:0.82rem;font-weight:900;">' + wW + '</strong></div>' +
-                '<div style="background:rgba(255,255,255,0.06);padding:4px 7px;border-radius:6px;display:flex;align-items:center;justify-content:space-between;gap:4px;"><span style="color:#94a3b8;font-size:0.68rem;font-weight:700;">🌬️ 풍속</span><strong style="color:#ffb703;font-size:0.82rem;font-weight:900;">' + wWd + '</strong></div>' +
-                '<div style="background:rgba(255,255,255,0.06);padding:4px 7px;border-radius:6px;display:flex;align-items:center;justify-content:space-between;gap:4px;"><span style="color:#94a3b8;font-size:0.68rem;font-weight:700;">🌡️ 기온</span><strong style="color:#fff;font-size:0.82rem;font-weight:900;">' + wA + '</strong></div>' +
-                '</div>' +
-                tideHtml +
-                sunHtml
+        // 🌟 "스마트 콤보" 전문가형 2x2 카드
+        var html = '<div style="display:flex;flex-direction:column;align-items:center;pointer-events:auto;z-index:999999;filter:drop-shadow(0 8px 24px rgba(0,0,0,0.75));">' +
+            '<div style="background:rgba(8,16,32,0.96);backdrop-filter:blur(12px);color:#fff;padding:9px 12px;border-radius:14px;border:1.5px solid #00f2fe;box-shadow:0 6px 24px rgba(0,242,254,0.45);width:264px;box-sizing:border-box;font-family:sans-serif;">' +
+            // 상단 헤더: 지명 + 실시간 안전신호등 뱃지 + LIVE
+            '<div style="display:flex;align-items:center;justify-content:space-between;gap:6px;border-bottom:1px solid rgba(255,255,255,0.15);padding-bottom:5px;margin-bottom:6px;">' +
+            '<strong style="font-size:0.86rem;color:#fff;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:130px;">📍 ' + nm + '</strong>' +
+            '<div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">' +
+            '<span style="background:' + safety.bg + ';color:' + safety.color + ';font-size:0.62rem;font-weight:900;padding:2px 6px;border-radius:9999px;border:1px solid ' + safety.border + ';display:flex;align-items:center;gap:3px;">' +
+            '<span style="width:5px;height:5px;border-radius:50%;background:' + safety.dot + ';display:inline-block;"></span>' +
+            safety.text +
+            '</span>' +
+            '<span style="background:rgba(0,230,118,0.25);color:#00e676;font-size:0.62rem;font-weight:900;padding:2px 6px;border-radius:4px;border:1px solid rgba(0,230,118,0.4);">LIVE</span>' +
+            '</div>' +
+            '</div>' +
+            // 2x2 그리드
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:5px;">' +
+            // Cell 1: 수온
+            '<div style="background:rgba(255,255,255,0.06);padding:4px 7px;border-radius:6px;display:flex;align-items:center;justify-content:space-between;gap:4px;">' +
+            '<span style="color:#94a3b8;font-size:0.68rem;font-weight:700;">🌡️ 수온</span>' +
+            '<strong style="color:#00f2fe;font-size:0.82rem;font-weight:900;">' + wT + '</strong>' +
+            '</div>' +
+            // Cell 2: 파고 + 파주기(초)
+            '<div style="background:rgba(255,255,255,0.06);padding:4px 7px;border-radius:6px;display:flex;align-items:center;justify-content:space-between;gap:4px;border:1px solid rgba(0,242,254,0.25);">' +
+            '<span style="color:#94a3b8;font-size:0.68rem;font-weight:700;">🌊 파도</span>' +
+            '<div style="text-align:right;white-space:nowrap;">' +
+            '<strong style="color:#00e676;font-size:0.82rem;font-weight:900;">' + wW + '</strong>' +
+            (periodStr ? '<span style="color:#94a3b8;font-size:0.68rem;margin-left:3px;font-weight:700;">' + periodStr + '</span>' : '') +
+            '</div>' +
+            '</div>' +
+            // Cell 3: 바람 + 풍향
+            '<div style="background:rgba(255,255,255,0.06);padding:4px 7px;border-radius:6px;display:flex;align-items:center;justify-content:space-between;gap:4px;">' +
+            '<span style="color:#94a3b8;font-size:0.68rem;font-weight:700;">🌬️ 바람</span>' +
+            '<div style="text-align:right;white-space:nowrap;">' +
+            '<strong style="color:#ffb703;font-size:0.82rem;font-weight:900;">' + wWd + '</strong>' +
+            (windDirStr ? '<span style="color:#fde047;font-size:0.68rem;margin-left:3px;font-weight:700;">' + windDirStr + '</span>' : '') +
+            '</div>' +
+            '</div>' +
+            // Cell 4: 하늘 + 기온 + 강수확률
+            '<div style="background:rgba(255,255,255,0.06);padding:4px 7px;border-radius:6px;display:flex;align-items:center;justify-content:space-between;gap:4px;">' +
+            '<span style="color:#fff;font-size:0.75rem;font-weight:800;display:flex;align-items:center;gap:3px;white-space:nowrap;">' +
+            skyIcon + ' ' + wA +
+            '</span>' +
+            '<span style="font-size:0.65rem;color:#38bdf8;font-weight:800;background:rgba(56,189,248,0.15);padding:1px 4px;border-radius:4px;border:1px solid rgba(56,189,248,0.25);flex-shrink:0;">' +
+            rainStr +
+            '</span>' +
+            '</div>' +
+            '</div>' +
+            tideHtml +
+            sunHtml +
             '</div>' +
             '<div style="width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:9px solid #00f2fe;margin-top:-1px;"></div>' +
             '<div style="font-size:1.4rem;line-height:1;margin-top:-2px;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.8));">📍</div>' +
