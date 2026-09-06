@@ -3573,7 +3573,7 @@ var OCEAN_WEATHER_DATA = [
         "lat": 36.5912,
         "lng": 129.4124,
         "tide_code": "SO_0187",
-        "buoy_code": "TW_0068",
+        "buoy_code": "TW_0095",
         "scuba_code": null,
         "beach_num": 288
     },
@@ -18709,7 +18709,7 @@ async function loadOceanWeatherCacheFromSupabase() {
             
         if (data && data.length > 0) {
             OCEAN_WEATHER_DATA.forEach(s => {
-                const spotNameClean = (s.name || '').replace(/부산|울산|거제|포항|경북|경남|강원|제주|해수욕장|해변|포구|항|해상/g, '').trim();
+                const spotNameClean = (s.name || '').replace(/영덕|울진|동해|삼척|강릉|속초|양양|고성|태안|보령|서천|군산|부안|여수|남해|통영|부산|울산|거제|포항|경북|경남|강원|제주|해수욕장|해변|포구|항|해상/g, '').trim();
                 
                 const matchingRows = data.filter(dbItem => {
                     if (s.id && dbItem.spot_id === s.id) return true;
@@ -18920,7 +18920,7 @@ async function initKakaoOceanMap(spot) {
     if (typeof supabaseClient !== 'undefined' && supabaseClient) {
         try {
             var spotId = spot.id || spot.spot_id;
-            var cleanName = nm.replace(/부산|울산|거제|포항|경북|경남|강원|제주|해수욕장|해변|포구|항|해상/g, '').trim();
+            var cleanName = nm.replace(/영덕|울진|동해|삼척|강릉|속초|양양|고성|태안|보령|서천|군산|부안|여수|남해|통영|부산|울산|거제|포항|경북|경남|강원|제주|해수욕장|해변|포구|항|해상/g, '').trim();
             
             var queryOr = `spot_id.eq.${spotId},spot_name.ilike.%${cleanName || nm}%,spot_name.ilike.%${nm}%`;
             if (spot.buoy_code) queryOr += `,buoy_code.eq.${spot.buoy_code}`;
