@@ -18984,6 +18984,10 @@ async function initKakaoOceanMap(spot) {
     if (wWd === '-' || wWd === '정보없음') wWd = '정보 점검 중';
     if (wA === '-' || wA === '정보없음') wA = '정보 점검 중';
 
+    var displayNm = nm.replace(/해수욕장/g, '').trim() || nm;
+    var cleanWaveHeight = wW.replace(/\s+m/i, 'm');
+    var cleanWindSpeed  = wWd.replace(/\s+m\/s/i, 'm/s');
+
     // 🌟 4. 스마트 콤보 데이터 산출
     // 1) 파고 + 파주기 (초)
     var pVal = spot.wave_period || spot.wavePeriod;
@@ -19013,7 +19017,7 @@ async function initKakaoOceanMap(spot) {
     var safety = calculateOceanSafetyBadge(wW, spot.scuba_index_grade || spot.scubaIndexGrade);
 
     var tide = '조석 정보 수집 중';
-    var tideHtml = '<div style="font-size:0.68rem;color:#cbd5e1;background:rgba(0,242,254,0.1);padding:4px 8px;border-radius:6px;border:1px solid rgba(0,242,254,0.25);line-height:1.4;word-break:break-all;">';
+    var tideHtml = '<div style="font-size:0.68rem;color:#cbd5e1;background:rgba(0,242,254,0.1);padding:5px 8px;border-radius:6px;border:1px solid rgba(0,242,254,0.25);line-height:1.4;word-break:break-all;">';
     if (spot.high_tide && spot.high_tide !== '정보없음') {
         tideHtml += '<div style="overflow:hidden;text-overflow:ellipsis;">🌊 <strong>만조:</strong> ' + spot.high_tide + '</div>';
     }
@@ -19047,14 +19051,14 @@ async function initKakaoOceanMap(spot) {
             '<span>🌇 <strong>일몰</strong> ' + sunTimes.sunset + '</span>' +
             '</div>';
 
-        // 🌟 "스마트 콤보" 전문가형 2x2 카드
+        // 🌟 "스마트 콤보" 전문가형 2x2 카드 (290px 와이드 핏, 텍스트 잘림 제로)
         var html = '<div style="display:flex;flex-direction:column;align-items:center;pointer-events:auto;z-index:999999;filter:drop-shadow(0 8px 24px rgba(0,0,0,0.75));">' +
-            '<div style="background:rgba(8,16,32,0.96);backdrop-filter:blur(12px);color:#fff;padding:9px 12px;border-radius:14px;border:1.5px solid #00f2fe;box-shadow:0 6px 24px rgba(0,242,254,0.45);width:264px;box-sizing:border-box;font-family:sans-serif;">' +
+            '<div style="background:rgba(8,16,32,0.96);backdrop-filter:blur(12px);color:#fff;padding:10px 12px;border-radius:14px;border:1.5px solid #00f2fe;box-shadow:0 6px 28px rgba(0,242,254,0.45);width:290px;box-sizing:border-box;font-family:sans-serif;">' +
             // 상단 헤더: 지명 + 실시간 안전신호등 뱃지 + LIVE
-            '<div style="display:flex;align-items:center;justify-content:space-between;gap:6px;border-bottom:1px solid rgba(255,255,255,0.15);padding-bottom:5px;margin-bottom:6px;">' +
-            '<strong style="font-size:0.86rem;color:#fff;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:130px;">📍 ' + nm + '</strong>' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;gap:6px;border-bottom:1px solid rgba(255,255,255,0.15);padding-bottom:6px;margin-bottom:6px;">' +
+            '<strong style="font-size:0.86rem;color:#fff;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;">📍 ' + displayNm + '</strong>' +
             '<div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">' +
-            '<span style="background:' + safety.bg + ';color:' + safety.color + ';font-size:0.62rem;font-weight:900;padding:2px 6px;border-radius:9999px;border:1px solid ' + safety.border + ';display:flex;align-items:center;gap:3px;">' +
+            '<span style="background:' + safety.bg + ';color:' + safety.color + ';font-size:0.62rem;font-weight:900;padding:2px 7px;border-radius:9999px;border:1px solid ' + safety.border + ';display:flex;align-items:center;gap:3px;">' +
             '<span style="width:5px;height:5px;border-radius:50%;background:' + safety.dot + ';display:inline-block;"></span>' +
             safety.text +
             '</span>' +
@@ -19062,34 +19066,34 @@ async function initKakaoOceanMap(spot) {
             '</div>' +
             '</div>' +
             // 2x2 그리드
-            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:5px;">' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:6px;">' +
             // Cell 1: 수온
-            '<div style="background:rgba(255,255,255,0.06);padding:4px 7px;border-radius:6px;display:flex;align-items:center;justify-content:space-between;gap:4px;">' +
-            '<span style="color:#94a3b8;font-size:0.68rem;font-weight:700;">🌡️ 수온</span>' +
+            '<div style="background:rgba(255,255,255,0.06);padding:5px 8px;border-radius:8px;display:flex;align-items:center;justify-content:space-between;gap:4px;">' +
+            '<span style="color:#94a3b8;font-size:0.68rem;font-weight:700;flex-shrink:0;">🌡️ 수온</span>' +
             '<strong style="color:#00f2fe;font-size:0.82rem;font-weight:900;">' + wT + '</strong>' +
             '</div>' +
             // Cell 2: 파고 + 파주기(초)
-            '<div style="background:rgba(255,255,255,0.06);padding:4px 7px;border-radius:6px;display:flex;align-items:center;justify-content:space-between;gap:4px;border:1px solid rgba(0,242,254,0.25);">' +
-            '<span style="color:#94a3b8;font-size:0.68rem;font-weight:700;">🌊 파도</span>' +
-            '<div style="text-align:right;white-space:nowrap;">' +
-            '<strong style="color:#00e676;font-size:0.82rem;font-weight:900;">' + wW + '</strong>' +
-            (periodStr ? '<span style="color:#94a3b8;font-size:0.68rem;margin-left:3px;font-weight:700;">' + periodStr + '</span>' : '') +
+            '<div style="background:rgba(255,255,255,0.06);padding:5px 8px;border-radius:8px;display:flex;align-items:center;justify-content:space-between;gap:4px;border:1px solid rgba(0,242,254,0.25);">' +
+            '<span style="color:#94a3b8;font-size:0.68rem;font-weight:700;flex-shrink:0;">🌊 파도</span>' +
+            '<div style="text-align:right;white-space:nowrap;display:flex;align-items:baseline;justify-content:flex-end;gap:3px;">' +
+            '<strong style="color:#00e676;font-size:0.82rem;font-weight:900;">' + cleanWaveHeight + '</strong>' +
+            (periodStr ? '<span style="color:#94a3b8;font-size:0.65rem;font-weight:700;">' + periodStr + '</span>' : '') +
             '</div>' +
             '</div>' +
             // Cell 3: 바람 + 풍향
-            '<div style="background:rgba(255,255,255,0.06);padding:4px 7px;border-radius:6px;display:flex;align-items:center;justify-content:space-between;gap:4px;">' +
-            '<span style="color:#94a3b8;font-size:0.68rem;font-weight:700;">🌬️ 바람</span>' +
-            '<div style="text-align:right;white-space:nowrap;">' +
-            '<strong style="color:#ffb703;font-size:0.82rem;font-weight:900;">' + wWd + '</strong>' +
-            (windDirStr ? '<span style="color:#fde047;font-size:0.68rem;margin-left:3px;font-weight:700;">' + windDirStr + '</span>' : '') +
+            '<div style="background:rgba(255,255,255,0.06);padding:5px 8px;border-radius:8px;display:flex;align-items:center;justify-content:space-between;gap:4px;">' +
+            '<span style="color:#94a3b8;font-size:0.68rem;font-weight:700;flex-shrink:0;">🌬️ 바람</span>' +
+            '<div style="text-align:right;white-space:nowrap;display:flex;align-items:baseline;justify-content:flex-end;gap:3px;">' +
+            '<strong style="color:#ffb703;font-size:0.82rem;font-weight:900;">' + cleanWindSpeed + '</strong>' +
+            (windDirStr ? '<span style="color:#fde047;font-size:0.65rem;font-weight:700;">' + windDirStr + '</span>' : '') +
             '</div>' +
             '</div>' +
             // Cell 4: 하늘 + 기온 + 강수확률
-            '<div style="background:rgba(255,255,255,0.06);padding:4px 7px;border-radius:6px;display:flex;align-items:center;justify-content:space-between;gap:4px;">' +
+            '<div style="background:rgba(255,255,255,0.06);padding:5px 8px;border-radius:8px;display:flex;align-items:center;justify-content:space-between;gap:4px;">' +
             '<span style="color:#fff;font-size:0.75rem;font-weight:800;display:flex;align-items:center;gap:3px;white-space:nowrap;">' +
             skyIcon + ' ' + wA +
             '</span>' +
-            '<span style="font-size:0.65rem;color:#38bdf8;font-weight:800;background:rgba(56,189,248,0.15);padding:1px 4px;border-radius:4px;border:1px solid rgba(56,189,248,0.25);flex-shrink:0;">' +
+            '<span style="font-size:0.62rem;color:#38bdf8;font-weight:800;background:rgba(56,189,248,0.15);padding:1px 5px;border-radius:4px;border:1px solid rgba(56,189,248,0.3);flex-shrink:0;">' +
             rainStr +
             '</span>' +
             '</div>' +
