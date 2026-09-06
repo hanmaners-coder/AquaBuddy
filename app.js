@@ -12922,7 +12922,60 @@ function renderGrid(filteredPosts) {
         postsGrid.innerHTML = "";
         if (loadMoreContainer) loadMoreContainer.style.display = "none";
         const emptyState = document.getElementById("emptyState");
-        if (emptyState) emptyState.classList.remove("hidden");
+        if (emptyState) {
+            emptyState.classList.remove("hidden");
+            const cat = (typeof activeCategory !== "undefined" && activeCategory) ? activeCategory : "all";
+            let icon = "fa-compass-drafting";
+            let title = "등록된 게시글이 없습니다. 첫 번째 이야기를 남겨보세요!";
+            let desc = "내가 직접 새 버디 모집글, 강사 클래스 또는 중고 장비를 등록해 보세요!";
+            let btnText = "첫 이야기 등록하기";
+
+            if (cat === "openwater") {
+                icon = "fa-water";
+                title = "아직 등록된 바다 수영 버디 모집글이 없어요!";
+                desc = "파도와 조류를 함께할 든든한 바다수영 짝꿍을 먼저 찾아보세요.";
+                btnText = "바다수영 첫 버디 모집하기";
+            } else if (cat === "swimming") {
+                icon = "fa-person-swimming";
+                title = "아직 등록된 실내 수영 모임이 없어요!";
+                desc = "레인 질주, 자세 교정, 영법 훈련을 함께할 버디를 모아보세요.";
+                btnText = "실내수영 버디 모집하기";
+            } else if (cat === "freediving") {
+                icon = "fa-person-swimming";
+                title = "아직 등록된 프리다이빙 버디 모집글이 없어요!";
+                desc = "K26, 용인 딥스테이션, 송도 잠수풀 트레이닝 버디를 먼저 구해볼까요?";
+                btnText = "프리다이빙 버디 모집하기";
+            } else if (cat === "scuba") {
+                icon = "fa-mask-snorkel";
+                title = "아직 등록된 스쿠버다이빙 모임이 없어요!";
+                desc = "동해·제주 해양 투어 또는 잠수풀 연습 짝꿍을 찾아보세요.";
+                btnText = "스쿠버다이빙 버디 모집하기";
+            } else if (cat === "instructor") {
+                icon = "fa-graduation-cap";
+                title = "등록된 강사 클래스를 기다리고 있어요!";
+                desc = "수수료 0원! 공인 강사 실명 뱃지와 함께 수강생 클래스를 개설해 보세요.";
+                btnText = "강사 클래스 개설하기";
+            } else if (cat === "market") {
+                icon = "fa-tags";
+                title = "아직 등록된 중고 장비 매물이 없어요!";
+                desc = "안 쓰는 다이빙 핀, 슈트, 마스크, 다이빙 컴퓨터를 안전하게 직거래해 보세요.";
+                btnText = "중고 장비 매물 등록하기";
+            } else if (cat === "community") {
+                icon = "fa-comments";
+                title = "자유수다방 첫 게시글의 주인공이 되어보세요!";
+                desc = "장비 추천, 다이빙 후기, 물때 질문 등 자유롭게 이야기를 나눠보세요.";
+                btnText = "자유수다 글 작성하기";
+            }
+
+            const h3 = emptyState.querySelector("h3");
+            const p = emptyState.querySelector("p");
+            const btn = emptyState.querySelector("button");
+            const iconEl = emptyState.querySelector(".empty-icon");
+            if (h3) h3.textContent = title;
+            if (p) p.textContent = desc;
+            if (btn) btn.innerHTML = `<i class="fa-solid fa-plus"></i> ${btnText}`;
+            if (iconEl) iconEl.className = `fa-solid ${icon} empty-icon`;
+        }
         return;
     }
     

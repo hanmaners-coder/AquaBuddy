@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1550-fee-optional-auto-inquiry-mode";
+const CACHE_NAME = "aquabuddy-cache-v1560-seo-search-console-sitemap-robots-complete";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

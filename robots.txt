@@ -1,0 +1,22 @@
+User-agent: *
+Allow: /
+
+# Specific bots allowance
+User-agent: Googlebot
+Allow: /
+
+User-agent: Yeti
+Allow: /
+
+User-agent: Daumoa
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# Disallow private and administrative paths if any
+Disallow: /admin/
+Disallow: /private/
+
+# Sitemap location
+Sitemap: https://aquabuddy1.com/sitemap.xml

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- 1. Home / All Feeds -->
+  <url>
+    <loc>https://aquabuddy1.com/</loc>
+    <lastmod>2026-09-06</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- 2. 바다수영 & 오픈워터 버디 찾기 -->
+  <url>
+    <loc>https://aquabuddy1.com/?category=openwater</loc>
+    <lastmod>2026-09-06</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- 3. 실내수영 & 자세교정 버디 -->
+  <url>
+    <loc>https://aquabuddy1.com/?category=swimming</loc>
+    <lastmod>2026-09-06</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- 4. 프리다이빙 버디 찾기 (K26 / 딥스테이션) -->
+  <url>
+    <loc>https://aquabuddy1.com/?category=freediving</loc>
+    <lastmod>2026-09-06</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- 5. 스쿠버다이빙 버디 찾기 -->
+  <url>
+    <loc>https://aquabuddy1.com/?category=scuba</loc>
+    <lastmod>2026-09-06</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- 6. 공인 강사 클래스 & 수강생 모집 -->
+  <url>
+    <loc>https://aquabuddy1.com/?category=instructor</loc>
+    <lastmod>2026-09-06</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- 7. 다이빙 중고장터 -->
+  <url>
+    <loc>https://aquabuddy1.com/?category=market</loc>
+    <lastmod>2026-09-06</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- 8. 자유수다방 커뮤니티 -->
+  <url>
+    <loc>https://aquabuddy1.com/?category=community</loc>
+    <lastmod>2026-09-06</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- 9. 전국 365개 실시간 해양 날씨 & 81개 라이브 CCTV 관제 -->
+  <url>
+    <loc>https://aquabuddy1.com/?view=ocean_weather</loc>
+    <lastmod>2026-09-06</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>0.9</priority>
+  </url>
+</urlset>
