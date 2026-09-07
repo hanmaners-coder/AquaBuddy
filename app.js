@@ -2564,8 +2564,8 @@ var OCEAN_WEATHER_DATA = [
         "region_cat": "ulsan",
         "lat": 35.3854,
         "lng": 129.3508,
-        "tide_code": "DT_0008",
-        "buoy_code": "TW_0083",
+        "tide_code": "DT_0020",
+        "buoy_code": "TW_0092",
         "scuba_code": null,
         "beach_num": 311
     },
@@ -2576,8 +2576,8 @@ var OCEAN_WEATHER_DATA = [
         "region_cat": "ulsan",
         "lat": 35.4986,
         "lng": 129.4312,
-        "tide_code": "DT_0008",
-        "buoy_code": "TW_0083",
+        "tide_code": "DT_0020",
+        "buoy_code": "TW_0092",
         "scuba_code": null,
         "beach_num": 312
     },
@@ -2588,8 +2588,8 @@ var OCEAN_WEATHER_DATA = [
         "region_cat": "ulsan",
         "lat": 35.5384,
         "lng": 129.4414,
-        "tide_code": "DT_0008",
-        "buoy_code": null,
+        "tide_code": "DT_0020",
+        "buoy_code": "TW_0092",
         "scuba_code": null,
         "beach_num": 313
     },
@@ -2600,8 +2600,8 @@ var OCEAN_WEATHER_DATA = [
         "region_cat": "ulsan",
         "lat": 35.6142,
         "lng": 129.4442,
-        "tide_code": "DT_0008",
-        "buoy_code": null,
+        "tide_code": "DT_0020",
+        "buoy_code": "TW_0092",
         "scuba_code": null,
         "beach_num": 314
     },
