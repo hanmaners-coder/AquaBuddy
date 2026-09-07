@@ -2096,8 +2096,15 @@ button:active, .btn:active, .action-btn:active, .category-pill:active {
     }
 
     .notification-dropdown {
-        right: -40px;
-        width: min(320px, calc(100vw - 24px));
+        position: fixed !important;
+        top: 56px !important;
+        left: 12px !important;
+        right: 12px !important;
+        width: auto !important;
+        max-width: 380px !important;
+        margin: 0 auto !important;
+        box-sizing: border-box !important;
+        border-radius: 16px !important;
     }
 }
 

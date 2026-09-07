@@ -7173,7 +7173,7 @@ function updateNavbarUserUI() {
         const navName = document.getElementById("navUserName");
         const displayName = (isInst && (currentUser.realName || currentUser.real_name)) ? (currentUser.realName || currentUser.real_name) : (currentUser.nickname || currentUser.name || (currentUser.email ? currentUser.email.split('@')[0] : "다이버"));
         if (navName) {
-            navName.innerHTML = `${escapeHtml(displayName)}${instBadge} ${typeof renderUserBadges === 'function' ? renderUserBadges(currentUser) : ''}`;
+            navName.innerHTML = escapeHtml(displayName);
         }
         if (openAuthBtn) {
             openAuthBtn.classList.add("hidden");
