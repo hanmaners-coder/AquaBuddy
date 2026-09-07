@@ -227,7 +227,7 @@
      <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=7c316726691ea5e02f234a85f5a20bab&libraries=services,clusterer"></script>
      
       <!-- Custom CSS -->
-       <link rel="stylesheet" href="styles.css?v=V1410_PERFECT_AUTH_NAVBAR_VISIBILITY_SYNC">
+       <link rel="stylesheet" href="styles.css?v=V1600_DESIGN_A_NOTIFICATION_FAB">
      <!-- PWA Manifest and Meta Tags -->
      <link rel="manifest" href="manifest.json">
      <link rel="apple-touch-icon" href="icon-192.png">
@@ -610,11 +610,33 @@
  
              <!-- Right Quick Actions (Guaranteed Mobile Fit for '+ 버디모집하기') -->
              <div class="nav-actions" style="position: relative;">
-                <!-- Dedicated Instructor Certification Button -->
-                <button type="button" class="btn btn-secondary nav-inst-btn" onclick="openInstructorAuthModal()" title="강사이신가요? 1초 강사 인증 신청">
-                     <i class="fa-solid fa-graduation-cap"></i> 강사인증
-                 </button>
- 
+                 <!-- Dedicated Instructor Certification Button -->
+                 <button type="button" class="btn btn-secondary nav-inst-btn" onclick="openInstructorAuthModal()" title="강사이신가요? 1초 강사 인증 신청">
+                      <i class="fa-solid fa-graduation-cap"></i> 강사인증
+                  </button>
+
+                  <!-- 🔔 AquaBuddy Realtime Notification Bell & Dropdown (설계 A) -->
+                  <div class="notification-nav-wrapper">
+                      <button type="button" id="notificationBellBtn" class="notification-bell-btn" onclick="toggleNotificationDropdown()" title="새 알림 확인">
+                          <i id="bellIcon" class="fa-solid fa-bell"></i>
+                          <span id="globalUnreadBadge" class="notification-badge hidden">0</span>
+                      </button>
+                      <div id="notificationDropdown" class="notification-dropdown hidden">
+                          <div class="notification-dropdown-header">
+                              <div class="notification-dropdown-title">
+                                  <i class="fa-solid fa-bell"></i> 받은 알림 <span id="notifHeaderCount" class="notif-count-badge">0</span>
+                              </div>
+                              <button type="button" class="notif-mark-all-btn" onclick="markAllNotificationsAsRead()">모두 읽음</button>
+                          </div>
+                          <div id="notificationList" class="notification-list">
+                              <div class="empty-notification-notice">
+                                  <i class="fa-solid fa-bell-slash" style="font-size: 1.5rem; color: #64748b; margin-bottom: 6px;"></i>
+                                  <p style="margin: 0; color: #94a3b8; font-size: 0.82rem;">새로운 알림이 없습니다.</p>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+
                  <!-- Clickable User Profile Badge -->
                  <div id="userProfileNav" class="user-nav-badge hidden" onclick="openProfileModal()" style="display: none; cursor: pointer;" title="클릭하여 내 프로필/계정 정보 확인">
                      <i class="fa-solid fa-user-circle"></i>
@@ -2311,9 +2333,15 @@
      </div>
  
      <!-- App Configuration & Main Logic Script -->
-     <script src="config.js?v=V1585_ALL_BEACHES_SMART_MAPPED"></script>
-     <script src="app.js?v=V1585_ALL_BEACHES_SMART_MAPPED"></script>
+     <script src="config.js?v=V1600_DESIGN_A_NOTIFICATION_FAB"></script>
+     <script src="app.js?v=V1600_DESIGN_A_NOTIFICATION_FAB"></script>
      <!-- Toast Notification Container -->
     <div id="toastContainer" class="toast-container"></div>
+
+    <!-- 🚀 Mobile Floating Action Button (FAB) for Design A -->
+    <div id="mobileFloatingCreateBtn" class="mobile-floating-create-btn" onclick="if(typeof openCreatePostModal==='function'){openCreatePostModal();}else{const b=document.getElementById('openCreateModalBtn');if(b)b.click();}" title="새로운 버디 모집하기">
+        <i class="fa-solid fa-plus text-sm"></i>
+        <span id="floatingCreateBtnText">버디 모집하기</span>
+    </div>
 </body>
  </html>

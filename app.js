@@ -7182,6 +7182,10 @@ function updateNavbarUserUI() {
 
         if (navActivity) navActivity.style.display = "inline-flex";
         if (tabActivity) tabActivity.style.display = "inline-flex";
+
+        if (typeof syncUserNotifications === 'function') {
+            syncUserNotifications();
+        }
     } else {
         if (userNav) {
             userNav.classList.add("hidden");
@@ -7194,6 +7198,10 @@ function updateNavbarUserUI() {
 
         if (navActivity) navActivity.style.display = "none";
         if (tabActivity) tabActivity.style.display = "none";
+
+        localNotifications = [];
+        if (typeof updateGlobalUnreadBadge === 'function') updateGlobalUnreadBadge();
+        if (typeof renderNotificationList === 'function') renderNotificationList();
 
         if (activeCategory === "activity_log") {
             activeCategory = "all";
@@ -11272,6 +11280,9 @@ async function loadPosts() {
     if (typeof filterAndRender === 'function') {
         filterAndRender();
     }
+    if (typeof syncUserNotifications === 'function') {
+        syncUserNotifications();
+    }
 }
 
 function loadMyPosts() {
@@ -11413,6 +11424,13 @@ function initEventListeners() {
     if (closeCreateModalBtn) closeCreateModalBtn.addEventListener("click", () => closeModal(createModal));
     if (cancelCreateBtn) cancelCreateBtn.addEventListener("click", () => closeModal(createModal));
     if (createPostForm) createPostForm.addEventListener("submit", interceptHostSubmit);
+
+    const mobileFloatBtn = document.getElementById("mobileFloatingCreateBtn");
+    if (mobileFloatBtn) {
+        mobileFloatBtn.addEventListener("click", () => {
+            if (openCreateModalBtn) openCreateModalBtn.click();
+        });
+    }
 
     const mapAddrInput = document.getElementById("postMapAddress");
     if (mapAddrInput) {
@@ -12321,6 +12339,11 @@ function updateCreateButtonText(cat) {
     } else {
         createBtnText.textContent = "버디 모집하기";
         openCreateModalBtn.style.opacity = "1";
+    }
+
+    const floatBtnText = document.getElementById("floatingCreateBtnText");
+    if (floatBtnText && createBtnText) {
+        floatBtnText.textContent = createBtnText.textContent;
     }
 }
 
@@ -17385,10 +17408,32 @@ function toggleAudioMute() {
     }
 }
 
+function getReadNotificationIds() {
+    try {
+        const raw = localStorage.getItem('aquabuddy_read_notifs');
+        if (raw) return new Set(JSON.parse(raw));
+    } catch (e) {}
+    return new Set();
+}
+
+function markNotificationAsRead(id) {
+    const set = getReadNotificationIds();
+    set.add(String(id));
+    try {
+        const arr = Array.from(set).slice(-250);
+        localStorage.setItem('aquabuddy_read_notifs', JSON.stringify(arr));
+    } catch (e) {}
+}
+
 function updateGlobalUnreadBadge() {
     const unreadCount = localNotifications.filter(n => !n.isRead).length;
     const badgeEl = document.getElementById("globalUnreadBadge");
     const bellIcon = document.getElementById("bellIcon");
+    const notifHeaderCount = document.getElementById("notifHeaderCount");
+
+    if (notifHeaderCount) {
+        notifHeaderCount.textContent = unreadCount;
+    }
 
     if (badgeEl) {
         if (unreadCount > 0) {
@@ -17423,8 +17468,8 @@ function renderNotificationList() {
     if (!localNotifications || localNotifications.length === 0) {
         listContainer.innerHTML = `
             <div class="empty-notification-notice">
-                <i class="fa-solid fa-bell-slash" style="font-size: 1.5rem; color: var(--text-muted); margin-bottom: 6px;"></i>
-                <p style="margin: 0; color: var(--text-muted); font-size: 0.82rem;">새로운 알림이 없습니다.</p>
+                <i class="fa-solid fa-bell-slash" style="font-size: 1.5rem; color: #64748b; margin-bottom: 6px;"></i>
+                <p style="margin: 0; color: #94a3b8; font-size: 0.82rem;">새로운 알림이 없습니다.</p>
             </div>
         `;
         return;
@@ -17433,13 +17478,11 @@ function renderNotificationList() {
     listContainer.innerHTML = localNotifications.map(item => `
         <div class="notification-item ${item.isRead ? '' : 'unread'}" onclick="handleNotificationClick('${item.id}')">
             <div class="notification-avatar">
-                <i class="fa-solid fa-comments"></i>
+                <i class="${item.avatarIcon || (item.type === 'chat_mention' ? 'fa-solid fa-at' : 'fa-solid fa-comments')}"></i>
             </div>
             <div class="notification-content">
-                <div style="font-weight: 800; color: var(--accent-cyan); margin-bottom: 2px;">
-                    ${typeof escapeHtml === 'function' ? escapeHtml(item.author) : item.author}
-                </div>
-                <div>${typeof escapeHtml === 'function' ? escapeHtml(item.textSummary) : item.textSummary}</div>
+                <div class="notif-author">${typeof escapeHtml === 'function' ? escapeHtml(item.author) : item.author}</div>
+                <div class="notif-text">${typeof escapeHtml === 'function' ? escapeHtml(item.textSummary) : item.textSummary}</div>
                 <div class="notification-time">${item.time || '방금 전'}</div>
             </div>
         </div>
@@ -17450,25 +17493,143 @@ function handleNotificationClick(notifId) {
     const item = localNotifications.find(n => String(n.id) === String(notifId));
     if (item) {
         item.isRead = true;
+        markNotificationAsRead(item.id);
         updateGlobalUnreadBadge();
         renderNotificationList();
 
         const dropdown = document.getElementById("notificationDropdown");
         if (dropdown) dropdown.classList.add("hidden");
 
-        if (item.targetPostId && typeof openChatRoomModal === "function") {
+        if (item.type === 'comment' || item.type === 'post') {
+            if (item.targetPostId && typeof openDetailModal === "function") {
+                openDetailModal(item.targetPostId);
+            }
+        } else if (item.targetPostId && typeof openChatRoomModal === "function") {
             openChatRoomModal(item.targetPostId);
         }
     }
 }
 
 function markAllNotificationsAsRead() {
-    localNotifications.forEach(n => n.isRead = true);
+    const set = getReadNotificationIds();
+    localNotifications.forEach(n => {
+        n.isRead = true;
+        set.add(String(n.id));
+    });
+    try {
+        const arr = Array.from(set).slice(-250);
+        localStorage.setItem('aquabuddy_read_notifs', JSON.stringify(arr));
+    } catch (e) {}
     updateGlobalUnreadBadge();
     renderNotificationList();
     if (typeof showToast === "function") {
         showToast("🔔 모든 알림을 읽음 처리했습니다.");
     }
+}
+
+// 🔄 사용자별 최신 알림 지능형 동기화 (내 글에 달린 댓글 + 나를 멘션한 대화)
+async function syncUserNotifications() {
+    if (!currentUser) {
+        localNotifications = [];
+        updateGlobalUnreadBadge();
+        renderNotificationList();
+        return;
+    }
+
+    const myNick = (currentUser.nickname || currentUser.name || '').trim();
+    const myEmail = (currentUser.email || '').trim().toLowerCase();
+
+    // 1. 내가 작성한 게시글 식별
+    const myPosts = (Array.isArray(posts) ? posts : []).filter(p => isMyPost(p));
+    const myPostIds = myPosts.map(p => String(p.id));
+
+    const notifs = [];
+    const readSet = getReadNotificationIds();
+
+    // 2. 내가 쓴 글에 달린 최신 댓글 Supabase DB 스캔
+    if (supabaseClient && myPostIds.length > 0) {
+        try {
+            const { data: commentsData } = await supabaseClient
+                .from('comments')
+                .select('*')
+                .in('post_id', myPostIds)
+                .order('created_at', { ascending: false })
+                .limit(50);
+
+            if (commentsData && commentsData.length > 0) {
+                commentsData.forEach(c => {
+                    const author = (c.author || c.user_name || '다이버').trim();
+                    const isSelf = (author === myNick || (myEmail && author.toLowerCase() === myEmail));
+                    if (!isSelf) {
+                        const targetPost = myPosts.find(p => String(p.id) === String(c.post_id));
+                        const postTitle = targetPost ? (targetPost.title || '게시글') : '게시글';
+                        const notifId = `comment_${c.id || (c.post_id + '_' + c.created_at)}`;
+                        notifs.push({
+                            id: notifId,
+                            type: 'comment',
+                            author: author,
+                            avatarIcon: 'fa-solid fa-comment-dots',
+                            textSummary: `${author}님이 '${postTitle}' 글에 댓글을 남겼습니다: "${(c.content || c.text || '').substring(0, 30)}"`,
+                            targetPostId: c.post_id,
+                            time: c.created_at ? (typeof formatTimeAgo === 'function' ? formatTimeAgo(c.created_at) : '방금 전') : '방금 전',
+                            timestamp: c.created_at ? new Date(c.created_at).getTime() : Date.now(),
+                            isRead: readSet.has(notifId)
+                        });
+                    }
+                });
+            }
+        } catch (e) {
+            console.warn('syncUserNotifications comments error:', e);
+        }
+    }
+
+    // 3. 대화방 @멘션 스캔 (예: @김동욱)
+    if (supabaseClient && myNick) {
+        try {
+            const { data: mentionsData } = await supabaseClient
+                .from('chats')
+                .select('*')
+                .like('message_text', `%@${myNick}%`)
+                .order('created_at', { ascending: false })
+                .limit(20);
+
+            if (mentionsData && mentionsData.length > 0) {
+                mentionsData.forEach(m => {
+                    const sender = (m.sender_name || m.author || '다이버').trim();
+                    if (sender !== myNick) {
+                        const notifId = `chat_mention_${m.id || m.created_at}`;
+                        notifs.push({
+                            id: notifId,
+                            type: 'chat_mention',
+                            author: sender,
+                            avatarIcon: 'fa-solid fa-at',
+                            textSummary: `${sender}님이 대화방에서 회원님을 멘션했습니다: "${(m.message_text || '').substring(0, 30)}"`,
+                            targetPostId: m.post_id,
+                            time: m.created_at ? (typeof formatTimeAgo === 'function' ? formatTimeAgo(m.created_at) : '방금 전') : '방금 전',
+                            timestamp: m.created_at ? new Date(m.created_at).getTime() : Date.now(),
+                            isRead: readSet.has(notifId)
+                        });
+                    }
+                });
+            }
+        } catch (e) {
+            console.warn('syncUserNotifications mentions error:', e);
+        }
+    }
+
+    // 4. 기존 실시간 수신 미읽음 알림 보존 병합
+    const existingUnread = localNotifications.filter(n => !n.isRead && !readSet.has(String(n.id)));
+    existingUnread.forEach(un => {
+        if (!notifs.some(n => String(n.id) === String(un.id))) {
+            notifs.push(un);
+        }
+    });
+
+    // 5. 최신순 정렬 및 반영
+    notifs.sort((a, b) => b.timestamp - a.timestamp);
+    localNotifications = notifs;
+    updateGlobalUnreadBadge();
+    renderNotificationList();
 }
 
 function showChatNoticeToast(author, text, postId) {
@@ -17481,7 +17642,8 @@ function showChatNoticeToast(author, text, postId) {
     const notifItem = {
         id: `notif-${Date.now()}-${Math.random().toString(36).substr(2,4)}`,
         author: author,
-        textSummary: `${author}님이 '${postTitle}' 대화방에 메시지를 남겼습니다: "${text.length > 18 ? text.substring(0,18) + '...' : text}"`,
+        avatarIcon: 'fa-solid fa-comments',
+        textSummary: `${author}님이 '${postTitle}' 대화방에 메시지를 남겼습니다: "${text.length > 25 ? text.substring(0,25) + '...' : text}"`,
         targetPostId: postId,
         time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
         timestamp: Date.now(),
@@ -17508,10 +17670,10 @@ function showChatNoticeToast(author, text, postId) {
     const toast = document.createElement("div");
     toast.id = "chatNoticeToast";
     toast.className = "chat-notice-toast";
-    const truncatedText = text.length > 15 ? text.substring(0, 15) + '...' : text;
+    const truncatedText = text.length > 20 ? text.substring(0, 20) + '...' : text;
     
     toast.innerHTML = `
-        <div style="background: rgba(0,242,254,0.15); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--accent-cyan);">
+        <div style="background: rgba(0,242,254,0.15); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--accent-cyan); flex-shrink: 0;">
             <i class="fa-solid fa-comments"></i>
         </div>
         <div>
@@ -17533,13 +17695,77 @@ function showChatNoticeToast(author, text, postId) {
             toast.style.transform = 'translateX(50px)';
             setTimeout(() => toast.remove(), 300);
         }
-    }, 3500);
+    }, 4000);
+}
+
+function showCommentNoticeToast(author, text, postId, postTitle) {
+    const truncatedText = text.length > 20 ? text.substring(0, 20) + '...' : text;
+    const toast = document.createElement("div");
+    toast.className = "chat-notice-toast";
+    toast.innerHTML = `
+        <div style="background: rgba(0,242,254,0.2); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--accent-cyan); flex-shrink: 0;">
+            <i class="fa-solid fa-comment-dots"></i>
+        </div>
+        <div>
+            <div style="font-weight: 800; font-size: 0.84rem; color: var(--accent-cyan);">${typeof escapeHtml === 'function' ? escapeHtml(author) : author} 님의 새 댓글</div>
+            <div style="font-size: 0.78rem; color: #eee; margin-top: 2px;">${typeof escapeHtml === 'function' ? escapeHtml(truncatedText) : truncatedText}</div>
+        </div>
+    `;
+
+    toast.onclick = () => {
+        toast.remove();
+        if (postId && typeof openDetailModal === "function") {
+            openDetailModal(postId);
+        }
+    };
+
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        if (toast && toast.parentElement) {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(50px)';
+            setTimeout(() => toast.remove(), 300);
+        }
+    }, 4000);
+}
+
+function showMentionToast(author, text, postId) {
+    const truncatedText = text.length > 20 ? text.substring(0, 20) + '...' : text;
+    const toast = document.createElement("div");
+    toast.className = "chat-notice-toast";
+    toast.innerHTML = `
+        <div style="background: rgba(251,191,36,0.2); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fbbf24; flex-shrink: 0;">
+            <i class="fa-solid fa-at"></i>
+        </div>
+        <div>
+            <div style="font-weight: 800; font-size: 0.84rem; color: #fbbf24;">${typeof escapeHtml === 'function' ? escapeHtml(author) : author} 님이 멘션함</div>
+            <div style="font-size: 0.78rem; color: #eee; margin-top: 2px;">${typeof escapeHtml === 'function' ? escapeHtml(truncatedText) : truncatedText}</div>
+        </div>
+    `;
+
+    toast.onclick = () => {
+        toast.remove();
+        if (postId && typeof openChatRoomModal === "function") {
+            openChatRoomModal(postId);
+        }
+    };
+
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        if (toast && toast.parentElement) {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(50px)';
+            setTimeout(() => toast.remove(), 300);
+        }
+    }, 4000);
 }
 
 // Close notification dropdown when clicking outside
 document.addEventListener('click', (e) => {
     const dropdown = document.getElementById("notificationDropdown");
-    const bellBtn = document.getElementById("bellBtn");
+    const bellBtn = document.getElementById("notificationBellBtn") || document.getElementById("bellBtn");
     if (dropdown && !dropdown.classList.contains("hidden")) {
         if (bellBtn && !dropdown.contains(e.target) && !bellBtn.contains(e.target)) {
             dropdown.classList.add("hidden");
@@ -18058,7 +18284,7 @@ function initGlobalRealtimeSubscriptions() {
     try {
         _globalRealtimeChannel = supabaseClient
             .channel('aqua_buddy_global_realtime')
-            // 1. chats (전역 알림 & 플로팅 토스트)
+            // 1. chats (전역 알림 & 플로팅 토스트 및 @멘션 타겟팅)
             .on('postgres_changes', {
                 event: 'INSERT',
                 schema: 'public',
@@ -18066,18 +18292,37 @@ function initGlobalRealtimeSubscriptions() {
             }, (payload) => {
                 if (!payload || !payload.new) return;
                 const m = payload.new;
-                const author = m.sender_name || m.author || m.user_name || '다이버';
+                const author = (m.sender_name || m.author || m.user_name || '다이버').trim();
                 const text = m.message_text || m.text || m.content || '';
                 const postId = m.post_id;
-                const myName = currentUser ? (currentUser.nickname || currentUser.name || currentUser.email) : '';
+                const myNick = currentUser ? (currentUser.nickname || currentUser.name || '').trim() : '';
 
-                if (author !== myName && postId) {
-                    if (typeof showChatNoticeToast === 'function') {
+                if (author !== myNick && postId) {
+                    const isMentioned = myNick && text.includes(`@${myNick}`);
+                    if (isMentioned) {
+                        const notifItem = {
+                            id: `chat_mention_${m.id || Date.now()}`,
+                            type: 'chat_mention',
+                            author: author,
+                            avatarIcon: 'fa-solid fa-at',
+                            textSummary: `${author}님이 대화방에서 회원님을 멘션했습니다: "${text.substring(0, 30)}"`,
+                            targetPostId: postId,
+                            time: '방금 전',
+                            timestamp: Date.now(),
+                            isRead: false
+                        };
+                        localNotifications.unshift(notifItem);
+                        updateGlobalUnreadBadge();
+                        playNotificationSound();
+                        if (typeof showMentionToast === 'function') {
+                            showMentionToast(author, text, postId);
+                        }
+                    } else if (typeof showChatNoticeToast === 'function') {
                         showChatNoticeToast(author, text, postId);
                     }
                 }
             })
-            // 2. comments (전역 알림)
+            // 2. comments (내 글에 달린 댓글 타겟 알림)
             .on('postgres_changes', {
                 event: 'INSERT',
                 schema: 'public',
@@ -18085,11 +18330,35 @@ function initGlobalRealtimeSubscriptions() {
             }, (payload) => {
                 if (!payload || !payload.new) return;
                 const c = payload.new;
-                const author = c.author || c.user_name || '다이버';
+                const author = (c.author || c.user_name || '다이버').trim();
                 const text = c.content || c.text || '';
-                const myName = currentUser ? (currentUser.nickname || currentUser.name || currentUser.email) : '';
-                if (author !== myName && typeof showToast === 'function') {
-                    showToast(`💬 새로운 댓글 등록: ${author} - "${text.substring(0, 15)}"`);
+                const myNick = currentUser ? (currentUser.nickname || currentUser.name || '').trim() : '';
+                const myEmail = currentUser ? (currentUser.email || '').trim().toLowerCase() : '';
+
+                if (author !== myNick && (!myEmail || author.toLowerCase() !== myEmail)) {
+                    const targetPost = Array.isArray(posts) ? posts.find(p => String(p.id) === String(c.post_id)) : null;
+                    if (targetPost && isMyPost(targetPost)) {
+                        const postTitle = targetPost.title || '게시글';
+                        const notifItem = {
+                            id: `comment_${c.id || Date.now()}`,
+                            type: 'comment',
+                            author: author,
+                            avatarIcon: 'fa-solid fa-comment-dots',
+                            textSummary: `${author}님이 '${postTitle}' 글에 댓글을 남겼습니다: "${text.substring(0, 30)}"`,
+                            targetPostId: targetPost.id,
+                            time: '방금 전',
+                            timestamp: Date.now(),
+                            isRead: false
+                        };
+                        localNotifications.unshift(notifItem);
+                        updateGlobalUnreadBadge();
+                        playNotificationSound();
+                        if (typeof showCommentNoticeToast === 'function') {
+                            showCommentNoticeToast(author, text, targetPost.id, postTitle);
+                        }
+                    } else if (typeof showToast === 'function') {
+                        showToast(`💬 새로운 댓글 등록: ${author} - "${text.substring(0, 15)}"`);
+                    }
                 }
             })
             // 3. chat_rooms (새 대화방 생성 알림)
