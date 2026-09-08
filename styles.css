@@ -2232,4 +2232,17 @@ button:active, .btn:active, .action-btn:active, .category-pill:active {
     transform: translateY(-2px);
 }
 
+#voiceRoomModalOverlay.is-open {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    display: flex !important;
+}
+
+#voiceRoomModalOverlay.is-open .modal-container {
+    opacity: 1 !important;
+    transform: translateY(0) scale(1) !important;
+    pointer-events: auto !important;
+}
+
+
 
