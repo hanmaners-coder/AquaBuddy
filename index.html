@@ -2610,13 +2610,50 @@
                 </div>
             </div>
 
+            <!-- 👑 6. 방장 퇴장 시 위임 / 방 종료 확인 내부 모달 (보이스룸 화면 내부 100% 즉시 표시) -->
+            <div id="voiceHostExitInnerOverlay" class="hidden" style="position: absolute; inset: 0; background: rgba(5, 10, 22, 0.94); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 999999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; border-radius: 24px;">
+                <div style="width: 100%; max-width: 440px; background: rgba(12, 20, 38, 0.98); border: 2px solid var(--accent-gold); border-radius: 20px; box-shadow: 0 16px 50px rgba(0, 0, 0, 0.9); padding: 22px; color: #fff; box-sizing: border-box;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; border-bottom: 1px solid rgba(255, 183, 3, 0.3); padding-bottom: 10px;">
+                        <h3 style="margin: 0; font-size: 1.1rem; font-weight: 900; color: var(--accent-gold); display: flex; align-items: center; gap: 8px;">
+                            👑 방장 권한 위임 후 퇴장
+                        </h3>
+                        <button type="button" onclick="closeVoiceHostExitInnerModal()" style="background: none; border: none; color: #94a3b8; font-size: 1.4rem; cursor: pointer; line-height: 1;">&times;</button>
+                    </div>
+                    <p style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.5; margin: 0 0 14px 0;">
+                        현재 방에 다른 참가자가 남아있습니다.<br>
+                        다른 분에게 <strong style="color: var(--accent-gold);">방장 권한을 위임</strong>하고 나가시면 보이스룸이 종료되지 않고 계속 유지됩니다!
+                    </p>
+
+                    <div style="margin-bottom: 16px;">
+                        <label for="voiceHostSuccessorSelectInner" style="display: block; font-size: 0.82rem; font-weight: 800; color: var(--accent-cyan); margin-bottom: 6px;">
+                            새로운 방장(주최자) 선택 *
+                        </label>
+                        <select id="voiceHostSuccessorSelectInner" style="width: 100%; padding: 11px 12px; background: rgba(15, 23, 42, 0.95); border: 1.5px solid var(--accent-gold); border-radius: 10px; color: #fff; font-size: 0.9rem; outline: none; box-sizing: border-box;">
+                            <!-- Injected dynamically -->
+                        </select>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <button type="button" onclick="executeHostDelegationAndExit()" class="btn" style="background: linear-gradient(135deg, #ffb703, #fb8500); color: #070e17; font-weight: 900; padding: 12px; border-radius: 12px; border: none; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 15px rgba(255, 183, 3, 0.4);">
+                            <i class="fa-solid fa-crown"></i> 방장 권한 위임하고 나가기
+                        </button>
+                        <button type="button" onclick="executeHostCloseRoomAndExit()" class="btn btn-secondary" style="background: rgba(255, 71, 87, 0.15); border: 1px solid #ff4757; color: #ff4757; font-weight: 800; padding: 10px; border-radius: 12px; cursor: pointer; font-size: 0.84rem; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                            <i class="fa-solid fa-ban"></i> 방 전체 종료하고 해산하기
+                        </button>
+                        <button type="button" onclick="closeVoiceHostExitInnerModal()" class="btn btn-secondary" style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); color: #94a3b8; padding: 9px; border-radius: 12px; cursor: pointer; font-size: 0.82rem;">
+                            취소 (방에 머무르기)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
  
      <!-- App Configuration & Main Logic Script -->
-     <script src="config.js?v=V1625_VOICEROOM_HOST_EXIT_MODAL_ZINDEX_FIX"></script>
-     <script src="app.js?v=V1625_VOICEROOM_HOST_EXIT_MODAL_ZINDEX_FIX"></script>
+     <script src="config.js?v=V1626_VOICEROOM_INNER_HOST_EXIT_MODAL_FIX"></script>
+     <script src="app.js?v=V1626_VOICEROOM_INNER_HOST_EXIT_MODAL_FIX"></script>
      <!-- Toast Notification Container -->
     <div id="toastContainer" class="toast-container"></div>
 

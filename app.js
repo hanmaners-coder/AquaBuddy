@@ -18692,13 +18692,24 @@ function closeVoiceRoomModal() {
         }
 
         // 2. 다른 참가자가 남아있다면 방장 권한 위임 모달 오픈
+        const innerOverlay = document.getElementById("voiceHostExitInnerOverlay");
+        const innerSelect = document.getElementById("voiceHostSuccessorSelectInner");
         const exitModal = document.getElementById("voiceHostExitModal");
         const selectEl = document.getElementById("voiceHostSuccessorSelect");
-        if (exitModal && selectEl) {
-            selectEl.innerHTML = otherCandidates.map(c => {
-                const safeName = typeof escapeHtml === 'function' ? escapeHtml(c.user_name) : c.user_name;
-                return `<option value="${safeName}">👤 ${safeName} (${c.role})</option>`;
-            }).join("");
+
+        const optionsHtml = otherCandidates.map(c => {
+            const safeName = typeof escapeHtml === 'function' ? escapeHtml(c.user_name) : c.user_name;
+            return `<option value="${safeName}">👤 ${safeName} (${c.role})</option>`;
+        }).join("");
+
+        if (innerSelect) innerSelect.innerHTML = optionsHtml;
+        if (selectEl) selectEl.innerHTML = optionsHtml;
+
+        if (innerOverlay) {
+            innerOverlay.classList.remove("hidden");
+            innerOverlay.style.setProperty("display", "flex", "important");
+            return;
+        } else if (exitModal) {
             exitModal.style.setProperty("z-index", "9999999", "important");
             openModal(exitModal);
             return;
@@ -18738,14 +18749,25 @@ function closeVoiceRoomModal() {
 }
 window.closeVoiceRoomModal = closeVoiceRoomModal;
 
+// 보이스룸 내부 방장 위임 모달 닫기
+function closeVoiceHostExitInnerModal() {
+    const overlay = document.getElementById("voiceHostExitInnerOverlay");
+    if (overlay) {
+        overlay.classList.add("hidden");
+        overlay.style.setProperty("display", "none", "important");
+    }
+}
+window.closeVoiceHostExitInnerModal = closeVoiceHostExitInnerModal;
+
 // 방장 권한 위임 후 퇴장 실행
 async function executeHostDelegationAndExit() {
-    const selectEl = document.getElementById("voiceHostSuccessorSelect");
+    const selectEl = document.getElementById("voiceHostSuccessorSelectInner") || document.getElementById("voiceHostSuccessorSelect");
     const newHostName = selectEl ? selectEl.value : "";
     if (!newHostName) {
         showToast("⚠️ 위임할 새 주최자(방장)를 선택해 주세요!");
         return;
     }
+    closeVoiceHostExitInnerModal();
     const exitModal = document.getElementById("voiceHostExitModal");
     if (exitModal) closeModal(exitModal);
 
@@ -18755,6 +18777,7 @@ window.executeHostDelegationAndExit = executeHostDelegationAndExit;
 
 // 방 전체 폭파/종료 실행
 async function executeHostCloseRoomAndExit() {
+    closeVoiceHostExitInnerModal();
     const exitModal = document.getElementById("voiceHostExitModal");
     if (exitModal) closeModal(exitModal);
 
@@ -18923,6 +18946,9 @@ async function delegateVoiceRoomHost(newHostName, shouldExitAfter = false) {
 window.delegateVoiceRoomHost = delegateVoiceRoomHost;
 
 function cleanupVoiceRoomSession() {
+    if (typeof closeVoiceHostExitInnerModal === 'function') {
+        closeVoiceHostExitInnerModal();
+    }
     cleanupAllWebRTC();
     isVoiceMicOn = false;
     currentVoiceRoom = null;
