@@ -12867,10 +12867,10 @@ function filterAndRender(resetPagination = true) {
     if (filterSec) filterSec.style.display = "block";
     if (postsSec) postsSec.style.display = "block";
 
-    // 🔴 Render Live Voice Room Top Banner Card if in Community view
+    // 🔴 Render Live Voice Room Top Banner Card if in Community view ('all' sub-filter)
     const liveVoiceContainer = document.getElementById("communityLiveVoiceContainer");
     if (liveVoiceContainer) {
-        if (activeCategory === "community" && activeCommunitySubFilter !== 'feed') {
+        if (activeCategory === "community" && activeCommunitySubFilter === 'all') {
             const activeVoiceRooms = (typeof posts !== 'undefined' && Array.isArray(posts)) ? posts.filter(p => {
                 const isVR = (p.is_voiceroom === true || p.post_type === 'voiceroom' || p.sports_type === 'voiceroom' || p.class_type === 'voiceroom' || p.category === 'voiceroom');
                 return (p.category === 'community' || p.category === 'voiceroom' || isVR) && isVR && p.status !== 'closed';
@@ -12906,7 +12906,7 @@ function filterAndRender(resetPagination = true) {
                                     👑
                                 </div>
                                 <span style="font-size: 0.82rem; font-weight: 800; color: #fff;">${typeof escapeHtml === 'function' ? escapeHtml(hostName) : hostName}</span>
-                                <span style="font-size: 0.75rem; color: #94a3b8; margin-left: 4px;">(발언석 ${spkCount}/5명)</span>
+                                <span style="font-size: 0.75rem; color: #94a3b8; margin-left: 4px;">(발언석 ${spkCount}/6명)</span>
                             </div>
                             <button type="button" class="btn" onclick="event.stopPropagation(); openVoiceRoomModal('${room.id}');" style="background: linear-gradient(135deg, #00f2fe, #4facfe); color: #070e17; font-weight: 900; font-size: 0.82rem; padding: 7px 16px; border-radius: 10px; border: none; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 3px 12px rgba(0, 242, 254, 0.35);">
                                 <span>입장하기</span> <i class="fa-solid fa-arrow-right"></i>
@@ -13009,9 +13009,11 @@ function filterAndRender(resetPagination = true) {
             if (isVR && post.status === 'closed') return false;
             if (cat !== "community" && !isVR) return false;
             if (typeof activeCommunitySubFilter !== 'undefined') {
-                if (activeCommunitySubFilter === "feed" && isVR) return false;
+                // 🌟 중복 노출 방지: 전체보기('all') 및 수다글('feed')에서는 하단 피드 그리드에 보이스룸 카드를 중복 렌더링하지 않음
+                // ('all'에서는 상단 라이브 보이스룸 배너가 독점 노출되어 중복 방지)
+                if (activeCommunitySubFilter !== "voiceroom" && isVR) return false;
+                // 'voiceroom' 탭에서는 보이스룸 카드만 노출
                 if (activeCommunitySubFilter === "voiceroom" && !isVR) return false;
-                // 'all' 필터에서는 상단 LIVE 배너와 하단 피드 모두에 자연스럽게 표시
             }
         } else if (activeCategory === "market") {
             if (cat !== "market") return false;
@@ -15314,18 +15316,56 @@ function deletePostWithPassword(postId) {
     performPostDeletion(postId);
 }
 
-function performPostDeletion(postId) {
-    const post = posts.find(p => String(p.id) === String(postId));
-    if (post && !isMyPost(post) && !isAdminAuthenticated) {
-        showToast("⛔ 본인이 작성한 글만 삭제할 수 있습니다.");
+async function performPostDeletion(postId) {
+    const postIdStr = String(postId);
+    const post = (typeof posts !== 'undefined' && Array.isArray(posts)) ? posts.find(p => String(p.id) === postIdStr) : null;
+    
+    // 보이스룸인 경우 주최자(방장) 권한도 삭제/종료 권한으로 인정
+    const isVR = post && (post.is_voiceroom === true || post.sports_type === 'voiceroom' || post.class_type === 'voiceroom' || post.category === 'voiceroom');
+    const isHost = isVR && typeof isVoiceRoomHost === 'function' && isVoiceRoomHost(post);
+    const canDelete = (post && typeof isMyPost === 'function' && isMyPost(post)) || isHost || (typeof isAdminAuthenticated !== 'undefined' && isAdminAuthenticated);
+
+    if (post && !canDelete) {
+        if (typeof showToast === 'function') showToast("⛔ 본인이 작성한 글(또는 주최 중인 보이스룸)만 삭제할 수 있습니다.");
         return;
     }
 
-    posts = posts.filter(p => String(p.id) !== String(postId));
-    myCreatedPostIds = myCreatedPostIds.filter(id => String(id) !== String(postId));
+    // 1. 메모리 및 로컬스토리지 즉시 제거
+    posts = posts.filter(p => String(p.id) !== postIdStr);
+    if (typeof myCreatedPostIds !== 'undefined' && Array.isArray(myCreatedPostIds)) {
+        myCreatedPostIds = myCreatedPostIds.filter(id => String(id) !== postIdStr);
+    }
+    if (typeof savePosts === 'function') savePosts();
+    if (typeof saveMyPosts === 'function') saveMyPosts();
 
-    savePosts();
-    saveMyPosts();
+    // 2. Supabase DB 영구 삭제 및 전역 실시간 브로드캐스트 전파
+    if (supabaseClient) {
+        try {
+            await supabaseClient.from('posts').delete().eq('id', postIdStr);
+            console.log("🗑️ Supabase 게시글 삭제 완료:", postIdStr);
+        } catch (e) {
+            console.warn("Supabase post delete error:", e);
+        }
+
+        // 모든 접속 기기(모바일, PC 등)에 실시간 삭제 브로드캐스트 전송
+        if (_globalRealtimeChannel) {
+            try {
+                _globalRealtimeChannel.send({
+                    type: 'broadcast',
+                    event: 'post_deleted',
+                    payload: { postId: postIdStr }
+                });
+            } catch(e) {}
+        }
+    }
+
+    // 3. 만약 보이스룸이었을 경우 방 종료 브로드캐스트도 발송
+    if (isVR && typeof broadcastVoiceEvent === 'function') {
+        broadcastVoiceEvent({
+            type: "room_closed",
+            room_id: postIdStr
+        });
+    }
 
     const detailM = document.getElementById("postDetailModal") || document.getElementById("detailModal");
     if (detailM) closeModal(detailM);
@@ -15994,8 +16034,12 @@ window.editPost = editPost;
 function openDeleteConfirmModal(postId) {
     if (!postId) return;
     const post = (typeof posts !== 'undefined' && Array.isArray(posts)) ? posts.find(p => String(p.id) === String(postId)) : null;
-    if (post && typeof isMyPost === 'function' && !isMyPost(post) && typeof isAdminAuthenticated !== 'undefined' && !isAdminAuthenticated) {
-        if (typeof showToast === 'function') showToast("⛔ 본인이 작성한 게시글만 삭제할 수 있습니다!");
+    const isVR = post && (post.is_voiceroom === true || post.sports_type === 'voiceroom' || post.class_type === 'voiceroom' || post.category === 'voiceroom');
+    const isHost = isVR && typeof isVoiceRoomHost === 'function' && isVoiceRoomHost(post);
+    const canDelete = (post && typeof isMyPost === 'function' && isMyPost(post)) || isHost || (typeof isAdminAuthenticated !== 'undefined' && isAdminAuthenticated);
+
+    if (post && !canDelete) {
+        if (typeof showToast === 'function') showToast("⛔ 본인이 작성한 게시글(또는 주최 중인 보이스룸)만 삭제할 수 있습니다!");
         return;
     }
     if (typeof pendingDeletePostId !== 'undefined') {
@@ -20280,6 +20324,25 @@ function initGlobalRealtimeSubscriptions() {
                 const dynamicOverlay = document.getElementById("dynamicDetailModalOverlay");
                 if (dynamicOverlay && typeof refreshCurrentDetailModal === 'function') {
                     refreshCurrentDetailModal(postIdStr);
+                }
+            })
+            // 0.1 WebSocket Broadcast (게시글 및 보이스룸 삭제 0.05초 전 기기 즉시 동기화)
+            .on('broadcast', { event: 'post_deleted' }, async (payload) => {
+                if (!payload || !payload.payload) return;
+                const delId = String(payload.payload.postId);
+                console.log("⚡ [INSTANT BROADCAST POST DELETED]", delId);
+                if (typeof posts !== 'undefined' && Array.isArray(posts)) {
+                    posts = posts.filter(p => String(p.id) !== delId);
+                }
+                if (typeof myCreatedPostIds !== 'undefined' && Array.isArray(myCreatedPostIds)) {
+                    myCreatedPostIds = myCreatedPostIds.filter(id => String(id) !== delId);
+                }
+                const detailM = document.getElementById("postDetailModal") || document.getElementById("detailModal");
+                if (detailM && typeof closeModal === 'function') closeModal(detailM);
+                const dynM = document.getElementById("dynamicDetailModalOverlay");
+                if (dynM) dynM.remove();
+                if (typeof filterAndRender === 'function') {
+                    filterAndRender();
                 }
             })
             // 6. posts (모집글 상태 변경, 참가 신청/승인/취소, 일정 완료 실시간 0.1초 동기화)
