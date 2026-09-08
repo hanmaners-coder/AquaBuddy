@@ -667,7 +667,7 @@
                      <i class="fa-solid fa-graduation-cap"></i> 강사 클래스
                  </a>
                  <a href="#" class="nav-item" id="navLinkCommunity" onclick="switchMainView('community'); return false;">
-                     <i class="fa-solid fa-comments"></i> 자유수다방
+                     <i class="fa-solid fa-comments"></i> 자유글 & 보이스룸
                  </a>
                  <a href="#" class="nav-item" id="navLinkMarket" onclick="switchMainView('market'); return false;">
                      <i class="fa-solid fa-tags"></i> 중고장터
@@ -746,7 +746,7 @@
                         <i class="fa-solid fa-mask-snorkel"></i> 스쿠버다이빙
                     </button>
                     <button class="tab-btn community-tab" data-category="community" onclick="filterByCategory('community'); return false;">
-                        <i class="fa-solid fa-comments"></i> 자유수다방
+                        <i class="fa-solid fa-comments"></i> 자유글 & 보이스룸
                     </button>
                     <button class="tab-btn market-tab" data-category="market" onclick="filterByCategory('market'); return false;">
                         <i class="fa-solid fa-tags"></i> 중고장터
@@ -824,13 +824,13 @@
                 <div class="community-sub-tabs hidden" id="communitySubFilterBar" style="display: none; gap: 8px; flex-wrap: wrap; margin-top: 10px; background: rgba(0, 242, 254, 0.08); padding: 10px; border-radius: 12px; border: 1px dashed var(--accent-cyan); justify-content: space-between; align-items: center;">
                     <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
                         <span style="font-size: 0.82rem; color: var(--accent-cyan); font-weight: 800; display: flex; align-items: center; gap: 4px; margin-right: 4px;">
-                            <i class="fa-solid fa-comments"></i> 수다방 모드:
+                            <i class="fa-solid fa-comments"></i> 보기 모드:
                         </span>
                         <button type="button" class="sub-tab-btn active" data-commsub="all" onclick="filterCommunitySub('all')">
                             🌐 전체보기
                         </button>
                         <button type="button" class="sub-tab-btn" data-commsub="feed" onclick="filterCommunitySub('feed')">
-                            💬 수다글만
+                            💬 자유글만
                         </button>
                         <button type="button" class="sub-tab-btn" data-commsub="voiceroom" onclick="filterCommunitySub('voiceroom')">
                             <span class="live-pulse-dot" style="display:inline-block; width:6px; height:6px; background:#ff4757; border-radius:50%; margin-right:4px;"></span>🎙️ LIVE 보이스룸
@@ -1614,11 +1614,11 @@
                  <button class="close-btn" id="closeCreateModalBtn">&times;</button>
              </div>
              <form id="createPostForm" onsubmit="interceptHostSubmit(event); return false;">
-                 <!-- 💬 일반 수다글 작성 vs 🎙️ LIVE 보이스룸 개설 세그먼트 토글 (자유수다방 전용) -->
+                 <!-- 💬 일반 자유글 작성 vs 🎙️ LIVE 보이스룸 개설 세그먼트 토글 (자유글 & 보이스룸 전용) -->
                  <div id="communityPostTypeToggleGroup" style="display: none; margin-bottom: 16px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(0, 242, 254, 0.25); border-radius: 14px; padding: 4px;">
                      <div style="display: flex; gap: 6px;">
                          <button type="button" id="commTypePostBtn" class="community-type-tab-btn active" onclick="switchCommunityCreateType('post')" style="flex: 1; padding: 10px 8px; border-radius: 10px; border: none; font-weight: 800; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                             💬 일반 수다글 작성
+                             💬 일반 자유글 작성
                          </button>
                          <button type="button" id="commTypeVoiceBtn" class="community-type-tab-btn" onclick="switchCommunityCreateType('voiceroom')" style="flex: 1; padding: 10px 8px; border-radius: 10px; border: none; font-weight: 800; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
                              <span class="live-pulse-dot" style="display:inline-block; width:7px; height:7px; background:#ff4757; border-radius:50%;"></span>
@@ -2652,8 +2652,8 @@
 
  
      <!-- App Configuration & Main Logic Script -->
-     <script src="config.js?v=V1627_VOICEROOM_STRICT_SINGLE_SLOT_PER_USER_FIX"></script>
-     <script src="app.js?v=V1627_VOICEROOM_STRICT_SINGLE_SLOT_PER_USER_FIX"></script>
+     <script src="config.js?v=V1628_RENAME_COMMUNITY_TO_FREE_POST_AND_VOICEROOM"></script>
+     <script src="app.js?v=V1628_RENAME_COMMUNITY_TO_FREE_POST_AND_VOICEROOM"></script>
      <!-- Toast Notification Container -->
     <div id="toastContainer" class="toast-container"></div>
 

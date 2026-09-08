@@ -909,7 +909,7 @@ function getCategoryNameKorean(catCode) {
         case "freediving": return "🤿 프리다이빙";
         case "scuba": return "🤿 스쿠버 다이빙";
         case "instructor": return "🎓 강사 클래스";
-        case "community": return "💬 자유 수다방";
+        case "community": return "💬 자유글 & 보이스룸";
         case "market": return "🛒 중고 다이빙 장비";
         case "buddy": return "👥 버디 모집";
         default: return catCode;
@@ -923,7 +923,7 @@ function updateCreateButtonText(catKey) {
     if (catKey === "instructor") {
         text = "강사 클래스 개설";
     } else if (catKey === "community") {
-        text = "자유수다 게시글 작성";
+        text = "자유글 / 보이스룸 작성";
     } else if (catKey === "market") {
         text = "중고 장비 매물 등록";
     } else if (["swimming", "openwater", "freediving", "scuba"].includes(catKey)) {
@@ -1080,7 +1080,7 @@ function switchMainView(viewName) {
         return;
     }
 
-    // 3. 📋 일반 게시판 피드 뷰 (홈 / 버디 / 강사 / 수다방 / 장터 / 내 활동기록 / 제휴)
+    // 3. 📋 일반 게시판 피드 뷰 (홈 / 버디 / 강사 / 자유글&보이스룸 / 장터 / 내 활동기록 / 제휴)
     document.body.classList.remove("tide-view-active", "category-view-tide");
     if (feedSec) { feedSec.style.display = "block"; feedSec.classList.remove("hidden"); feedSec.classList.add("view-transition-fade"); }
     if (tideSec) { tideSec.className = "offscreen-tab"; tideSec.style.display = ""; }
@@ -8113,7 +8113,7 @@ function getAdminCategoryBadge(catKey) {
         swimming: { name: '🏊‍♂️ 실내수영', color: '#4facfe', bg: 'rgba(79, 172, 254, 0.15)', border: 'rgba(79, 172, 254, 0.4)' },
         openwater: { name: '🌊 바다수영', color: '#00c6ff', bg: 'rgba(0, 198, 255, 0.15)', border: 'rgba(0, 198, 255, 0.4)' },
         instructor: { name: '🎓 강사 클래스', color: '#ffd700', bg: 'rgba(255, 215, 0, 0.15)', border: 'rgba(255, 215, 0, 0.4)' },
-        community: { name: '💬 자유수다방', color: '#ff758c', bg: 'rgba(255, 117, 140, 0.15)', border: 'rgba(255, 117, 140, 0.4)' },
+        community: { name: '💬 자유글 & 보이스룸', color: '#ff758c', bg: 'rgba(255, 117, 140, 0.15)', border: 'rgba(255, 117, 140, 0.4)' },
         market: { name: '🛒 중고장터', color: '#a18cd1', bg: 'rgba(161, 140, 209, 0.15)', border: 'rgba(161, 140, 209, 0.4)' },
         partnership: { name: '🤝 투어 & 제휴', color: '#f6d365', bg: 'rgba(246, 211, 101, 0.15)', border: 'rgba(246, 211, 101, 0.4)' },
         my_activity: { name: '📋 내 활동기록', color: '#667eea', bg: 'rgba(102, 126, 234, 0.15)', border: 'rgba(102, 126, 234, 0.4)' },
@@ -8789,7 +8789,7 @@ function getAdminCategoryBadge(catKey) {
         swimming: { name: '🏊‍♂️ 실내수영', color: '#4facfe', bg: 'rgba(79, 172, 254, 0.15)', border: 'rgba(79, 172, 254, 0.4)' },
         openwater: { name: '🌊 바다수영', color: '#00c6ff', bg: 'rgba(0, 198, 255, 0.15)', border: 'rgba(0, 198, 255, 0.4)' },
         instructor: { name: '🎓 강사 클래스', color: '#ffd700', bg: 'rgba(255, 215, 0, 0.15)', border: 'rgba(255, 215, 0, 0.4)' },
-        community: { name: '💬 자유수다방', color: '#ff758c', bg: 'rgba(255, 117, 140, 0.15)', border: 'rgba(255, 117, 140, 0.4)' },
+        community: { name: '💬 자유글 & 보이스룸', color: '#ff758c', bg: 'rgba(255, 117, 140, 0.15)', border: 'rgba(255, 117, 140, 0.4)' },
         market: { name: '🛒 중고장터', color: '#a18cd1', bg: 'rgba(161, 140, 209, 0.15)', border: 'rgba(161, 140, 209, 0.4)' },
         partnership: { name: '🤝 투어 & 제휴', color: '#f6d365', bg: 'rgba(246, 211, 101, 0.15)', border: 'rgba(246, 211, 101, 0.4)' },
         my_activity: { name: '📋 내 활동기록', color: '#667eea', bg: 'rgba(102, 126, 234, 0.15)', border: 'rgba(102, 126, 234, 0.4)' },
@@ -10096,7 +10096,7 @@ function interceptHostSubmit(e) {
     if (e && e.preventDefault) e.preventDefault();
     pendingHostSubmitEvent = e;
 
-    // 🎙️ 자유수다방에서 'LIVE 보이스룸 개설' 탭이 선택된 경우 보이스룸 생성으로 분기
+    // 🎙️ 자유글 & 보이스룸에서 'LIVE 보이스룸 개설' 탭이 선택된 경우 보이스룸 생성으로 분기
     const selCat = document.getElementById("postCategory") ? document.getElementById("postCategory").value : (typeof activeCategory !== 'undefined' ? activeCategory : '');
     if (selCat === "community" && typeof currentCommunityCreateType !== 'undefined' && currentCommunityCreateType === "voiceroom") {
         if (typeof handleCreateVoiceRoomFromModal === 'function') {
@@ -12504,7 +12504,7 @@ function switchCommunityCreateType(type) {
         if (descGroup) descGroup.style.display = "block";
         if (liabilityBox) liabilityBox.style.display = "flex";
         if (submitBtnText) submitBtnText.innerHTML = '등록하기';
-        if (modalTitle) modalTitle.textContent = "수다방 게시글 작성";
+        if (modalTitle) modalTitle.textContent = "자유글 작성";
     }
 }
 window.switchCommunityCreateType = switchCommunityCreateType;
@@ -12536,7 +12536,7 @@ function preselectModalCategory(cat, isEditing = false) {
     const buddyPillOptionsGroup = document.getElementById("buddyPillOptionsGroup");
     const marketGroupBuyContainer = document.getElementById("marketGroupBuyContainer");
 
-    // 자유수다방 전용 보이스룸 토글 및 필드 초기화
+    // 자유글 & 보이스룸 전용 보이스룸 토글 및 필드 초기화
     const commToggle = document.getElementById("communityPostTypeToggleGroup");
     const commVoiceFields = document.getElementById("commVoiceRoomFieldsContainer");
     if (commToggle) commToggle.style.display = "none";
@@ -12609,7 +12609,7 @@ function preselectModalCategory(cat, isEditing = false) {
             renderClassTypePills(curChannel);
         }
     } else if (cat === "community") {
-        if (modalFormTitle) modalFormTitle.textContent = isEditing ? "자유수다글 수정" : "수다방 게시글 작성";
+        if (modalFormTitle) modalFormTitle.textContent = isEditing ? "자유글 수정" : "자유글 작성";
         if (postCategoryGroup) postCategoryGroup.style.display = "none";
         if (instructorFields) instructorFields.style.display = "none";
         if (priceRow) priceRow.style.display = "none";
@@ -12627,16 +12627,16 @@ function preselectModalCategory(cat, isEditing = false) {
             if (typeof toggleCarpoolFields === "function") toggleCarpoolFields(false);
         }
 
-        // 🌟 자유수다방 신규 작성 시 일반 수다글 vs LIVE 보이스룸 개설 선택 세그먼트 활성화
+        // 🌟 자유글 & 보이스룸 신규 작성 시 일반 자유글 vs LIVE 보이스룸 개설 선택 세그먼트 활성화
         if (!isEditing && commToggle) {
             commToggle.style.display = "block";
             switchCommunityCreateType('post');
         }
 
-        if (imageUploadLabel) imageUploadLabel.innerHTML = `<i class="fa-solid fa-images"></i> 수다방 사진 등록 (최대 4장)`;
+        if (imageUploadLabel) imageUploadLabel.innerHTML = `<i class="fa-solid fa-images"></i> 사진 등록 (최대 4장)`;
         if (descLabel) descLabel.textContent = "내용 작성 *";
         if (document.getElementById("postDesc")) document.getElementById("postDesc").placeholder = "생각과 정보, 궁금증을 작성해주세요";
-        if (postCategorySelect) postCategorySelect.innerHTML = `<option value="community" selected>자유수다방 게시글</option>`;
+        if (postCategorySelect) postCategorySelect.innerHTML = `<option value="community" selected>자유글 & 보이스룸 게시글</option>`;
     } else if (cat === "market") {
         if (modalFormTitle) modalFormTitle.textContent = isEditing ? "중고 장비 수정" : "중고 장비 매물 등록";
         if (postCategoryGroup) postCategoryGroup.style.display = "none";
@@ -12897,7 +12897,7 @@ function filterAndRender(resetPagination = true) {
                                     🔴 LIVE
                                 </span>
                                 <span style="font-size: 0.78rem; color: #94a3b8; font-weight: bold;">
-                                    자유수다방 실시간 보이스룸
+                                    자유글 & 보이스룸 실시간 보이스룸
                                 </span>
                             </div>
                             <span style="font-size: 0.75rem; color: var(--accent-cyan); background: rgba(0, 242, 254, 0.1); padding: 3px 10px; border-radius: 12px; border: 1px solid rgba(0, 242, 254, 0.3); display: flex; align-items: center; gap: 5px;">
@@ -13179,9 +13179,9 @@ function renderGrid(filteredPosts) {
                 btnText = "중고 장비 매물 등록하기";
             } else if (cat === "community") {
                 icon = "fa-comments";
-                title = "자유수다방 첫 게시글의 주인공이 되어보세요!";
+                title = "자유글 & 보이스룸 첫 게시글의 주인공이 되어보세요!";
                 desc = "장비 추천, 다이빙 후기, 물때 질문 등 자유롭게 이야기를 나눠보세요.";
-                btnText = "자유수다 글 작성하기";
+                btnText = "자유글 작성하기";
             }
 
             const h3 = emptyState.querySelector("h3");
@@ -13517,15 +13517,15 @@ function renderDashboardBlocks() {
             </div>
         </div>
 
-        <!-- Block 3: 💬 자유수다방 핫이슈 -->
+        <!-- Block 3: 💬 자유글 & 보이스룸 핫이슈 -->
         <div class="dashboard-category-block">
             <div class="block-header">
                 <div class="block-header-title">
                     <i class="fa-solid fa-comments" style="color: var(--accent-cyan);"></i>
-                    <span>💬 실시간 자유수다방 핫이슈</span>
+                    <span>💬 실시간 자유글 & 보이스룸 핫이슈</span>
                 </div>
                 <button type="button" class="block-more-btn" onclick="filterByCategory('community')">
-                    자유수다방 바로가기 ➔
+                    자유글 & 보이스룸 바로가기 ➔
                 </button>
             </div>
             <div class="compact-post-table">
@@ -14295,7 +14295,7 @@ function renderDynamicDetailModal(post) {
                 </div>
             </div>
 
-            <!-- 3. 일정 & 지도 카카오 지오코딩 카드 (자유수다방 제외) -->
+            <!-- 3. 일정 & 지도 카카오 지오코딩 카드 (자유글 & 보이스룸 제외) -->
             ${!isCommunity ? `
             <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 14px; padding: 14px; margin-bottom: 16px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
@@ -14575,7 +14575,7 @@ function renderDynamicDetailModal(post) {
 
     document.body.appendChild(overlay);
 
-    // 카카오맵 지오코딩 정밀 연동 (자유수다방 제외)
+    // 카카오맵 지오코딩 정밀 연동 (자유글 & 보이스룸 제외)
     if (!isCommunity && locationText) {
         setTimeout(() => {
             const mapContainer = document.getElementById("detailModalMapBox");
@@ -15062,9 +15062,9 @@ function openDetailModal(postId) {
         mainInfoHtml = `
             <div class="detail-profile-card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                 <div>
-                    <h3><i class="fa-solid fa-user-circle" style="color: var(--accent-cyan);"></i> ${escapeHtml(post.nickname || post.userName || post.user_name || post.author || '다이버')} ${isHost ? '<span style="color: var(--accent-gold); font-size: 0.8rem;">(작성자 - 본인)</span>' : ''} (자유수다방)</h3>
+                    <h3><i class="fa-solid fa-user-circle" style="color: var(--accent-cyan);"></i> ${escapeHtml(post.nickname || post.userName || post.user_name || post.author || '다이버')} ${isHost ? '<span style="color: var(--accent-gold); font-size: 0.8rem;">(작성자 - 본인)</span>' : ''} (자유글 & 보이스룸)</h3>
                     <div class="detail-badge-list">
-                        <span class="detail-badge"><i class="fa-solid fa-certificate"></i> ${escapeHtml(post.userLicense || post.user_license || '자유수다 다이버')}</span>
+                        <span class="detail-badge"><i class="fa-solid fa-certificate"></i> ${escapeHtml(post.userLicense || post.user_license || '자유글 다이버')}</span>
                     </div>
                 </div>
                 ${isHost ? `
@@ -15185,7 +15185,7 @@ function openDetailModal(postId) {
             'equipment': '장비문의',
             'market': '중고장터',
             'instructor': '강사클래스',
-            'community': '자유수다방'
+            'community': '자유글 & 보이스룸'
         };
         const catNameStr = post.categoryName || categoryMapRef[post.category] || '버디모집';
         const statusTextStr = post.statusText || (post.status === 'completed' ? '일정 완료' : (post.status === 'in_progress' ? '일정 진행 중' : '모집 중'));
@@ -16620,7 +16620,7 @@ async function handleSavePost(e) {
     if (category === "freediving") categoryName = "프리다이빙";
     if (category === "scuba") categoryName = "스쿠버다이빙";
     if (category === "instructor") categoryName = "강사 클래스";
-    if (category === "community") categoryName = "자유수다방";
+    if (category === "community") categoryName = "자유글 & 보이스룸";
     if (category === "market") categoryName = "중고장터";
 
     const token = localStorage.getItem("aqua_buddy_user_token") || localStorage.getItem("access_token") || "guest_demo_token";
@@ -17633,7 +17633,7 @@ async function handleCreateVoiceRoomFromModal(e) {
         id: roomId,
         title: title,
         category: "community",
-        category_name: "자유수다방",
+        category_name: "자유글 & 보이스룸",
         sports_type: "voiceroom",
         class_type: "voiceroom",
         post_type: "voiceroom",
@@ -17659,7 +17659,7 @@ async function handleCreateVoiceRoomFromModal(e) {
             const dbPayload = {
                 title: newRoom.title,
                 category: "community",
-                category_name: "자유수다방",
+                category_name: "자유글 & 보이스룸",
                 sports_type: "voiceroom",
                 class_type: "voiceroom",
                 user_name: userNick,
@@ -17734,7 +17734,7 @@ async function handleCreateVoiceRoom(e) {
         id: roomId,
         title: title,
         category: "community",
-        category_name: "자유수다방",
+        category_name: "자유글 & 보이스룸",
         sports_type: "voiceroom",
         class_type: "voiceroom",
         post_type: "voiceroom",
@@ -17762,7 +17762,7 @@ async function handleCreateVoiceRoom(e) {
             const dbPayload = {
                 title: newRoom.title,
                 category: "community",
-                category_name: "자유수다방",
+                category_name: "자유글 & 보이스룸",
                 sports_type: "voiceroom",
                 class_type: "voiceroom",
                 user_name: userNick,
@@ -17806,7 +17806,7 @@ async function handleCreateVoiceRoom(e) {
     closeModal(document.getElementById("createVoiceRoomModal"));
     showToast(`🎙️ '${title}' 보이스룸이 개설되었습니다!`);
 
-    // 자유수다방 뷰로 자동 이동 후 방 즉시 입장
+    // 자유글 & 보이스룸 뷰로 자동 이동 후 방 즉시 입장
     switchMainView('community');
     setTimeout(function() {
         openVoiceRoomModal(newRoom.id);
@@ -18850,7 +18850,7 @@ async function executeHostCloseRoomAndExit() {
         }
     }
 
-    // 3. 상단 자유수다방 LIVE 배너 즉시 강제 제거
+    // 3. 상단 자유글 & 보이스룸 LIVE 배너 즉시 강제 제거
     const liveContainer = document.getElementById("communityLiveVoiceContainer");
     if (liveContainer) {
         liveContainer.innerHTML = "";
