@@ -6991,6 +6991,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     loadPosts();
     loadMyPosts();
     loadInquiries();
+    if (typeof initGlobalRealtimeSubscriptions === 'function') {
+        initGlobalRealtimeSubscriptions();
+    }
     initEventListeners();
     switchMainView('all');
     if (typeof OCEAN_WEATHER_DATA !== "undefined" && OCEAN_WEATHER_DATA.length > 0) {
@@ -11284,6 +11287,12 @@ async function loadPosts() {
             posts = [];
         } else {
             posts = (data || []).map(p => {
+                const isVR = Boolean(p.is_voiceroom === true || p.sports_type === 'voiceroom' || p.class_type === 'voiceroom' || p.post_type === 'voiceroom' || p.category === 'voiceroom');
+                // 🛑 종료된 보이스룸은 메모리 posts 배열에 전혀 적재하지 않음
+                if (isVR && p.status === 'closed') {
+                    return null;
+                }
+
                 const timeVal = p.created_at || p.createdAt || p.time || (p.date ? p.date : new Date().toISOString());
                 let mappedRealName = (p.real_name || p.realName || "").trim();
                 if (!mappedRealName && p.category === 'instructor') {
@@ -11298,8 +11307,6 @@ async function loadPosts() {
 
                 const finalGender = p.gender || p.author_gender || (matchedUser ? matchedUser.gender : '') || 'private';
                 const finalAgeGroup = p.age_group || p.author_age_group || p.ageGroup || (matchedUser ? matchedUser.ageGroup : '') || 'private';
-
-                const isVR = Boolean(p.is_voiceroom === true || p.sports_type === 'voiceroom' || p.class_type === 'voiceroom' || p.post_type === 'voiceroom' || p.category === 'voiceroom');
 
                 return {
                     ...p,
@@ -11320,7 +11327,7 @@ async function loadPosts() {
                     created_at: timeVal,
                     userLiked: isPostLikedByMe(p)
                 };
-            });
+            }).filter(Boolean);
             localStorage.setItem("aqua_buddy_posts_v27", JSON.stringify(posts));
         }
     } catch (e) {
@@ -17664,17 +17671,19 @@ async function handleCreateVoiceRoomFromModal(e) {
             const { data, error } = await supabaseClient.from('posts').insert([dbPayload]).select();
             if (!error && data && data.length > 0) {
                 newRoom.id = data[0].id;
-                posts[0].id = data[0].id;
+                const pIdx = posts.findIndex(p => p.id === roomId);
+                if (pIdx !== -1) posts[pIdx].id = data[0].id;
                 console.log("✨ Supabase 보이스룸 생성 성공:", data[0].id);
 
-                try {
-                    const globalChannel = supabaseClient.channel('aqua_buddy_global_realtime');
-                    globalChannel.send({
-                        type: 'broadcast',
-                        event: 'post_updated',
-                        payload: { postId: data[0].id, postData: newRoom }
-                    });
-                } catch(bcErr) {}
+                if (_globalRealtimeChannel) {
+                    try {
+                        _globalRealtimeChannel.send({
+                            type: 'broadcast',
+                            event: 'post_updated',
+                            payload: { postId: data[0].id, postData: newRoom }
+                        });
+                    } catch(bcErr) {}
+                }
             } else if (error) {
                 console.error("보이스룸 Supabase 저장 에러:", error);
             }
@@ -17765,19 +17774,21 @@ async function handleCreateVoiceRoom(e) {
             const { data, error } = await supabaseClient.from('posts').insert([dbPayload]).select();
             if (!error && data && data.length > 0) {
                 newRoom.id = data[0].id;
-                posts[0].id = data[0].id;
+                const pIdx = posts.findIndex(p => p.id === roomId);
+                if (pIdx !== -1) posts[pIdx].id = data[0].id;
                 console.log("✨ Supabase 보이스룸 생성 성공:", data[0].id);
 
                 // 실시간 전역 브로드캐스트로 모바일 등 모든 접속 기기에 0.05초 즉시 동기화
-                try {
-                    const globalChannel = supabaseClient.channel('aqua_buddy_global_realtime');
-                    globalChannel.send({
-                        type: 'broadcast',
-                        event: 'post_updated',
-                        payload: { postId: data[0].id, postData: newRoom }
-                    });
-                } catch(bcErr) {
-                    console.warn("글 전역 브로드캐스트 참고:", bcErr);
+                if (_globalRealtimeChannel) {
+                    try {
+                        _globalRealtimeChannel.send({
+                            type: 'broadcast',
+                            event: 'post_updated',
+                            payload: { postId: data[0].id, postData: newRoom }
+                        });
+                    } catch(bcErr) {
+                        console.warn("글 전역 브로드캐스트 참고:", bcErr);
+                    }
                 }
             } else if (error) {
                 console.error("보이스룸 Supabase 저장 에러:", error);
@@ -17841,8 +17852,20 @@ function openVoiceRoomModal(roomId) {
     if (!room) {
         room = posts.find(p => String(p.post_id || p.uuid || '').trim() === roomIdStr);
     }
-    if (!room) {
-        showToast("⚠️ 보이스룸을 찾을 수 없습니다.");
+    if (!room || room.status === 'closed') {
+        showToast("⚠️ 이미 종료되었거나 존재하지 않는 보이스룸입니다.");
+        const liveContainer = document.getElementById("communityLiveVoiceContainer");
+        if (liveContainer) {
+            const hasOtherActiveVR = (typeof posts !== 'undefined' && Array.isArray(posts)) ? posts.some(p => {
+                const isVR = (p.is_voiceroom === true || p.post_type === 'voiceroom' || p.sports_type === 'voiceroom' || p.class_type === 'voiceroom' || p.category === 'voiceroom');
+                return isVR && p.status !== 'closed' && String(p.id).trim() !== roomIdStr;
+            }) : false;
+            if (!hasOtherActiveVR) {
+                liveContainer.innerHTML = "";
+                liveContainer.style.display = "none";
+            }
+        }
+        if (typeof filterAndRender === 'function') filterAndRender();
         return;
     }
 
@@ -18613,43 +18636,59 @@ async function executeHostDelegationAndExit() {
 window.executeHostDelegationAndExit = executeHostDelegationAndExit;
 
 // 방 전체 폭파/종료 실행
-function executeHostCloseRoomAndExit() {
+async function executeHostCloseRoomAndExit() {
     const exitModal = document.getElementById("voiceHostExitModal");
     if (exitModal) closeModal(exitModal);
 
-    const closingRoomId = currentVoiceRoom ? currentVoiceRoom.id : null;
+    const closingRoomId = currentVoiceRoom ? String(currentVoiceRoom.id) : null;
 
-    // 1. 방 상태 closed로 변경
+    // 1. 현재 방의 참여자들에게 보이스룸 종료 브로드캐스트 (방 안에 있는 게스트들 모달 자동 퇴장 유도)
+    if (closingRoomId) {
+        broadcastVoiceEvent({
+            type: "room_closed",
+            room_id: closingRoomId
+        });
+    }
+
+    // 2. posts 메모리 배열에서 보이스룸 완전 삭제 및 로컬 스토리지 즉시 동기화
     if (currentVoiceRoom) {
         currentVoiceRoom.status = "closed";
     }
-
-    // 2. posts 메모리 배열 상태 즉시 closed 갱신
     if (closingRoomId && typeof posts !== 'undefined' && Array.isArray(posts)) {
-        const targetP = posts.find(p => String(p.id) === String(closingRoomId));
-        if (targetP) {
-            targetP.status = "closed";
+        posts = posts.filter(p => String(p.id) !== closingRoomId && String(p.id) !== ('vr_' + closingRoomId) && !(p.uuid && String(p.uuid) === closingRoomId));
+        if (typeof savePosts === 'function') {
+            savePosts();
+        } else {
+            try { localStorage.setItem("aqua_buddy_posts_v27", JSON.stringify(posts)); } catch(e) {}
         }
     }
 
-    // 3. 현재 방의 참여자들에게 보이스룸 종료 브로드캐스트
-    broadcastVoiceEvent({
-        type: "room_closed",
-        room_id: closingRoomId
-    });
+    // 3. 상단 자유수다방 LIVE 배너 즉시 강제 제거
+    const liveContainer = document.getElementById("communityLiveVoiceContainer");
+    if (liveContainer) {
+        liveContainer.innerHTML = "";
+        liveContainer.style.display = "none";
+    }
 
-    // 4. Supabase DB에 영구 closed 저장 및 전역 실시간 갱신 전파
+    // 4. Supabase DB에서 보이스룸 완전 삭제 (DELETE) + 전역 실시간 post_deleted 브로드캐스트
     if (supabaseClient && closingRoomId) {
-        supabaseClient.from('posts').update({ status: 'closed' }).eq('id', closingRoomId).then(() => {
-            console.log("보이스룸 DB 종료 처리 완료");
-        });
+        try {
+            await supabaseClient.from('posts').delete().eq('id', closingRoomId);
+            console.log("✨ Supabase 보이스룸 DB 영구 삭제 완료:", closingRoomId);
+        } catch(e) {
+            console.warn("보이스룸 DB 삭제 시도 중 참고:", e);
+            try {
+                await supabaseClient.from('posts').update({ status: 'closed' }).eq('id', closingRoomId);
+            } catch(e2) {}
+        }
 
+        // 전역 실시간 채널에 post_deleted 브로드캐스트 (모든 기기에서 0.05초 만에 배너/목록 즉시 제거)
         if (_globalRealtimeChannel) {
             try {
                 _globalRealtimeChannel.send({
                     type: 'broadcast',
-                    event: 'post_updated',
-                    payload: { postId: closingRoomId, postData: { status: 'closed' } }
+                    event: 'post_deleted',
+                    payload: { postId: closingRoomId }
                 });
             } catch(e) {}
         }
@@ -18792,6 +18831,19 @@ function cleanupVoiceRoomSession() {
 
     const drawer = document.getElementById("voiceAudienceDrawer");
     if (drawer) drawer.classList.add("hidden");
+
+    // 상단 LIVE 보이스룸 배너 검사 및 즉시 비우기
+    const liveContainer = document.getElementById("communityLiveVoiceContainer");
+    if (liveContainer) {
+        const hasActiveVR = (typeof posts !== 'undefined' && Array.isArray(posts)) ? posts.some(p => {
+            const isVR = (p.is_voiceroom === true || p.post_type === 'voiceroom' || p.sports_type === 'voiceroom' || p.class_type === 'voiceroom' || p.category === 'voiceroom');
+            return isVR && p.status !== 'closed';
+        }) : false;
+        if (!hasActiveVR) {
+            liveContainer.innerHTML = "";
+            liveContainer.style.display = "none";
+        }
+    }
 
     if (typeof renderDashboardBlocks === "function") {
         renderDashboardBlocks();
@@ -20404,9 +20456,13 @@ function initGlobalRealtimeSubscriptions() {
                 console.log("⚡ [INSTANT BROADCAST POST UPDATED]", postIdStr, pInfo);
 
                 if (pInfo.postData && typeof posts !== 'undefined' && Array.isArray(posts)) {
-                    const idx = posts.findIndex(p => String(p.id) === postIdStr);
-                    if (idx !== -1) {
-                        posts[idx] = { ...posts[idx], ...pInfo.postData };
+                    if (pInfo.postData.status === 'closed') {
+                        posts = posts.filter(p => String(p.id) !== postIdStr && String(p.id) !== ('vr_' + postIdStr));
+                    } else {
+                        const idx = posts.findIndex(p => String(p.id) === postIdStr);
+                        if (idx !== -1) {
+                            posts[idx] = { ...posts[idx], ...pInfo.postData };
+                        }
                     }
                 }
 
@@ -20427,11 +20483,25 @@ function initGlobalRealtimeSubscriptions() {
                 const delId = String(payload.payload.postId);
                 console.log("⚡ [INSTANT BROADCAST POST DELETED]", delId);
                 if (typeof posts !== 'undefined' && Array.isArray(posts)) {
-                    posts = posts.filter(p => String(p.id) !== delId);
+                    posts = posts.filter(p => String(p.id) !== delId && String(p.id) !== ('vr_' + delId) && !(p.uuid && String(p.uuid) === delId));
                 }
                 if (typeof myCreatedPostIds !== 'undefined' && Array.isArray(myCreatedPostIds)) {
                     myCreatedPostIds = myCreatedPostIds.filter(id => String(id) !== delId);
                 }
+
+                // 상단 LIVE 보이스룸 배너 실시간 즉시 갱신/숨김
+                const liveContainer = document.getElementById("communityLiveVoiceContainer");
+                if (liveContainer) {
+                    const hasOtherActiveVR = (typeof posts !== 'undefined' && Array.isArray(posts)) ? posts.some(p => {
+                        const isVR = (p.is_voiceroom === true || p.post_type === 'voiceroom' || p.sports_type === 'voiceroom' || p.class_type === 'voiceroom' || p.category === 'voiceroom');
+                        return isVR && p.status !== 'closed';
+                    }) : false;
+                    if (!hasOtherActiveVR) {
+                        liveContainer.innerHTML = "";
+                        liveContainer.style.display = "none";
+                    }
+                }
+
                 const detailM = document.getElementById("postDetailModal") || document.getElementById("detailModal");
                 if (detailM && typeof closeModal === 'function') closeModal(detailM);
                 const dynM = document.getElementById("dynamicDetailModalOverlay");
@@ -20510,6 +20580,13 @@ function initGlobalRealtimeSubscriptions() {
 }
 window.initGlobalRealtimeSubscriptions = initGlobalRealtimeSubscriptions;
 
+// ⚡ 전역 실시간 채널 즉시 자동 구독 시작
+try {
+    if (typeof initGlobalRealtimeSubscriptions === 'function') {
+        initGlobalRealtimeSubscriptions();
+    }
+} catch(e) {}
+
 
 // ==================================================
 // 📱 Mobile Visibility & Auto-Reconnect Event Handlers
@@ -20521,6 +20598,9 @@ document.addEventListener('visibilitychange', () => {
             try {
                 supabaseClient.realtime.connect();
             } catch(e) {}
+        }
+        if (!_globalRealtimeChannel && typeof initGlobalRealtimeSubscriptions === 'function') {
+            initGlobalRealtimeSubscriptions();
         }
         if (typeof _commentRealtimePostId !== 'undefined' && _commentRealtimePostId) {
             if (typeof fetchAndRenderComments === 'function') {
