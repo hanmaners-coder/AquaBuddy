@@ -17658,7 +17658,23 @@ function renderVoiceRoomStage() {
     const container = document.getElementById("voiceStageSlotsContainer");
     if (!container) return;
 
-    const myName = (currentUser && (currentUser.nickname || currentUser.name)) ? (currentUser.nickname || currentUser.name) : "";
+    const myNick = (currentUser && currentUser.nickname) ? currentUser.nickname : "";
+    const myDisplayName = (currentUser && currentUser.name) ? currentUser.name : "";
+    const myRealName = (currentUser && currentUser.real_name) ? currentUser.real_name : "";
+    const myEmail = (currentUser && currentUser.email) ? currentUser.email : "";
+    const myName = myNick || myDisplayName || myRealName || "다이버";
+
+    const hostName = currentVoiceRoom ? (currentVoiceRoom.user_name || currentVoiceRoom.author) : "";
+    const amIHost = Boolean(
+        currentVoiceRoom && (
+            (myNick && (currentVoiceRoom.user_name === myNick || currentVoiceRoom.author === myNick)) ||
+            (myDisplayName && (currentVoiceRoom.user_name === myDisplayName || currentVoiceRoom.author === myDisplayName)) ||
+            (myRealName && (currentVoiceRoom.real_name === myRealName || currentVoiceRoom.user_name === myRealName)) ||
+            (myEmail && (currentVoiceRoom.author === myEmail || currentVoiceRoom.user_email === myEmail)) ||
+            (currentVoiceRoom.user_name === myName)
+        )
+    );
+
     let html = "";
     let activeSpeakers = 0;
 
@@ -17669,11 +17685,16 @@ function renderVoiceRoomStage() {
         if (slot) {
             activeSpeakers++;
             const isHost = slot.is_host === true || i === 0;
-            const isMe = (slot.user_name === myName);
+            const isMe = (
+                slot.user_name === myName ||
+                (myNick && slot.user_name === myNick) ||
+                (myDisplayName && slot.user_name === myDisplayName) ||
+                (amIHost && i === 0)
+            );
             const isSpeaking = (slot.is_speaking && !slot.is_muted);
 
             html += `
-                <div class="voice-slot-card ${isHost ? 'host-slot' : ''}">
+                <div class="voice-slot-card ${isHost ? 'host-slot' : ''} ${isMe ? 'my-slot' : ''}" ${isMe ? 'onclick="toggleVoiceMic()" style="cursor: pointer;" title="내 마이크 켜기/끄기 (터치)"' : ''}>
                     <div style="position: relative; margin-bottom: 6px;">
                         <div class="${isSpeaking ? 'speaking-wave' : ''}" style="width: 44px; height: 44px; border-radius: 50%; background: ${isHost ? 'rgba(255, 183, 3, 0.2)' : 'rgba(0, 242, 254, 0.2)'}; border: 2px solid ${isSpeaking ? '#00e676' : (isHost ? 'var(--accent-gold)' : 'var(--accent-cyan)')}; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: ${isHost ? 'var(--accent-gold)' : 'var(--accent-cyan)'}; transition: all 0.2s ease;">
                             ${isHost ? '👑' : '🤿'}
@@ -17683,10 +17704,10 @@ function renderVoiceRoomStage() {
                         </span>
                     </div>
                     <span style="font-size: 0.76rem; font-weight: 900; color: ${isMe ? 'var(--accent-cyan)' : '#fff'}; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.2;">
-                        ${typeof escapeHtml === 'function' ? escapeHtml(slot.user_name) : slot.user_name}
+                        ${typeof escapeHtml === 'function' ? escapeHtml(slot.user_name) : slot.user_name} ${isMe ? '(나)' : ''}
                     </span>
                     <span style="font-size: 0.68rem; color: ${isSpeaking ? '#00e676' : (slot.is_muted ? '#ff4757' : '#94a3b8')}; margin-top: 2px;">
-                        ${isSpeaking ? '🎙️ 말하는 중' : (slot.is_muted ? '음소거' : (isHost ? '주최자' : '발언자'))}
+                        ${isSpeaking ? '🎙️ 말하는 중' : (slot.is_muted ? (isMe ? '🔇 마이크 켜기' : '음소거') : (isHost ? '주최자' : '발언자'))}
                     </span>
                 </div>
             `;
@@ -17869,33 +17890,65 @@ window.inviteAudienceToMic = inviteAudienceToMic;
 
 // 10. 마이크 토글 및 WebRTC 실시간 음성 송수신
 async function toggleVoiceMic() {
-    if (!currentUser || !currentUser.name) return;
-    const myName = (currentUser.nickname || currentUser.name || "다이버");
+    if (!currentUser || !currentUser.name) {
+        showToast("🔑 로그인 후 마이크를 사용하실 수 있습니다.");
+        return;
+    }
+    const myNick = (currentUser && currentUser.nickname) ? currentUser.nickname : "";
+    const myDisplayName = (currentUser && currentUser.name) ? currentUser.name : "";
+    const myRealName = (currentUser && currentUser.real_name) ? currentUser.real_name : "";
+    const myEmail = (currentUser && currentUser.email) ? currentUser.email : "";
+    const myName = myNick || myDisplayName || myRealName || "다이버";
+
+    const hostName = currentVoiceRoom ? (currentVoiceRoom.user_name || currentVoiceRoom.author) : "";
+    const amIHost = Boolean(
+        currentVoiceRoom && (
+            (myNick && (currentVoiceRoom.user_name === myNick || currentVoiceRoom.author === myNick)) ||
+            (myDisplayName && (currentVoiceRoom.user_name === myDisplayName || currentVoiceRoom.author === myDisplayName)) ||
+            (myRealName && (currentVoiceRoom.real_name === myRealName || currentVoiceRoom.user_name === myRealName)) ||
+            (myEmail && (currentVoiceRoom.author === myEmail || currentVoiceRoom.user_email === myEmail)) ||
+            (currentVoiceRoom.user_name === myName)
+        )
+    );
 
     // 내가 5개 발언석 중 하나에 앉아있는지 검사
-    const mySlotIdx = voiceRoomSpeakers.findIndex(s => s && s.user_name === myName);
+    let mySlotIdx = voiceRoomSpeakers.findIndex(s => s && (
+        s.user_name === myName ||
+        (myNick && s.user_name === myNick) ||
+        (myDisplayName && s.user_name === myDisplayName) ||
+        (amIHost && s.is_host)
+    ));
+
+    // 주최자인데 슬롯 0이 비어있거나 매칭되지 않았다면 즉시 0번석 배정
+    if (mySlotIdx === -1 && amIHost) {
+        mySlotIdx = 0;
+        voiceRoomSpeakers[0] = { user_name: myName, is_host: true, is_muted: true, is_speaking: false };
+    }
+
     if (mySlotIdx === -1) {
-        showToast("⚠️ 발언석에 착석한 후 마이크를 켤 수 있습니다. 빈자리를 눌러 신청해보세요!");
+        showToast("⚠️ 발언석에 착석한 후 마이크를 켤 수 있습니다. 빈자리(+ 신청하기)를 눌러보세요!");
         return;
     }
 
     isVoiceMicOn = !isVoiceMicOn;
 
     if (isVoiceMicOn) {
-        // 실제 디바이스 마이크 오디오 스트림 획득
+        // 실제 디바이스 마이크 오디오 스트림 획득 (에코 캔슬링/노이즈 억제/하울링 방지 단일채널 최적화)
         try {
             if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                 localAudioStream = await navigator.mediaDevices.getUserMedia({
                     audio: {
-                        echoCancellation: true,
-                        noiseSuppression: true,
-                        autoGainControl: true
+                        echoCancellation: { ideal: true },
+                        noiseSuppression: { ideal: true },
+                        autoGainControl: { ideal: true },
+                        channelCount: { ideal: 1 },
+                        sampleRate: { ideal: 48000 }
                     },
                     video: false
                 });
 
                 // 실시간 목소리 감지(VAD) 활성화: 실제로 말할 때만 초록색 오로라 발동
-                setupVoiceActivityDetector(localAudioStream, myName);
+                setupVoiceActivityDetector(localAudioStream, myName, mySlotIdx, amIHost);
 
                 // 현재 방에 있는 모든 참가자(발언자 & 청취자)와 WebRTC 오디오 스트림 연결
                 negotiateAudioWithAllPeers();
@@ -17926,6 +17979,9 @@ async function toggleVoiceMic() {
     broadcastVoiceEvent({
         type: "mic_toggle",
         user_name: myName,
+        slot_idx: mySlotIdx,
+        slot_num: mySlotIdx + 1,
+        is_host: amIHost || (mySlotIdx === 0),
         is_muted: !isVoiceMicOn,
         is_speaking: false
     });
@@ -17933,14 +17989,15 @@ async function toggleVoiceMic() {
     if (isVoiceMicOn) {
         broadcastVoiceEvent({
             type: "speaker_audio_ready",
-            speaker: myName
+            speaker: myName,
+            slot_idx: mySlotIdx
         });
     }
 }
 window.toggleVoiceMic = toggleVoiceMic;
 
 // 실시간 음성 볼륨 감지 (Voice Activity Detection - VAD)
-function setupVoiceActivityDetector(stream, myName) {
+function setupVoiceActivityDetector(stream, myName, mySlotIdx, amIHost) {
     try {
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         if (!AudioCtx) return;
@@ -17975,14 +18032,23 @@ function setupVoiceActivityDetector(stream, myName) {
 
             if (isSpeakingNow !== wasSpeaking) {
                 wasSpeaking = isSpeakingNow;
-                const mySlot = voiceRoomSpeakers.find(s => s && s.user_name === myName);
+                let mySlot = (mySlotIdx !== undefined && voiceRoomSpeakers[mySlotIdx]) ? voiceRoomSpeakers[mySlotIdx] : null;
+                if (!mySlot) {
+                    mySlot = voiceRoomSpeakers.find(s => s && s.user_name === myName);
+                }
                 if (mySlot) {
                     mySlot.is_speaking = isSpeakingNow;
+                    if (isSpeakingNow) {
+                        mySlot.is_muted = false;
+                    }
                     renderVoiceRoomStage();
                 }
                 broadcastVoiceEvent({
                     type: "speaking_state",
                     user_name: myName,
+                    slot_idx: mySlotIdx !== undefined ? mySlotIdx : 0,
+                    slot_num: (mySlotIdx !== undefined ? mySlotIdx : 0) + 1,
+                    is_host: Boolean(amIHost || mySlotIdx === 0),
                     is_speaking: isSpeakingNow
                 });
             }
@@ -18140,8 +18206,19 @@ async function handleWebRTCCandidate(from, candidate) {
     }
 }
 
-// 수신된 상대방의 음성 오디오를 실제로 재생
+// 수신된 상대방의 음성 오디오를 실제로 재생 (본인 음성 로컬 루프백 원천 차단하여 에코/하울링 방지)
 function attachRemoteAudio(peerName, stream) {
+    const myNick = (currentUser && currentUser.nickname) ? currentUser.nickname : "";
+    const myDisplayName = (currentUser && currentUser.name) ? currentUser.name : "";
+    const myRealName = (currentUser && currentUser.real_name) ? currentUser.real_name : "";
+    const myEmail = (currentUser && currentUser.email) ? currentUser.email : "";
+    const myName = myNick || myDisplayName || myRealName || "다이버";
+
+    // 본인의 스트림이거나 미지정 피어인 경우 로컬 스피커 재생 원천 차단 (하울링 방지)
+    if (!peerName || peerName === myName || (myNick && peerName === myNick) || (myDisplayName && peerName === myDisplayName) || (myEmail && peerName === myEmail)) {
+        return;
+    }
+
     const safePeerId = (peerName || "peer").replace(/[^a-zA-Z0-9_-]/g, "_");
     const audioId = `remote_audio_${safePeerId}`;
     let audioEl = document.getElementById(audioId);
@@ -18491,14 +18568,32 @@ function syncVoiceRoomRealtimePresence(state) {
         currentVoiceRoom.listeners_count = voiceRoomAudience.length;
     }
 
-    // 내가 마이크가 켜진 발언자이고 새로운 청취자/참가자가 들어왔다면 WebRTC Offer 전송
-    const myName = (currentUser && (currentUser.nickname || currentUser.name)) ? (currentUser.nickname || currentUser.name) : "";
+    // 내가 마이크가 켜진 발언자이고 새로운 청취자/참가자가 들어왔다면 WebRTC Offer 전송 및 현재 마이크 상태 동기화
+    const myNick = (currentUser && currentUser.nickname) ? currentUser.nickname : "";
+    const myDisplayName = (currentUser && currentUser.name) ? currentUser.name : "";
+    const myRealName = (currentUser && currentUser.real_name) ? currentUser.real_name : "";
+    const myName = myNick || myDisplayName || myRealName || "다이버";
+
     if (isVoiceMicOn && localAudioStream) {
         voiceRoomAudience.forEach(aud => {
             if (aud.user_name !== myName && !rtcPeerConnections[aud.user_name]) {
                 createWebRTCOfferToPeer(aud.user_name);
             }
         });
+
+        // 새로 들어온 청취자/참가자에게 내 발언석의 마이크 켜짐 상태 브로드캐스트
+        const mySlotIdx = voiceRoomSpeakers.findIndex(s => s && (s.user_name === myName || (s.user_name === myNick && myNick)));
+        if (mySlotIdx !== -1) {
+            broadcastVoiceEvent({
+                type: "mic_toggle",
+                user_name: myName,
+                slot_idx: mySlotIdx,
+                slot_num: mySlotIdx + 1,
+                is_host: (mySlotIdx === 0),
+                is_muted: false,
+                is_speaking: voiceRoomSpeakers[mySlotIdx].is_speaking
+            });
+        }
     }
 }
 
@@ -18545,22 +18640,47 @@ function handleVoiceRoomBroadcastEvent(event) {
             renderVoiceRoomStage();
             renderAudienceList();
 
-            const myName = (currentUser && (currentUser.nickname || currentUser.name)) ? (currentUser.nickname || currentUser.name) : "";
-            if (event.applicant === myName) {
+            const myNick = (currentUser && currentUser.nickname) ? currentUser.nickname : "";
+            const myDisplayName = (currentUser && currentUser.name) ? currentUser.name : "";
+            const myRealName = (currentUser && currentUser.real_name) ? currentUser.real_name : "";
+            const myName = myNick || myDisplayName || myRealName || "다이버";
+            if (event.applicant === myName || (myNick && event.applicant === myNick) || (myDisplayName && event.applicant === myDisplayName)) {
                 showToast(`🎉 주최자가 ${event.slotNum}번 발언석 참가를 승인했습니다! 마이크를 켤 수 있습니다.`);
             }
         }
     } else if (event.type === "mic_toggle") {
-        const slot = voiceRoomSpeakers.find(s => s && s.user_name === event.user_name);
+        let slot = null;
+        if (event.slot_idx !== undefined && event.slot_idx >= 0 && event.slot_idx < 5 && voiceRoomSpeakers[event.slot_idx]) {
+            slot = voiceRoomSpeakers[event.slot_idx];
+        } else if (event.is_host && voiceRoomSpeakers[0]) {
+            slot = voiceRoomSpeakers[0];
+        } else {
+            slot = voiceRoomSpeakers.find(s => s && (s.user_name === event.user_name || (event.applicant && s.user_name === event.applicant)));
+        }
+
         if (slot) {
-            slot.is_muted = event.is_muted;
-            slot.is_speaking = event.is_speaking;
+            slot.is_muted = Boolean(event.is_muted);
+            slot.is_speaking = Boolean(event.is_speaking);
+            if (event.user_name && (!slot.user_name || slot.user_name === "주최자")) {
+                slot.user_name = event.user_name;
+            }
             renderVoiceRoomStage();
         }
     } else if (event.type === "speaking_state") {
-        const slot = voiceRoomSpeakers.find(s => s && s.user_name === event.user_name);
+        let slot = null;
+        if (event.slot_idx !== undefined && event.slot_idx >= 0 && event.slot_idx < 5 && voiceRoomSpeakers[event.slot_idx]) {
+            slot = voiceRoomSpeakers[event.slot_idx];
+        } else if (event.is_host && voiceRoomSpeakers[0]) {
+            slot = voiceRoomSpeakers[0];
+        } else {
+            slot = voiceRoomSpeakers.find(s => s && (s.user_name === event.user_name || (event.applicant && s.user_name === event.applicant)));
+        }
+
         if (slot) {
             slot.is_speaking = Boolean(event.is_speaking);
+            if (event.is_speaking) {
+                slot.is_muted = false; // 말하는 중일 때는 음소거 해제 상태로 확실히 표시
+            }
             renderVoiceRoomStage();
         }
     } else if (event.type === "speaker_audio_ready") {

@@ -2479,24 +2479,24 @@
             </div>
 
             <!-- 4. 하단 컨트롤 바 & 채팅 입력 -->
-            <div style="padding: 10px 14px; background: rgba(7, 14, 28, 0.95); border-top: 1px solid rgba(0, 242, 254, 0.2); display: flex; align-items: center; gap: 8px; flex-shrink: 0; box-sizing: border-box;">
+            <div style="padding: 10px 12px; background: rgba(7, 14, 28, 0.95); border-top: 1px solid rgba(0, 242, 254, 0.2); display: flex; align-items: center; gap: 8px; flex-shrink: 0; box-sizing: border-box; width: 100%; max-width: 100%;">
+                <!-- 마이크 Mute / Unmute 토글 버튼 (가장 왼쪽 고정 & 터치 최적화: 모바일에서 밀림 방지) -->
+                <button type="button" id="voiceMicToggleBtn" onclick="toggleVoiceMic()" style="background: rgba(255, 71, 87, 0.15); border: 1.5px solid #ff4757; color: #ff4757; border-radius: 12px; min-width: 44px; width: 44px; height: 42px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; cursor: pointer; flex-shrink: 0;" title="마이크 켜기/끄기">
+                    <i class="fa-solid fa-microphone-slash"></i>
+                </button>
+
                 <!-- 청취자 서랍 토글 버튼 -->
-                <button type="button" onclick="toggleAudienceDrawer()" style="background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(0, 242, 254, 0.35); color: var(--accent-cyan); font-size: 0.78rem; font-weight: 800; padding: 9px 12px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
+                <button type="button" onclick="toggleAudienceDrawer()" style="background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(0, 242, 254, 0.35); color: var(--accent-cyan); font-size: 0.78rem; font-weight: 800; padding: 9px 10px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
                     <i class="fa-solid fa-users"></i> <span id="voiceBottomAudienceCount">0</span>명
                 </button>
 
-                <!-- 채팅 입력 폼 -->
-                <form onsubmit="handleSendVoiceRoomChat(event)" style="flex: 1; display: flex; gap: 6px; margin: 0;">
-                    <input type="text" id="voiceRoomChatInput" placeholder="실시간 채팅에 참여해보세요..." style="flex: 1; background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 12px; padding: 9px 14px; color: #fff; font-size: 0.86rem; outline: none;">
-                    <button type="submit" style="background: var(--accent-cyan); color: #070e17; border: none; border-radius: 12px; padding: 9px 14px; font-weight: 800; cursor: pointer; font-size: 0.86rem; flex-shrink: 0;">
+                <!-- 채팅 입력 폼 (min-width: 0 으로 모바일 가로폭 오버플로우 원천 방지) -->
+                <form onsubmit="handleSendVoiceRoomChat(event)" style="flex: 1; min-width: 0; display: flex; gap: 6px; margin: 0;">
+                    <input type="text" id="voiceRoomChatInput" placeholder="채팅 참여..." style="flex: 1; min-width: 0; background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 12px; padding: 9px 12px; color: #fff; font-size: 0.84rem; outline: none;">
+                    <button type="submit" style="background: var(--accent-cyan); color: #070e17; border: none; border-radius: 12px; padding: 9px 12px; font-weight: 800; cursor: pointer; font-size: 0.86rem; flex-shrink: 0;">
                         <i class="fa-solid fa-paper-plane"></i>
                     </button>
                 </form>
-
-                <!-- 마이크 Mute / Unmute 토글 버튼 -->
-                <button type="button" id="voiceMicToggleBtn" onclick="toggleVoiceMic()" style="background: rgba(255, 71, 87, 0.15); border: 1.5px solid #ff4757; color: #ff4757; border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 1rem; cursor: pointer; flex-shrink: 0;" title="마이크 켜기">
-                    <i class="fa-solid fa-microphone-slash"></i>
-                </button>
             </div>
 
             <!-- 5. 👥 청취자 목록 서랍 (주최자 마이크 초대 기능 탑재) -->
@@ -2519,8 +2519,8 @@
 
  
      <!-- App Configuration & Main Logic Script -->
-     <script src="config.js?v=V1613_VOICEROOM_MOBILE_REALTIME_SYNC_FIX"></script>
-     <script src="app.js?v=V1613_VOICEROOM_MOBILE_REALTIME_SYNC_FIX"></script>
+     <script src="config.js?v=V1614_MIC_LAYOUT_SLOT_SYNC_ECHO_FIX"></script>
+     <script src="app.js?v=V1614_MIC_LAYOUT_SLOT_SYNC_ECHO_FIX"></script>
      <!-- Toast Notification Container -->
     <div id="toastContainer" class="toast-container"></div>
 
