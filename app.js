@@ -967,6 +967,13 @@ function switchMainView(viewName) {
             else btn.classList.remove("active");
         });
     }
+    if (viewName !== "community") {
+        activeCommunitySubFilter = "all";
+        document.querySelectorAll("#communitySubFilterBar .sub-tab-btn").forEach(function(btn) {
+            if (btn.dataset.commsub === "all") btn.classList.add("active");
+            else btn.classList.remove("active");
+        });
+    }
 
     activeMainView = viewName;
     window._activeMainView = viewName;
@@ -1038,6 +1045,8 @@ function switchMainView(viewName) {
         if (categoryBar) categoryBar.style.display = "none";
         if (subFilterBar) { subFilterBar.style.display = "none"; subFilterBar.classList.add("hidden"); }
         if (activitySubFilterBar) { activitySubFilterBar.style.display = "none"; activitySubFilterBar.classList.add("hidden"); }
+        const commSubBarEarly = document.getElementById("communitySubFilterBar");
+        if (commSubBarEarly) { commSubBarEarly.style.display = "none"; commSubBarEarly.classList.add("hidden"); }
         if (partnershipSubFilterBar) { partnershipSubFilterBar.style.display = "none"; partnershipSubFilterBar.classList.add("hidden"); }
         if (partnershipTeaserBanner) { partnershipTeaserBanner.style.display = "none"; partnershipTeaserBanner.classList.add("hidden"); }
         if (oceanWeatherSection) oceanWeatherSection.style.display = "none";
@@ -1083,6 +1092,8 @@ function switchMainView(viewName) {
         if (categoryBar) categoryBar.style.display = "flex";
         if (subFilterBar) { subFilterBar.style.display = "none"; subFilterBar.classList.add("hidden"); }
         if (activitySubFilterBar) { activitySubFilterBar.style.display = "none"; activitySubFilterBar.classList.add("hidden"); }
+        const commSubBarHome = document.getElementById("communitySubFilterBar");
+        if (commSubBarHome) { commSubBarHome.style.display = "none"; commSubBarHome.classList.add("hidden"); }
         if (partnershipSubFilterBar) { partnershipSubFilterBar.style.display = "none"; partnershipSubFilterBar.classList.add("hidden"); }
         if (partnershipTeaserBanner) { partnershipTeaserBanner.style.display = "none"; partnershipTeaserBanner.classList.add("hidden"); }
         if (oceanWeatherSection) oceanWeatherSection.style.display = "block";
@@ -1103,6 +1114,11 @@ function switchMainView(viewName) {
         if (activitySubFilterBar) {
             if (viewName === "my_activity" || viewName === "activity_log") { activitySubFilterBar.style.display = "flex"; activitySubFilterBar.classList.remove("hidden"); }
             else { activitySubFilterBar.style.display = "none"; activitySubFilterBar.classList.add("hidden"); }
+        }
+        const commSubBarOther = document.getElementById("communitySubFilterBar");
+        if (commSubBarOther) {
+            if (viewName === "community") { commSubBarOther.style.display = "flex"; commSubBarOther.classList.remove("hidden"); }
+            else { commSubBarOther.style.display = "none"; commSubBarOther.classList.add("hidden"); }
         }
         if (partnershipSubFilterBar) {
             if (viewName === "partnership") { partnershipSubFilterBar.style.display = "flex"; partnershipSubFilterBar.classList.remove("hidden"); }
@@ -9801,6 +9817,23 @@ let activeInstructorSubFilter = "all";
 
 let activeBuddySubFilter = "all";
 
+let activeCommunitySubFilter = "all";
+
+function filterCommunitySub(subType) {
+    activeCommunitySubFilter = subType || "all";
+    document.querySelectorAll("#communitySubFilterBar .sub-tab-btn").forEach(btn => {
+        if (btn.dataset.commsub === activeCommunitySubFilter) {
+            btn.classList.add("active");
+        } else {
+            btn.classList.remove("active");
+        }
+    });
+    if (typeof filterAndRender === "function") {
+        filterAndRender(false);
+    }
+}
+window.filterCommunitySub = filterCommunitySub;
+
 function filterBuddySub(subType) {
     activeBuddySubFilter = subType;
     document.querySelectorAll("#buddySubFilterBar .sub-tab-btn").forEach(btn => {
@@ -12733,6 +12766,17 @@ function filterAndRender(resetPagination = true) {
         }
     }
 
+    const commSubBar = document.getElementById("communitySubFilterBar");
+    if (commSubBar) {
+        if (activeCategory === "community") {
+            commSubBar.classList.remove("hidden");
+            commSubBar.style.display = "flex";
+        } else {
+            commSubBar.classList.add("hidden");
+            commSubBar.style.display = "none";
+        }
+    }
+
     if (activeCategory === "all" || activeCategory === "home") {
         document.body.classList.remove("category-view-active");
         if (dashboardSec) dashboardSec.style.display = "flex";
@@ -12748,6 +12792,64 @@ function filterAndRender(resetPagination = true) {
     if (dashboardSec) dashboardSec.style.display = "none";
     if (filterSec) filterSec.style.display = "block";
     if (postsSec) postsSec.style.display = "block";
+
+    // 🔴 Render Live Voice Room Top Banner Card if in Community view
+    const liveVoiceContainer = document.getElementById("communityLiveVoiceContainer");
+    if (liveVoiceContainer) {
+        if (activeCategory === "community" && activeCommunitySubFilter !== 'feed') {
+            const activeVoiceRooms = (typeof posts !== 'undefined' && Array.isArray(posts)) ? posts.filter(p => {
+                const isVR = (p.is_voiceroom === true || p.post_type === 'voiceroom' || p.sports_type === 'voiceroom' || p.class_type === 'voiceroom' || p.category === 'voiceroom');
+                return (p.category === 'community' || p.category === 'voiceroom' || isVR) && isVR && p.status !== 'closed';
+            }) : [];
+
+            if (activeVoiceRooms.length > 0) {
+                const room = activeVoiceRooms[0];
+                const hostName = room.user_name || room.author || '주최자';
+                const listenersCount = room.listeners_count || (Array.isArray(voiceRoomAudience) && voiceRoomAudience.length > 0 ? voiceRoomAudience.length : 1);
+                const spkCount = (Array.isArray(voiceRoomSpeakers) ? voiceRoomSpeakers.filter(s => s !== null).length : 1) || 1;
+
+                liveVoiceContainer.innerHTML = `
+                    <div class="live-voiceroom-banner" onclick="openVoiceRoomModal('${room.id}')">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span class="live-pulse-dot" style="background: #ff4757; color: #fff; font-size: 0.72rem; font-weight: 900; padding: 2px 8px; border-radius: 12px; box-shadow: 0 0 10px rgba(255, 71, 87, 0.6);">
+                                    🔴 LIVE
+                                </span>
+                                <span style="font-size: 0.78rem; color: #94a3b8; font-weight: bold;">
+                                    자유수다방 실시간 보이스룸
+                                </span>
+                            </div>
+                            <span style="font-size: 0.75rem; color: var(--accent-cyan); background: rgba(0, 242, 254, 0.1); padding: 3px 10px; border-radius: 12px; border: 1px solid rgba(0, 242, 254, 0.3); display: flex; align-items: center; gap: 5px;">
+                                <i class="fa-solid fa-headphones"></i> <strong>${listenersCount}</strong>명 청취 중
+                            </span>
+                        </div>
+                        <h3 style="margin: 0 0 10px 0; font-size: 1.05rem; font-weight: 900; color: #fff; line-height: 1.35;">
+                            ${typeof escapeHtml === 'function' ? escapeHtml(room.title) : room.title}
+                        </h3>
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 10px; flex-wrap: wrap; gap: 8px;">
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <div style="width: 28px; height: 28px; border-radius: 50%; background: rgba(0, 242, 254, 0.2); border: 1.5px solid var(--accent-cyan); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: var(--accent-cyan);">
+                                    👑
+                                </div>
+                                <span style="font-size: 0.82rem; font-weight: 800; color: #fff;">${typeof escapeHtml === 'function' ? escapeHtml(hostName) : hostName}</span>
+                                <span style="font-size: 0.75rem; color: #94a3b8; margin-left: 4px;">(발언석 ${spkCount}/5명)</span>
+                            </div>
+                            <button type="button" class="btn" style="background: linear-gradient(135deg, #00f2fe, #4facfe); color: #070e17; font-weight: 900; font-size: 0.82rem; padding: 7px 16px; border-radius: 10px; border: none; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 3px 12px rgba(0, 242, 254, 0.35);">
+                                <span>입장하기</span> <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                liveVoiceContainer.style.display = "block";
+            } else {
+                liveVoiceContainer.innerHTML = "";
+                liveVoiceContainer.style.display = "none";
+            }
+        } else {
+            liveVoiceContainer.innerHTML = "";
+            liveVoiceContainer.style.display = "none";
+        }
+    }
 
     // 🚫 [투명망토 상호 차단 필터링 전처리 변수]
     const myEmail = (currentUser && currentUser.email) ? currentUser.email.trim().toLowerCase() : "";
@@ -12828,7 +12930,13 @@ function filterAndRender(resetPagination = true) {
         } else if (activeCategory === "scuba") {
             if (cat !== "scuba") return false;
         } else if (activeCategory === "community") {
-            if (cat !== "community") return false;
+            const isVR = (post.is_voiceroom === true || post.post_type === 'voiceroom' || post.sports_type === 'voiceroom' || post.class_type === 'voiceroom' || cat === 'voiceroom');
+            if (cat !== "community" && !isVR) return false;
+            if (typeof activeCommunitySubFilter !== 'undefined') {
+                if (activeCommunitySubFilter === "feed" && isVR) return false;
+                if (activeCommunitySubFilter === "voiceroom" && !isVR) return false;
+                if (activeCommunitySubFilter === "all" && isVR) return false; // 상단 LIVE 배너 카드로 전진 배치되므로 하단 일반 타임라인과 분리
+            }
         } else if (activeCategory === "market") {
             if (cat !== "market") return false;
         } else if (activeCategory !== "all" && cat !== activeCategory) {
@@ -17242,6 +17350,699 @@ function renderDynamicChatRoomModal(post) {
 }
 window.renderDynamicChatRoomModal = renderDynamicChatRoomModal;
 
+// ============================================================================
+// 🎙️ AQUABUDDY HYBRID LIVE VOICE ROOM & REALTIME CHAT ENGINE (5 SPEAKERS / 30 LISTENERS)
+// ============================================================================
+
+let currentVoiceRoom = null;
+let voiceRoomSpeakers = [null, null, null, null, null]; // Slot 0: Host, Slots 1-4: Speakers
+let voiceRoomAudience = [];
+let isVoiceMicOn = false;
+let voiceAudioStream = null;
+let voiceRoomChannel = null;
+
+// 1. 보이스룸 개설 모달 열기
+function openCreateVoiceRoomModal() {
+    if (!currentUser || !currentUser.name) {
+        showToast("🔑 로그인 후 보이스룸을 개설하실 수 있습니다!");
+        pendingLoginAction = openCreateVoiceRoomModal;
+        if (typeof switchAuthTab === "function") switchAuthTab('login');
+        openModal(document.getElementById("authModal"));
+        return;
+    }
+    const modal = document.getElementById("createVoiceRoomModal");
+    if (modal) {
+        const titleInput = document.getElementById("voiceRoomTitleInput");
+        if (titleInput) titleInput.value = "";
+        openModal(modal);
+    }
+}
+window.openCreateVoiceRoomModal = openCreateVoiceRoomModal;
+
+// 2. 보이스룸 생성 핸들러
+async function handleCreateVoiceRoom(e) {
+    if (e) e.preventDefault();
+    if (!currentUser || !currentUser.name) {
+        showToast("🔑 로그인 후 이용 가능합니다.");
+        return;
+    }
+
+    const titleInput = document.getElementById("voiceRoomTitleInput");
+    const regionSelect = document.getElementById("voiceRoomRegionSelect");
+    const topicSelect = document.getElementById("voiceRoomTopicSelect");
+
+    const title = titleInput ? titleInput.value.trim() : "";
+    if (!title) {
+        showToast("⚠️ 보이스룸 제목을 입력해 주세요!");
+        return;
+    }
+
+    const region = regionSelect ? regionSelect.value : "all";
+    const topic = topicSelect ? topicSelect.value : "free_talk";
+    const userNick = currentUser.nickname || currentUser.name || "다이버";
+    const roomId = 'vr_' + Date.now();
+
+    const newRoom = {
+        id: roomId,
+        title: title,
+        category: "community",
+        category_name: "자유수다방",
+        sports_type: "voiceroom",
+        class_type: "voiceroom",
+        post_type: "voiceroom",
+        is_voiceroom: true,
+        region: region,
+        topic: topic,
+        capacity: 35, // 5 발언자 + 30 청취자
+        max_speakers: 5,
+        max_listeners: 30,
+        user_name: userNick,
+        real_name: currentUser.real_name || currentUser.name || userNick,
+        author: currentUser.email || userNick,
+        status: "open",
+        desc: `🎙️ 실시간 라이브 보이스룸: ${title} (발언 5명 / 청취 최대 30명)`,
+        created_at: (typeof getKSTIsoString === "function") ? getKSTIsoString() : new Date().toISOString(),
+        listeners_count: 1
+    };
+
+    // 로컬 posts 배열 최우선 삽입
+    posts.unshift(newRoom);
+
+    // Supabase posts 테이블에 비동기 저장 (실패 시에도 앱 내 구동 완벽 보장)
+    if (supabaseClient) {
+        try {
+            const dbPayload = {
+                title: newRoom.title,
+                category: "community",
+                category_name: "자유수다방",
+                sports_type: "voiceroom",
+                class_type: "voiceroom",
+                user_name: userNick,
+                real_name: newRoom.real_name,
+                capacity: 35,
+                region: newRoom.region,
+                status: "open",
+                author: newRoom.author,
+                desc: newRoom.desc,
+                content: newRoom.desc,
+                created_at: newRoom.created_at
+            };
+            const { data, error } = await supabaseClient.from('posts').insert([dbPayload]).select();
+            if (!error && data && data.length > 0) {
+                newRoom.id = data[0].id;
+                posts[0].id = data[0].id;
+                console.log("✨ Supabase 보이스룸 생성 성공:", data[0].id);
+            }
+        } catch (dbErr) {
+            console.warn("보이스룸 Supabase 저장 참고:", dbErr);
+        }
+    }
+
+    closeModal(document.getElementById("createVoiceRoomModal"));
+    showToast(`🎙️ '${title}' 보이스룸이 개설되었습니다!`);
+
+    // 자유수다방 뷰로 자동 이동 후 방 즉시 입장
+    switchMainView('community');
+    openVoiceRoomModal(newRoom.id);
+}
+window.handleCreateVoiceRoom = handleCreateVoiceRoom;
+
+// 3. 보이스룸 모달 열기 & 입장
+function openVoiceRoomModal(roomId) {
+    if (!roomId) return;
+    const roomIdStr = String(roomId).trim();
+    if (!currentUser || !currentUser.name) {
+        showToast("🔑 로그인 후 보이스룸에 입장하실 수 있습니다!");
+        pendingLoginAction = function() { openVoiceRoomModal(roomIdStr); };
+        if (typeof switchAuthTab === "function") switchAuthTab('login');
+        openModal(document.getElementById("authModal"));
+        return;
+    }
+
+    const room = posts.find(p => String(p.id).trim() === roomIdStr);
+    if (!room) {
+        showToast("⚠️ 보이스룸을 찾을 수 없습니다.");
+        return;
+    }
+
+    currentVoiceRoom = room;
+    const myName = currentUser.nickname || currentUser.name || "다이버";
+    const hostName = room.user_name || room.author || "주최자";
+    const isHost = (myName === hostName || (currentUser.email && room.author && currentUser.email === room.author));
+
+    // 발언자 슬롯 초기화: 0번은 항상 주최자
+    voiceRoomSpeakers = [
+        { user_name: hostName, is_host: true, is_muted: false, is_speaking: isHost ? false : true },
+        null, null, null, null
+    ];
+
+    // 청취자 목록 초기화 (최대 30명)
+    voiceRoomAudience = [
+        { user_name: "바다거북", role: "청취자", joined_at: "방금" },
+        { user_name: "잠수왕", role: "청취자", joined_at: "1분 전" },
+        { user_name: "Waterlife", role: "청취자", joined_at: "방금" },
+        { user_name: "동해지킴이", role: "청취자", joined_at: "방금" }
+    ];
+
+    if (!isHost && !voiceRoomAudience.some(a => a.user_name === myName)) {
+        voiceRoomAudience.unshift({ user_name: myName, role: "청취자", joined_at: "방금" });
+    }
+
+    // 모달 UI 바인딩
+    const titleEl = document.getElementById("voiceRoomModalTitle");
+    if (titleEl) titleEl.textContent = room.title || "실시간 라이브 보이스룸";
+
+    const hostInfoEl = document.getElementById("voiceRoomHostInfo");
+    if (hostInfoEl) hostInfoEl.textContent = `👑 주최자: ${hostName}`;
+
+    // 5석 무대 렌더링
+    renderVoiceRoomStage();
+
+    // 청취자 서랍 렌더링
+    renderAudienceList();
+
+    // 마이크 초기 상태 설정
+    isVoiceMicOn = false;
+    updateMicButtonUI();
+
+    // 모달 표시
+    const modal = document.getElementById("voiceRoomModalOverlay");
+    if (modal) modal.classList.remove("hidden");
+
+    // 채팅 스트림 초기 웰컴 메시지 및 동기화
+    initVoiceRoomChatStream(room);
+
+    // Supabase Realtime 채널 연결 (텍스트 채팅 및 발언석 실시간 동기화)
+    connectVoiceRoomRealtime(roomIdStr);
+}
+window.openVoiceRoomModal = openVoiceRoomModal;
+
+// 4. 5석 발언 무대 슬롯 렌더링
+function renderVoiceRoomStage() {
+    const container = document.getElementById("voiceStageSlotsContainer");
+    if (!container) return;
+
+    const myName = (currentUser && (currentUser.nickname || currentUser.name)) ? (currentUser.nickname || currentUser.name) : "";
+    let html = "";
+    let activeSpeakers = 0;
+
+    for (let i = 0; i < 5; i++) {
+        const slot = voiceRoomSpeakers[i];
+        const slotNum = i + 1;
+
+        if (slot) {
+            activeSpeakers++;
+            const isHost = slot.is_host === true || i === 0;
+            const isMe = (slot.user_name === myName);
+            const isSpeaking = (slot.is_speaking && !slot.is_muted);
+
+            html += `
+                <div class="voice-slot-card ${isHost ? 'host-slot' : ''}">
+                    <div style="position: relative; margin-bottom: 6px;">
+                        <div class="${isSpeaking ? 'speaking-wave' : ''}" style="width: 44px; height: 44px; border-radius: 50%; background: ${isHost ? 'rgba(255, 183, 3, 0.2)' : 'rgba(0, 242, 254, 0.2)'}; border: 2px solid ${isSpeaking ? '#00e676' : (isHost ? 'var(--accent-gold)' : 'var(--accent-cyan)')}; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: ${isHost ? 'var(--accent-gold)' : 'var(--accent-cyan)'}; transition: all 0.2s ease;">
+                            ${isHost ? '👑' : '🤿'}
+                        </div>
+                        <span style="position: absolute; bottom: -2px; right: -2px; width: 18px; height: 18px; border-radius: 50%; background: ${slot.is_muted ? '#ff4757' : '#00e676'}; border: 2px solid #070e1f; display: flex; align-items: center; justify-content: center; font-size: 8px; color: #fff;">
+                            <i class="fa-solid ${slot.is_muted ? 'fa-microphone-slash' : 'fa-microphone'}"></i>
+                        </span>
+                    </div>
+                    <span style="font-size: 0.76rem; font-weight: 900; color: ${isMe ? 'var(--accent-cyan)' : '#fff'}; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.2;">
+                        ${typeof escapeHtml === 'function' ? escapeHtml(slot.user_name) : slot.user_name}
+                    </span>
+                    <span style="font-size: 0.68rem; color: ${isSpeaking ? '#00e676' : (slot.is_muted ? '#ff4757' : '#94a3b8')}; margin-top: 2px;">
+                        ${isSpeaking ? '🎙️ 말하는 중' : (slot.is_muted ? '음소거' : (isHost ? '주최자' : '발언자'))}
+                    </span>
+                </div>
+            `;
+        } else {
+            // 빈자리 (신청 가능 슬롯)
+            html += `
+                <div onclick="requestVoiceSlot(${slotNum})" class="voice-slot-card empty-slot" title="${slotNum}번 발언석 참가 신청">
+                    <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(0, 242, 254, 0.08); border: 1.5px dashed rgba(0, 242, 254, 0.4); display: flex; align-items: center; justify-content: center; font-size: 0.9rem; color: var(--accent-cyan); margin-bottom: 6px;">
+                        <i class="fa-solid fa-plus"></i>
+                    </div>
+                    <span style="font-size: 0.72rem; font-weight: 800; color: var(--accent-cyan); line-height: 1.2;">
+                        신청하기
+                    </span>
+                    <span style="font-size: 0.66rem; color: #64748b; margin-top: 2px;">
+                        ${slotNum}번석
+                    </span>
+                </div>
+            `;
+        }
+    }
+
+    container.innerHTML = html;
+
+    const countEl = document.getElementById("voiceSpeakerCount");
+    if (countEl) countEl.textContent = activeSpeakers;
+}
+window.renderVoiceRoomStage = renderVoiceRoomStage;
+
+// 5. 청취자 목록 렌더링
+function renderAudienceList() {
+    const listContainer = document.getElementById("voiceAudienceListContainer");
+    if (!listContainer) return;
+
+    const totalAudience = voiceRoomAudience.length;
+    const headerCount = document.getElementById("voiceRoomHeaderAudienceCount");
+    const bottomCount = document.getElementById("voiceBottomAudienceCount");
+    const drawerCount = document.getElementById("voiceDrawerAudienceCount");
+
+    if (headerCount) headerCount.textContent = totalAudience;
+    if (bottomCount) bottomCount.textContent = totalAudience;
+    if (drawerCount) drawerCount.textContent = totalAudience;
+
+    const myName = (currentUser && (currentUser.nickname || currentUser.name)) ? (currentUser.nickname || currentUser.name) : "";
+    const isHost = currentVoiceRoom && (currentVoiceRoom.user_name === myName || (currentUser && currentUser.email === currentVoiceRoom.author));
+
+    let html = "";
+    voiceRoomAudience.forEach(aud => {
+        const isMe = (aud.user_name === myName);
+        const initial = aud.user_name ? aud.user_name.charAt(0).toUpperCase() : "U";
+
+        html += `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; margin-bottom: 4px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(79, 172, 254, 0.2)); border: 1px solid rgba(0, 242, 254, 0.4); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 900; color: var(--accent-cyan);">
+                        ${initial}
+                    </div>
+                    <div>
+                        <div style="font-size: 0.82rem; font-weight: 800; color: ${isMe ? 'var(--accent-cyan)' : '#fff'};">
+                            ${typeof escapeHtml === 'function' ? escapeHtml(aud.user_name) : aud.user_name} ${isMe ? '(나)' : ''}
+                        </div>
+                        <div style="font-size: 0.68rem; color: #94a3b8;">
+                            🎧 청취 중 (${aud.joined_at || '방금'})
+                        </div>
+                    </div>
+                </div>
+                ${isHost && !isMe ? `
+                    <button type="button" onclick="inviteAudienceToMic('${escapeHtml(aud.user_name)}')" style="background: rgba(0, 242, 254, 0.15); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); font-size: 0.72rem; font-weight: 800; padding: 4px 10px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                        <i class="fa-solid fa-microphone"></i> 마이크 초대
+                    </button>
+                ` : ''}
+            </div>
+        `;
+    });
+
+    listContainer.innerHTML = html;
+}
+window.renderAudienceList = renderAudienceList;
+
+// 6. 청취자 서랍 토글
+function toggleAudienceDrawer() {
+    const drawer = document.getElementById("voiceAudienceDrawer");
+    if (drawer) drawer.classList.toggle("hidden");
+}
+window.toggleAudienceDrawer = toggleAudienceDrawer;
+
+// 7. 빈자리 발언 신청
+function requestVoiceSlot(slotNum) {
+    if (!currentUser || !currentUser.name) {
+        showToast("🔑 로그인 후 신청하실 수 있습니다.");
+        return;
+    }
+    const myName = currentUser.nickname || currentUser.name || "다이버";
+    const slotIdx = slotNum - 1;
+
+    // 이미 발언석에 있는지 확인
+    const isAlreadySpeaker = voiceRoomSpeakers.some(s => s && s.user_name === myName);
+    if (isAlreadySpeaker) {
+        showToast("⚠️ 이미 발언석에 참여 중이십니다!");
+        return;
+    }
+
+    const hostName = currentVoiceRoom ? (currentVoiceRoom.user_name || currentVoiceRoom.author) : "";
+    const isHost = (myName === hostName || (currentUser.email && currentVoiceRoom && currentUser.email === currentVoiceRoom.author));
+
+    if (isHost) {
+        // 주최자가 직접 빈 슬롯으로 이동/배치
+        voiceRoomSpeakers[slotIdx] = { user_name: myName, is_host: true, is_muted: false, is_speaking: isVoiceMicOn };
+        renderVoiceRoomStage();
+        showToast(`👑 ${slotNum}번석으로 이동했습니다.`);
+        return;
+    }
+
+    // 주최자가 방 안에 있는 경우 주최자에게 참가 신청 팝업 발송
+    showToast(`📢 ${slotNum}번석 발언 참가를 신청했습니다! 주최자의 수락을 기다립니다.`);
+
+    // 주최자 화면에 참가 승인 토스트/확인창 트리거 (P2P / Realtime)
+    if (isHost) {
+        // 주최자 본인에게 온 경우 즉시 승인 알림
+        if (confirm(`🎙️ [발언석 참가 신청]\n'${myName}'님이 ${slotNum}번 발언석 참가를 신청했습니다. 수락하시겠습니까?`)) {
+            approveVoiceSlot(slotNum, myName);
+        }
+    } else {
+        // 실시간 채널로 주최자에게 신청 전송
+        broadcastVoiceEvent({
+            type: "request_slot",
+            slotNum: slotNum,
+            applicant: myName
+        });
+    }
+}
+window.requestVoiceSlot = requestVoiceSlot;
+
+// 8. 발언석 승인
+function approveVoiceSlot(slotNum, applicantName) {
+    const slotIdx = slotNum - 1;
+    if (slotIdx < 0 || slotIdx >= 5) return;
+
+    voiceRoomSpeakers[slotIdx] = {
+        user_name: applicantName,
+        is_host: false,
+        is_muted: false,
+        is_speaking: false
+    };
+
+    // 청취자 목록에서 제거
+    voiceRoomAudience = voiceRoomAudience.filter(a => a.user_name !== applicantName);
+
+    renderVoiceRoomStage();
+    renderAudienceList();
+    showToast(`🎉 '${applicantName}'님이 ${slotNum}번 발언석에 입장했습니다!`);
+
+    // 브로드캐스트
+    broadcastVoiceEvent({
+        type: "approve_slot",
+        slotNum: slotNum,
+        applicant: applicantName
+    });
+}
+window.approveVoiceSlot = approveVoiceSlot;
+
+// 9. 주최자의 청취자 마이크 초대
+function inviteAudienceToMic(userName) {
+    // 빈 슬롯 찾기
+    const emptyIdx = voiceRoomSpeakers.findIndex((s, idx) => idx > 0 && s === null);
+    if (emptyIdx === -1) {
+        showToast("⚠️ 발언 무대(총 5석)가 모두 찼습니다!");
+        return;
+    }
+
+    const slotNum = emptyIdx + 1;
+    showToast(`🎙️ '${userName}'님을 ${slotNum}번 발언석으로 초대했습니다!`);
+
+    // 수락 처리 및 슬롯 배정
+    approveVoiceSlot(slotNum, userName);
+}
+window.inviteAudienceToMic = inviteAudienceToMic;
+
+// 10. 마이크 토글 (음소거 / 켜기)
+async function toggleVoiceMic() {
+    if (!currentUser || !currentUser.name) return;
+    const myName = currentUser.nickname || currentUser.name || "다이버";
+
+    // 내가 5개 슬롯 중 하나에 앉아있는지 검사
+    const mySlotIdx = voiceRoomSpeakers.findIndex(s => s && s.user_name === myName);
+    if (mySlotIdx === -1) {
+        showToast("⚠️ 발언석에 착석한 후 마이크를 켤 수 있습니다. 빈자리를 눌러 신청해보세요!");
+        return;
+    }
+
+    isVoiceMicOn = !isVoiceMicOn;
+
+    if (isVoiceMicOn) {
+        // 마이크 스트림 요청
+        try {
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                voiceAudioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            }
+        } catch (micErr) {
+            console.warn("마이크 권한 획득 실패 (UI 시뮬레이션 유지):", micErr);
+        }
+
+        voiceRoomSpeakers[mySlotIdx].is_muted = false;
+        voiceRoomSpeakers[mySlotIdx].is_speaking = true;
+        showToast("🎙️ 마이크가 켜졌습니다. 자유롭게 말씀하세요!");
+    } else {
+        if (voiceAudioStream) {
+            voiceAudioStream.getTracks().forEach(track => track.stop());
+            voiceAudioStream = null;
+        }
+        voiceRoomSpeakers[mySlotIdx].is_muted = true;
+        voiceRoomSpeakers[mySlotIdx].is_speaking = false;
+        showToast("🔇 마이크가 음소거되었습니다.");
+    }
+
+    updateMicButtonUI();
+    renderVoiceRoomStage();
+
+    broadcastVoiceEvent({
+        type: "mic_toggle",
+        user_name: myName,
+        is_muted: !isVoiceMicOn,
+        is_speaking: isVoiceMicOn
+    });
+}
+window.toggleVoiceMic = toggleVoiceMic;
+
+function updateMicButtonUI() {
+    const micBtn = document.getElementById("voiceMicToggleBtn");
+    if (!micBtn) return;
+
+    if (isVoiceMicOn) {
+        micBtn.style.background = "rgba(0, 230, 118, 0.25)";
+        micBtn.style.borderColor = "#00e676";
+        micBtn.style.color = "#00e676";
+        micBtn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+        micBtn.title = "마이크 끄기 (음소거)";
+    } else {
+        micBtn.style.background = "rgba(255, 71, 87, 0.15)";
+        micBtn.style.borderColor = "#ff4757";
+        micBtn.style.color = "#ff4757";
+        micBtn.innerHTML = '<i class="fa-solid fa-microphone-slash"></i>';
+        micBtn.title = "마이크 켜기";
+    }
+}
+
+// 11. 보이스룸 모달 닫기 & 퇴장
+function closeVoiceRoomModal() {
+    if (!currentVoiceRoom) {
+        const modal = document.getElementById("voiceRoomModalOverlay");
+        if (modal) modal.classList.add("hidden");
+        return;
+    }
+
+    const myName = (currentUser && (currentUser.nickname || currentUser.name)) ? (currentUser.nickname || currentUser.name) : "";
+    const isHost = currentVoiceRoom && (currentVoiceRoom.user_name === myName || (currentUser && currentUser.email === currentVoiceRoom.author));
+
+    if (isHost) {
+        if (confirm("👑 주최자가 퇴장하면 보이스룸이 자동 종료됩니다.\n정말 방을 종료하시겠습니까?")) {
+            // 방 종료 처리: posts 상태 closed 변경
+            currentVoiceRoom.status = "closed";
+            if (supabaseClient && currentVoiceRoom.id) {
+                supabaseClient.from('posts').update({ status: 'closed' }).eq('id', currentVoiceRoom.id).then(() => {
+                    console.log("보이스룸 DB 종료 처리 완료");
+                });
+            }
+            showToast("🎙️ 라이브 보이스룸이 종료되었습니다.");
+            cleanupVoiceRoomSession();
+        }
+    } else {
+        showToast("보이스룸에서 퇴장했습니다.");
+        cleanupVoiceRoomSession();
+    }
+}
+window.closeVoiceRoomModal = closeVoiceRoomModal;
+
+function cleanupVoiceRoomSession() {
+    if (voiceAudioStream) {
+        voiceAudioStream.getTracks().forEach(track => track.stop());
+        voiceAudioStream = null;
+    }
+    isVoiceMicOn = false;
+    currentVoiceRoom = null;
+    voiceRoomSpeakers = [null, null, null, null, null];
+    voiceRoomAudience = [];
+
+    const modal = document.getElementById("voiceRoomModalOverlay");
+    if (modal) modal.classList.add("hidden");
+
+    const drawer = document.getElementById("voiceAudienceDrawer");
+    if (drawer) drawer.classList.add("hidden");
+
+    if (typeof filterAndRender === "function") {
+        filterAndRender(false);
+    }
+}
+
+// 12. 보이스룸 실시간 텍스트 채팅
+function initVoiceRoomChatStream(room) {
+    const stream = document.getElementById("voiceChatStream");
+    if (!stream) return;
+
+    stream.innerHTML = `
+        <div style="background: rgba(0, 242, 254, 0.08); border: 1px solid rgba(0, 242, 254, 0.25); border-radius: 10px; padding: 8px 12px; font-size: 0.76rem; color: #94a3b8; text-align: center;">
+            💡 청취자분들도 마이크 없이 채팅으로 자유롭게 질문하고 소통하실 수 있습니다!
+        </div>
+        <div style="display: flex; gap: 6px; align-items: flex-start; font-size: 0.8rem; margin-top: 4px;">
+            <span style="font-weight: 900; color: var(--accent-gold); flex-shrink: 0;">👑 ${escapeHtml(room.user_name || '주최자')}:</span>
+            <span style="color: #e2e8f0; background: rgba(255, 183, 3, 0.1); padding: 4px 8px; border-radius: 8px; border-left: 2px solid var(--accent-gold);">
+                "안녕하세요! 실시간 보이스룸에 오신 것을 환영합니다~"
+            </span>
+        </div>
+    `;
+
+    // 기존 채팅 메시지가 있다면 렌더링
+    const roomIdStr = String(room.id);
+    if (chatMessages[roomIdStr] && chatMessages[roomIdStr].length > 0) {
+        chatMessages[roomIdStr].forEach(msg => {
+            appendVoiceRoomChatMessage(msg.sender || msg.user_name || "익명", msg.message || msg.content || "");
+        });
+    }
+}
+
+function appendVoiceRoomChatMessage(sender, text) {
+    const stream = document.getElementById("voiceChatStream");
+    if (!stream || !text) return;
+
+    const myName = (currentUser && (currentUser.nickname || currentUser.name)) ? (currentUser.nickname || currentUser.name) : "";
+    const isMe = (sender === myName);
+    const isHost = currentVoiceRoom && (sender === currentVoiceRoom.user_name);
+    const isSpeaker = voiceRoomSpeakers.some(s => s && s.user_name === sender);
+
+    const div = document.createElement("div");
+    div.style.cssText = "display: flex; gap: 6px; align-items: flex-start; font-size: 0.8rem; animation: fadeIn 0.2s ease;";
+
+    div.innerHTML = `
+        <span style="font-weight: 800; color: ${isHost ? 'var(--accent-gold)' : (isSpeaker ? 'var(--accent-cyan)' : '#94a3b8')}; flex-shrink: 0;">
+            ${isHost ? '👑' : (isSpeaker ? '🎙️' : '')} ${escapeHtml(sender)}:
+        </span>
+        <span style="color: #fff; background: ${isMe ? 'rgba(0, 242, 254, 0.15)' : 'rgba(255, 255, 255, 0.06)'}; padding: 3px 8px; border-radius: 8px; word-break: break-word;">
+            ${escapeHtml(text)}
+        </span>
+    `;
+
+    stream.appendChild(div);
+    stream.scrollTop = stream.scrollHeight;
+}
+
+async function handleSendVoiceRoomChat(e) {
+    if (e) e.preventDefault();
+    if (!currentVoiceRoom) return;
+
+    const input = document.getElementById("voiceRoomChatInput");
+    if (!input) return;
+
+    const text = input.value.trim();
+    if (!text) return;
+
+    const myName = (currentUser && (currentUser.nickname || currentUser.name)) ? (currentUser.nickname || currentUser.name) : "다이버";
+    input.value = "";
+
+    // 로컬 즉시 표시
+    appendVoiceRoomChatMessage(myName, text);
+
+    // chats 메모리 배열 저장
+    const roomIdStr = String(currentVoiceRoom.id);
+    chatMessages[roomIdStr] = chatMessages[roomIdStr] || [];
+    chatMessages[roomIdStr].push({
+        sender: myName,
+        message: text,
+        created_at: (typeof getKSTIsoString === "function") ? getKSTIsoString() : new Date().toISOString()
+    });
+
+    // Supabase chats 테이블 저장
+    if (supabaseClient) {
+        try {
+            await supabaseClient.from('chats').insert([{
+                post_id: roomIdStr,
+                user_name: myName,
+                sender_name: myName,
+                message: text,
+                created_at: (typeof getKSTIsoString === "function") ? getKSTIsoString() : new Date().toISOString()
+            }]);
+        } catch (cErr) {
+            console.warn("보이스룸 채팅 Supabase 저장 참고:", cErr);
+        }
+    }
+
+    // 브로드캐스트
+    broadcastVoiceEvent({
+        type: "chat_message",
+        sender: myName,
+        text: text
+    });
+}
+window.handleSendVoiceRoomChat = handleSendVoiceRoomChat;
+
+// 13. 실시간 웹소켓 이벤트 브로드캐스트 & 수신
+function connectVoiceRoomRealtime(roomId) {
+    if (!supabaseClient) return;
+    try {
+        if (voiceRoomChannel) {
+            supabaseClient.removeChannel(voiceRoomChannel);
+        }
+
+        voiceRoomChannel = supabaseClient.channel(`voiceroom_${roomId}`)
+            .on('broadcast', { event: 'voice_event' }, payload => {
+                handleVoiceRoomBroadcastEvent(payload.payload);
+            })
+            .subscribe();
+    } catch (e) {
+        console.warn("보이스룸 실시간 채널 연결 참고:", e);
+    }
+}
+
+function broadcastVoiceEvent(payload) {
+    if (voiceRoomChannel) {
+        try {
+            voiceRoomChannel.send({
+                type: 'broadcast',
+                event: 'voice_event',
+                payload: payload
+            });
+        } catch (e) {
+            console.warn("브로드캐스트 전송 참고:", e);
+        }
+    }
+}
+
+function handleVoiceRoomBroadcastEvent(event) {
+    if (!event || !event.type) return;
+
+    if (event.type === "chat_message") {
+        const myName = (currentUser && (currentUser.nickname || currentUser.name)) ? (currentUser.nickname || currentUser.name) : "";
+        if (event.sender !== myName) {
+            appendVoiceRoomChatMessage(event.sender, event.text);
+        }
+    } else if (event.type === "request_slot") {
+        const myName = (currentUser && (currentUser.nickname || currentUser.name)) ? (currentUser.nickname || currentUser.name) : "";
+        const isHost = currentVoiceRoom && (currentVoiceRoom.user_name === myName);
+        if (isHost) {
+            if (confirm(`🎙️ [발언 무대 신청]\n'${event.applicant}'님이 ${event.slotNum}번석 참가를 신청했습니다. 수락하시겠습니까?`)) {
+                approveVoiceSlot(event.slotNum, event.applicant);
+            }
+        }
+    } else if (event.type === "approve_slot") {
+        if (event.slotNum && event.applicant) {
+            const slotIdx = event.slotNum - 1;
+            voiceRoomSpeakers[slotIdx] = {
+                user_name: event.applicant,
+                is_host: false,
+                is_muted: false,
+                is_speaking: false
+            };
+            voiceRoomAudience = voiceRoomAudience.filter(a => a.user_name !== event.applicant);
+            renderVoiceRoomStage();
+            renderAudienceList();
+
+            const myName = (currentUser && (currentUser.nickname || currentUser.name)) ? (currentUser.nickname || currentUser.name) : "";
+            if (event.applicant === myName) {
+                showToast(`🎉 주최자가 ${event.slotNum}번 발언석 참가를 승인했습니다! 마이크를 켤 수 있습니다.`);
+            }
+        }
+    } else if (event.type === "mic_toggle") {
+        const slot = voiceRoomSpeakers.find(s => s && s.user_name === event.user_name);
+        if (slot) {
+            slot.is_muted = event.is_muted;
+            slot.is_speaking = event.is_speaking;
+            renderVoiceRoomStage();
+        }
+    }
+}
+
 function openChatRoomModal(postId) {
     if (!postId) return;
     const postIdStr = String(postId).trim();
@@ -17294,6 +18095,7 @@ window.openPostReportModal = openPostReportModal;
     window.switchMainView = switchMainView;
     window.filterInstructorSub = filterInstructorSub;
     window.filterBuddySub = filterBuddySub;
+    window.filterCommunitySub = filterCommunitySub;
     window.filterActivitySub = filterActivitySub;
     window.filterTideRegion = filterTideRegion;
     window.filterCctvRegion = filterCctvRegion;

@@ -2108,3 +2108,128 @@ button:active, .btn:active, .action-btn:active, .category-pill:active {
     }
 }
 
+/* ======================================================== */
+/* 🎙️ 하이브리드 라이브 보이스룸 & 실시간 채팅 스타일링 (5석 무대 + 청취자 30명) */
+/* ======================================================== */
+
+/* 말할 때 초록색 오로라 파동 애니메이션 */
+@keyframes voice-wave {
+    0% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.7); }
+    70% { box-shadow: 0 0 0 12px rgba(0, 230, 118, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0); }
+}
+
+.speaking-wave {
+    animation: voice-wave 1.5s infinite cubic-bezier(0.66, 0, 0, 1) !important;
+}
+
+/* LIVE 뱃지 레드 펄스 애니메이션 */
+@keyframes red-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.92); }
+}
+
+.live-pulse-dot {
+    animation: red-pulse 1.2s infinite ease-in-out;
+}
+
+/* 5석 발언자 무대 반응형 그리드 */
+.voice-stage-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-top: 10px;
+}
+
+@media (max-width: 640px) {
+    .voice-stage-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+    }
+}
+
+/* 보이스룸 슬롯 카드 */
+.voice-slot-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 6px;
+    border-radius: 14px;
+    background: rgba(13, 23, 42, 0.85);
+    border: 1px solid rgba(0, 242, 254, 0.25);
+    position: relative;
+    text-align: center;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+    min-height: 96px;
+}
+
+.voice-slot-card.host-slot {
+    border-color: rgba(255, 183, 3, 0.6);
+    background: rgba(255, 183, 3, 0.08);
+}
+
+.voice-slot-card.empty-slot {
+    border-style: dashed;
+    border-color: rgba(0, 242, 254, 0.35);
+    background: rgba(0, 242, 254, 0.04);
+    cursor: pointer;
+}
+
+.voice-slot-card.empty-slot:hover {
+    border-color: var(--accent-cyan);
+    background: rgba(0, 242, 254, 0.1);
+    transform: translateY(-2px);
+}
+
+.voice-slot-card.empty-slot:active {
+    transform: scale(0.96);
+}
+
+/* 청취자 서랍 (Bottom Sheet) */
+.voice-audience-drawer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-height: 60%;
+    background: rgba(10, 18, 35, 0.98);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 2px solid var(--accent-cyan);
+    border-radius: 24px 24px 0 0;
+    padding: 16px;
+    z-index: 60;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.8);
+    animation: drawerSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+}
+
+@keyframes drawerSlideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
+/* 상단 LIVE 보이스룸 배너 카드 */
+.live-voiceroom-banner {
+    background: linear-gradient(135deg, rgba(13, 23, 42, 0.95), rgba(10, 26, 50, 0.95));
+    border: 1.5px solid var(--accent-cyan);
+    box-shadow: 0 8px 30px rgba(0, 242, 254, 0.2);
+    border-radius: 18px;
+    padding: 16px 18px;
+    margin-bottom: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.live-voiceroom-banner:hover {
+    border-color: #00e676;
+    box-shadow: 0 10px 35px rgba(0, 230, 118, 0.25);
+    transform: translateY(-2px);
+}
+
+

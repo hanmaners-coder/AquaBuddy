@@ -227,7 +227,7 @@
      <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=7c316726691ea5e02f234a85f5a20bab&libraries=services,clusterer"></script>
      
      <!-- Custom CSS -->
-     <link rel="stylesheet" href="styles.css?v=V1605_CLEAN_NAV_PROFILE_AND_NOTIF_CENTERED">
+     <link rel="stylesheet" href="styles.css?v=V1610_HYBRID_VOICEROOM_LIVE_CHAT">
      <!-- PWA Manifest and Meta Tags -->
      <link rel="manifest" href="manifest.json">
      <link rel="apple-touch-icon" href="icon-192.png">
@@ -819,7 +819,28 @@
                         🍺 맛집/장비샵
                     </button>
                 </div>
- 
+
+                <!-- Sub Filter Bar for Community & Live Voice Room -->
+                <div class="community-sub-tabs hidden" id="communitySubFilterBar" style="display: none; gap: 8px; flex-wrap: wrap; margin-top: 10px; background: rgba(0, 242, 254, 0.08); padding: 10px; border-radius: 12px; border: 1px dashed var(--accent-cyan); justify-content: space-between; align-items: center;">
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                        <span style="font-size: 0.82rem; color: var(--accent-cyan); font-weight: 800; display: flex; align-items: center; gap: 4px; margin-right: 4px;">
+                            <i class="fa-solid fa-comments"></i> 수다방 모드:
+                        </span>
+                        <button type="button" class="sub-tab-btn active" data-commsub="all" onclick="filterCommunitySub('all')">
+                            🌐 전체보기
+                        </button>
+                        <button type="button" class="sub-tab-btn" data-commsub="feed" onclick="filterCommunitySub('feed')">
+                            💬 수다글만
+                        </button>
+                        <button type="button" class="sub-tab-btn" data-commsub="voiceroom" onclick="filterCommunitySub('voiceroom')">
+                            <span class="live-pulse-dot" style="display:inline-block; width:6px; height:6px; background:#ff4757; border-radius:50%; margin-right:4px;"></span>🎙️ LIVE 보이스룸
+                        </button>
+                    </div>
+                    <button type="button" class="btn" onclick="openCreateVoiceRoomModal()" style="background: linear-gradient(135deg, #00f2fe, #4facfe); color: #070e17; font-weight: 900; font-size: 0.82rem; padding: 6px 14px; border-radius: 20px; border: none; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 10px rgba(0, 242, 254, 0.3);">
+                        <i class="fa-solid fa-plus-circle"></i> 보이스룸 개설
+                    </button>
+                </div>
+
                  <!-- Sub Filter Bar for My Activity Log -->
                  <div class="activity-sub-tabs hidden" id="activitySubFilterBar">
                      <button class="sub-tab-btn active" data-sub="my_posts" onclick="filterActivitySub('my_posts')"><i class="fa-solid fa-pen"></i> 내가 작성한 글</button>
@@ -965,6 +986,9 @@
                         </button>
                     </div>
                 </div>
+
+                <!-- 🔴 Live Voice Room Top Banner Card Container (Active in Community View) -->
+                <div id="communityLiveVoiceContainer"></div>
 
                 <div class="posts-grid" id="postsGrid"></div>
                      <!-- Dynamic cards rendered by JS -->
@@ -2331,10 +2355,172 @@
              </div>
          </div>
      </div>
+
+    <!-- 🎙️ Voice Room Creation Modal (#createVoiceRoomModal) -->
+    <div class="modal-overlay hidden" id="createVoiceRoomModal" style="z-index: 9999990 !important;">
+        <div class="modal-container glass-panel" style="max-width: 480px; width: 92%; border: 1.5px solid var(--accent-cyan); box-shadow: 0 10px 40px rgba(0, 242, 254, 0.4);">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0, 242, 254, 0.2); padding-bottom: 12px; margin-bottom: 16px;">
+                <h3 style="margin: 0; color: #fff; font-size: 1.15rem; font-weight: 900; display: flex; align-items: center; gap: 8px;">
+                    <span class="live-pulse-dot" style="display:inline-block; width:8px; height:8px; background:#ff4757; border-radius:50%;"></span>
+                    🎙️ 실시간 라이브 보이스룸 개설
+                </h3>
+                <button class="close-btn" onclick="closeModal(document.getElementById('createVoiceRoomModal'))" style="background:none; border:none; color:#94a3b8; font-size:1.4rem; cursor:pointer;">&times;</button>
+            </div>
+            <form onsubmit="handleCreateVoiceRoom(event)">
+                <div style="margin-bottom: 14px;">
+                    <label style="display: block; font-size: 0.85rem; font-weight: 800; color: #e2e8f0; margin-bottom: 6px;">
+                        📢 보이스룸 제목 <span style="color: var(--accent-cyan);">*</span>
+                    </label>
+                    <input type="text" id="voiceRoomTitleInput" placeholder="예: 🌊 제주 서귀포 실시간 파도 상황 & 물때 브리핑" required maxlength="50" style="width: 100%; padding: 12px 14px; background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(0, 242, 254, 0.4); border-radius: 10px; color: #fff; font-size: 0.92rem; outline: none; box-sizing: border-box;">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;">
+                    <div>
+                        <label style="display: block; font-size: 0.82rem; font-weight: 800; color: #e2e8f0; margin-bottom: 6px;">
+                            📍 지역
+                        </label>
+                        <select id="voiceRoomRegionSelect" style="width: 100%; padding: 11px 12px; background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(0, 242, 254, 0.3); border-radius: 10px; color: #fff; font-size: 0.88rem; outline: none; box-sizing: border-box;">
+                            <option value="all">🌐 전국 전체</option>
+                            <option value="jeju" selected>제주권 (서귀포/제주시)</option>
+                            <option value="seoul">수도권 (서울/경기/K26/딥스테이션)</option>
+                            <option value="gangwon">강원권 (동해/양양/강릉)</option>
+                            <option value="gyeongsang">경상권 (부산/포항/울산/거제)</option>
+                            <option value="jeolla">전라권 (광주/여수/목포)</option>
+                            <option value="chungcheong">충청권 (대전/세종/태안)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.82rem; font-weight: 800; color: #e2e8f0; margin-bottom: 6px;">
+                            🏷️ 토픽 주제
+                        </label>
+                        <select id="voiceRoomTopicSelect" style="width: 100%; padding: 11px 12px; background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(0, 242, 254, 0.3); border-radius: 10px; color: #fff; font-size: 0.88rem; outline: none; box-sizing: border-box;">
+                            <option value="wave_report">🌊 실시간 파도/시야/수온</option>
+                            <option value="pool_buddy">🤿 K26/잠수풀 버디 수다</option>
+                            <option value="free_talk" selected>💬 자유 수다 & 다이버 소통</option>
+                            <option value="gear_qa">🤿 장비 추천 & Q&A</option>
+                            <option value="tour_plan">✈️ 국내/해외 투어 계획</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 규격 안내 박스 (발언자 5명 / 청취자 30명) -->
+                <div style="background: rgba(0, 242, 254, 0.08); border: 1px dashed rgba(0, 242, 254, 0.4); border-radius: 12px; padding: 12px 14px; margin-bottom: 18px; font-size: 0.82rem; line-height: 1.5; color: #cbd5e1;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <span style="font-weight: 800; color: var(--accent-cyan);"><i class="fa-solid fa-microphone"></i> 발언 무대:</span>
+                        <strong style="color: #fff;">총 5석 (주최자 1 + 발언자 4)</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 800; color: #ffb703;"><i class="fa-solid fa-headphones"></i> 청취 정원:</span>
+                        <strong style="color: #fff;">최대 30명 (실시간 텍스트 채팅 참여)</strong>
+                    </div>
+                    <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 6px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 6px;">
+                        ※ 주최자가 방을 닫거나 종료하면 상단 LIVE 목록에서 자동으로 정리됩니다.
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal(document.getElementById('createVoiceRoomModal'))">취소</button>
+                    <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, #00f2fe, #4facfe); color: #070e17; font-weight: 900; padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 15px rgba(0,242,254,0.3);">
+                        <i class="fa-solid fa-microphone-lines"></i> 룸 개설하고 입장하기
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 🎙️ Hybrid Live Voice Room & Chat Modal Overlay (#voiceRoomModalOverlay) -->
+    <div class="modal-overlay hidden" id="voiceRoomModalOverlay" style="z-index: 9999995 !important; padding: 12px; box-sizing: border-box;">
+        <div class="glass-panel" style="background: rgba(10, 18, 35, 0.98); border: 2px solid var(--accent-cyan); border-radius: 24px; box-shadow: 0 16px 60px rgba(0, 0, 0, 0.9); width: 100%; max-width: 580px; height: 90vh; max-height: 740px; display: flex; flex-direction: column; overflow: hidden; position: relative; color: #fff;">
+            
+            <!-- 1. 보이스룸 상단 헤더 -->
+            <div style="padding: 14px 18px; border-bottom: 1px solid rgba(0, 242, 254, 0.25); background: rgba(7, 14, 28, 0.9); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;">
+                <div style="display: flex; align-items: center; gap: 10px; overflow: hidden; flex: 1; margin-right: 12px;">
+                    <span class="live-pulse-dot" style="background: #ff4757; color: #fff; font-size: 0.72rem; font-weight: 900; padding: 3px 8px; border-radius: 20px; flex-shrink: 0; box-shadow: 0 0 10px rgba(255, 71, 87, 0.6);">
+                        🔴 LIVE
+                    </span>
+                    <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        <h3 id="voiceRoomModalTitle" style="margin: 0; font-size: 1.05rem; font-weight: 900; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            제주 서귀포 실시간 파도 상황 & 물때
+                        </h3>
+                        <div style="font-size: 0.76rem; color: #94a3b8; display: flex; align-items: center; gap: 8px; margin-top: 2px;">
+                            <span id="voiceRoomHostInfo">👑 주최자: 김동욱</span>
+                            <span>•</span>
+                            <span id="voiceRoomHeaderAudienceBtn" style="color: var(--accent-cyan); cursor: pointer; font-weight: 700;" onclick="toggleAudienceDrawer()">
+                                <i class="fa-solid fa-users"></i> 청취자 <span id="voiceRoomHeaderAudienceCount">1</span>/30명 ➔
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" onclick="closeVoiceRoomModal()" style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); color: #fff; border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.2rem; flex-shrink: 0;">
+                    &times;
+                </button>
+            </div>
+
+            <!-- 2. 🎙️ 5석 발언자 무대 컨테이너 (주최자 1석 + 발언자 4석) -->
+            <div style="padding: 12px 16px; background: rgba(12, 22, 42, 0.85); border-bottom: 1px solid rgba(255, 255, 255, 0.08); flex-shrink: 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.8rem;">
+                    <span style="font-weight: 900; color: var(--accent-cyan); display: flex; align-items: center; gap: 5px;">
+                        <i class="fa-solid fa-microphone-lines"></i> 발언 무대 (<span id="voiceSpeakerCount">1</span>/5명)
+                    </span>
+                    <span style="font-size: 0.74rem; color: #94a3b8;">
+                        빈자리 터치 시 발언 신청
+                    </span>
+                </div>
+                <div class="voice-stage-grid" id="voiceStageSlotsContainer">
+                    <!-- 5 Slots injected by JS -->
+                </div>
+            </div>
+
+            <!-- 3. 💬 실시간 라이브 텍스트 채팅 스트림 -->
+            <div id="voiceChatStream" style="flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; background: rgba(8, 14, 28, 0.6); box-sizing: border-box;">
+                <div style="background: rgba(0, 242, 254, 0.08); border: 1px solid rgba(0, 242, 254, 0.25); border-radius: 10px; padding: 8px 12px; font-size: 0.76rem; color: #94a3b8; text-align: center;">
+                    💡 청취자분들도 마이크 없이 채팅으로 자유롭게 질문하고 소통하실 수 있습니다!
+                </div>
+                <!-- Dynamic chat bubbles -->
+            </div>
+
+            <!-- 4. 하단 컨트롤 바 & 채팅 입력 -->
+            <div style="padding: 10px 14px; background: rgba(7, 14, 28, 0.95); border-top: 1px solid rgba(0, 242, 254, 0.2); display: flex; align-items: center; gap: 8px; flex-shrink: 0; box-sizing: border-box;">
+                <!-- 청취자 서랍 토글 버튼 -->
+                <button type="button" onclick="toggleAudienceDrawer()" style="background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(0, 242, 254, 0.35); color: var(--accent-cyan); font-size: 0.78rem; font-weight: 800; padding: 9px 12px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
+                    <i class="fa-solid fa-users"></i> <span id="voiceBottomAudienceCount">1</span>명
+                </button>
+
+                <!-- 채팅 입력 폼 -->
+                <form onsubmit="handleSendVoiceRoomChat(event)" style="flex: 1; display: flex; gap: 6px; margin: 0;">
+                    <input type="text" id="voiceRoomChatInput" placeholder="실시간 채팅에 참여해보세요..." style="flex: 1; background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 12px; padding: 9px 14px; color: #fff; font-size: 0.86rem; outline: none;">
+                    <button type="submit" style="background: var(--accent-cyan); color: #070e17; border: none; border-radius: 12px; padding: 9px 14px; font-weight: 800; cursor: pointer; font-size: 0.86rem; flex-shrink: 0;">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </form>
+
+                <!-- 마이크 Mute / Unmute 토글 버튼 -->
+                <button type="button" id="voiceMicToggleBtn" onclick="toggleVoiceMic()" style="background: rgba(0, 230, 118, 0.15); border: 1.5px solid #00e676; color: #00e676; border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 1rem; cursor: pointer; flex-shrink: 0;" title="마이크 음소거 / 켜기">
+                    <i class="fa-solid fa-microphone"></i>
+                </button>
+            </div>
+
+            <!-- 5. 👥 청취자 목록 서랍 (주최자 마이크 초대 기능 탑재) -->
+            <div id="voiceAudienceDrawer" class="voice-audience-drawer hidden">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 10px;">
+                    <span style="font-weight: 900; font-size: 0.88rem; color: #fff; display: flex; align-items: center; gap: 6px;">
+                        <i class="fa-solid fa-users" style="color: var(--accent-cyan);"></i> 현재 방에 들어온 청취자 (<span id="voiceDrawerAudienceCount">1</span>명)
+                    </span>
+                    <button type="button" onclick="toggleAudienceDrawer()" style="background: none; border: none; color: #94a3b8; font-size: 0.82rem; font-weight: 700; cursor: pointer;">
+                        닫기
+                    </button>
+                </div>
+                <div id="voiceAudienceListContainer" style="overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 4px;">
+                    <!-- Audience items injected by JS -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
  
      <!-- App Configuration & Main Logic Script -->
-     <script src="config.js?v=V1605_CLEAN_NAV_PROFILE_AND_NOTIF_CENTERED"></script>
-     <script src="app.js?v=V1605_CLEAN_NAV_PROFILE_AND_NOTIF_CENTERED"></script>
+     <script src="config.js?v=V1610_HYBRID_VOICEROOM_LIVE_CHAT"></script>
+     <script src="app.js?v=V1610_HYBRID_VOICEROOM_LIVE_CHAT"></script>
      <!-- Toast Notification Container -->
     <div id="toastContainer" class="toast-container"></div>
 
