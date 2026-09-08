@@ -17569,6 +17569,30 @@ async function handleCreateVoiceRoom(e) {
 }
 window.handleCreateVoiceRoom = handleCreateVoiceRoom;
 
+/// 2.5 보이스룸 주최자 판별 유틸리티 (절대 실명 real_name으로 대조하지 않고, 이메일 및 닉네임 엄격 대조)
+function isVoiceRoomHost(room) {
+    if (!room || !currentUser) return false;
+
+    // 1. 표준 isMyPost 대조 (이메일 및 고유 사용자 ID)
+    if (typeof isMyPost === 'function' && isMyPost(room)) return true;
+
+    // 2. 이메일 직접 대조 (대소문자 무관)
+    const myEmail = String(currentUser.email || '').trim().toLowerCase();
+    const roomAuthor = String(room.author || room.user_email || room.authorEmail || '').trim().toLowerCase();
+    if (myEmail && roomAuthor && myEmail === roomAuthor) return true;
+
+    // 3. 닉네임 정확한 대조 (절대 real_name 사용 안 함)
+    const myNick = String(currentUser.nickname || '').trim().toLowerCase();
+    const roomNick = String(room.user_name || '').trim().toLowerCase();
+    if (myNick && roomNick && myNick === roomNick) return true;
+
+    const myName = String(currentUser.name || '').trim().toLowerCase();
+    if (myName && roomNick && myName === roomNick && !roomNick.includes('@')) return true;
+
+    return false;
+}
+window.isVoiceRoomHost = isVoiceRoomHost;
+
 // 3. 보이스룸 모달 열기 & 입장
 function openVoiceRoomModal(roomId) {
     if (!roomId) return;
@@ -17591,29 +17615,21 @@ function openVoiceRoomModal(roomId) {
     }
 
     currentVoiceRoom = room;
-    const myNick = currentUser.nickname || "";
-    const myDisplayName = currentUser.name || "";
-    const myRealName = currentUser.real_name || "";
-    const myEmail = currentUser.email || "";
-    const myName = myNick || myDisplayName || myRealName || "다이버";
-    const hostName = room.user_name || room.author || "주최자";
+    const myNick = (currentUser && currentUser.nickname) ? currentUser.nickname.trim() : "";
+    const myDisplayName = (currentUser && currentUser.name) ? currentUser.name.trim() : "";
+    const myName = myNick || myDisplayName || "다이버";
 
-    // 강력하고 정확한 주최자 판별
-    const isHost = Boolean(
-        (myNick && (room.user_name === myNick || room.author === myNick)) ||
-        (myDisplayName && (room.user_name === myDisplayName || room.author === myDisplayName)) ||
-        (myRealName && (room.real_name === myRealName || room.user_name === myRealName)) ||
-        (myEmail && (room.author === myEmail || room.user_email === myEmail)) ||
-        (room.user_name === myName)
-    );
+    // 실제 방 주최자의 표시명 (게스트 접속 시 절대 게스트 이름으로 변조되지 않음)
+    const hostDisplayName = (room.user_name || "주최자").trim();
+    const amIHost = isVoiceRoomHost(room);
 
-    // 발언자 슬롯 초기화: 0번은 항상 주최자
+    // 발언자 슬롯 초기화: 0번은 항상 실제 방 주최자의 이름으로 고정
     voiceRoomSpeakers = [
-        { user_name: isHost ? myName : hostName, is_host: true, is_muted: true, is_speaking: false },
+        { user_name: hostDisplayName, is_host: true, is_muted: true, is_speaking: false },
         null, null, null, null
     ];
 
-    // 청취자 목록 초기화: 100% 실제 접속자만 Presence로 등록 (더미 유저 완전 제거)
+    // 청취자 목록 초기화: 100% 실제 접속자만 Presence로 등록
     voiceRoomAudience = [];
 
     // 모달 UI 바인딩
@@ -17621,7 +17637,9 @@ function openVoiceRoomModal(roomId) {
     if (titleEl) titleEl.textContent = room.title || "실시간 라이브 보이스룸";
 
     const hostInfoEl = document.getElementById("voiceRoomHostInfo");
-    if (hostInfoEl) hostInfoEl.textContent = `👑 주최자: ${isHost ? myName : hostName}`;
+    if (hostInfoEl) {
+        hostInfoEl.textContent = `👑 주최자: ${hostDisplayName} ${amIHost ? '(나)' : ''}`;
+    }
 
     // 5석 무대 렌더링
     renderVoiceRoomStage();
@@ -17629,7 +17647,7 @@ function openVoiceRoomModal(roomId) {
     // 청취자 서랍 렌더링
     renderAudienceList();
 
-    // 마이크 초기 상태 설정 (안전을 위해 초기 음소거, 사용자가 버튼을 눌러 음성 송출 시작)
+    // 마이크 초기 상태 설정 (안전을 위해 초기 음소거)
     isVoiceMicOn = false;
     updateMicButtonUI();
 
@@ -17648,7 +17666,7 @@ function openVoiceRoomModal(roomId) {
     // 채팅 스트림 동기화
     initVoiceRoomChatStream(room);
 
-    // Supabase Realtime & Presence 채널 연결 (실제 참여자 실시간 트래킹 및 WebRTC 연결)
+    // Supabase Realtime & Presence 채널 연결
     connectVoiceRoomRealtime(roomIdStr);
 }
 window.openVoiceRoomModal = openVoiceRoomModal;
@@ -17658,22 +17676,10 @@ function renderVoiceRoomStage() {
     const container = document.getElementById("voiceStageSlotsContainer");
     if (!container) return;
 
-    const myNick = (currentUser && currentUser.nickname) ? currentUser.nickname : "";
-    const myDisplayName = (currentUser && currentUser.name) ? currentUser.name : "";
-    const myRealName = (currentUser && currentUser.real_name) ? currentUser.real_name : "";
-    const myEmail = (currentUser && currentUser.email) ? currentUser.email : "";
-    const myName = myNick || myDisplayName || myRealName || "다이버";
-
-    const hostName = currentVoiceRoom ? (currentVoiceRoom.user_name || currentVoiceRoom.author) : "";
-    const amIHost = Boolean(
-        currentVoiceRoom && (
-            (myNick && (currentVoiceRoom.user_name === myNick || currentVoiceRoom.author === myNick)) ||
-            (myDisplayName && (currentVoiceRoom.user_name === myDisplayName || currentVoiceRoom.author === myDisplayName)) ||
-            (myRealName && (currentVoiceRoom.real_name === myRealName || currentVoiceRoom.user_name === myRealName)) ||
-            (myEmail && (currentVoiceRoom.author === myEmail || currentVoiceRoom.user_email === myEmail)) ||
-            (currentVoiceRoom.user_name === myName)
-        )
-    );
+    const myNick = (currentUser && currentUser.nickname) ? currentUser.nickname.trim() : "";
+    const myDisplayName = (currentUser && currentUser.name) ? currentUser.name.trim() : "";
+    const myName = myNick || myDisplayName || "다이버";
+    const amIHost = currentVoiceRoom ? isVoiceRoomHost(currentVoiceRoom) : false;
 
     let html = "";
     let activeSpeakers = 0;
@@ -17685,12 +17691,14 @@ function renderVoiceRoomStage() {
         if (slot) {
             activeSpeakers++;
             const isHost = slot.is_host === true || i === 0;
-            const isMe = (
-                slot.user_name === myName ||
-                (myNick && slot.user_name === myNick) ||
-                (myDisplayName && slot.user_name === myDisplayName) ||
-                (amIHost && i === 0)
-            );
+            // 0번석(주최자석)은 오직 내가 실제 주최자일 때만 isMe가 됨!
+            const isMe = i === 0 
+                ? amIHost 
+                : (
+                    (slot.user_name && slot.user_name === myName) ||
+                    (myNick && slot.user_name === myNick) ||
+                    (myDisplayName && slot.user_name === myDisplayName)
+                );
             const isSpeaking = (slot.is_speaking && !slot.is_muted);
 
             html += `
@@ -17706,7 +17714,7 @@ function renderVoiceRoomStage() {
                     <span style="font-size: 0.76rem; font-weight: 900; color: ${isMe ? 'var(--accent-cyan)' : '#fff'}; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.2;">
                         ${typeof escapeHtml === 'function' ? escapeHtml(slot.user_name) : slot.user_name} ${isMe ? '(나)' : ''}
                     </span>
-                    <span style="font-size: 0.68rem; color: ${isSpeaking ? '#00e676' : (slot.is_muted ? '#ff4757' : '#94a3b8')}; margin-top: 2px;">
+                    <span style="font-size: 0.68rem; color: ${isSpeaking ? '#00e676' : (slot.is_muted ? (isMe ? '🔇 마이크 켜기' : '음소거') : (isHost ? '주최자' : '발언자'))}; margin-top: 2px;">
                         ${isSpeaking ? '🎙️ 말하는 중' : (slot.is_muted ? (isMe ? '🔇 마이크 켜기' : '음소거') : (isHost ? '주최자' : '발언자'))}
                     </span>
                 </div>
@@ -17750,8 +17758,10 @@ function renderAudienceList() {
     if (bottomCount) bottomCount.textContent = totalAudience;
     if (drawerCount) drawerCount.textContent = totalAudience;
 
-    const myName = (currentUser && (currentUser.nickname || currentUser.name)) ? (currentUser.nickname || currentUser.name) : "";
-    const isHost = currentVoiceRoom && (currentVoiceRoom.user_name === myName || (currentUser && currentUser.email === currentVoiceRoom.author));
+    const myNick = (currentUser && currentUser.nickname) ? currentUser.nickname.trim() : "";
+    const myDisplayName = (currentUser && currentUser.name) ? currentUser.name.trim() : "";
+    const myName = myNick || myDisplayName || "다이버";
+    const amIHost = currentVoiceRoom ? isVoiceRoomHost(currentVoiceRoom) : false;
 
     if (totalAudience === 0) {
         listContainer.innerHTML = `
@@ -17766,7 +17776,7 @@ function renderAudienceList() {
 
     let html = "";
     voiceRoomAudience.forEach(aud => {
-        const isMe = (aud.user_name === myName);
+        const isMe = (aud.user_name === myName || (myNick && aud.user_name === myNick));
         const initial = aud.user_name ? aud.user_name.charAt(0).toUpperCase() : "U";
 
         html += `
@@ -17784,7 +17794,7 @@ function renderAudienceList() {
                         </div>
                     </div>
                 </div>
-                ${isHost && !isMe ? `
+                ${amIHost && !isMe ? `
                     <button type="button" onclick="inviteAudienceToMic('${escapeHtml(aud.user_name)}')" style="background: rgba(0, 242, 254, 0.15); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); font-size: 0.72rem; font-weight: 800; padding: 4px 10px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
                         <i class="fa-solid fa-microphone"></i> 마이크 초대
                     </button>
@@ -17810,20 +17820,21 @@ function requestVoiceSlot(slotNum) {
         showToast("🔑 로그인 후 신청하실 수 있습니다.");
         return;
     }
-    const myName = currentUser.nickname || currentUser.name || "다이버";
+    const myNick = (currentUser && currentUser.nickname) ? currentUser.nickname.trim() : "";
+    const myDisplayName = (currentUser && currentUser.name) ? currentUser.name.trim() : "";
+    const myName = myNick || myDisplayName || "다이버";
     const slotIdx = slotNum - 1;
 
     // 이미 발언석에 있는지 확인
-    const isAlreadySpeaker = voiceRoomSpeakers.some(s => s && s.user_name === myName);
+    const isAlreadySpeaker = voiceRoomSpeakers.some(s => s && (s.user_name === myName || (myNick && s.user_name === myNick)));
     if (isAlreadySpeaker) {
         showToast("⚠️ 이미 발언석에 참여 중이십니다!");
         return;
     }
 
-    const hostName = currentVoiceRoom ? (currentVoiceRoom.user_name || currentVoiceRoom.author) : "";
-    const isHost = (myName === hostName || (currentUser.email && currentVoiceRoom && currentUser.email === currentVoiceRoom.author));
+    const amIHost = currentVoiceRoom ? isVoiceRoomHost(currentVoiceRoom) : false;
 
-    if (isHost) {
+    if (amIHost) {
         // 주최자가 직접 빈 슬롯으로 이동/배치
         voiceRoomSpeakers[slotIdx] = { user_name: myName, is_host: true, is_muted: !isVoiceMicOn, is_speaking: false };
         renderVoiceRoomStage();
@@ -17831,7 +17842,7 @@ function requestVoiceSlot(slotNum) {
         return;
     }
 
-    // 주최자가 방 안에 있는 경우 주최자에게 참가 신청 전송
+    // 주최자에게 참가 신청 전송
     showToast(`📢 ${slotNum}번석 발언 참가를 신청했습니다! 주최자의 승인을 기다립니다.`);
 
     // 실시간 채널로 주최자에게 신청 브로드캐스트
@@ -17894,32 +17905,22 @@ async function toggleVoiceMic() {
         showToast("🔑 로그인 후 마이크를 사용하실 수 있습니다.");
         return;
     }
-    const myNick = (currentUser && currentUser.nickname) ? currentUser.nickname : "";
-    const myDisplayName = (currentUser && currentUser.name) ? currentUser.name : "";
-    const myRealName = (currentUser && currentUser.real_name) ? currentUser.real_name : "";
-    const myEmail = (currentUser && currentUser.email) ? currentUser.email : "";
-    const myName = myNick || myDisplayName || myRealName || "다이버";
+    const myNick = (currentUser && currentUser.nickname) ? currentUser.nickname.trim() : "";
+    const myDisplayName = (currentUser && currentUser.name) ? currentUser.name.trim() : "";
+    const myName = myNick || myDisplayName || "다이버";
+    const amIHost = currentVoiceRoom ? isVoiceRoomHost(currentVoiceRoom) : false;
 
-    const hostName = currentVoiceRoom ? (currentVoiceRoom.user_name || currentVoiceRoom.author) : "";
-    const amIHost = Boolean(
-        currentVoiceRoom && (
-            (myNick && (currentVoiceRoom.user_name === myNick || currentVoiceRoom.author === myNick)) ||
-            (myDisplayName && (currentVoiceRoom.user_name === myDisplayName || currentVoiceRoom.author === myDisplayName)) ||
-            (myRealName && (currentVoiceRoom.real_name === myRealName || currentVoiceRoom.user_name === myRealName)) ||
-            (myEmail && (currentVoiceRoom.author === myEmail || currentVoiceRoom.user_email === myEmail)) ||
-            (currentVoiceRoom.user_name === myName)
-        )
-    );
-
-    // 내가 5개 발언석 중 하나에 앉아있는지 검사
-    let mySlotIdx = voiceRoomSpeakers.findIndex(s => s && (
-        s.user_name === myName ||
-        (myNick && s.user_name === myNick) ||
-        (myDisplayName && s.user_name === myDisplayName) ||
-        (amIHost && s.is_host)
+    // 내가 5개 발언석 중 하나에 앉아있는지 검사 (0번석은 오직 주최자일 때만 내 슬롯으로 인정)
+    let mySlotIdx = voiceRoomSpeakers.findIndex((s, idx) => s && (
+        (idx === 0 && amIHost) ||
+        (idx > 0 && (
+            s.user_name === myName ||
+            (myNick && s.user_name === myNick) ||
+            (myDisplayName && s.user_name === myDisplayName)
+        ))
     ));
 
-    // 주최자인데 슬롯 0이 비어있거나 매칭되지 않았다면 즉시 0번석 배정
+    // 주최자인데 슬롯 0이 비어있다면 0번석 배정
     if (mySlotIdx === -1 && amIHost) {
         mySlotIdx = 0;
         voiceRoomSpeakers[0] = { user_name: myName, is_host: true, is_muted: true, is_speaking: false };
@@ -18299,21 +18300,9 @@ function closeVoiceRoomModal() {
         return;
     }
 
-    const myNick = (currentUser && currentUser.nickname) ? currentUser.nickname : "";
-    const myDisplayName = (currentUser && currentUser.name) ? currentUser.name : "";
-    const myRealName = (currentUser && currentUser.real_name) ? currentUser.real_name : "";
-    const myEmail = (currentUser && currentUser.email) ? currentUser.email : "";
-    const myName = myNick || myDisplayName || myRealName || "다이버";
+    const amIHost = isVoiceRoomHost(currentVoiceRoom);
 
-    const isHost = Boolean(
-        (myNick && (currentVoiceRoom.user_name === myNick || currentVoiceRoom.author === myNick)) ||
-        (myDisplayName && (currentVoiceRoom.user_name === myDisplayName || currentVoiceRoom.author === myDisplayName)) ||
-        (myRealName && (currentVoiceRoom.real_name === myRealName || currentVoiceRoom.user_name === myRealName)) ||
-        (myEmail && (currentVoiceRoom.author === myEmail || currentVoiceRoom.user_email === myEmail)) ||
-        (currentVoiceRoom.user_name === myName)
-    );
-
-    if (isHost) {
+    if (amIHost) {
         if (confirm("👑 주최자가 퇴장하면 보이스룸이 자동 종료됩니다.\n정말 방을 종료하시겠습니까?")) {
             // 방 종료 처리: posts 상태 closed 변경
             currentVoiceRoom.status = "closed";
@@ -18482,8 +18471,10 @@ function connectVoiceRoomRealtime(roomId) {
             supabaseClient.removeChannel(voiceRoomChannel);
         }
 
-        const myName = (currentUser && (currentUser.nickname || currentUser.name)) ? (currentUser.nickname || currentUser.name) : "다이버";
-        const isHost = currentVoiceRoom && (currentVoiceRoom.user_name === myName);
+        const myNick = (currentUser && currentUser.nickname) ? currentUser.nickname.trim() : "";
+        const myDisplayName = (currentUser && currentUser.name) ? currentUser.name.trim() : "";
+        const myName = myNick || myDisplayName || "다이버";
+        const amIHost = currentVoiceRoom ? isVoiceRoomHost(currentVoiceRoom) : false;
 
         voiceRoomChannel = supabaseClient.channel(`voiceroom_${roomId}`, {
             config: {
@@ -18518,7 +18509,7 @@ function connectVoiceRoomRealtime(roomId) {
                 if (status === 'SUBSCRIBED') {
                     await voiceRoomChannel.track({
                         user_name: myName,
-                        is_host: isHost,
+                        is_host: amIHost,
                         joined_at: (typeof getKSTIsoString === "function") ? getKSTIsoString() : new Date().toISOString()
                     });
 
@@ -18541,14 +18532,15 @@ function syncVoiceRoomRealtimePresence(state) {
     if (!state) return;
     const realAudience = [];
     const speakerNames = new Set(voiceRoomSpeakers.filter(s => s !== null).map(s => s.user_name));
-    const hostName = currentVoiceRoom ? (currentVoiceRoom.user_name || currentVoiceRoom.author) : "";
+    const hostDisplayName = currentVoiceRoom ? (currentVoiceRoom.user_name || "주최자").trim() : "";
 
     Object.keys(state).forEach(key => {
         const presences = state[key];
         if (Array.isArray(presences)) {
             presences.forEach(p => {
-                const uName = p.user_name || key;
-                if (uName && !speakerNames.has(uName) && uName !== hostName) {
+                const uName = (p.user_name || key || "").trim();
+                // 슬롯에 착석한 발언자가 아니거나 0번 슬롯 주최자가 아니면 청취자로 분류
+                if (uName && !speakerNames.has(uName) && uName !== hostDisplayName) {
                     if (!realAudience.some(a => a.user_name === uName)) {
                         realAudience.push({
                             user_name: uName,
@@ -18569,10 +18561,10 @@ function syncVoiceRoomRealtimePresence(state) {
     }
 
     // 내가 마이크가 켜진 발언자이고 새로운 청취자/참가자가 들어왔다면 WebRTC Offer 전송 및 현재 마이크 상태 동기화
-    const myNick = (currentUser && currentUser.nickname) ? currentUser.nickname : "";
-    const myDisplayName = (currentUser && currentUser.name) ? currentUser.name : "";
-    const myRealName = (currentUser && currentUser.real_name) ? currentUser.real_name : "";
-    const myName = myNick || myDisplayName || myRealName || "다이버";
+    const myNick = (currentUser && currentUser.nickname) ? currentUser.nickname.trim() : "";
+    const myDisplayName = (currentUser && currentUser.name) ? currentUser.name.trim() : "";
+    const myName = myNick || myDisplayName || "다이버";
+    const amIHost = currentVoiceRoom ? isVoiceRoomHost(currentVoiceRoom) : false;
 
     if (isVoiceMicOn && localAudioStream) {
         voiceRoomAudience.forEach(aud => {
@@ -18582,7 +18574,11 @@ function syncVoiceRoomRealtimePresence(state) {
         });
 
         // 새로 들어온 청취자/참가자에게 내 발언석의 마이크 켜짐 상태 브로드캐스트
-        const mySlotIdx = voiceRoomSpeakers.findIndex(s => s && (s.user_name === myName || (s.user_name === myNick && myNick)));
+        const mySlotIdx = voiceRoomSpeakers.findIndex((s, idx) => s && (
+            (idx === 0 && amIHost) ||
+            s.user_name === myName ||
+            (myNick && s.user_name === myNick)
+        ));
         if (mySlotIdx !== -1) {
             broadcastVoiceEvent({
                 type: "mic_toggle",
@@ -18620,8 +18616,7 @@ function handleVoiceRoomBroadcastEvent(event) {
             appendVoiceRoomChatMessage(event.sender, event.text);
         }
     } else if (event.type === "request_slot") {
-        const myName = (currentUser && (currentUser.nickname || currentUser.name)) ? (currentUser.nickname || currentUser.name) : "";
-        const isHost = currentVoiceRoom && (currentVoiceRoom.user_name === myName);
+        const isHost = currentVoiceRoom ? isVoiceRoomHost(currentVoiceRoom) : false;
         if (isHost) {
             if (confirm(`🎙️ [발언 무대 신청]\n'${event.applicant}'님이 ${event.slotNum}번석 참가를 신청했습니다. 수락하시겠습니까?`)) {
                 approveVoiceSlot(event.slotNum, event.applicant);
