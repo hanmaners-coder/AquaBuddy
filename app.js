@@ -17275,8 +17275,13 @@ function openModal(modal) {
     targetEl.style.setProperty("top", "0px", "important");
     targetEl.style.setProperty("left", "0px", "important");
     targetEl.style.setProperty("width", "100vw", "important");
-    targetEl.style.setProperty("height", "100vh", "important");
-    targetEl.style.setProperty("z-index", targetEl.id === "authModal" ? "9999999" : "999999", "important");
+    let modalZIndex = "999999";
+    if (targetEl.id === "authModal" || targetEl.id === "voiceHostExitModal") {
+        modalZIndex = "9999999";
+    } else if (targetEl.id === "voiceRoomModalOverlay") {
+        modalZIndex = "9999995";
+    }
+    targetEl.style.setProperty("z-index", modalZIndex, "important");
     targetEl.style.setProperty("justify-content", "center", "important");
     targetEl.style.setProperty("align-items", "center", "important");
 
@@ -18690,9 +18695,11 @@ function closeVoiceRoomModal() {
         const exitModal = document.getElementById("voiceHostExitModal");
         const selectEl = document.getElementById("voiceHostSuccessorSelect");
         if (exitModal && selectEl) {
-            selectEl.innerHTML = otherCandidates.map(c => 
-                `<option value="${escapeHtml(c.user_name)}">👤 ${escapeHtml(c.user_name)} (${c.role})</option>`
-            ).join("");
+            selectEl.innerHTML = otherCandidates.map(c => {
+                const safeName = typeof escapeHtml === 'function' ? escapeHtml(c.user_name) : c.user_name;
+                return `<option value="${safeName}">👤 ${safeName} (${c.role})</option>`;
+            }).join("");
+            exitModal.style.setProperty("z-index", "9999999", "important");
             openModal(exitModal);
             return;
         } else {
