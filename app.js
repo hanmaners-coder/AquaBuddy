@@ -12939,6 +12939,8 @@ function filterAndRender(resetPagination = true) {
             if (cat !== "scuba") return false;
         } else if (activeCategory === "community") {
             const isVR = (post.is_voiceroom === true || post.post_type === 'voiceroom' || post.sports_type === 'voiceroom' || post.class_type === 'voiceroom' || cat === 'voiceroom');
+            // 종료된 보이스룸은 피드 목록에 절대 노출하지 않음
+            if (isVR && post.status === 'closed') return false;
             if (cat !== "community" && !isVR) return false;
             if (typeof activeCommunitySubFilter !== 'undefined') {
                 if (activeCommunitySubFilter === "feed" && isVR) return false;
@@ -17317,6 +17319,10 @@ function openPostDetailModal(postId) {
     if (!postId) return;
     const post = posts.find(p => String(p.id).trim() === String(postId).trim());
     if (post && (post.is_voiceroom === true || post.sports_type === 'voiceroom' || post.class_type === 'voiceroom' || post.category === 'voiceroom')) {
+        if (post.status === 'closed') {
+            showToast("ℹ️ 이미 종료된 보이스룸입니다.");
+            return;
+        }
         openVoiceRoomModal(post.id);
         return;
     }
@@ -18304,13 +18310,44 @@ function closeVoiceRoomModal() {
 
     if (amIHost) {
         if (confirm("👑 주최자가 퇴장하면 보이스룸이 자동 종료됩니다.\n정말 방을 종료하시겠습니까?")) {
-            // 방 종료 처리: posts 상태 closed 변경
-            currentVoiceRoom.status = "closed";
-            if (supabaseClient && currentVoiceRoom.id) {
-                supabaseClient.from('posts').update({ status: 'closed' }).eq('id', currentVoiceRoom.id).then(() => {
+            const closingRoomId = currentVoiceRoom ? currentVoiceRoom.id : null;
+
+            // 1. 방 상태 closed로 변경
+            if (currentVoiceRoom) {
+                currentVoiceRoom.status = "closed";
+            }
+
+            // 2. posts 메모리 배열 상태 즉시 closed 갱신
+            if (closingRoomId && typeof posts !== 'undefined' && Array.isArray(posts)) {
+                const targetP = posts.find(p => String(p.id) === String(closingRoomId));
+                if (targetP) {
+                    targetP.status = "closed";
+                }
+            }
+
+            // 3. 현재 방의 참여자들에게 보이스룸 종료 브로드캐스트
+            broadcastVoiceEvent({
+                type: "room_closed",
+                room_id: closingRoomId
+            });
+
+            // 4. Supabase DB에 영구 closed 저장 및 전역 실시간 갱신 전파
+            if (supabaseClient && closingRoomId) {
+                supabaseClient.from('posts').update({ status: 'closed' }).eq('id', closingRoomId).then(() => {
                     console.log("보이스룸 DB 종료 처리 완료");
                 });
+
+                if (_globalRealtimeChannel) {
+                    try {
+                        _globalRealtimeChannel.send({
+                            type: 'broadcast',
+                            event: 'post_updated',
+                            payload: { postId: closingRoomId, postData: { status: 'closed' } }
+                        });
+                    } catch(e) {}
+                }
             }
+
             showToast("🎙️ 라이브 보이스룸이 종료되었습니다.");
             cleanupVoiceRoomSession();
         }
@@ -18349,6 +18386,9 @@ function cleanupVoiceRoomSession() {
     const drawer = document.getElementById("voiceAudienceDrawer");
     if (drawer) drawer.classList.add("hidden");
 
+    if (typeof renderDashboardBlocks === "function") {
+        renderDashboardBlocks();
+    }
     if (typeof filterAndRender === "function") {
         filterAndRender(false);
     }
@@ -18697,6 +18737,9 @@ function handleVoiceRoomBroadcastEvent(event) {
                 handleWebRTCCandidate(event.from, event.candidate);
             }
         }
+    } else if (event.type === "room_closed") {
+        showToast("🎙️ 주최자가 보이스룸을 종료했습니다.");
+        cleanupVoiceRoomSession();
     }
 }
 
