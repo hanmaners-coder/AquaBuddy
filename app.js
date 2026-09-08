@@ -17562,6 +17562,7 @@ const rtcIceConfig = {
     ]
 };
 let voiceRoomChannel = null;
+const voiceClientSessionId = 'vc_' + Math.random().toString(36).substring(2, 9) + Date.now();
 
 // 1. 보이스룸 개설 모달 열기 (통합 작성 모달 #createModal의 보이스룸 탭으로 자연스럽게 전환)
 function openCreateVoiceRoomModal() {
@@ -18832,9 +18833,13 @@ function initVoiceRoomChatStream(room) {
     }
 }
 
-function appendVoiceRoomChatMessage(sender, text) {
+function appendVoiceRoomChatMessage(sender, text, msgId) {
     const stream = document.getElementById("voiceChatStream");
     if (!stream || !text) return;
+
+    if (msgId && stream.querySelector(`[data-msg-id="${msgId}"]`)) {
+        return; // 이미 화면에 렌더링된 메시지 중복 방지
+    }
 
     const emptyNotice = document.getElementById("voiceChatEmptyNotice");
     if (emptyNotice) emptyNotice.remove();
@@ -18845,6 +18850,7 @@ function appendVoiceRoomChatMessage(sender, text) {
     const isSpeaker = voiceRoomSpeakers.some(s => s && s.user_name === sender);
 
     const div = document.createElement("div");
+    if (msgId) div.setAttribute("data-msg-id", msgId);
     div.style.cssText = "display: flex; gap: 6px; align-items: flex-start; font-size: 0.8rem; animation: fadeIn 0.2s ease;";
 
     div.innerHTML = `
@@ -18873,13 +18879,16 @@ async function handleSendVoiceRoomChat(e) {
     const myName = (currentUser && (currentUser.nickname || currentUser.name)) ? (currentUser.nickname || currentUser.name) : "다이버";
     input.value = "";
 
-    // 로컬 즉시 표시
-    appendVoiceRoomChatMessage(myName, text);
+    const msgId = 'msg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+
+    // 로컬 화면 즉시 표시
+    appendVoiceRoomChatMessage(myName, text, msgId);
 
     // chats 메모리 배열 저장
     const roomIdStr = String(currentVoiceRoom.id);
     chatMessages[roomIdStr] = chatMessages[roomIdStr] || [];
     chatMessages[roomIdStr].push({
+        id: msgId,
         sender: myName,
         message: text,
         created_at: (typeof getKSTIsoString === "function") ? getKSTIsoString() : new Date().toISOString()
@@ -18900,9 +18909,11 @@ async function handleSendVoiceRoomChat(e) {
         }
     }
 
-    // 브로드캐스트
+    // 🌟 실시간 브로드캐스트 (기기 고유 세션 ID 및 메시지 ID 전송)
     broadcastVoiceEvent({
         type: "chat_message",
+        msg_id: msgId,
+        client_session_id: voiceClientSessionId,
         sender: myName,
         text: text
     });
@@ -19072,9 +19083,10 @@ function handleVoiceRoomBroadcastEvent(event) {
     if (!event || !event.type) return;
 
     if (event.type === "chat_message") {
-        const myName = (currentUser && (currentUser.nickname || currentUser.name)) ? (currentUser.nickname || currentUser.name) : "";
-        if (event.sender !== myName) {
-            appendVoiceRoomChatMessage(event.sender, event.text);
+        // 🌟 동일 브라우저 탭에서 내가 직접 입력하여 이미 로컬에 표시한 메시지가 아니라면,
+        // 다른 기기(동일 아이디로 동시 로그인한 모바일/PC든 다른 유저든 무관)에서 온 모든 메시지를 100% 실시간 화면에 표시!
+        if (!event.client_session_id || event.client_session_id !== voiceClientSessionId) {
+            appendVoiceRoomChatMessage(event.sender, event.text, event.msg_id);
         }
     } else if (event.type === "request_slot") {
         const isHost = currentVoiceRoom ? isVoiceRoomHost(currentVoiceRoom) : false;
