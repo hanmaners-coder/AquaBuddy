@@ -836,9 +836,6 @@
                             <span class="live-pulse-dot" style="display:inline-block; width:6px; height:6px; background:#ff4757; border-radius:50%; margin-right:4px;"></span>🎙️ LIVE 보이스룸
                         </button>
                     </div>
-                    <button type="button" class="btn" onclick="openCreateVoiceRoomModal()" style="background: linear-gradient(135deg, #00f2fe, #4facfe); color: #070e17; font-weight: 900; font-size: 0.82rem; padding: 6px 14px; border-radius: 20px; border: none; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 10px rgba(0, 242, 254, 0.3);">
-                        <i class="fa-solid fa-plus-circle"></i> 보이스룸 개설
-                    </button>
                 </div>
 
                  <!-- Sub Filter Bar for My Activity Log -->
@@ -862,6 +859,7 @@
                          <i class="fa-solid fa-map"></i>
                          <select id="regionSelect">
                              <option value="all">🌐 전국 지역 전체</option>
+                             <option value="overseas">✈️ 해외 (필리핀/이집트/동남아/오키나와 등)</option>
                              <option value="seoul">수도권 (서울/경기/인천)</option>
                              <option value="gangwon">강원권</option>
                              <option value="chungcheong">충청권 (대전/세종/충청)</option>
@@ -1616,13 +1614,73 @@
                  <button class="close-btn" id="closeCreateModalBtn">&times;</button>
              </div>
              <form id="createPostForm" onsubmit="interceptHostSubmit(event); return false;">
+                 <!-- 💬 일반 수다글 작성 vs 🎙️ LIVE 보이스룸 개설 세그먼트 토글 (자유수다방 전용) -->
+                 <div id="communityPostTypeToggleGroup" style="display: none; margin-bottom: 16px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(0, 242, 254, 0.25); border-radius: 14px; padding: 4px;">
+                     <div style="display: flex; gap: 6px;">
+                         <button type="button" id="commTypePostBtn" class="community-type-tab-btn active" onclick="switchCommunityCreateType('post')" style="flex: 1; padding: 10px 8px; border-radius: 10px; border: none; font-weight: 800; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                             💬 일반 수다글 작성
+                         </button>
+                         <button type="button" id="commTypeVoiceBtn" class="community-type-tab-btn" onclick="switchCommunityCreateType('voiceroom')" style="flex: 1; padding: 10px 8px; border-radius: 10px; border: none; font-weight: 800; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                             <span class="live-pulse-dot" style="display:inline-block; width:7px; height:7px; background:#ff4757; border-radius:50%;"></span>
+                             🎙️ LIVE 보이스룸 개설
+                         </button>
+                     </div>
+                 </div>
+
+                 <!-- 🎙️ 보이스룸 선택 시 표시되는 전용 설정 (지역/주제/6석 안내) -->
+                 <div id="commVoiceRoomFieldsContainer" style="display: none; margin-bottom: 16px;">
+                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                         <div>
+                             <label for="commVoiceRoomRegionSelect" style="display: block; font-size: 0.82rem; font-weight: 800; color: #e2e8f0; margin-bottom: 6px;">
+                                 📍 지역 선택 *
+                             </label>
+                             <select id="commVoiceRoomRegionSelect" style="width: 100%; padding: 11px 12px; background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(0, 242, 254, 0.35); border-radius: 10px; color: #fff; font-size: 0.88rem; outline: none; box-sizing: border-box;">
+                                 <option value="all">🌐 전국 전체</option>
+                                 <option value="overseas" selected>✈️ 해외 (필리핀/이집트/동남아/오키나와 등)</option>
+                                 <option value="jeju">제주권 (서귀포/제주시)</option>
+                                 <option value="seoul">수도권 (서울/경기/K26/딥스테이션)</option>
+                                 <option value="gangwon">강원권 (동해/양양/강릉)</option>
+                                 <option value="gyeongsang">경상권 (부산/포항/울산/거제)</option>
+                                 <option value="jeolla">전라권 (광주/여수/목포)</option>
+                                 <option value="chungcheong">충청권 (대전/세종/태안)</option>
+                             </select>
+                         </div>
+                         <div>
+                             <label for="commVoiceRoomTopicSelect" style="display: block; font-size: 0.82rem; font-weight: 800; color: #e2e8f0; margin-bottom: 6px;">
+                                 🏷️ 대화 주제 *
+                             </label>
+                             <select id="commVoiceRoomTopicSelect" style="width: 100%; padding: 11px 12px; background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(0, 242, 254, 0.35); border-radius: 10px; color: #fff; font-size: 0.88rem; outline: none; box-sizing: border-box;">
+                                 <option value="free_talk" selected>💬 자유 수다 & 다이버 소통</option>
+                                 <option value="wave_report">🌊 실시간 파도/시야/수온</option>
+                                 <option value="tour_plan">✈️ 국내/해외 투어 계획</option>
+                                 <option value="gear_qa">🤿 장비 추천 & Q&A</option>
+                                 <option value="pool_buddy">🤿 K26/잠수풀 버디 수다</option>
+                             </select>
+                         </div>
+                     </div>
+                     <!-- 6석 발언 무대 + 청취 30명 안내 -->
+                     <div style="background: rgba(0, 242, 254, 0.08); border: 1px dashed rgba(0, 242, 254, 0.4); border-radius: 12px; padding: 12px 14px; font-size: 0.82rem; line-height: 1.5; color: #cbd5e1;">
+                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                             <span style="font-weight: 800; color: var(--accent-cyan);"><i class="fa-solid fa-microphone"></i> 발언 무대:</span>
+                             <strong style="color: #fff;">총 6석 (주최자 1 + 발언자 5)</strong>
+                         </div>
+                         <div style="display: flex; justify-content: space-between; align-items: center;">
+                             <span style="font-weight: 800; color: #ffb703;"><i class="fa-solid fa-headphones"></i> 청취 정원:</span>
+                             <strong style="color: #fff;">최대 30명 (실시간 텍스트 채팅 동시 참여)</strong>
+                         </div>
+                         <div style="font-size: 0.74rem; color: #94a3b8; margin-top: 6px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 6px;">
+                             💡 방장은 퇴장 시 다른 참가자에게 방장 권한을 위임하거나 방을 종료할 수 있습니다.
+                         </div>
+                     </div>
+                 </div>
+
                  <div class="form-group" id="postCategoryGroup" style="display: none;">
                      <label for="postCategory">작성 카테고리 *</label>
                      <select id="postCategory" onchange="handlePostCategoryChange(this.value)">
                      </select>
                  </div>
  
-                 <div class="form-group">
+                 <div class="form-group" id="postTitleGroup">
                      <label for="postTitle" id="labelTitle">글 제목 *</label>
                      <input type="text" id="postTitle" placeholder="제목을 입력해 주세요!" required>
                  </div>
@@ -2380,6 +2438,7 @@
                         </label>
                         <select id="voiceRoomRegionSelect" style="width: 100%; padding: 11px 12px; background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(0, 242, 254, 0.3); border-radius: 10px; color: #fff; font-size: 0.88rem; outline: none; box-sizing: border-box;">
                             <option value="all">🌐 전국 전체</option>
+                            <option value="overseas">✈️ 해외 (필리핀/이집트/동남아/오키나와 등)</option>
                             <option value="jeju" selected>제주권 (서귀포/제주시)</option>
                             <option value="seoul">수도권 (서울/경기/K26/딥스테이션)</option>
                             <option value="gangwon">강원권 (동해/양양/강릉)</option>
@@ -2402,11 +2461,11 @@
                     </div>
                 </div>
 
-                <!-- 규격 안내 박스 (발언자 5명 / 청취자 30명) -->
+                <!-- 규격 안내 박스 (발언자 6명 / 청취자 30명) -->
                 <div style="background: rgba(0, 242, 254, 0.08); border: 1px dashed rgba(0, 242, 254, 0.4); border-radius: 12px; padding: 12px 14px; margin-bottom: 18px; font-size: 0.82rem; line-height: 1.5; color: #cbd5e1;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                         <span style="font-weight: 800; color: var(--accent-cyan);"><i class="fa-solid fa-microphone"></i> 발언 무대:</span>
-                        <strong style="color: #fff;">총 5석 (주최자 1 + 발언자 4)</strong>
+                        <strong style="color: #fff;">총 6석 (주최자 1 + 발언자 5)</strong>
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <span style="font-weight: 800; color: #ffb703;"><i class="fa-solid fa-headphones"></i> 청취 정원:</span>
@@ -2424,6 +2483,43 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- 👑 Host Delegation & Exit Modal (#voiceHostExitModal) -->
+    <div class="modal-overlay hidden" id="voiceHostExitModal" style="z-index: 9999998 !important; padding: 16px; box-sizing: border-box;">
+        <div class="glass-panel modal-container" style="max-width: 440px; width: 100%; background: rgba(10, 18, 35, 0.98); border: 2px solid var(--accent-gold); border-radius: 20px; box-shadow: 0 16px 50px rgba(0, 0, 0, 0.9); padding: 22px; color: #fff;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; border-bottom: 1px solid rgba(255, 183, 3, 0.3); padding-bottom: 10px;">
+                <h3 style="margin: 0; font-size: 1.1rem; font-weight: 900; color: var(--accent-gold); display: flex; align-items: center; gap: 8px;">
+                    👑 방장 권한 위임 후 퇴장
+                </h3>
+                <button type="button" onclick="closeModal(document.getElementById('voiceHostExitModal'))" style="background: none; border: none; color: #94a3b8; font-size: 1.3rem; cursor: pointer;">&times;</button>
+            </div>
+            <p style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.5; margin: 0 0 14px 0;">
+                현재 방에 다른 참가자가 남아있습니다.<br>
+                다른 분에게 <strong style="color: var(--accent-gold);">방장 권한을 위임</strong>하고 나가시면 보이스룸이 종료되지 않고 계속 유지됩니다!
+            </p>
+
+            <div style="margin-bottom: 16px;">
+                <label for="voiceHostSuccessorSelect" style="display: block; font-size: 0.82rem; font-weight: 800; color: var(--accent-cyan); margin-bottom: 6px;">
+                    새로운 방장(주최자) 선택 *
+                </label>
+                <select id="voiceHostSuccessorSelect" style="width: 100%; padding: 11px 12px; background: rgba(15, 23, 42, 0.95); border: 1.5px solid var(--accent-gold); border-radius: 10px; color: #fff; font-size: 0.9rem; outline: none; box-sizing: border-box;">
+                    <!-- Injected dynamically -->
+                </select>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <button type="button" onclick="executeHostDelegationAndExit()" class="btn" style="background: linear-gradient(135deg, #ffb703, #fb8500); color: #070e17; font-weight: 900; padding: 12px; border-radius: 12px; border: none; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 15px rgba(255, 183, 3, 0.4);">
+                    <i class="fa-solid fa-crown"></i> 방장 권한 위임하고 나가기
+                </button>
+                <button type="button" onclick="executeHostCloseRoomAndExit()" class="btn btn-secondary" style="background: rgba(255, 71, 87, 0.15); border: 1px solid #ff4757; color: #ff4757; font-weight: 800; padding: 10px; border-radius: 12px; cursor: pointer; font-size: 0.84rem; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                    <i class="fa-solid fa-ban"></i> 방 전체 종료하고 해산하기
+                </button>
+                <button type="button" onclick="closeModal(document.getElementById('voiceHostExitModal'))" class="btn btn-secondary" style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); color: #94a3b8; padding: 9px; border-radius: 12px; cursor: pointer; font-size: 0.82rem;">
+                    취소 (방에 머무르기)
+                </button>
+            </div>
         </div>
     </div>
 
@@ -2455,18 +2551,18 @@
                 </button>
             </div>
 
-            <!-- 2. 🎙️ 5석 발언자 무대 컨테이너 (주최자 1석 + 발언자 4석) -->
+            <!-- 2. 🎙️ 6석 발언자 무대 컨테이너 (주최자 1석 + 발언자 5석) -->
             <div style="padding: 12px 16px; background: rgba(12, 22, 42, 0.85); border-bottom: 1px solid rgba(255, 255, 255, 0.08); flex-shrink: 0;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.8rem;">
                     <span style="font-weight: 900; color: var(--accent-cyan); display: flex; align-items: center; gap: 5px;">
-                        <i class="fa-solid fa-microphone-lines"></i> 발언 무대 (<span id="voiceSpeakerCount">1</span>/5명)
+                        <i class="fa-solid fa-microphone-lines"></i> 발언 무대 (<span id="voiceSpeakerCount">1</span>/6명)
                     </span>
                     <span style="font-size: 0.74rem; color: #94a3b8;">
                         빈자리 터치 시 발언 신청
                     </span>
                 </div>
                 <div class="voice-stage-grid" id="voiceStageSlotsContainer">
-                    <!-- 5 Slots injected by JS -->
+                    <!-- 6 Slots injected by JS -->
                 </div>
             </div>
 
@@ -2519,8 +2615,8 @@
 
  
      <!-- App Configuration & Main Logic Script -->
-     <script src="config.js?v=V1616_VOICEROOM_TERMINATION_FEED_AND_PRESENCE_FIX"></script>
-     <script src="app.js?v=V1616_VOICEROOM_TERMINATION_FEED_AND_PRESENCE_FIX"></script>
+     <script src="config.js?v=V1617_VOICEROOM_6SLOT_OVERSEAS_HOST_DELEGATION"></script>
+     <script src="app.js?v=V1617_VOICEROOM_6SLOT_OVERSEAS_HOST_DELEGATION"></script>
      <!-- Toast Notification Container -->
     <div id="toastContainer" class="toast-container"></div>
 

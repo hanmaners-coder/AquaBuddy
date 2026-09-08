@@ -2133,10 +2133,10 @@ button:active, .btn:active, .action-btn:active, .category-pill:active {
     animation: red-pulse 1.2s infinite ease-in-out;
 }
 
-/* 5석 발언자 무대 반응형 그리드 */
+/* 6석 발언자 무대 반응형 그리드 (PC 6열 / 모바일 3열x2행) */
 .voice-stage-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     gap: 10px;
     margin-top: 10px;
 }
@@ -2146,6 +2146,25 @@ button:active, .btn:active, .action-btn:active, .category-pill:active {
         grid-template-columns: repeat(3, 1fr);
         gap: 8px;
     }
+}
+
+/* 커뮤니티 글 작성 vs 보이스룸 개설 세그먼트 토글 버튼 */
+.community-type-tab-btn {
+    background: rgba(255, 255, 255, 0.06);
+    color: #94a3b8;
+    transition: all 0.2s ease;
+}
+
+.community-type-tab-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+}
+
+.community-type-tab-btn.active {
+    background: linear-gradient(135deg, rgba(0, 242, 254, 0.25), rgba(79, 172, 254, 0.25));
+    border: 1.5px solid var(--accent-cyan) !important;
+    color: #fff;
+    box-shadow: 0 0 15px rgba(0, 242, 254, 0.35);
 }
 
 /* 보이스룸 슬롯 카드 */

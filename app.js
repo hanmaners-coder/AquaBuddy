@@ -10093,6 +10093,15 @@ function interceptHostSubmit(e) {
     if (e && e.preventDefault) e.preventDefault();
     pendingHostSubmitEvent = e;
 
+    // 🎙️ 자유수다방에서 'LIVE 보이스룸 개설' 탭이 선택된 경우 보이스룸 생성으로 분기
+    const selCat = document.getElementById("postCategory") ? document.getElementById("postCategory").value : (typeof activeCategory !== 'undefined' ? activeCategory : '');
+    if (selCat === "community" && typeof currentCommunityCreateType !== 'undefined' && currentCommunityCreateType === "voiceroom") {
+        if (typeof handleCreateVoiceRoomFromModal === 'function') {
+            handleCreateVoiceRoomFromModal(e);
+        }
+        return;
+    }
+
     // 🌟 [미입력 항목 즉각 차단 및 토스트 알림]
     if (!validatePostForm()) {
         return;
@@ -12446,7 +12455,52 @@ function resetCreatePostForm() {
         renderImagePreviews();
     }
 }
-window.resetCreatePostForm = resetCreatePostForm;
+let currentCommunityCreateType = 'post';
+
+function switchCommunityCreateType(type) {
+    currentCommunityCreateType = type || 'post';
+    const postBtn = document.getElementById("commTypePostBtn");
+    const voiceBtn = document.getElementById("commTypeVoiceBtn");
+    const commVoiceFields = document.getElementById("commVoiceRoomFieldsContainer");
+    const titleLabel = document.getElementById("labelTitle");
+    const titleInput = document.getElementById("postTitle");
+    const imageGroup = document.getElementById("imageUploadGroup");
+    const descEl = document.getElementById("postDesc");
+    const descGroup = descEl ? descEl.closest(".form-group") : null;
+    const liabilityEl = document.getElementById("inlineLiabilityCheck");
+    const liabilityBox = liabilityEl ? liabilityEl.closest("div") : null;
+    const submitBtnText = document.getElementById("submitBtnText");
+    const modalTitle = document.getElementById("modalFormTitle");
+
+    if (currentCommunityCreateType === 'voiceroom') {
+        if (postBtn) postBtn.classList.remove("active");
+        if (voiceBtn) voiceBtn.classList.add("active");
+        if (commVoiceFields) commVoiceFields.style.display = "block";
+        if (titleLabel) titleLabel.innerHTML = '📢 보이스룸 제목 *';
+        if (titleInput) {
+            titleInput.placeholder = "예: 🌊 [보홀] 발리카삭 거북이 썰 / 실시간 파도 상황 & 물때";
+        }
+        if (imageGroup) imageGroup.style.display = "none";
+        if (descGroup) descGroup.style.display = "none";
+        if (liabilityBox) liabilityBox.style.display = "none";
+        if (submitBtnText) submitBtnText.innerHTML = '<i class="fa-solid fa-microphone-lines"></i> 🎙️ 보이스룸 개설하고 바로 입장';
+        if (modalTitle) modalTitle.textContent = "🎙️ 실시간 라이브 보이스룸 개설";
+    } else {
+        if (postBtn) postBtn.classList.add("active");
+        if (voiceBtn) voiceBtn.classList.remove("active");
+        if (commVoiceFields) commVoiceFields.style.display = "none";
+        if (titleLabel) titleLabel.innerHTML = '글 제목 *';
+        if (titleInput) {
+            titleInput.placeholder = "제목을 입력해 주세요!";
+        }
+        if (imageGroup) imageGroup.style.display = "block";
+        if (descGroup) descGroup.style.display = "block";
+        if (liabilityBox) liabilityBox.style.display = "flex";
+        if (submitBtnText) submitBtnText.innerHTML = '등록하기';
+        if (modalTitle) modalTitle.textContent = "수다방 게시글 작성";
+    }
+}
+window.switchCommunityCreateType = switchCommunityCreateType;
 
 function preselectModalCategory(cat, isEditing = false) {
     const catKey = cat;
@@ -12474,6 +12528,12 @@ function preselectModalCategory(cat, isEditing = false) {
     const submitBtnText = document.getElementById("submitBtnText");
     const buddyPillOptionsGroup = document.getElementById("buddyPillOptionsGroup");
     const marketGroupBuyContainer = document.getElementById("marketGroupBuyContainer");
+
+    // 자유수다방 전용 보이스룸 토글 및 필드 초기화
+    const commToggle = document.getElementById("communityPostTypeToggleGroup");
+    const commVoiceFields = document.getElementById("commVoiceRoomFieldsContainer");
+    if (commToggle) commToggle.style.display = "none";
+    if (commVoiceFields) commVoiceFields.style.display = "none";
 
     if (!isEditing) {
         if (submitBtnText) submitBtnText.textContent = "등록하기";
@@ -12558,6 +12618,12 @@ function preselectModalCategory(cat, isEditing = false) {
             const cpCheck = document.getElementById("postIsCarpool");
             if (cpCheck) cpCheck.checked = false;
             if (typeof toggleCarpoolFields === "function") toggleCarpoolFields(false);
+        }
+
+        // 🌟 자유수다방 신규 작성 시 일반 수다글 vs LIVE 보이스룸 개설 선택 세그먼트 활성화
+        if (!isEditing && commToggle) {
+            commToggle.style.display = "block";
+            switchCommunityCreateType('post');
         }
 
         if (imageUploadLabel) imageUploadLabel.innerHTML = `<i class="fa-solid fa-images"></i> 수다방 사진 등록 (최대 4장)`;
@@ -12965,6 +13031,7 @@ function filterAndRender(resetPagination = true) {
                 else if (selectedRegion === 'jeolla' && (postRegion.includes('jeolla') || postRegion.includes('honam') || locName.includes('전라') || locName.includes('광주') || locName.includes('전주') || locName.includes('여수') || locName.includes('목포') || locName.includes('순천') || locName.includes('익산'))) isMatch = true;
                 else if (selectedRegion === 'gyeongsang' && (postRegion.includes('gyeongsang') || postRegion.includes('yeongnam') || locName.includes('경상') || locName.includes('부산') || locName.includes('대구') || locName.includes('울산') || locName.includes('포항') || locName.includes('경주') || locName.includes('통영') || locName.includes('창원') || locName.includes('거제'))) isMatch = true;
                 else if (selectedRegion === 'jeju' && (postRegion.includes('jeju') || locName.includes('제주') || locName.includes('서귀포'))) isMatch = true;
+                else if (selectedRegion === 'overseas' && (postRegion.includes('overseas') || locName.includes('해외') || locName.includes('필리핀') || locName.includes('세부') || locName.includes('보홀') || locName.includes('이집트') || locName.includes('다합') || locName.includes('오키나와') || locName.includes('사이판') || locName.includes('괌') || locName.includes('발리') || locName.includes('팔라우') || locName.includes('시밀란') || locName.includes('꼬따오'))) isMatch = true;
             }
             if (!isMatch) return false;
         }
@@ -17432,11 +17499,11 @@ function renderDynamicChatRoomModal(post) {
 window.renderDynamicChatRoomModal = renderDynamicChatRoomModal;
 
 // ============================================================================
-// 🎙️ AQUABUDDY HYBRID LIVE VOICE ROOM & REALTIME CHAT ENGINE (5 SPEAKERS / 30 LISTENERS)
+// 🎙️ AQUABUDDY HYBRID LIVE VOICE ROOM & REALTIME CHAT ENGINE (6 SPEAKERS / 30 LISTENERS)
 // ============================================================================
 
 let currentVoiceRoom = null;
-let voiceRoomSpeakers = [null, null, null, null, null]; // Slot 0: Host, Slots 1-4: Speakers
+let voiceRoomSpeakers = [null, null, null, null, null, null]; // Slot 0: Host, Slots 1-5: Speakers (총 6석 무대)
 let voiceRoomAudience = []; // 100% 실제 접속자만 관리 (가짜 더미 데이터 영구 제거)
 let isVoiceMicOn = false;
 let localAudioStream = null;
@@ -17452,13 +17519,21 @@ const rtcIceConfig = {
 };
 let voiceRoomChannel = null;
 
-// 1. 보이스룸 개설 모달 열기
+// 1. 보이스룸 개설 모달 열기 (통합 작성 모달 #createModal의 보이스룸 탭으로 자연스럽게 전환)
 function openCreateVoiceRoomModal() {
     if (!currentUser || !currentUser.name) {
         showToast("🔑 로그인 후 보이스룸을 개설하실 수 있습니다!");
         pendingLoginAction = openCreateVoiceRoomModal;
         if (typeof switchAuthTab === "function") switchAuthTab('login');
         openModal(document.getElementById("authModal"));
+        return;
+    }
+    const createModalEl = document.getElementById("createModal");
+    if (createModalEl) {
+        if (typeof resetCreatePostForm === "function") resetCreatePostForm();
+        if (typeof preselectModalCategory === "function") preselectModalCategory("community", false);
+        if (typeof switchCommunityCreateType === "function") switchCommunityCreateType("voiceroom");
+        openModal(createModalEl);
         return;
     }
     const modal = document.getElementById("createVoiceRoomModal");
@@ -17470,7 +17545,110 @@ function openCreateVoiceRoomModal() {
 }
 window.openCreateVoiceRoomModal = openCreateVoiceRoomModal;
 
-// 2. 보이스룸 생성 핸들러
+// 1.5 통합 작성 모달(#createModal)에서 보이스룸 개설 처리 핸들러
+async function handleCreateVoiceRoomFromModal(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!currentUser || !currentUser.name) {
+        showToast("🔑 로그인 후 이용 가능합니다.");
+        return;
+    }
+
+    const titleInput = document.getElementById("postTitle");
+    const regionSelect = document.getElementById("commVoiceRoomRegionSelect");
+    const topicSelect = document.getElementById("commVoiceRoomTopicSelect");
+
+    const title = titleInput ? titleInput.value.trim() : "";
+    if (!title) {
+        showToast("⚠️ 보이스룸 제목을 입력해 주세요!");
+        if (titleInput) {
+            highlightInvalidInput(titleInput);
+            titleInput.focus();
+        }
+        return;
+    }
+
+    const region = regionSelect ? regionSelect.value : "all";
+    const topic = topicSelect ? topicSelect.value : "free_talk";
+    const userNick = currentUser.nickname || currentUser.name || "다이버";
+    const roomId = 'vr_' + Date.now();
+
+    const newRoom = {
+        id: roomId,
+        title: title,
+        category: "community",
+        category_name: "자유수다방",
+        sports_type: "voiceroom",
+        class_type: "voiceroom",
+        post_type: "voiceroom",
+        is_voiceroom: true,
+        region: region,
+        topic: topic,
+        capacity: 36, // 6 발언자 + 30 청취자
+        max_speakers: 6,
+        max_listeners: 30,
+        user_name: userNick,
+        real_name: currentUser.real_name || currentUser.name || userNick,
+        author: currentUser.email || userNick,
+        status: "open",
+        desc: `🎙️ 실시간 라이브 보이스룸: ${title} (발언 6명 / 청취 최대 30명)`,
+        created_at: (typeof getKSTIsoString === "function") ? getKSTIsoString() : new Date().toISOString(),
+        listeners_count: 0
+    };
+
+    posts.unshift(newRoom);
+
+    if (supabaseClient) {
+        try {
+            const dbPayload = {
+                title: newRoom.title,
+                category: "community",
+                category_name: "자유수다방",
+                sports_type: "voiceroom",
+                class_type: "voiceroom",
+                user_name: userNick,
+                real_name: newRoom.real_name,
+                capacity: 36,
+                location: region || "all",
+                location_name: (region === "all" ? "전국" : (region === "overseas" ? "해외" : region)),
+                status: "open",
+                author: newRoom.author,
+                desc: newRoom.desc,
+                content: newRoom.desc,
+                created_at: newRoom.created_at
+            };
+            const { data, error } = await supabaseClient.from('posts').insert([dbPayload]).select();
+            if (!error && data && data.length > 0) {
+                newRoom.id = data[0].id;
+                posts[0].id = data[0].id;
+                console.log("✨ Supabase 보이스룸 생성 성공:", data[0].id);
+
+                try {
+                    const globalChannel = supabaseClient.channel('aqua_buddy_global_realtime');
+                    globalChannel.send({
+                        type: 'broadcast',
+                        event: 'post_updated',
+                        payload: { postId: data[0].id, postData: newRoom }
+                    });
+                } catch(bcErr) {}
+            } else if (error) {
+                console.error("보이스룸 Supabase 저장 에러:", error);
+            }
+        } catch (dbErr) {
+            console.warn("보이스룸 Supabase 저장 참고:", dbErr);
+        }
+    }
+
+    closeModal(document.getElementById("createModal"));
+    showToast(`🎙️ '${title}' 보이스룸이 개설되었습니다!`);
+
+    switchMainView('community');
+    setTimeout(function() {
+        openVoiceRoomModal(newRoom.id);
+    }, 250);
+}
+window.handleCreateVoiceRoomFromModal = handleCreateVoiceRoomFromModal;
+
+// 2. 보이스룸 생성 핸들러 (스탠드얼론 모달용 호환 유지)
 async function handleCreateVoiceRoom(e) {
     if (e) e.preventDefault();
     if (!currentUser || !currentUser.name) {
@@ -17504,14 +17682,14 @@ async function handleCreateVoiceRoom(e) {
         is_voiceroom: true,
         region: region,
         topic: topic,
-        capacity: 35, // 5 발언자 + 30 청취자
-        max_speakers: 5,
+        capacity: 36, // 6 발언자 + 30 청취자
+        max_speakers: 6,
         max_listeners: 30,
         user_name: userNick,
         real_name: currentUser.real_name || currentUser.name || userNick,
         author: currentUser.email || userNick,
         status: "open",
-        desc: `🎙️ 실시간 라이브 보이스룸: ${title} (발언 5명 / 청취 최대 30명)`,
+        desc: `🎙️ 실시간 라이브 보이스룸: ${title} (발언 6명 / 청취 최대 30명)`,
         created_at: (typeof getKSTIsoString === "function") ? getKSTIsoString() : new Date().toISOString(),
         listeners_count: 0
     };
@@ -17530,9 +17708,9 @@ async function handleCreateVoiceRoom(e) {
                 class_type: "voiceroom",
                 user_name: userNick,
                 real_name: newRoom.real_name,
-                capacity: 35,
+                capacity: 36,
                 location: region || "all",
-                location_name: (region === "all" ? "전국" : region),
+                location_name: (region === "all" ? "전국" : (region === "overseas" ? "해외" : region)),
                 status: "open",
                 author: newRoom.author,
                 desc: newRoom.desc,
@@ -17629,10 +17807,10 @@ function openVoiceRoomModal(roomId) {
     const hostDisplayName = (room.user_name || "주최자").trim();
     const amIHost = isVoiceRoomHost(room);
 
-    // 발언자 슬롯 초기화: 0번은 항상 실제 방 주최자의 이름으로 고정
+    // 발언자 슬롯 초기화: 0번은 항상 실제 방 주최자의 이름으로 고정 (총 6석: 주최자 1 + 발언자 5)
     voiceRoomSpeakers = [
         { user_name: hostDisplayName, is_host: true, is_muted: true, is_speaking: false },
-        null, null, null, null
+        null, null, null, null, null
     ];
 
     // 청취자 목록 초기화: 100% 실제 접속자만 Presence로 등록
@@ -17647,7 +17825,7 @@ function openVoiceRoomModal(roomId) {
         hostInfoEl.textContent = `👑 주최자: ${hostDisplayName} ${amIHost ? '(나)' : ''}`;
     }
 
-    // 5석 무대 렌더링
+    // 6석 무대 렌더링
     renderVoiceRoomStage();
 
     // 청취자 서랍 렌더링
@@ -17677,7 +17855,7 @@ function openVoiceRoomModal(roomId) {
 }
 window.openVoiceRoomModal = openVoiceRoomModal;
 
-// 4. 5석 발언 무대 슬롯 렌더링
+// 4. 6석 발언 무대 슬롯 렌더링 (주최자 1석 + 발언자 5석)
 function renderVoiceRoomStage() {
     const container = document.getElementById("voiceStageSlotsContainer");
     if (!container) return;
@@ -17690,7 +17868,7 @@ function renderVoiceRoomStage() {
     let html = "";
     let activeSpeakers = 0;
 
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 6; i++) {
         const slot = voiceRoomSpeakers[i];
         const slotNum = i + 1;
 
@@ -17723,6 +17901,11 @@ function renderVoiceRoomStage() {
                     <span style="font-size: 0.68rem; color: ${isSpeaking ? '#00e676' : (slot.is_muted ? (isMe ? '🔇 마이크 켜기' : '음소거') : (isHost ? '주최자' : '발언자'))}; margin-top: 2px;">
                         ${isSpeaking ? '🎙️ 말하는 중' : (slot.is_muted ? (isMe ? '🔇 마이크 켜기' : '음소거') : (isHost ? '주최자' : '발언자'))}
                     </span>
+                    ${(amIHost && !isMe && !isHost) ? `
+                        <button type="button" onclick="event.stopPropagation(); confirmDelegateHost('${escapeHtml(slot.user_name)}')" style="margin-top: 4px; background: rgba(255, 183, 3, 0.2); border: 1px solid var(--accent-gold); color: var(--accent-gold); font-size: 0.62rem; font-weight: 800; padding: 2px 5px; border-radius: 6px; cursor: pointer;" title="이 참가자에게 방장 권한 위임">
+                            👑 위임
+                        </button>
+                    ` : ''}
                 </div>
             `;
         } else {
@@ -17801,9 +17984,14 @@ function renderAudienceList() {
                     </div>
                 </div>
                 ${amIHost && !isMe ? `
-                    <button type="button" onclick="inviteAudienceToMic('${escapeHtml(aud.user_name)}')" style="background: rgba(0, 242, 254, 0.15); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); font-size: 0.72rem; font-weight: 800; padding: 4px 10px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
-                        <i class="fa-solid fa-microphone"></i> 마이크 초대
-                    </button>
+                    <div style="display: flex; gap: 6px; align-items: center;">
+                        <button type="button" onclick="confirmDelegateHost('${escapeHtml(aud.user_name)}')" style="background: rgba(255, 183, 3, 0.15); border: 1px solid var(--accent-gold); color: var(--accent-gold); font-size: 0.72rem; font-weight: 800; padding: 4px 8px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 3px;" title="이 청취자에게 방장 권한 위임">
+                            👑 위임
+                        </button>
+                        <button type="button" onclick="inviteAudienceToMic('${escapeHtml(aud.user_name)}')" style="background: rgba(0, 242, 254, 0.15); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); font-size: 0.72rem; font-weight: 800; padding: 4px 10px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                            <i class="fa-solid fa-microphone"></i> 마이크 초대
+                        </button>
+                    </div>
                 ` : ''}
             </div>
         `;
@@ -17860,10 +18048,10 @@ function requestVoiceSlot(slotNum) {
 }
 window.requestVoiceSlot = requestVoiceSlot;
 
-// 8. 발언석 승인
+// 8. 발언석 승인 (총 6석: 0번 주최자, 1~5번 발언자)
 function approveVoiceSlot(slotNum, applicantName) {
     const slotIdx = slotNum - 1;
-    if (slotIdx < 0 || slotIdx >= 5) return;
+    if (slotIdx < 0 || slotIdx >= 6) return;
 
     voiceRoomSpeakers[slotIdx] = {
         user_name: applicantName,
@@ -17893,7 +18081,7 @@ function inviteAudienceToMic(userName) {
     // 빈 슬롯 찾기
     const emptyIdx = voiceRoomSpeakers.findIndex((s, idx) => idx > 0 && s === null);
     if (emptyIdx === -1) {
-        showToast("⚠️ 발언 무대(총 5석)가 모두 찼습니다!");
+        showToast("⚠️ 발언 무대(총 6석)가 모두 찼습니다!");
         return;
     }
 
@@ -18309,47 +18497,44 @@ function closeVoiceRoomModal() {
     const amIHost = isVoiceRoomHost(currentVoiceRoom);
 
     if (amIHost) {
-        if (confirm("👑 주최자가 퇴장하면 보이스룸이 자동 종료됩니다.\n정말 방을 종료하시겠습니까?")) {
-            const closingRoomId = currentVoiceRoom ? currentVoiceRoom.id : null;
+        // 방에 남은 다른 참가자 수집 (발언자 1~5석 및 청취자 목록)
+        const myNick = (currentUser && currentUser.nickname) ? currentUser.nickname.trim() : "";
+        const myDisplayName = (currentUser && currentUser.name) ? currentUser.name.trim() : "";
+        const myName = myNick || myDisplayName || "주최자";
 
-            // 1. 방 상태 closed로 변경
-            if (currentVoiceRoom) {
-                currentVoiceRoom.status = "closed";
+        const otherCandidates = [];
+        voiceRoomSpeakers.forEach((s, idx) => {
+            if (idx > 0 && s && s.user_name && s.user_name !== myName && !otherCandidates.some(c => c.user_name === s.user_name)) {
+                otherCandidates.push({ user_name: s.user_name, role: `${idx + 1}번 발언자` });
             }
-
-            // 2. posts 메모리 배열 상태 즉시 closed 갱신
-            if (closingRoomId && typeof posts !== 'undefined' && Array.isArray(posts)) {
-                const targetP = posts.find(p => String(p.id) === String(closingRoomId));
-                if (targetP) {
-                    targetP.status = "closed";
-                }
+        });
+        voiceRoomAudience.forEach(a => {
+            if (a && a.user_name && a.user_name !== myName && !otherCandidates.some(c => c.user_name === a.user_name)) {
+                otherCandidates.push({ user_name: a.user_name, role: "청취자" });
             }
+        });
 
-            // 3. 현재 방의 참여자들에게 보이스룸 종료 브로드캐스트
-            broadcastVoiceEvent({
-                type: "room_closed",
-                room_id: closingRoomId
-            });
-
-            // 4. Supabase DB에 영구 closed 저장 및 전역 실시간 갱신 전파
-            if (supabaseClient && closingRoomId) {
-                supabaseClient.from('posts').update({ status: 'closed' }).eq('id', closingRoomId).then(() => {
-                    console.log("보이스룸 DB 종료 처리 완료");
-                });
-
-                if (_globalRealtimeChannel) {
-                    try {
-                        _globalRealtimeChannel.send({
-                            type: 'broadcast',
-                            event: 'post_updated',
-                            payload: { postId: closingRoomId, postData: { status: 'closed' } }
-                        });
-                    } catch(e) {}
-                }
+        // 1. 방에 아무도 없으면 바로 종료 확인 후 방 닫기
+        if (otherCandidates.length === 0) {
+            if (confirm("👑 현재 방에 다른 참가자가 없습니다.\n보이스룸을 완전히 종료하시겠습니까?")) {
+                executeHostCloseRoomAndExit();
             }
+            return;
+        }
 
-            showToast("🎙️ 라이브 보이스룸이 종료되었습니다.");
-            cleanupVoiceRoomSession();
+        // 2. 다른 참가자가 남아있다면 방장 권한 위임 모달 오픈
+        const exitModal = document.getElementById("voiceHostExitModal");
+        const selectEl = document.getElementById("voiceHostSuccessorSelect");
+        if (exitModal && selectEl) {
+            selectEl.innerHTML = otherCandidates.map(c => 
+                `<option value="${escapeHtml(c.user_name)}">👤 ${escapeHtml(c.user_name)} (${c.role})</option>`
+            ).join("");
+            openModal(exitModal);
+            return;
+        } else {
+            if (confirm("👑 주최자가 퇴장하면 보이스룸이 자동 종료됩니다.\n정말 방을 종료하시겠습니까?")) {
+                executeHostCloseRoomAndExit();
+            }
         }
     } else {
         showToast("보이스룸에서 퇴장했습니다.");
@@ -18358,11 +18543,162 @@ function closeVoiceRoomModal() {
 }
 window.closeVoiceRoomModal = closeVoiceRoomModal;
 
+// 방장 권한 위임 후 퇴장 실행
+async function executeHostDelegationAndExit() {
+    const selectEl = document.getElementById("voiceHostSuccessorSelect");
+    const newHostName = selectEl ? selectEl.value : "";
+    if (!newHostName) {
+        showToast("⚠️ 위임할 새 주최자(방장)를 선택해 주세요!");
+        return;
+    }
+    const exitModal = document.getElementById("voiceHostExitModal");
+    if (exitModal) closeModal(exitModal);
+
+    await delegateVoiceRoomHost(newHostName, true);
+}
+window.executeHostDelegationAndExit = executeHostDelegationAndExit;
+
+// 방 전체 폭파/종료 실행
+function executeHostCloseRoomAndExit() {
+    const exitModal = document.getElementById("voiceHostExitModal");
+    if (exitModal) closeModal(exitModal);
+
+    const closingRoomId = currentVoiceRoom ? currentVoiceRoom.id : null;
+
+    // 1. 방 상태 closed로 변경
+    if (currentVoiceRoom) {
+        currentVoiceRoom.status = "closed";
+    }
+
+    // 2. posts 메모리 배열 상태 즉시 closed 갱신
+    if (closingRoomId && typeof posts !== 'undefined' && Array.isArray(posts)) {
+        const targetP = posts.find(p => String(p.id) === String(closingRoomId));
+        if (targetP) {
+            targetP.status = "closed";
+        }
+    }
+
+    // 3. 현재 방의 참여자들에게 보이스룸 종료 브로드캐스트
+    broadcastVoiceEvent({
+        type: "room_closed",
+        room_id: closingRoomId
+    });
+
+    // 4. Supabase DB에 영구 closed 저장 및 전역 실시간 갱신 전파
+    if (supabaseClient && closingRoomId) {
+        supabaseClient.from('posts').update({ status: 'closed' }).eq('id', closingRoomId).then(() => {
+            console.log("보이스룸 DB 종료 처리 완료");
+        });
+
+        if (_globalRealtimeChannel) {
+            try {
+                _globalRealtimeChannel.send({
+                    type: 'broadcast',
+                    event: 'post_updated',
+                    payload: { postId: closingRoomId, postData: { status: 'closed' } }
+                });
+            } catch(e) {}
+        }
+    }
+
+    showToast("🎙️ 라이브 보이스룸이 종료되었습니다.");
+    cleanupVoiceRoomSession();
+}
+window.executeHostCloseRoomAndExit = executeHostCloseRoomAndExit;
+
+// 화면 내 참가자 카드에서 직접 방장 권한 위임 확인
+function confirmDelegateHost(targetUserName) {
+    if (!targetUserName) return;
+    if (confirm(`👑 '${targetUserName}'님에게 방장(주최자) 권한을 위임하시겠습니까?\n위임 후에도 방에 머무르며 대화를 나누실 수 있습니다.`)) {
+        delegateVoiceRoomHost(targetUserName, false);
+    }
+}
+window.confirmDelegateHost = confirmDelegateHost;
+
+// 방장 권한 위임 핵심 처리 (shouldExitAfter: 위임 후 즉시 방을 나갈지 여부)
+async function delegateVoiceRoomHost(newHostName, shouldExitAfter = false) {
+    if (!currentVoiceRoom || !newHostName) return;
+
+    const roomId = currentVoiceRoom.id;
+    const myNick = (currentUser && currentUser.nickname) ? currentUser.nickname.trim() : "";
+    const myDisplayName = (currentUser && currentUser.name) ? currentUser.name.trim() : "";
+    const myName = myNick || myDisplayName || "이전주최자";
+
+    // 1. 로컬 방 데이터 업데이트
+    currentVoiceRoom.user_name = newHostName;
+    if (typeof posts !== 'undefined' && Array.isArray(posts)) {
+        const targetP = posts.find(p => String(p.id) === String(roomId));
+        if (targetP) targetP.user_name = newHostName;
+    }
+
+    // 2. Supabase DB에 주최자 변경 영구 반영
+    if (supabaseClient && roomId) {
+        try {
+            await supabaseClient.from('posts').update({
+                user_name: newHostName,
+                author: newHostName
+            }).eq('id', roomId);
+        } catch(e) {
+            console.warn("방장 위임 DB 업데이트 참고:", e);
+        }
+    }
+
+    // 3. 브로드캐스트로 방 전체 참가자들에게 전파
+    broadcastVoiceEvent({
+        type: "host_transferred",
+        room_id: roomId,
+        new_host: newHostName,
+        previous_host: myName
+    });
+
+    // 4. 슬롯 0번석을 새 방장으로 교체
+    if (voiceRoomSpeakers && voiceRoomSpeakers[0]) {
+        voiceRoomSpeakers[0] = {
+            user_name: newHostName,
+            is_host: true,
+            is_muted: true,
+            is_speaking: false
+        };
+    }
+    // 새 방장이 이전 다른 슬롯에 앉아있었다면 해당 슬롯 비움
+    for (let i = 1; i < voiceRoomSpeakers.length; i++) {
+        if (voiceRoomSpeakers[i] && voiceRoomSpeakers[i].user_name === newHostName) {
+            voiceRoomSpeakers[i] = null;
+        }
+    }
+    voiceRoomAudience = voiceRoomAudience.filter(a => a.user_name !== newHostName);
+
+    // 5. 이전 방장 처리
+    if (shouldExitAfter) {
+        showToast(`👑 '${newHostName}'님에게 방장 권한을 위임하고 퇴장했습니다.`);
+        cleanupVoiceRoomSession();
+    } else {
+        // 방에 남는 경우: 이전 방장은 1번 이후 빈 슬롯으로 이동
+        const emptySlotIdx = voiceRoomSpeakers.findIndex((s, idx) => idx > 0 && s === null);
+        if (emptySlotIdx !== -1) {
+            voiceRoomSpeakers[emptySlotIdx] = {
+                user_name: myName,
+                is_host: false,
+                is_muted: !isVoiceMicOn,
+                is_speaking: false
+            };
+        }
+        const hostInfoEl = document.getElementById("voiceRoomHostInfo");
+        if (hostInfoEl) {
+            hostInfoEl.textContent = `👑 주최자: ${newHostName}`;
+        }
+        renderVoiceRoomStage();
+        renderAudienceList();
+        showToast(`👑 '${newHostName}'님에게 방장 권한을 성공적으로 위임했습니다!`);
+    }
+}
+window.delegateVoiceRoomHost = delegateVoiceRoomHost;
+
 function cleanupVoiceRoomSession() {
     cleanupAllWebRTC();
     isVoiceMicOn = false;
     currentVoiceRoom = null;
-    voiceRoomSpeakers = [null, null, null, null, null];
+    voiceRoomSpeakers = [null, null, null, null, null, null];
     voiceRoomAudience = [];
 
     if (supabaseClient && voiceRoomChannel) {
@@ -18685,7 +19021,7 @@ function handleVoiceRoomBroadcastEvent(event) {
         }
     } else if (event.type === "mic_toggle") {
         let slot = null;
-        if (event.slot_idx !== undefined && event.slot_idx >= 0 && event.slot_idx < 5 && voiceRoomSpeakers[event.slot_idx]) {
+        if (event.slot_idx !== undefined && event.slot_idx >= 0 && event.slot_idx < 6 && voiceRoomSpeakers[event.slot_idx]) {
             slot = voiceRoomSpeakers[event.slot_idx];
         } else if (event.is_host && voiceRoomSpeakers[0]) {
             slot = voiceRoomSpeakers[0];
@@ -18703,7 +19039,7 @@ function handleVoiceRoomBroadcastEvent(event) {
         }
     } else if (event.type === "speaking_state") {
         let slot = null;
-        if (event.slot_idx !== undefined && event.slot_idx >= 0 && event.slot_idx < 5 && voiceRoomSpeakers[event.slot_idx]) {
+        if (event.slot_idx !== undefined && event.slot_idx >= 0 && event.slot_idx < 6 && voiceRoomSpeakers[event.slot_idx]) {
             slot = voiceRoomSpeakers[event.slot_idx];
         } else if (event.is_host && voiceRoomSpeakers[0]) {
             slot = voiceRoomSpeakers[0];
@@ -18718,6 +19054,45 @@ function handleVoiceRoomBroadcastEvent(event) {
             }
             renderVoiceRoomStage();
         }
+    } else if (event.type === "host_transferred") {
+        if (currentVoiceRoom) {
+            currentVoiceRoom.user_name = event.new_host;
+        }
+        if (typeof posts !== 'undefined' && Array.isArray(posts) && currentVoiceRoom) {
+            const memP = posts.find(p => String(p.id) === String(currentVoiceRoom.id));
+            if (memP) memP.user_name = event.new_host;
+        }
+        if (voiceRoomSpeakers && voiceRoomSpeakers[0]) {
+            voiceRoomSpeakers[0].user_name = event.new_host;
+            voiceRoomSpeakers[0].is_host = true;
+        }
+        // 새 방장이 기존 발언석에 있었다면 해당 발언석 비움
+        for (let i = 1; i < voiceRoomSpeakers.length; i++) {
+            if (voiceRoomSpeakers[i] && voiceRoomSpeakers[i].user_name === event.new_host) {
+                voiceRoomSpeakers[i] = null;
+            }
+        }
+        // 청취자 목록에서 새 방장 제거
+        voiceRoomAudience = voiceRoomAudience.filter(a => a.user_name !== event.new_host);
+
+        const myNick = (currentUser && currentUser.nickname) ? currentUser.nickname.trim() : "";
+        const myDisplayName = (currentUser && currentUser.name) ? currentUser.name.trim() : "";
+        const myName = myNick || myDisplayName || "다이버";
+        const amINewHost = (myName === event.new_host || (myNick && myNick === event.new_host));
+
+        const hostInfoEl = document.getElementById("voiceRoomHostInfo");
+        if (hostInfoEl) {
+            hostInfoEl.textContent = `👑 주최자: ${event.new_host} ${amINewHost ? '(나)' : ''}`;
+        }
+
+        if (amINewHost) {
+            showToast("👑 주최자(방장) 권한을 위임받았습니다! 이제 방을 운영하실 수 있습니다.");
+        } else {
+            showToast(`👑 '${event.new_host}'님이 새로운 주최자가 되었습니다.`);
+        }
+
+        renderVoiceRoomStage();
+        renderAudienceList();
     } else if (event.type === "speaker_audio_ready") {
         const myName = (currentUser && (currentUser.nickname || currentUser.name)) ? (currentUser.nickname || currentUser.name) : "";
         if (event.speaker && event.speaker !== myName) {
