@@ -17837,7 +17837,7 @@ function isVoiceRoomHost(room) {
 window.isVoiceRoomHost = isVoiceRoomHost;
 
 // 3. 보이스룸 모달 열기 & 입장
-function openVoiceRoomModal(roomId) {
+async function openVoiceRoomModal(roomId) {
     if (!roomId) return;
     const roomIdStr = String(roomId).trim();
     if (!currentUser || !currentUser.name) {
@@ -17848,81 +17848,109 @@ function openVoiceRoomModal(roomId) {
         return;
     }
 
-    let room = posts.find(p => String(p.id).trim() === roomIdStr);
-    if (!room) {
-        room = posts.find(p => String(p.post_id || p.uuid || '').trim() === roomIdStr);
-    }
-    if (!room || room.status === 'closed') {
-        showToast("⚠️ 이미 종료되었거나 존재하지 않는 보이스룸입니다.");
-        const liveContainer = document.getElementById("communityLiveVoiceContainer");
-        if (liveContainer) {
-            const hasOtherActiveVR = (typeof posts !== 'undefined' && Array.isArray(posts)) ? posts.some(p => {
-                const isVR = (p.is_voiceroom === true || p.post_type === 'voiceroom' || p.sports_type === 'voiceroom' || p.class_type === 'voiceroom' || p.category === 'voiceroom');
-                return isVR && p.status !== 'closed' && String(p.id).trim() !== roomIdStr;
-            }) : false;
-            if (!hasOtherActiveVR) {
-                liveContainer.innerHTML = "";
-                liveContainer.style.display = "none";
+    try {
+        let room = posts.find(p => String(p.id).trim() === roomIdStr);
+        if (!room) {
+            room = posts.find(p => String(p.post_id || p.uuid || '').trim() === roomIdStr);
+        }
+
+        // 로컬 posts에 방이 아직 없는 경우 Supabase에서 직접 즉시 단건 조회
+        if (!room && supabaseClient) {
+            try {
+                const { data, error } = await supabaseClient.from('posts').select('*').eq('id', roomIdStr);
+                if (!error && data && data.length > 0) {
+                    const p = data[0];
+                    const isVR = Boolean(p.is_voiceroom === true || p.sports_type === 'voiceroom' || p.class_type === 'voiceroom' || p.post_type === 'voiceroom' || p.category === 'voiceroom');
+                    room = {
+                        ...p,
+                        is_voiceroom: isVR,
+                        sports_type: isVR ? 'voiceroom' : p.sports_type,
+                        class_type: isVR ? 'voiceroom' : p.class_type,
+                        post_type: isVR ? 'voiceroom' : (p.post_type || p.category)
+                    };
+                    posts.unshift(room);
+                }
+            } catch(fetchErr) {
+                console.warn("보이스룸 Supabase 단건 조회 참고:", fetchErr);
             }
         }
-        if (typeof filterAndRender === 'function') filterAndRender();
-        return;
-    }
 
-    currentVoiceRoom = room;
-    const myNick = (currentUser && currentUser.nickname) ? currentUser.nickname.trim() : "";
-    const myDisplayName = (currentUser && currentUser.name) ? currentUser.name.trim() : "";
-    const myName = myNick || myDisplayName || "다이버";
-
-    // 실제 방 주최자의 표시명 (게스트 접속 시 절대 게스트 이름으로 변조되지 않음)
-    const hostDisplayName = (room.user_name || "주최자").trim();
-    const amIHost = isVoiceRoomHost(room);
-
-    // 발언자 슬롯 초기화: 0번은 항상 실제 방 주최자의 이름으로 고정 (총 6석: 주최자 1 + 발언자 5)
-    voiceRoomSpeakers = [
-        { user_name: hostDisplayName, is_host: true, is_muted: true, is_speaking: false },
-        null, null, null, null, null
-    ];
-
-    // 청취자 목록 초기화: 100% 실제 접속자만 Presence로 등록
-    voiceRoomAudience = [];
-
-    // 모달 UI 바인딩
-    const titleEl = document.getElementById("voiceRoomModalTitle");
-    if (titleEl) titleEl.textContent = room.title || "실시간 라이브 보이스룸";
-
-    const hostInfoEl = document.getElementById("voiceRoomHostInfo");
-    if (hostInfoEl) {
-        hostInfoEl.textContent = `👑 주최자: ${hostDisplayName} ${amIHost ? '(나)' : ''}`;
-    }
-
-    // 6석 무대 렌더링
-    renderVoiceRoomStage();
-
-    // 청취자 서랍 렌더링
-    renderAudienceList();
-
-    // 마이크 초기 상태 설정 (안전을 위해 초기 음소거)
-    isVoiceMicOn = false;
-    updateMicButtonUI();
-
-    // 모달 표시 (AquaBuddy 표준 openModal 필수 호출)
-    const modal = document.getElementById("voiceRoomModalOverlay");
-    if (modal) {
-        if (typeof openModal === "function") {
-            openModal(modal);
-        } else {
-            modal.classList.remove("hidden");
-            modal.style.display = "flex";
-            modal.classList.add("is-open");
+        if (!room || room.status === 'closed') {
+            showToast("⚠️ 이미 종료되었거나 존재하지 않는 보이스룸입니다.");
+            const liveContainer = document.getElementById("communityLiveVoiceContainer");
+            if (liveContainer) {
+                const hasOtherActiveVR = (typeof posts !== 'undefined' && Array.isArray(posts)) ? posts.some(p => {
+                    const isVR = (p.is_voiceroom === true || p.post_type === 'voiceroom' || p.sports_type === 'voiceroom' || p.class_type === 'voiceroom' || p.category === 'voiceroom');
+                    return isVR && p.status !== 'closed' && String(p.id).trim() !== roomIdStr;
+                }) : false;
+                if (!hasOtherActiveVR) {
+                    liveContainer.innerHTML = "";
+                    liveContainer.style.display = "none";
+                }
+            }
+            if (typeof filterAndRender === 'function') filterAndRender();
+            return;
         }
+
+        currentVoiceRoom = room;
+        const myNick = (currentUser && currentUser.nickname) ? currentUser.nickname.trim() : "";
+        const myDisplayName = (currentUser && currentUser.name) ? currentUser.name.trim() : "";
+        const myEmail = (currentUser && currentUser.email) ? currentUser.email.trim().toLowerCase() : "";
+        const myName = myNick || myDisplayName || "다이버";
+
+        // 실제 방 주최자의 표시명 (게스트 접속 시 절대 게스트 이름으로 변조되지 않음)
+        const hostDisplayName = (room.user_name || "주최자").trim();
+        const amIHost = isVoiceRoomHost(room);
+
+        // 발언자 슬롯 초기화: 0번은 항상 실제 방 주최자의 이름으로 고정 (총 6석: 주최자 1 + 발언자 5)
+        voiceRoomSpeakers = [
+            { user_name: hostDisplayName, is_host: true, is_muted: true, is_speaking: false },
+            null, null, null, null, null
+        ];
+
+        // 청취자 목록 초기화: 100% 실제 접속자만 Presence로 등록
+        voiceRoomAudience = [];
+
+        // 모달 UI 바인딩
+        const titleEl = document.getElementById("voiceRoomModalTitle");
+        if (titleEl) titleEl.textContent = room.title || "실시간 라이브 보이스룸";
+
+        const hostInfoEl = document.getElementById("voiceRoomHostInfo");
+        if (hostInfoEl) {
+            hostInfoEl.textContent = `👑 주최자: ${hostDisplayName} ${amIHost ? '(나)' : ''}`;
+        }
+
+        // 6석 무대 렌더링
+        renderVoiceRoomStage();
+
+        // 청취자 서랍 렌더링
+        renderAudienceList();
+
+        // 마이크 초기 상태 설정 (안전을 위해 초기 음소거)
+        isVoiceMicOn = false;
+        updateMicButtonUI();
+
+        // 모달 표시 (AquaBuddy 표준 openModal 필수 호출)
+        const modal = document.getElementById("voiceRoomModalOverlay");
+        if (modal) {
+            if (typeof openModal === "function") {
+                openModal(modal);
+            } else {
+                modal.classList.remove("hidden");
+                modal.style.display = "flex";
+                modal.classList.add("is-open");
+            }
+        }
+
+        // 채팅 스트림 동기화
+        initVoiceRoomChatStream(room);
+
+        // Supabase Realtime & Presence 채널 연결
+        connectVoiceRoomRealtime(roomIdStr);
+    } catch(err) {
+        console.error("보이스룸 입장 중 오류 발생:", err);
+        showToast("⚠️ 보이스룸 입장 오류: " + (err.message || err));
     }
-
-    // 채팅 스트림 동기화
-    initVoiceRoomChatStream(room);
-
-    // Supabase Realtime & Presence 채널 연결
-    connectVoiceRoomRealtime(roomIdStr);
 }
 window.openVoiceRoomModal = openVoiceRoomModal;
 
@@ -17933,6 +17961,7 @@ function renderVoiceRoomStage() {
 
     const myNick = (currentUser && currentUser.nickname) ? currentUser.nickname.trim() : "";
     const myDisplayName = (currentUser && currentUser.name) ? currentUser.name.trim() : "";
+    const myEmail = (currentUser && currentUser.email) ? currentUser.email.trim().toLowerCase() : "";
     const myName = myNick || myDisplayName || "다이버";
     const amIHost = currentVoiceRoom ? isVoiceRoomHost(currentVoiceRoom) : false;
 
