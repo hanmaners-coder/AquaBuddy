@@ -11290,8 +11290,16 @@ async function loadPosts() {
                 const finalGender = p.gender || p.author_gender || (matchedUser ? matchedUser.gender : '') || 'private';
                 const finalAgeGroup = p.age_group || p.author_age_group || p.ageGroup || (matchedUser ? matchedUser.ageGroup : '') || 'private';
 
+                const isVR = Boolean(p.is_voiceroom === true || p.sports_type === 'voiceroom' || p.class_type === 'voiceroom' || p.post_type === 'voiceroom' || p.category === 'voiceroom');
+
                 return {
                     ...p,
+                    is_voiceroom: isVR,
+                    sports_type: isVR ? 'voiceroom' : p.sports_type,
+                    class_type: isVR ? 'voiceroom' : p.class_type,
+                    post_type: isVR ? 'voiceroom' : (p.post_type || p.category),
+                    region: p.region || p.location || 'all',
+                    location: p.location || p.region || 'all',
                     real_name: mappedRealName,
                     realName: mappedRealName,
                     gender: finalGender,
@@ -12935,7 +12943,7 @@ function filterAndRender(resetPagination = true) {
             if (typeof activeCommunitySubFilter !== 'undefined') {
                 if (activeCommunitySubFilter === "feed" && isVR) return false;
                 if (activeCommunitySubFilter === "voiceroom" && !isVR) return false;
-                if (activeCommunitySubFilter === "all" && isVR) return false; // 상단 LIVE 배너 카드로 전진 배치되므로 하단 일반 타임라인과 분리
+                // 'all' 필터에서는 상단 LIVE 배너와 하단 피드 모두에 자연스럽게 표시
             }
         } else if (activeCategory === "market") {
             if (cat !== "market") return false;
@@ -13196,14 +13204,25 @@ function renderGrid(filteredPosts) {
             ? `👥 ${totalConfirmed}/${post.capacity || 4}명`
             : "";
 
+        const isVR = Boolean(post.is_voiceroom === true || post.sports_type === 'voiceroom' || post.class_type === 'voiceroom' || post.category === 'voiceroom');
+
         return `
-            <div class="post-card post-card-slim" data-post-id="${post.id}" onclick="openPostDetailModal('${post.id}')" style="cursor: pointer;">
+            <div class="post-card post-card-slim ${isVR ? 'voiceroom-card-highlight' : ''}" data-post-id="${post.id}" onclick="openPostDetailModal('${post.id}')" style="cursor: pointer; ${isVR ? 'border: 1.5px solid rgba(0, 242, 254, 0.45) !important; box-shadow: 0 4px 20px rgba(0, 242, 254, 0.15) !important;' : ''}">
                 <div class="slim-card-inner">
                     <!-- Line 1: 카테고리, 상태 뱃지, 닉네임 (강사클래스는 4대 세부채널 종목 + 실제 단체명 + 실명 표기) -->
                     <div class="card-line-1" style="display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
+                        ${isVR ? `
+                        <span class="slim-cat-badge" style="color:#ff4757; border-color:#ff4757; background: rgba(255, 71, 87, 0.12); flex-shrink:0; font-weight: 900;">
+                            <i class="fa-solid fa-microphone-lines"></i> 🔴 LIVE 보이스룸
+                        </span>
+                        <span style="background: rgba(0,242,254,0.15); color: #00f2fe; border: 1px solid rgba(0,242,254,0.35); padding:2px 8px; border-radius:6px; font-size:0.72rem; font-weight:800; flex-shrink:0;">
+                            🎙️ 실시간 음성대화
+                        </span>
+                        ` : `
                         <span class="slim-cat-badge" style="color:${catColor}; border-color:${catColor}; flex-shrink:0;">
                             <i class="fa-solid ${catIcon}"></i> ${catLabel}
                         </span>
+                        `}
                         ${isInst ? (() => {
                             let sportTag = "프리다이빙";
                             const subCat = (post.inst_sub_category || post.instSubCategory || post.sports_type || "").toLowerCase();
@@ -13311,10 +13330,13 @@ function renderGrid(filteredPosts) {
                         ${(!isCommunity && !isMarket && dateStr) ? `<span class="slim-meta slim-date" style="color: #ffffff !important; font-weight: 600;"><i class="fa-regular fa-calendar" style="color: #ffffff !important;"></i> ${dateStr}</span>` : ""}
                         ${capacityText ? `<span class="slim-meta slim-capacity" style="color: #ffffff !important; font-weight: 700;">${capacityText}</span>` : ""}
                         ${priceText ? `<span class="slim-price">${priceText}</span>` : ""}
-                        ${isCommunity ? `
+                        ${isVR ? `
+                        <span class="slim-meta" style="color: var(--accent-cyan); font-weight: 700; font-size: 0.78rem;"><i class="fa-solid fa-headphones"></i> ${(Array.isArray(voiceRoomAudience) && voiceRoomAudience.length > 0) ? voiceRoomAudience.length : (post.listeners_count || 0)}명 청취 중</span>
+                        <span class="slim-meta" style="color: var(--accent-gold); font-weight: 700; font-size: 0.78rem;"><i class="fa-solid fa-microphone"></i> 발언석 5석</span>
+                        ` : (isCommunity ? `
                         <span class="slim-meta" style="color: #ff6b81; font-weight: 700; font-size: 0.76rem;"><i class="fa-solid fa-heart"></i> ${post.likes || post.likes_count || 0}</span>
                         <span class="slim-meta" style="color: var(--accent-cyan); font-weight: 700; font-size: 0.76rem;"><i class="fa-solid fa-comment-dots"></i> ${(Array.isArray(post.comments) ? post.comments.length : (post.comments_count || 0))}</span>
-                        ` : ''}
+                        ` : '')}
                         ${isMarket ? `
                         <span class="slim-meta" style="color: #ff6b81; font-weight: 700; font-size: 0.76rem;"><i class="fa-solid fa-heart"></i> 찜 ${post.likes || post.likes_count || post.wishlistCount || 0}</span>
                         <span class="slim-meta" style="color: var(--accent-cyan); font-weight: 700; font-size: 0.76rem;"><i class="fa-solid fa-comment-dots"></i> ${(Array.isArray(post.comments) ? post.comments.length : (post.comments_count || 0))}</span>
@@ -13337,12 +13359,54 @@ function renderDashboardBlocks() {
         ? posts.filter(p => typeof isAuthorBlockedByMe !== 'function' || !isAuthorBlockedByMe(p))
         : [];
 
-    const buddyPosts = visiblePosts.filter(p => ["freediving", "scuba", "swimming", "openwater"].includes(p.category)).slice(0, 4);
-    const instPosts = visiblePosts.filter(p => p.category === "instructor").slice(0, 4);
-    const commPosts = visiblePosts.filter(p => p.category === "community").slice(0, 4);
-    const marketPosts = visiblePosts.filter(p => p.category === "market").slice(0, 4);
+    const activeVoiceRooms = visiblePosts.filter(p => {
+        const isVR = (p.is_voiceroom === true || p.post_type === 'voiceroom' || p.sports_type === 'voiceroom' || p.class_type === 'voiceroom' || p.category === 'voiceroom');
+        return isVR && p.status !== 'closed';
+    });
+
+    let liveVoiceBannerHtml = "";
+    if (activeVoiceRooms.length > 0) {
+        const room = activeVoiceRooms[0];
+        const hostName = room.user_name || room.author || '주최자';
+        const listenersCount = (Array.isArray(voiceRoomAudience) && voiceRoomAudience.length > 0) ? voiceRoomAudience.length : (room.listeners_count || 0);
+        const spkCount = (Array.isArray(voiceRoomSpeakers) ? voiceRoomSpeakers.filter(s => s !== null).length : 1) || 1;
+
+        liveVoiceBannerHtml = `
+            <div class="live-voiceroom-banner" onclick="openVoiceRoomModal('${room.id}')" style="grid-column: 1 / -1; width: 100%; box-sizing: border-box; margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span class="live-pulse-dot" style="background: #ff4757; color: #fff; font-size: 0.72rem; font-weight: 900; padding: 2px 8px; border-radius: 12px; box-shadow: 0 0 10px rgba(255, 71, 87, 0.6);">
+                            🔴 LIVE
+                        </span>
+                        <span style="font-size: 0.78rem; color: #94a3b8; font-weight: bold;">
+                            실시간 라이브 보이스룸 진행 중!
+                        </span>
+                    </div>
+                    <span style="font-size: 0.75rem; color: var(--accent-cyan); background: rgba(0, 242, 254, 0.1); padding: 3px 10px; border-radius: 12px; border: 1px solid rgba(0, 242, 254, 0.3); display: flex; align-items: center; gap: 5px;">
+                        <i class="fa-solid fa-headphones"></i> <strong>${listenersCount}</strong>명 청취 중
+                    </span>
+                </div>
+                <h3 style="margin: 0 0 10px 0; font-size: 1.05rem; font-weight: 900; color: #fff; line-height: 1.35;">
+                    ${typeof escapeHtml === 'function' ? escapeHtml(room.title) : room.title}
+                </h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 10px; flex-wrap: wrap; gap: 8px;">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <div style="width: 28px; height: 28px; border-radius: 50%; background: rgba(0, 242, 254, 0.2); border: 1.5px solid var(--accent-cyan); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: var(--accent-cyan);">
+                            👑
+                        </div>
+                        <span style="font-size: 0.82rem; font-weight: 800; color: #fff;">${typeof escapeHtml === 'function' ? escapeHtml(hostName) : hostName}</span>
+                        <span style="font-size: 0.75rem; color: #94a3b8; margin-left: 4px;">(발언석 ${spkCount}/5명)</span>
+                    </div>
+                    <button type="button" class="btn" onclick="event.stopPropagation(); openVoiceRoomModal('${room.id}');" style="background: linear-gradient(135deg, #00f2fe, #4facfe); color: #070e17; font-weight: 900; font-size: 0.82rem; padding: 7px 16px; border-radius: 10px; border: none; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 3px 12px rgba(0, 242, 254, 0.35);">
+                        <span>보이스룸 바로입장</span> <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    }
 
     container.innerHTML = `
+        ${liveVoiceBannerHtml}
         <!-- Block 1: 🔥 실시간 인기 버디 모집 -->
         <div class="dashboard-category-block">
             <div class="block-header">
@@ -14551,6 +14615,12 @@ function openDetailModal(postId) {
         }
         if (!post) {
             alert("게시글 데이터를 찾을 수 없습니다. (ID: " + postId + ")");
+            return;
+        }
+
+        const isVR = Boolean(post.is_voiceroom === true || post.sports_type === 'voiceroom' || post.class_type === 'voiceroom' || post.category === 'voiceroom');
+        if (isVR) {
+            openVoiceRoomModal(post.id);
             return;
         }
 
@@ -17245,6 +17315,11 @@ function generateBubbles() {
 
 function openPostDetailModal(postId) {
     if (!postId) return;
+    const post = posts.find(p => String(p.id).trim() === String(postId).trim());
+    if (post && (post.is_voiceroom === true || post.sports_type === 'voiceroom' || post.class_type === 'voiceroom' || post.category === 'voiceroom')) {
+        openVoiceRoomModal(post.id);
+        return;
+    }
     openDetailModal(postId);
 }
 
@@ -17450,7 +17525,8 @@ async function handleCreateVoiceRoom(e) {
                 user_name: userNick,
                 real_name: newRoom.real_name,
                 capacity: 35,
-                region: newRoom.region,
+                location: region || "all",
+                location_name: (region === "all" ? "전국" : region),
                 status: "open",
                 author: newRoom.author,
                 desc: newRoom.desc,
@@ -17462,6 +17538,20 @@ async function handleCreateVoiceRoom(e) {
                 newRoom.id = data[0].id;
                 posts[0].id = data[0].id;
                 console.log("✨ Supabase 보이스룸 생성 성공:", data[0].id);
+
+                // 실시간 전역 브로드캐스트로 모바일 등 모든 접속 기기에 0.05초 즉시 동기화
+                try {
+                    const globalChannel = supabaseClient.channel('aqua_buddy_global_realtime');
+                    globalChannel.send({
+                        type: 'broadcast',
+                        event: 'post_updated',
+                        payload: { postId: data[0].id, postData: newRoom }
+                    });
+                } catch(bcErr) {
+                    console.warn("글 전역 브로드캐스트 참고:", bcErr);
+                }
+            } else if (error) {
+                console.error("보이스룸 Supabase 저장 에러:", error);
             }
         } catch (dbErr) {
             console.warn("보이스룸 Supabase 저장 참고:", dbErr);
