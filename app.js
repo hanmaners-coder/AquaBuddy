@@ -17801,21 +17801,24 @@ window.handleCreateVoiceRoom = handleCreateVoiceRoom;
 function isVoiceRoomHost(room) {
     if (!room || !currentUser) return false;
 
-    // 1. 표준 isMyPost 대조 (이메일 및 고유 사용자 ID)
-    if (typeof isMyPost === 'function' && isMyPost(room)) return true;
-
-    // 2. 이메일 직접 대조 (대소문자 무관)
+    const myNick = String(currentUser.nickname || '').trim().toLowerCase();
+    const myName = String(currentUser.name || '').trim().toLowerCase();
     const myEmail = String(currentUser.email || '').trim().toLowerCase();
+    const roomHost = String(room.user_name || '').trim().toLowerCase();
+
+    // 1. 현재 라이브 방의 주최자명(room.user_name)이 명시되어 있다면 그것이 절대적 기준!
+    // (다른 사람에게 방장을 위임했을 경우, 내가 원작성자라도 현재는 방장이 아니어야 함)
+    if (roomHost) {
+        if (myNick && roomHost === myNick) return true;
+        if (myName && roomHost === myName && !roomHost.includes('@')) return true;
+        if (myEmail && roomHost === myEmail) return true;
+        return false;
+    }
+
+    // 2. room.user_name이 비어있을 때만 author / isMyPost로 폴백
     const roomAuthor = String(room.author || room.user_email || room.authorEmail || '').trim().toLowerCase();
     if (myEmail && roomAuthor && myEmail === roomAuthor) return true;
-
-    // 3. 닉네임 정확한 대조 (절대 real_name 사용 안 함)
-    const myNick = String(currentUser.nickname || '').trim().toLowerCase();
-    const roomNick = String(room.user_name || '').trim().toLowerCase();
-    if (myNick && roomNick && myNick === roomNick) return true;
-
-    const myName = String(currentUser.name || '').trim().toLowerCase();
-    if (myName && roomNick && myName === roomNick && !roomNick.includes('@')) return true;
+    if (typeof isMyPost === 'function' && isMyPost(room)) return true;
 
     return false;
 }
@@ -17919,14 +17922,14 @@ function renderVoiceRoomStage() {
         if (slot) {
             activeSpeakers++;
             const isHost = slot.is_host === true || i === 0;
-            // 0번석(주최자석)은 오직 내가 실제 주최자일 때만 isMe가 됨!
-            const isMe = i === 0 
-                ? amIHost 
-                : (
-                    (slot.user_name && slot.user_name === myName) ||
-                    (myNick && slot.user_name === myNick) ||
-                    (myDisplayName && slot.user_name === myDisplayName)
-                );
+            // 🌟 슬롯의 닉네임/이름이 현재 로그인한 사용자와 일치할 때만 100% (나)로 판정!
+            const slotName = String(slot.user_name || '').trim().toLowerCase();
+            const isMe = Boolean(
+                (slotName && myName && slotName === myName.toLowerCase()) ||
+                (slotName && myNick && slotName === myNick.toLowerCase()) ||
+                (slotName && myDisplayName && slotName === myDisplayName.toLowerCase()) ||
+                (slotName && myEmail && slotName === myEmail.toLowerCase())
+            );
             const isSpeaking = (slot.is_speaking && !slot.is_muted);
 
             html += `
@@ -18271,10 +18274,16 @@ function setupVoiceActivityDetector(stream, myName, mySlotIdx, amIHost) {
 
             if (isSpeakingNow !== wasSpeaking) {
                 wasSpeaking = isSpeakingNow;
-                let mySlot = (mySlotIdx !== undefined && voiceRoomSpeakers[mySlotIdx]) ? voiceRoomSpeakers[mySlotIdx] : null;
-                if (!mySlot) {
-                    mySlot = voiceRoomSpeakers.find(s => s && s.user_name === myName);
-                }
+                // 🌟 현재 내가 실제로 착석해 있는 슬롯을 실시간으로 동적 탐색 (방장 위임 후 슬롯 이동 시에도 엉뚱한 슬롯에 발화 표시 방지)
+                const currentSlotIdx = voiceRoomSpeakers.findIndex(s => s && (
+                    s.user_name === myName ||
+                    (myNick && s.user_name === myNick) ||
+                    (myDisplayName && s.user_name === myDisplayName)
+                ));
+                if (currentSlotIdx === -1) return;
+                const mySlot = voiceRoomSpeakers[currentSlotIdx];
+                const amIActuallyHost = (currentSlotIdx === 0) || (currentVoiceRoom ? isVoiceRoomHost(currentVoiceRoom) : false);
+
                 if (mySlot) {
                     mySlot.is_speaking = isSpeakingNow;
                     if (isSpeakingNow) {
@@ -18285,9 +18294,9 @@ function setupVoiceActivityDetector(stream, myName, mySlotIdx, amIHost) {
                 broadcastVoiceEvent({
                     type: "speaking_state",
                     user_name: myName,
-                    slot_idx: mySlotIdx !== undefined ? mySlotIdx : 0,
-                    slot_num: (mySlotIdx !== undefined ? mySlotIdx : 0) + 1,
-                    is_host: Boolean(amIHost || mySlotIdx === 0),
+                    slot_idx: currentSlotIdx,
+                    slot_num: currentSlotIdx + 1,
+                    is_host: amIActuallyHost,
                     is_speaking: isSpeakingNow
                 });
             }
@@ -18670,9 +18679,13 @@ async function delegateVoiceRoomHost(newHostName, shouldExitAfter = false) {
 
     // 1. 로컬 방 데이터 업데이트
     currentVoiceRoom.user_name = newHostName;
+    currentVoiceRoom.author = newHostName;
     if (typeof posts !== 'undefined' && Array.isArray(posts)) {
         const targetP = posts.find(p => String(p.id) === String(roomId));
-        if (targetP) targetP.user_name = newHostName;
+        if (targetP) {
+            targetP.user_name = newHostName;
+            targetP.author = newHostName;
+        }
     }
 
     // 2. Supabase DB에 주최자 변경 영구 반영
@@ -18687,15 +18700,7 @@ async function delegateVoiceRoomHost(newHostName, shouldExitAfter = false) {
         }
     }
 
-    // 3. 브로드캐스트로 방 전체 참가자들에게 전파
-    broadcastVoiceEvent({
-        type: "host_transferred",
-        room_id: roomId,
-        new_host: newHostName,
-        previous_host: myName
-    });
-
-    // 4. 슬롯 0번석을 새 방장으로 교체
+    // 3. 슬롯 0번석을 새 방장으로 교체
     if (voiceRoomSpeakers && voiceRoomSpeakers[0]) {
         voiceRoomSpeakers[0] = {
             user_name: newHostName,
@@ -18712,8 +18717,18 @@ async function delegateVoiceRoomHost(newHostName, shouldExitAfter = false) {
     }
     voiceRoomAudience = voiceRoomAudience.filter(a => a.user_name !== newHostName);
 
-    // 5. 이전 방장 처리
+    // 4. 이전 방장 처리 및 브로드캐스트 전송
     if (shouldExitAfter) {
+        // 브로드캐스트로 방 전체 참가자들에게 전파 (퇴장 동기화)
+        broadcastVoiceEvent({
+            type: "host_transferred",
+            room_id: roomId,
+            new_host: newHostName,
+            previous_host: myName,
+            shouldExitAfter: true,
+            speakers: voiceRoomSpeakers
+        });
+
         showToast(`👑 '${newHostName}'님에게 방장 권한을 위임하고 퇴장했습니다.`);
         cleanupVoiceRoomSession();
     } else {
@@ -18727,6 +18742,17 @@ async function delegateVoiceRoomHost(newHostName, shouldExitAfter = false) {
                 is_speaking: false
             };
         }
+
+        // 🌟 브로드캐스트로 방 전체 참가자들에게 전체 6석 상태 그대로 실시간 전파
+        broadcastVoiceEvent({
+            type: "host_transferred",
+            room_id: roomId,
+            new_host: newHostName,
+            previous_host: myName,
+            shouldExitAfter: false,
+            speakers: voiceRoomSpeakers
+        });
+
         const hostInfoEl = document.getElementById("voiceRoomHostInfo");
         if (hostInfoEl) {
             hostInfoEl.textContent = `👑 주최자: ${newHostName}`;
@@ -18910,6 +18936,16 @@ function connectVoiceRoomRealtime(roomId) {
             .on('presence', { event: 'join' }, () => {
                 const state = voiceRoomChannel.presenceState();
                 syncVoiceRoomRealtimePresence(state);
+
+                // 🌟 신규 참가자 접속 시, 현재 발언석(6석 무대) 상태를 자동으로 브로드캐스트하여 동기화
+                if (currentVoiceRoom && voiceRoomSpeakers && voiceRoomSpeakers.some(s => s !== null)) {
+                    broadcastVoiceEvent({
+                        type: "stage_sync",
+                        room_id: currentVoiceRoom.id,
+                        host: currentVoiceRoom.user_name,
+                        speakers: voiceRoomSpeakers
+                    });
+                }
             })
             .on('presence', { event: 'leave' }, ({ key }) => {
                 const state = voiceRoomChannel.presenceState();
@@ -18931,6 +18967,11 @@ function connectVoiceRoomRealtime(roomId) {
                         user_name: myName,
                         is_host: amIHost,
                         joined_at: (typeof getKSTIsoString === "function") ? getKSTIsoString() : new Date().toISOString()
+                    });
+
+                    // 🌟 입장 즉시 기존 참가자들에게 현재 발언석 무대 슬롯 동기화 요청
+                    broadcastVoiceEvent({
+                        type: "request_stage_sync"
                     });
 
                     // 내가 마이크가 켜져있는 발언자라면 새 참가자들을 위해 오디오 준비 브로드캐스트
@@ -19101,29 +19142,51 @@ function handleVoiceRoomBroadcastEvent(event) {
     } else if (event.type === "host_transferred") {
         if (currentVoiceRoom) {
             currentVoiceRoom.user_name = event.new_host;
+            currentVoiceRoom.author = event.new_host;
         }
         if (typeof posts !== 'undefined' && Array.isArray(posts) && currentVoiceRoom) {
             const memP = posts.find(p => String(p.id) === String(currentVoiceRoom.id));
-            if (memP) memP.user_name = event.new_host;
-        }
-        if (voiceRoomSpeakers && voiceRoomSpeakers[0]) {
-            voiceRoomSpeakers[0].user_name = event.new_host;
-            voiceRoomSpeakers[0].is_host = true;
-        }
-        // 새 방장이 기존 발언석에 있었다면 해당 발언석 비움
-        for (let i = 1; i < voiceRoomSpeakers.length; i++) {
-            if (voiceRoomSpeakers[i] && voiceRoomSpeakers[i].user_name === event.new_host) {
-                voiceRoomSpeakers[i] = null;
+            if (memP) {
+                memP.user_name = event.new_host;
+                memP.author = event.new_host;
             }
         }
-        // 청취자 목록에서 새 방장 제거
-        voiceRoomAudience = voiceRoomAudience.filter(a => a.user_name !== event.new_host);
 
-        const myNick = (currentUser && currentUser.nickname) ? currentUser.nickname.trim() : "";
-        const myDisplayName = (currentUser && currentUser.name) ? currentUser.name.trim() : "";
-        const myName = myNick || myDisplayName || "다이버";
-        const amINewHost = (myName === event.new_host || (myNick && myNick === event.new_host));
+        // 🌟 핵심: 전체 6석 슬롯 배치(speakers)가 전달되었으면 그대로 완벽 동기화
+        if (Array.isArray(event.speakers) && event.speakers.length === 6) {
+            voiceRoomSpeakers = event.speakers.map(s => s ? { ...s } : null);
+        } else {
+            // 폴백 처리
+            if (voiceRoomSpeakers && voiceRoomSpeakers[0]) {
+                voiceRoomSpeakers[0] = {
+                    user_name: event.new_host,
+                    is_host: true,
+                    is_muted: true,
+                    is_speaking: false
+                };
+            }
+            for (let i = 1; i < voiceRoomSpeakers.length; i++) {
+                if (voiceRoomSpeakers[i] && voiceRoomSpeakers[i].user_name === event.new_host) {
+                    voiceRoomSpeakers[i] = null;
+                }
+            }
+            if (!event.shouldExitAfter && event.previous_host) {
+                const emptySlot = voiceRoomSpeakers.findIndex((s, idx) => idx > 0 && s === null);
+                if (emptySlot !== -1) {
+                    voiceRoomSpeakers[emptySlot] = {
+                        user_name: event.previous_host,
+                        is_host: false,
+                        is_muted: true,
+                        is_speaking: false
+                    };
+                }
+            }
+        }
 
+        // 청취자 목록에서 새 방장 및 이전 방장(발언석 착석자) 제거
+        voiceRoomAudience = voiceRoomAudience.filter(a => a.user_name !== event.new_host && (event.shouldExitAfter || a.user_name !== event.previous_host));
+
+        const amINewHost = currentVoiceRoom ? isVoiceRoomHost(currentVoiceRoom) : false;
         const hostInfoEl = document.getElementById("voiceRoomHostInfo");
         if (hostInfoEl) {
             hostInfoEl.textContent = `👑 주최자: ${event.new_host} ${amINewHost ? '(나)' : ''}`;
@@ -19137,6 +19200,26 @@ function handleVoiceRoomBroadcastEvent(event) {
 
         renderVoiceRoomStage();
         renderAudienceList();
+    } else if (event.type === "request_stage_sync") {
+        // 새로 입장한 사용자에게 현재 6석 무대 슬롯 상태 즉시 전송
+        if (currentVoiceRoom && voiceRoomSpeakers && voiceRoomSpeakers.some(s => s !== null)) {
+            broadcastVoiceEvent({
+                type: "stage_sync",
+                room_id: currentVoiceRoom.id,
+                host: currentVoiceRoom.user_name,
+                speakers: voiceRoomSpeakers
+            });
+        }
+    } else if (event.type === "stage_sync") {
+        // 기존 참가자로부터 6석 무대 슬롯 최신 상태 동기화
+        if (Array.isArray(event.speakers) && event.speakers.length === 6) {
+            voiceRoomSpeakers = event.speakers.map(s => s ? { ...s } : null);
+            if (currentVoiceRoom && event.host) {
+                currentVoiceRoom.user_name = event.host;
+            }
+            renderVoiceRoomStage();
+            renderAudienceList();
+        }
     } else if (event.type === "speaker_audio_ready") {
         const myName = (currentUser && (currentUser.nickname || currentUser.name)) ? (currentUser.nickname || currentUser.name) : "";
         if (event.speaker && event.speaker !== myName) {
