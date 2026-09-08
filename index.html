@@ -2445,7 +2445,7 @@
                             <span id="voiceRoomHostInfo">👑 주최자: 김동욱</span>
                             <span>•</span>
                             <span id="voiceRoomHeaderAudienceBtn" style="color: var(--accent-cyan); cursor: pointer; font-weight: 700;" onclick="toggleAudienceDrawer()">
-                                <i class="fa-solid fa-users"></i> 청취자 <span id="voiceRoomHeaderAudienceCount">1</span>/30명 ➔
+                                <i class="fa-solid fa-users"></i> 청취자 <span id="voiceRoomHeaderAudienceCount">0</span>/30명 ➔
                             </span>
                         </div>
                     </div>
@@ -2482,7 +2482,7 @@
             <div style="padding: 10px 14px; background: rgba(7, 14, 28, 0.95); border-top: 1px solid rgba(0, 242, 254, 0.2); display: flex; align-items: center; gap: 8px; flex-shrink: 0; box-sizing: border-box;">
                 <!-- 청취자 서랍 토글 버튼 -->
                 <button type="button" onclick="toggleAudienceDrawer()" style="background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(0, 242, 254, 0.35); color: var(--accent-cyan); font-size: 0.78rem; font-weight: 800; padding: 9px 12px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
-                    <i class="fa-solid fa-users"></i> <span id="voiceBottomAudienceCount">1</span>명
+                    <i class="fa-solid fa-users"></i> <span id="voiceBottomAudienceCount">0</span>명
                 </button>
 
                 <!-- 채팅 입력 폼 -->
@@ -2494,8 +2494,8 @@
                 </form>
 
                 <!-- 마이크 Mute / Unmute 토글 버튼 -->
-                <button type="button" id="voiceMicToggleBtn" onclick="toggleVoiceMic()" style="background: rgba(0, 230, 118, 0.15); border: 1.5px solid #00e676; color: #00e676; border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 1rem; cursor: pointer; flex-shrink: 0;" title="마이크 음소거 / 켜기">
-                    <i class="fa-solid fa-microphone"></i>
+                <button type="button" id="voiceMicToggleBtn" onclick="toggleVoiceMic()" style="background: rgba(255, 71, 87, 0.15); border: 1.5px solid #ff4757; color: #ff4757; border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 1rem; cursor: pointer; flex-shrink: 0;" title="마이크 켜기">
+                    <i class="fa-solid fa-microphone-slash"></i>
                 </button>
             </div>
 
@@ -2503,7 +2503,7 @@
             <div id="voiceAudienceDrawer" class="voice-audience-drawer hidden">
                 <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 10px;">
                     <span style="font-weight: 900; font-size: 0.88rem; color: #fff; display: flex; align-items: center; gap: 6px;">
-                        <i class="fa-solid fa-users" style="color: var(--accent-cyan);"></i> 현재 방에 들어온 청취자 (<span id="voiceDrawerAudienceCount">1</span>명)
+                        <i class="fa-solid fa-users" style="color: var(--accent-cyan);"></i> 현재 방에 들어온 청취자 (<span id="voiceDrawerAudienceCount">0</span>명)
                     </span>
                     <button type="button" onclick="toggleAudienceDrawer()" style="background: none; border: none; color: #94a3b8; font-size: 0.82rem; font-weight: 700; cursor: pointer;">
                         닫기
@@ -2519,8 +2519,8 @@
 
  
      <!-- App Configuration & Main Logic Script -->
-     <script src="config.js?v=V1611_VOICEROOM_MODAL_AUTO_ENTER_FIX"></script>
-     <script src="app.js?v=V1611_VOICEROOM_MODAL_AUTO_ENTER_FIX"></script>
+     <script src="config.js?v=V1612_REAL_WEBRTC_AUDIO_ZERO_DUMMY"></script>
+     <script src="app.js?v=V1612_REAL_WEBRTC_AUDIO_ZERO_DUMMY"></script>
      <!-- Toast Notification Container -->
     <div id="toastContainer" class="toast-container"></div>
 

@@ -12805,7 +12805,7 @@ function filterAndRender(resetPagination = true) {
             if (activeVoiceRooms.length > 0) {
                 const room = activeVoiceRooms[0];
                 const hostName = room.user_name || room.author || '주최자';
-                const listenersCount = room.listeners_count || (Array.isArray(voiceRoomAudience) && voiceRoomAudience.length > 0 ? voiceRoomAudience.length : 1);
+                const listenersCount = (Array.isArray(voiceRoomAudience) && voiceRoomAudience.length > 0) ? voiceRoomAudience.length : (room.listeners_count || 0);
                 const spkCount = (Array.isArray(voiceRoomSpeakers) ? voiceRoomSpeakers.filter(s => s !== null).length : 1) || 1;
 
                 liveVoiceContainer.innerHTML = `
@@ -17356,9 +17356,19 @@ window.renderDynamicChatRoomModal = renderDynamicChatRoomModal;
 
 let currentVoiceRoom = null;
 let voiceRoomSpeakers = [null, null, null, null, null]; // Slot 0: Host, Slots 1-4: Speakers
-let voiceRoomAudience = [];
+let voiceRoomAudience = []; // 100% 실제 접속자만 관리 (가짜 더미 데이터 영구 제거)
 let isVoiceMicOn = false;
-let voiceAudioStream = null;
+let localAudioStream = null;
+let voiceAudioContext = null;
+let voiceAnalyserTimer = null;
+let rtcPeerConnections = {}; // Map of userName -> RTCPeerConnection
+const rtcIceConfig = {
+    iceServers: [
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" },
+        { urls: "stun:stun2.l.google.com:19302" }
+    ]
+};
 let voiceRoomChannel = null;
 
 // 1. 보이스룸 개설 모달 열기
@@ -17422,7 +17432,7 @@ async function handleCreateVoiceRoom(e) {
         status: "open",
         desc: `🎙️ 실시간 라이브 보이스룸: ${title} (발언 5명 / 청취 최대 30명)`,
         created_at: (typeof getKSTIsoString === "function") ? getKSTIsoString() : new Date().toISOString(),
-        listeners_count: 1
+        listeners_count: 0
     };
 
     // 로컬 posts 배열 최우선 삽입
@@ -17509,22 +17519,12 @@ function openVoiceRoomModal(roomId) {
 
     // 발언자 슬롯 초기화: 0번은 항상 주최자
     voiceRoomSpeakers = [
-        { user_name: isHost ? myName : hostName, is_host: true, is_muted: false, is_speaking: true },
+        { user_name: isHost ? myName : hostName, is_host: true, is_muted: true, is_speaking: false },
         null, null, null, null
     ];
 
-    // 청취자 목록 초기화 (최대 30명)
-    voiceRoomAudience = [
-        { user_name: "바다거북", role: "청취자", joined_at: "방금" },
-        { user_name: "잠수왕", role: "청취자", joined_at: "1분 전" },
-        { user_name: "Waterlife", role: "청취자", joined_at: "방금" },
-        { user_name: "동해지킴이", role: "청취자", joined_at: "방금" }
-    ];
-
-    // 주최자가 아닐 경우에만 청취자 목록에 나를 추가
-    if (!isHost && !voiceRoomAudience.some(a => a.user_name === myName)) {
-        voiceRoomAudience.unshift({ user_name: myName, role: "청취자", joined_at: "방금" });
-    }
+    // 청취자 목록 초기화: 100% 실제 접속자만 Presence로 등록 (더미 유저 완전 제거)
+    voiceRoomAudience = [];
 
     // 모달 UI 바인딩
     const titleEl = document.getElementById("voiceRoomModalTitle");
@@ -17539,8 +17539,8 @@ function openVoiceRoomModal(roomId) {
     // 청취자 서랍 렌더링
     renderAudienceList();
 
-    // 마이크 초기 상태 설정 (주최자는 기본 ON)
-    isVoiceMicOn = isHost ? true : false;
+    // 마이크 초기 상태 설정 (안전을 위해 초기 음소거, 사용자가 버튼을 눌러 음성 송출 시작)
+    isVoiceMicOn = false;
     updateMicButtonUI();
 
     // 모달 표시 (AquaBuddy 표준 openModal 필수 호출)
@@ -17555,10 +17555,10 @@ function openVoiceRoomModal(roomId) {
         }
     }
 
-    // 채팅 스트림 초기 웰컴 메시지 및 동기화
+    // 채팅 스트림 동기화
     initVoiceRoomChatStream(room);
 
-    // Supabase Realtime 채널 연결 (텍스트 채팅 및 발언석 실시간 동기화)
+    // Supabase Realtime & Presence 채널 연결 (실제 참여자 실시간 트래킹 및 WebRTC 연결)
     connectVoiceRoomRealtime(roomIdStr);
 }
 window.openVoiceRoomModal = openVoiceRoomModal;
@@ -17625,7 +17625,7 @@ function renderVoiceRoomStage() {
 }
 window.renderVoiceRoomStage = renderVoiceRoomStage;
 
-// 5. 청취자 목록 렌더링
+// 5. 청취자 목록 렌더링 (100% 실제 데이터만 표시)
 function renderAudienceList() {
     const listContainer = document.getElementById("voiceAudienceListContainer");
     if (!listContainer) return;
@@ -17641,6 +17641,17 @@ function renderAudienceList() {
 
     const myName = (currentUser && (currentUser.nickname || currentUser.name)) ? (currentUser.nickname || currentUser.name) : "";
     const isHost = currentVoiceRoom && (currentVoiceRoom.user_name === myName || (currentUser && currentUser.email === currentVoiceRoom.author));
+
+    if (totalAudience === 0) {
+        listContainer.innerHTML = `
+            <div style="text-align: center; padding: 32px 14px; color: #64748b; font-size: 0.8rem;">
+                <i class="fa-solid fa-users" style="font-size: 1.6rem; opacity: 0.35; margin-bottom: 8px; display: block;"></i>
+                현재 참여 중인 청취자가 없습니다.<br>
+                <span style="font-size: 0.72rem; color: #475569;">실제 다이버가 방에 들어오면 실시간으로 표시됩니다.</span>
+            </div>
+        `;
+        return;
+    }
 
     let html = "";
     voiceRoomAudience.forEach(aud => {
@@ -17703,29 +17714,21 @@ function requestVoiceSlot(slotNum) {
 
     if (isHost) {
         // 주최자가 직접 빈 슬롯으로 이동/배치
-        voiceRoomSpeakers[slotIdx] = { user_name: myName, is_host: true, is_muted: false, is_speaking: isVoiceMicOn };
+        voiceRoomSpeakers[slotIdx] = { user_name: myName, is_host: true, is_muted: !isVoiceMicOn, is_speaking: false };
         renderVoiceRoomStage();
         showToast(`👑 ${slotNum}번석으로 이동했습니다.`);
         return;
     }
 
-    // 주최자가 방 안에 있는 경우 주최자에게 참가 신청 팝업 발송
-    showToast(`📢 ${slotNum}번석 발언 참가를 신청했습니다! 주최자의 수락을 기다립니다.`);
+    // 주최자가 방 안에 있는 경우 주최자에게 참가 신청 전송
+    showToast(`📢 ${slotNum}번석 발언 참가를 신청했습니다! 주최자의 승인을 기다립니다.`);
 
-    // 주최자 화면에 참가 승인 토스트/확인창 트리거 (P2P / Realtime)
-    if (isHost) {
-        // 주최자 본인에게 온 경우 즉시 승인 알림
-        if (confirm(`🎙️ [발언석 참가 신청]\n'${myName}'님이 ${slotNum}번 발언석 참가를 신청했습니다. 수락하시겠습니까?`)) {
-            approveVoiceSlot(slotNum, myName);
-        }
-    } else {
-        // 실시간 채널로 주최자에게 신청 전송
-        broadcastVoiceEvent({
-            type: "request_slot",
-            slotNum: slotNum,
-            applicant: myName
-        });
-    }
+    // 실시간 채널로 주최자에게 신청 브로드캐스트
+    broadcastVoiceEvent({
+        type: "request_slot",
+        slotNum: slotNum,
+        applicant: myName
+    });
 }
 window.requestVoiceSlot = requestVoiceSlot;
 
@@ -17737,7 +17740,7 @@ function approveVoiceSlot(slotNum, applicantName) {
     voiceRoomSpeakers[slotIdx] = {
         user_name: applicantName,
         is_host: false,
-        is_muted: false,
+        is_muted: true,
         is_speaking: false
     };
 
@@ -17774,12 +17777,12 @@ function inviteAudienceToMic(userName) {
 }
 window.inviteAudienceToMic = inviteAudienceToMic;
 
-// 10. 마이크 토글 (음소거 / 켜기)
+// 10. 마이크 토글 및 WebRTC 실시간 음성 송수신
 async function toggleVoiceMic() {
     if (!currentUser || !currentUser.name) return;
-    const myName = currentUser.nickname || currentUser.name || "다이버";
+    const myName = (currentUser.nickname || currentUser.name || "다이버");
 
-    // 내가 5개 슬롯 중 하나에 앉아있는지 검사
+    // 내가 5개 발언석 중 하나에 앉아있는지 검사
     const mySlotIdx = voiceRoomSpeakers.findIndex(s => s && s.user_name === myName);
     if (mySlotIdx === -1) {
         showToast("⚠️ 발언석에 착석한 후 마이크를 켤 수 있습니다. 빈자리를 눌러 신청해보세요!");
@@ -17789,22 +17792,38 @@ async function toggleVoiceMic() {
     isVoiceMicOn = !isVoiceMicOn;
 
     if (isVoiceMicOn) {
-        // 마이크 스트림 요청
+        // 실제 디바이스 마이크 오디오 스트림 획득
         try {
             if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                voiceAudioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            }
-        } catch (micErr) {
-            console.warn("마이크 권한 획득 실패 (UI 시뮬레이션 유지):", micErr);
-        }
+                localAudioStream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    },
+                    video: false
+                });
 
-        voiceRoomSpeakers[mySlotIdx].is_muted = false;
-        voiceRoomSpeakers[mySlotIdx].is_speaking = true;
-        showToast("🎙️ 마이크가 켜졌습니다. 자유롭게 말씀하세요!");
+                // 실시간 목소리 감지(VAD) 활성화: 실제로 말할 때만 초록색 오로라 발동
+                setupVoiceActivityDetector(localAudioStream, myName);
+
+                // 현재 방에 있는 모든 참가자(발언자 & 청취자)와 WebRTC 오디오 스트림 연결
+                negotiateAudioWithAllPeers();
+            }
+            voiceRoomSpeakers[mySlotIdx].is_muted = false;
+            voiceRoomSpeakers[mySlotIdx].is_speaking = false;
+            showToast("🎙️ 마이크가 켜졌습니다! 말씀하시면 음성이 실시간으로 전송됩니다.");
+        } catch (micErr) {
+            console.warn("마이크 권한 획득 실패:", micErr);
+            isVoiceMicOn = false;
+            showToast("⚠️ 마이크 접근 권한이 필요합니다. 브라우저 설정에서 마이크 권한을 허용해주세요.");
+            return;
+        }
     } else {
-        if (voiceAudioStream) {
-            voiceAudioStream.getTracks().forEach(track => track.stop());
-            voiceAudioStream = null;
+        stopVoiceActivityDetector();
+        if (localAudioStream) {
+            localAudioStream.getTracks().forEach(track => track.stop());
+            localAudioStream = null;
         }
         voiceRoomSpeakers[mySlotIdx].is_muted = true;
         voiceRoomSpeakers[mySlotIdx].is_speaking = false;
@@ -17818,10 +17837,270 @@ async function toggleVoiceMic() {
         type: "mic_toggle",
         user_name: myName,
         is_muted: !isVoiceMicOn,
-        is_speaking: isVoiceMicOn
+        is_speaking: false
     });
+
+    if (isVoiceMicOn) {
+        broadcastVoiceEvent({
+            type: "speaker_audio_ready",
+            speaker: myName
+        });
+    }
 }
 window.toggleVoiceMic = toggleVoiceMic;
+
+// 실시간 음성 볼륨 감지 (Voice Activity Detection - VAD)
+function setupVoiceActivityDetector(stream, myName) {
+    try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+
+        if (!voiceAudioContext) {
+            voiceAudioContext = new AudioCtx();
+        }
+        if (voiceAudioContext.state === "suspended") {
+            voiceAudioContext.resume();
+        }
+
+        const sourceNode = voiceAudioContext.createMediaStreamSource(stream);
+        const analyserNode = voiceAudioContext.createAnalyser();
+        analyserNode.fftSize = 256;
+        analyserNode.smoothingTimeConstant = 0.3;
+        sourceNode.connect(analyserNode);
+
+        const dataArray = new Uint8Array(analyserNode.frequencyBinCount);
+        let wasSpeaking = false;
+
+        if (voiceAnalyserTimer) clearInterval(voiceAnalyserTimer);
+        voiceAnalyserTimer = setInterval(() => {
+            if (!isVoiceMicOn || !localAudioStream) return;
+            analyserNode.getByteFrequencyData(dataArray);
+            let sum = 0;
+            for (let i = 0; i < dataArray.length; i++) {
+                sum += dataArray[i];
+            }
+            const avg = sum / dataArray.length;
+            // 실제 음성 볼륨 임계치(> 12) 감지 시에만 파동 애니메이션 작동
+            const isSpeakingNow = (avg > 12);
+
+            if (isSpeakingNow !== wasSpeaking) {
+                wasSpeaking = isSpeakingNow;
+                const mySlot = voiceRoomSpeakers.find(s => s && s.user_name === myName);
+                if (mySlot) {
+                    mySlot.is_speaking = isSpeakingNow;
+                    renderVoiceRoomStage();
+                }
+                broadcastVoiceEvent({
+                    type: "speaking_state",
+                    user_name: myName,
+                    is_speaking: isSpeakingNow
+                });
+            }
+        }, 120);
+    } catch (e) {
+        console.warn("음성 VAD 초기화 참고:", e);
+    }
+}
+
+function stopVoiceActivityDetector() {
+    if (voiceAnalyserTimer) {
+        clearInterval(voiceAnalyserTimer);
+        voiceAnalyserTimer = null;
+    }
+}
+
+// WebRTC 오디오 피어 연결 초기화 및 Offer 전송
+async function negotiateAudioWithAllPeers() {
+    const myName = (currentUser && (currentUser.nickname || currentUser.name)) ? (currentUser.nickname || currentUser.name) : "";
+    const targets = [];
+    voiceRoomSpeakers.forEach(s => {
+        if (s && s.user_name && s.user_name !== myName) targets.push(s.user_name);
+    });
+    voiceRoomAudience.forEach(a => {
+        if (a && a.user_name && a.user_name !== myName && !targets.includes(a.user_name)) targets.push(a.user_name);
+    });
+
+    for (const targetUser of targets) {
+        await createWebRTCOfferToPeer(targetUser);
+    }
+}
+
+async function createWebRTCOfferToPeer(targetUser) {
+    const myName = (currentUser && (currentUser.nickname || currentUser.name)) ? (currentUser.nickname || currentUser.name) : "";
+    if (!targetUser || targetUser === myName) return;
+
+    try {
+        if (rtcPeerConnections[targetUser]) {
+            try { rtcPeerConnections[targetUser].close(); } catch(e) {}
+        }
+
+        const pc = new RTCPeerConnection(rtcIceConfig);
+        rtcPeerConnections[targetUser] = pc;
+
+        if (localAudioStream) {
+            localAudioStream.getTracks().forEach(track => {
+                pc.addTrack(track, localAudioStream);
+            });
+        }
+
+        pc.onicecandidate = (event) => {
+            if (event.candidate) {
+                broadcastVoiceEvent({
+                    type: "webrtc_signal",
+                    from: myName,
+                    to: targetUser,
+                    signalType: "candidate",
+                    candidate: event.candidate
+                });
+            }
+        };
+
+        pc.ontrack = (event) => {
+            if (event.streams && event.streams[0]) {
+                attachRemoteAudio(targetUser, event.streams[0]);
+            }
+        };
+
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+
+        broadcastVoiceEvent({
+            type: "webrtc_signal",
+            from: myName,
+            to: targetUser,
+            signalType: "offer",
+            sdp: pc.localDescription
+        });
+    } catch (err) {
+        console.warn(`WebRTC Offer 생성 실패 (${targetUser}):`, err);
+    }
+}
+
+async function handleWebRTCOffer(from, sdp) {
+    const myName = (currentUser && (currentUser.nickname || currentUser.name)) ? (currentUser.nickname || currentUser.name) : "";
+    if (!from || from === myName) return;
+
+    try {
+        if (rtcPeerConnections[from]) {
+            try { rtcPeerConnections[from].close(); } catch(e) {}
+        }
+
+        const pc = new RTCPeerConnection(rtcIceConfig);
+        rtcPeerConnections[from] = pc;
+
+        if (localAudioStream) {
+            localAudioStream.getTracks().forEach(track => {
+                pc.addTrack(track, localAudioStream);
+            });
+        }
+
+        pc.onicecandidate = (event) => {
+            if (event.candidate) {
+                broadcastVoiceEvent({
+                    type: "webrtc_signal",
+                    from: myName,
+                    to: from,
+                    signalType: "candidate",
+                    candidate: event.candidate
+                });
+            }
+        };
+
+        pc.ontrack = (event) => {
+            if (event.streams && event.streams[0]) {
+                attachRemoteAudio(from, event.streams[0]);
+            }
+        };
+
+        await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+
+        broadcastVoiceEvent({
+            type: "webrtc_signal",
+            from: myName,
+            to: from,
+            signalType: "answer",
+            sdp: pc.localDescription
+        });
+    } catch (err) {
+        console.warn(`WebRTC Offer 처리 실패 (${from}):`, err);
+    }
+}
+
+async function handleWebRTCAnswer(from, sdp) {
+    const pc = rtcPeerConnections[from];
+    if (pc && sdp) {
+        try {
+            await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+        } catch (err) {
+            console.warn(`WebRTC Answer 처리 실패 (${from}):`, err);
+        }
+    }
+}
+
+async function handleWebRTCCandidate(from, candidate) {
+    const pc = rtcPeerConnections[from];
+    if (pc && candidate) {
+        try {
+            await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        } catch (err) {
+            console.warn(`WebRTC ICE Candidate 추가 실패 (${from}):`, err);
+        }
+    }
+}
+
+// 수신된 상대방의 음성 오디오를 실제로 재생
+function attachRemoteAudio(peerName, stream) {
+    const safePeerId = (peerName || "peer").replace(/[^a-zA-Z0-9_-]/g, "_");
+    const audioId = `remote_audio_${safePeerId}`;
+    let audioEl = document.getElementById(audioId);
+
+    if (!audioEl) {
+        audioEl = document.createElement("audio");
+        audioEl.id = audioId;
+        audioEl.autoplay = true;
+        audioEl.playsInline = true;
+        audioEl.style.display = "none";
+        document.body.appendChild(audioEl);
+    }
+
+    audioEl.srcObject = stream;
+    audioEl.play().catch(err => {
+        console.log("WebRTC 원격 오디오 자동재생 권한 참고:", err);
+    });
+}
+
+function removeRemoteAudio(peerName) {
+    const safePeerId = (peerName || "peer").replace(/[^a-zA-Z0-9_-]/g, "_");
+    const audioId = `remote_audio_${safePeerId}`;
+    const audioEl = document.getElementById(audioId);
+    if (audioEl) {
+        audioEl.pause();
+        audioEl.srcObject = null;
+        audioEl.remove();
+    }
+}
+
+function cleanupAllWebRTC() {
+    stopVoiceActivityDetector();
+
+    if (voiceAudioContext) {
+        try { voiceAudioContext.close(); } catch(e) {}
+        voiceAudioContext = null;
+    }
+
+    if (localAudioStream) {
+        localAudioStream.getTracks().forEach(track => track.stop());
+        localAudioStream = null;
+    }
+
+    Object.keys(rtcPeerConnections).forEach(peer => {
+        try { rtcPeerConnections[peer].close(); } catch(e) {}
+        removeRemoteAudio(peer);
+    });
+    rtcPeerConnections = {};
+}
 
 function updateMicButtonUI() {
     const micBtn = document.getElementById("voiceMicToggleBtn");
@@ -17887,14 +18166,18 @@ function closeVoiceRoomModal() {
 window.closeVoiceRoomModal = closeVoiceRoomModal;
 
 function cleanupVoiceRoomSession() {
-    if (voiceAudioStream) {
-        voiceAudioStream.getTracks().forEach(track => track.stop());
-        voiceAudioStream = null;
-    }
+    cleanupAllWebRTC();
     isVoiceMicOn = false;
     currentVoiceRoom = null;
     voiceRoomSpeakers = [null, null, null, null, null];
     voiceRoomAudience = [];
+
+    if (supabaseClient && voiceRoomChannel) {
+        try {
+            supabaseClient.removeChannel(voiceRoomChannel);
+        } catch (e) {}
+        voiceRoomChannel = null;
+    }
 
     const modal = document.getElementById("voiceRoomModalOverlay");
     if (modal) {
@@ -17915,27 +18198,33 @@ function cleanupVoiceRoomSession() {
     }
 }
 
-// 12. 보이스룸 실시간 텍스트 채팅
+// 12. 보이스룸 실시간 텍스트 채팅 (가짜 웰컴 메시지 완전 제거)
 function initVoiceRoomChatStream(room) {
     const stream = document.getElementById("voiceChatStream");
     if (!stream) return;
 
-    stream.innerHTML = `
+    let initialHtml = `
         <div style="background: rgba(0, 242, 254, 0.08); border: 1px solid rgba(0, 242, 254, 0.25); border-radius: 10px; padding: 8px 12px; font-size: 0.76rem; color: #94a3b8; text-align: center;">
             💡 청취자분들도 마이크 없이 채팅으로 자유롭게 질문하고 소통하실 수 있습니다!
         </div>
-        <div style="display: flex; gap: 6px; align-items: flex-start; font-size: 0.8rem; margin-top: 4px;">
-            <span style="font-weight: 900; color: var(--accent-gold); flex-shrink: 0;">👑 ${escapeHtml(room.user_name || '주최자')}:</span>
-            <span style="color: #e2e8f0; background: rgba(255, 183, 3, 0.1); padding: 4px 8px; border-radius: 8px; border-left: 2px solid var(--accent-gold);">
-                "안녕하세요! 실시간 보이스룸에 오신 것을 환영합니다~"
-            </span>
-        </div>
     `;
 
-    // 기존 채팅 메시지가 있다면 렌더링
+    // 기존 실제 채팅 메시지가 있다면 렌더링, 없다면 깔끔한 안내 표시
     const roomIdStr = String(room.id);
-    if (chatMessages[roomIdStr] && chatMessages[roomIdStr].length > 0) {
-        chatMessages[roomIdStr].forEach(msg => {
+    const msgs = chatMessages[roomIdStr] || [];
+    if (msgs.length === 0) {
+        initialHtml += `
+            <div id="voiceChatEmptyNotice" style="text-align: center; padding: 24px 10px; color: #64748b; font-size: 0.76rem;">
+                아직 작성된 메시지가 없습니다.<br>
+                <span style="color: #475569; font-size: 0.7rem;">첫 번째 실시간 채팅 메시지를 남겨보세요!</span>
+            </div>
+        `;
+    }
+
+    stream.innerHTML = initialHtml;
+
+    if (msgs.length > 0) {
+        msgs.forEach(msg => {
             appendVoiceRoomChatMessage(msg.sender || msg.user_name || "익명", msg.message || msg.content || "");
         });
     }
@@ -17944,6 +18233,9 @@ function initVoiceRoomChatStream(room) {
 function appendVoiceRoomChatMessage(sender, text) {
     const stream = document.getElementById("voiceChatStream");
     if (!stream || !text) return;
+
+    const emptyNotice = document.getElementById("voiceChatEmptyNotice");
+    if (emptyNotice) emptyNotice.remove();
 
     const myName = (currentUser && (currentUser.nickname || currentUser.name)) ? (currentUser.nickname || currentUser.name) : "";
     const isMe = (sender === myName);
@@ -18015,7 +18307,7 @@ async function handleSendVoiceRoomChat(e) {
 }
 window.handleSendVoiceRoomChat = handleSendVoiceRoomChat;
 
-// 13. 실시간 웹소켓 이벤트 브로드캐스트 & 수신
+// 13. Supabase Realtime & Presence 채널 연결 (100% 실제 접속자 감지 및 WebRTC 시그널링)
 function connectVoiceRoomRealtime(roomId) {
     if (!supabaseClient) return;
     try {
@@ -18023,13 +18315,100 @@ function connectVoiceRoomRealtime(roomId) {
             supabaseClient.removeChannel(voiceRoomChannel);
         }
 
-        voiceRoomChannel = supabaseClient.channel(`voiceroom_${roomId}`)
+        const myName = (currentUser && (currentUser.nickname || currentUser.name)) ? (currentUser.nickname || currentUser.name) : "다이버";
+        const isHost = currentVoiceRoom && (currentVoiceRoom.user_name === myName);
+
+        voiceRoomChannel = supabaseClient.channel(`voiceroom_${roomId}`, {
+            config: {
+                presence: { key: myName }
+            }
+        });
+
+        voiceRoomChannel
+            .on('presence', { event: 'sync' }, () => {
+                const state = voiceRoomChannel.presenceState();
+                syncVoiceRoomRealtimePresence(state);
+            })
+            .on('presence', { event: 'join' }, () => {
+                const state = voiceRoomChannel.presenceState();
+                syncVoiceRoomRealtimePresence(state);
+            })
+            .on('presence', { event: 'leave' }, ({ key }) => {
+                const state = voiceRoomChannel.presenceState();
+                syncVoiceRoomRealtimePresence(state);
+                if (key) {
+                    removeRemoteAudio(key);
+                    if (rtcPeerConnections[key]) {
+                        try { rtcPeerConnections[key].close(); } catch(e) {}
+                        delete rtcPeerConnections[key];
+                    }
+                }
+            })
             .on('broadcast', { event: 'voice_event' }, payload => {
                 handleVoiceRoomBroadcastEvent(payload.payload);
             })
-            .subscribe();
+            .subscribe(async (status) => {
+                if (status === 'SUBSCRIBED') {
+                    await voiceRoomChannel.track({
+                        user_name: myName,
+                        is_host: isHost,
+                        joined_at: (typeof getKSTIsoString === "function") ? getKSTIsoString() : new Date().toISOString()
+                    });
+
+                    // 내가 마이크가 켜져있는 발언자라면 새 참가자들을 위해 오디오 준비 브로드캐스트
+                    if (isVoiceMicOn && localAudioStream) {
+                        broadcastVoiceEvent({
+                            type: "speaker_audio_ready",
+                            speaker: myName
+                        });
+                    }
+                }
+            });
     } catch (e) {
         console.warn("보이스룸 실시간 채널 연결 참고:", e);
+    }
+}
+
+// 실시간 Presence 상태를 청취자 목록(voiceRoomAudience)에 정확히 반영
+function syncVoiceRoomRealtimePresence(state) {
+    if (!state) return;
+    const realAudience = [];
+    const speakerNames = new Set(voiceRoomSpeakers.filter(s => s !== null).map(s => s.user_name));
+    const hostName = currentVoiceRoom ? (currentVoiceRoom.user_name || currentVoiceRoom.author) : "";
+
+    Object.keys(state).forEach(key => {
+        const presences = state[key];
+        if (Array.isArray(presences)) {
+            presences.forEach(p => {
+                const uName = p.user_name || key;
+                if (uName && !speakerNames.has(uName) && uName !== hostName) {
+                    if (!realAudience.some(a => a.user_name === uName)) {
+                        realAudience.push({
+                            user_name: uName,
+                            role: "청취자",
+                            joined_at: p.joined_at ? "참여 중" : "방금"
+                        });
+                    }
+                }
+            });
+        }
+    });
+
+    voiceRoomAudience = realAudience;
+    renderAudienceList();
+
+    if (currentVoiceRoom) {
+        currentVoiceRoom.listeners_count = voiceRoomAudience.length;
+    }
+
+    // 내가 마이크가 켜진 발언자이고 새로운 청취자/참가자가 들어왔다면 WebRTC Offer 전송
+    const myName = (currentUser && (currentUser.nickname || currentUser.name)) ? (currentUser.nickname || currentUser.name) : "";
+    if (isVoiceMicOn && localAudioStream) {
+        voiceRoomAudience.forEach(aud => {
+            if (aud.user_name !== myName && !rtcPeerConnections[aud.user_name]) {
+                createWebRTCOfferToPeer(aud.user_name);
+            }
+        });
     }
 }
 
@@ -18069,7 +18448,7 @@ function handleVoiceRoomBroadcastEvent(event) {
             voiceRoomSpeakers[slotIdx] = {
                 user_name: event.applicant,
                 is_host: false,
-                is_muted: false,
+                is_muted: true,
                 is_speaking: false
             };
             voiceRoomAudience = voiceRoomAudience.filter(a => a.user_name !== event.applicant);
@@ -18087,6 +18466,31 @@ function handleVoiceRoomBroadcastEvent(event) {
             slot.is_muted = event.is_muted;
             slot.is_speaking = event.is_speaking;
             renderVoiceRoomStage();
+        }
+    } else if (event.type === "speaking_state") {
+        const slot = voiceRoomSpeakers.find(s => s && s.user_name === event.user_name);
+        if (slot) {
+            slot.is_speaking = Boolean(event.is_speaking);
+            renderVoiceRoomStage();
+        }
+    } else if (event.type === "speaker_audio_ready") {
+        const myName = (currentUser && (currentUser.nickname || currentUser.name)) ? (currentUser.nickname || currentUser.name) : "";
+        if (event.speaker && event.speaker !== myName) {
+            // 발언자가 오디오를 준비했으므로 해당 발언자에게 Offer 요청 또는 연결 대기
+            if (!rtcPeerConnections[event.speaker]) {
+                createWebRTCOfferToPeer(event.speaker);
+            }
+        }
+    } else if (event.type === "webrtc_signal") {
+        const myName = (currentUser && (currentUser.nickname || currentUser.name)) ? (currentUser.nickname || currentUser.name) : "";
+        if (event.to === myName) {
+            if (event.signalType === "offer") {
+                handleWebRTCOffer(event.from, event.sdp);
+            } else if (event.signalType === "answer") {
+                handleWebRTCAnswer(event.from, event.sdp);
+            } else if (event.signalType === "candidate") {
+                handleWebRTCCandidate(event.from, event.candidate);
+            }
         }
     }
 }
