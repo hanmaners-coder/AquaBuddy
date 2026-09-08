@@ -17986,6 +17986,22 @@ function renderVoiceRoomStage() {
     const container = document.getElementById("voiceStageSlotsContainer");
     if (!container) return;
 
+    // 🌟 1인 1석 엄격 보장 (동일 계정이 여러 슬롯에 중복 배정되는 문제 원천 방지)
+    if (Array.isArray(voiceRoomSpeakers)) {
+        const seenUsers = new Set();
+        for (let i = 0; i < 6; i++) {
+            const s = voiceRoomSpeakers[i];
+            if (s && s.user_name) {
+                const norm = String(s.user_name).trim().toLowerCase();
+                if (seenUsers.has(norm)) {
+                    voiceRoomSpeakers[i] = null;
+                } else {
+                    seenUsers.add(norm);
+                }
+            }
+        }
+    }
+
     const myNick = (currentUser && currentUser.nickname) ? currentUser.nickname.trim() : "";
     const myDisplayName = (currentUser && currentUser.name) ? currentUser.name.trim() : "";
     const myEmail = (currentUser && currentUser.email) ? currentUser.email.trim().toLowerCase() : "";
@@ -18136,6 +18152,7 @@ function toggleAudienceDrawer() {
 window.toggleAudienceDrawer = toggleAudienceDrawer;
 
 // 7. 빈자리 발언 신청
+let hasPendingVoiceSlotRequest = false;
 function requestVoiceSlot(slotNum) {
     if (!currentUser || !currentUser.name) {
         showToast("🔑 로그인 후 신청하실 수 있습니다.");
@@ -18143,13 +18160,30 @@ function requestVoiceSlot(slotNum) {
     }
     const myNick = (currentUser && currentUser.nickname) ? currentUser.nickname.trim() : "";
     const myDisplayName = (currentUser && currentUser.name) ? currentUser.name.trim() : "";
+    const myRealName = (currentUser && currentUser.real_name) ? currentUser.real_name.trim() : "";
+    const myEmail = (currentUser && currentUser.email) ? currentUser.email.trim() : "";
     const myName = myNick || myDisplayName || "다이버";
     const slotIdx = slotNum - 1;
 
     // 이미 발언석에 있는지 확인
-    const isAlreadySpeaker = voiceRoomSpeakers.some(s => s && (s.user_name === myName || (myNick && s.user_name === myNick)));
+    const isAlreadySpeaker = voiceRoomSpeakers.some(s => {
+        if (!s) return false;
+        const sName = String(s.user_name || '').trim().toLowerCase();
+        return Boolean(
+            (myNick && sName === myNick.toLowerCase()) ||
+            (myDisplayName && sName === myDisplayName.toLowerCase()) ||
+            (myRealName && sName === myRealName.toLowerCase()) ||
+            (myEmail && sName === myEmail.toLowerCase()) ||
+            (myName && sName === myName.toLowerCase())
+        );
+    });
     if (isAlreadySpeaker) {
         showToast("⚠️ 이미 발언석에 참여 중이십니다!");
+        return;
+    }
+
+    if (hasPendingVoiceSlotRequest) {
+        showToast("⏳ 이미 발언 참가를 신청하셨습니다. 주최자의 승인을 기다려주세요!");
         return;
     }
 
@@ -18162,6 +18196,9 @@ function requestVoiceSlot(slotNum) {
         showToast(`👑 ${slotNum}번석으로 이동했습니다.`);
         return;
     }
+
+    hasPendingVoiceSlotRequest = true;
+    setTimeout(() => { hasPendingVoiceSlotRequest = false; }, 8000);
 
     // 주최자에게 참가 신청 전송
     showToast(`📢 ${slotNum}번석 발언 참가를 신청했습니다! 주최자의 승인을 기다립니다.`);
@@ -18180,6 +18217,15 @@ function approveVoiceSlot(slotNum, applicantName) {
     const slotIdx = Number(slotNum) - 1;
     if (slotIdx < 0 || slotIdx >= 6) return;
 
+    const appLower = String(applicantName || '').trim().toLowerCase();
+
+    // 🌟 1인 1석 엄격 보장: 신청자가 이미 다른 슬롯에 배정되어 있다면 기존 슬롯을 먼저 비웁니다
+    for (let i = 0; i < 6; i++) {
+        if (voiceRoomSpeakers[i] && String(voiceRoomSpeakers[i].user_name || '').trim().toLowerCase() === appLower) {
+            voiceRoomSpeakers[i] = null;
+        }
+    }
+
     voiceRoomSpeakers[slotIdx] = {
         user_name: applicantName,
         is_host: false,
@@ -18188,7 +18234,7 @@ function approveVoiceSlot(slotNum, applicantName) {
     };
 
     // 청취자 목록에서 제거
-    voiceRoomAudience = voiceRoomAudience.filter(a => a.user_name !== applicantName);
+    voiceRoomAudience = voiceRoomAudience.filter(a => String(a.user_name || '').trim().toLowerCase() !== appLower);
 
     renderVoiceRoomStage();
     renderAudienceList();
@@ -19297,6 +19343,17 @@ function handleVoiceRoomBroadcastEvent(event) {
     } else if (event.type === "request_slot") {
         const isHost = currentVoiceRoom ? isVoiceRoomHost(currentVoiceRoom) : false;
         if (isHost) {
+            const appLower = String(event.applicant || '').trim().toLowerCase();
+            // 🌟 1인 1석 엄격 보장: 이미 발언석에 참여 중인 사용자의 추가 신청은 무시
+            const isAlreadyOnStage = voiceRoomSpeakers.some(s => s && String(s.user_name || '').trim().toLowerCase() === appLower);
+            if (isAlreadyOnStage) {
+                return;
+            }
+            // 해당 슬롯이 이미 찼다면 신청 무시
+            const targetSlotIdx = Number(event.slotNum) - 1;
+            if (targetSlotIdx >= 0 && targetSlotIdx < 6 && voiceRoomSpeakers[targetSlotIdx] !== null) {
+                return;
+            }
             if (confirm(`🎙️ [발언 무대 신청]\n'${event.applicant}'님이 ${event.slotNum}번석 참가를 신청했습니다. 수락하시겠습니까?`)) {
                 approveVoiceSlot(event.slotNum, event.applicant);
             }
@@ -19306,6 +19363,13 @@ function handleVoiceRoomBroadcastEvent(event) {
             voiceRoomSpeakers = event.speakers.map(s => s ? { ...s } : null);
         } else if (event.slotNum && event.applicant) {
             const slotIdx = Number(event.slotNum) - 1;
+            const appLower = String(event.applicant || '').trim().toLowerCase();
+            // 다른 슬롯에 있는 동일 사용자 제거 (1인 1석 엄격 보장)
+            for (let i = 0; i < 6; i++) {
+                if (voiceRoomSpeakers[i] && String(voiceRoomSpeakers[i].user_name || '').trim().toLowerCase() === appLower) {
+                    voiceRoomSpeakers[i] = null;
+                }
+            }
             if (slotIdx >= 0 && slotIdx < 6) {
                 voiceRoomSpeakers[slotIdx] = {
                     user_name: event.applicant,
@@ -19316,7 +19380,8 @@ function handleVoiceRoomBroadcastEvent(event) {
             }
         }
         if (event.applicant) {
-            voiceRoomAudience = voiceRoomAudience.filter(a => a.user_name !== event.applicant);
+            const appLower = String(event.applicant || '').trim().toLowerCase();
+            voiceRoomAudience = voiceRoomAudience.filter(a => String(a.user_name || '').trim().toLowerCase() !== appLower);
         }
         renderVoiceRoomStage();
         renderAudienceList();
