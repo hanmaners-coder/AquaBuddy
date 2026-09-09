@@ -22126,6 +22126,13 @@ const AquaToolkitEngine = {
         this.resetTimer(false);
         this.updateStatsDisplay();
         this.cacheEnVoice();
+        this.initStreakCalendar();
+        this.calcWeight();
+        this.calcSwolf();
+        this.initOpenWaterSpots();
+        this.calcSacRate();
+        this.calcMod();
+        this.initMiniLogs();
     },
 
     // 🔊 Web Audio API 초기화 (모바일 자동재생 정책 방어: 반드시 사용자 제스처 이벤트 내에서 호출)
@@ -22841,6 +22848,788 @@ const AquaToolkitEngine = {
         } else {
             alert('올바른 시간을 입력해 주세요 (10초 ~ 600초).');
         }
+    },
+
+    // ========================================================================
+    // 💡 0. 나의 물생활 잔디 심기 (Streak & Attendance Calendar)
+    // ========================================================================
+    initStreakCalendar() {
+        this.renderStreakCalendar();
+    },
+
+    getTodayStr() {
+        const d = new Date();
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    },
+
+    getStreakData() {
+        try {
+            return JSON.parse(localStorage.getItem('aqua_toolkit_streaks') || '{}');
+        } catch(e) {
+            return {};
+        }
+    },
+
+    saveStreakData(data) {
+        try {
+            localStorage.setItem('aqua_toolkit_streaks', JSON.stringify(data));
+        } catch(e) {}
+    },
+
+    stampToday(sportTag = null) {
+        const today = this.getTodayStr();
+        const data = this.getStreakData();
+        const sport = sportTag || this.currentSport || 'freediving';
+
+        if (!data[today]) {
+            data[today] = [];
+        }
+        if (!data[today].includes(sport)) {
+            data[today].push(sport);
+        }
+        this.saveStreakData(data);
+        this.playCompletionFanfare();
+
+        // Check if logged in & sync to Supabase in background
+        if (typeof currentUser !== 'undefined' && currentUser && typeof supabaseClient !== 'undefined' && supabaseClient) {
+            try {
+                console.log("[Streak] Stamped for user:", currentUser.email, today, sport);
+            } catch(e) {}
+        }
+
+        if (typeof showToast === 'function') {
+            showToast(`💧 오늘 훈련 완료 도장이 찍혔습니다! 연속 출석 달성!`);
+        }
+        this.renderStreakCalendar();
+    },
+
+    renderStreakCalendar() {
+        const grid = document.getElementById('streakCalendarGrid');
+        const curDaysEl = document.getElementById('streakCurrentDays');
+        const monthCountEl = document.getElementById('streakMonthCount');
+        const yearCountEl = document.getElementById('streakYearCount');
+        const bestDaysEl = document.getElementById('streakBestDays');
+        const monthTextEl = document.getElementById('streakCurrentMonthText');
+        const btnStamp = document.getElementById('btnStampToday');
+
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth();
+        const todayStr = this.getTodayStr();
+
+        if (monthTextEl) {
+            monthTextEl.textContent = `${year}년 ${month + 1}월`;
+        }
+
+        const streaks = this.getStreakData();
+        const isStampedToday = !!(streaks[todayStr] && streaks[todayStr].length > 0);
+
+        if (btnStamp) {
+            if (isStampedToday) {
+                btnStamp.innerHTML = '<i class="fa-solid fa-circle-check"></i> 오늘 도장 완료! (출석 완료)';
+                btnStamp.style.background = 'linear-gradient(135deg, #00e676, #00b0ff)';
+                btnStamp.style.color = '#000';
+            } else {
+                btnStamp.innerHTML = '<i class="fa-solid fa-droplet"></i> 오늘 훈련 완료! 도장 찍기';
+                btnStamp.style.background = 'linear-gradient(135deg, #00f2fe, #0077b6)';
+                btnStamp.style.color = '#070e17';
+            }
+        }
+
+        let currentStreak = 0;
+        let monthCount = 0;
+        let yearCount = 0;
+
+        const currentMonthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
+        const currentYearPrefix = `${year}-`;
+
+        Object.keys(streaks).forEach(dStr => {
+            if (dStr.startsWith(currentMonthPrefix) && streaks[dStr].length > 0) monthCount++;
+            if (dStr.startsWith(currentYearPrefix) && streaks[dStr].length > 0) yearCount++;
+        });
+
+        // Calculate continuous streak
+        let checkDate = new Date(now);
+        if (!isStampedToday) {
+            checkDate.setDate(checkDate.getDate() - 1);
+        }
+        while (true) {
+            const y = checkDate.getFullYear();
+            const m = String(checkDate.getMonth() + 1).padStart(2, '0');
+            const d = String(checkDate.getDate()).padStart(2, '0');
+            const key = `${y}-${m}-${d}`;
+            if (streaks[key] && streaks[key].length > 0) {
+                currentStreak++;
+                checkDate.setDate(checkDate.getDate() - 1);
+            } else {
+                break;
+            }
+        }
+
+        const savedBest = parseInt(localStorage.getItem('aqua_toolkit_best_streak') || '0', 10);
+        const bestStreak = Math.max(savedBest, currentStreak);
+        try { localStorage.setItem('aqua_toolkit_best_streak', String(bestStreak)); } catch(e) {}
+
+        if (curDaysEl) curDaysEl.textContent = currentStreak;
+        if (monthCountEl) monthCountEl.textContent = monthCount;
+        if (yearCountEl) yearCountEl.textContent = yearCount;
+        if (bestDaysEl) bestDaysEl.textContent = bestStreak;
+
+        if (!grid) return;
+        const firstDayOfWeek = new Date(year, month, 1).getDay();
+        const lastDate = new Date(year, month + 1, 0).getDate();
+
+        let html = '';
+        const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+        dayNames.forEach((d, idx) => {
+            const color = idx === 0 ? '#ff5252' : (idx === 6 ? '#00f2fe' : '#94a3b8');
+            html += `<div style="text-align: center; font-size: 0.72rem; font-weight: 800; color: ${color}; padding-bottom: 4px;">${d}</div>`;
+        });
+
+        for (let i = 0; i < firstDayOfWeek; i++) {
+            html += `<div style="height: 38px; border-radius: 8px; background: rgba(255,255,255,0.02);"></div>`;
+        }
+
+        const todayDateNum = now.getDate();
+        for (let day = 1; day <= lastDate; day++) {
+            const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const isToday = (day === todayDateNum);
+            const isDone = streaks[dateKey] && streaks[dateKey].length > 0;
+
+            const bg = isDone ? 'linear-gradient(135deg, rgba(0, 242, 254, 0.35), rgba(0, 119, 182, 0.5))'
+                              : (isToday ? 'rgba(0, 242, 254, 0.1)' : 'rgba(15, 23, 42, 0.7)');
+            const border = isDone ? '1.5px solid #00f2fe'
+                                  : (isToday ? '1.5px solid rgba(0, 242, 254, 0.5)' : '1px solid rgba(255, 255, 255, 0.06)');
+            const glow = isDone ? 'box-shadow: 0 0 10px rgba(0, 242, 254, 0.35);' : '';
+
+            html += `
+                <div onclick="AquaToolkitEngine.toggleDayStamp('${dateKey}')" title="${dateKey} ${isDone ? '훈련 완료!' : '클릭하여 도장 추가'}" style="height: 42px; border-radius: 8px; background: ${bg}; border: ${border}; ${glow} display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease;">
+                    <span style="font-size: 0.72rem; font-weight: ${isToday ? '900' : '600'}; color: ${isToday ? '#00f2fe' : '#cbd5e1'}; line-height: 1;">${day}</span>
+                    ${isDone ? '<span style="font-size: 0.78rem; line-height: 1; margin-top: 2px;">💧</span>' : ''}
+                </div>
+            `;
+        }
+
+        grid.innerHTML = html;
+    },
+
+    toggleDayStamp(dateKey) {
+        const data = this.getStreakData();
+        if (data[dateKey] && data[dateKey].length > 0) {
+            delete data[dateKey];
+        } else {
+            data[dateKey] = [this.currentSport || 'freediving'];
+            this.playTone(600, 0.1, 'sine', 0.2);
+        }
+        this.saveStreakData(data);
+        this.renderStreakCalendar();
+    },
+
+    // ========================================================================
+    // 🤿 1. 프리다이빙: 웨이트 계산기 & 프렌젤 메트로놈
+    // ========================================================================
+    calcWeight() {
+        const bodyInput = document.getElementById('fdWeightBody');
+        const suitSelect = document.getElementById('fdWeightSuit');
+        const waterSelect = document.getElementById('fdWeightWater');
+        const purposeSelect = document.getElementById('fdWeightPurpose');
+        const resEl = document.getElementById('fdWeightResultVal');
+        const brkEl = document.getElementById('fdWeightBreakdown');
+
+        const body = parseFloat(bodyInput ? bodyInput.value : 70) || 70;
+        const suit = parseFloat(suitSelect ? suitSelect.value : 3);
+        const water = waterSelect ? waterSelect.value : 'pool';
+        const purpose = purposeSelect ? purposeSelect.value : 'depth';
+
+        let base = (body - 50) * 0.025;
+        if (base < 0) base = 0;
+
+        let suitBuoyancy = 0;
+        if (suit === 0) suitBuoyancy = 0;
+        else if (suit === 1.5) suitBuoyancy = 1.0;
+        else if (suit === 3) suitBuoyancy = 2.5;
+        else if (suit === 5) suitBuoyancy = 4.5;
+
+        let waterBuoyancy = (water === 'ocean') ? 1.2 : 0;
+
+        let purposeOffset = 0;
+        if (purpose === 'depth') purposeOffset = -0.5;
+        else if (purpose === 'dyn') purposeOffset = 0.0;
+        else if (purpose === 'sta') purposeOffset = -0.3;
+
+        let total = base + suitBuoyancy + waterBuoyancy + purposeOffset;
+        if (total < 0.5) total = 0.5;
+
+        const minW = Math.max(0.5, total - 0.3).toFixed(1);
+        const maxW = (total + 0.3).toFixed(1);
+
+        if (resEl) resEl.textContent = `${minW} ~ ${maxW}`;
+        if (brkEl) {
+            const neck = Math.min(1.5, Math.max(0.8, (total * 0.5))).toFixed(1);
+            const belt = (total - parseFloat(neck)).toFixed(1);
+            brkEl.textContent = `(추천 세팅: 넥웨이트 약 ${neck}kg + 허리벨트 납 ${belt}kg 조합)`;
+        }
+    },
+
+    frenzelBpm: 30,
+    frenzelInterval: null,
+    frenzelCount: 0,
+    frenzelStartTime: null,
+    frenzelTimerInterval: null,
+
+    setFrenzelBpm(bpm) {
+        this.frenzelBpm = bpm;
+        document.querySelectorAll('.frenzel-bpm-btn').forEach(btn => {
+            btn.classList.remove('active');
+            btn.style.background = 'rgba(255,255,255,0.05)';
+            btn.style.borderColor = 'rgba(255,255,255,0.15)';
+            btn.style.color = '#94a3b8';
+        });
+        const activeBtn = document.getElementById('btnFrenzelBpm' + bpm);
+        if (activeBtn) {
+            activeBtn.classList.add('active');
+            activeBtn.style.background = 'rgba(0, 242, 254, 0.2)';
+            activeBtn.style.borderColor = '#00f2fe';
+            activeBtn.style.color = '#00f2fe';
+        }
+        if (this.frenzelInterval) {
+            this.startFrenzel();
+        }
+    },
+
+    startFrenzel() {
+        this.initAudio();
+        if (this.frenzelInterval) clearInterval(this.frenzelInterval);
+        if (this.frenzelTimerInterval) clearInterval(this.frenzelTimerInterval);
+
+        const btnStart = document.getElementById('btnFrenzelStart');
+        const btnStop = document.getElementById('btnFrenzelStop');
+        if (btnStart) btnStart.style.display = 'none';
+        if (btnStop) btnStop.style.display = 'inline-flex';
+
+        if (!this.frenzelStartTime) {
+            this.frenzelStartTime = Date.now();
+        }
+
+        const ms = (60 / this.frenzelBpm) * 1000;
+        this.tickFrenzelBeat();
+        this.frenzelInterval = setInterval(() => this.tickFrenzelBeat(), ms);
+
+        this.frenzelTimerInterval = setInterval(() => {
+            const elapsed = Math.floor((Date.now() - this.frenzelStartTime) / 1000);
+            const m = Math.floor(elapsed / 60).toString().padStart(2, '0');
+            const s = (elapsed % 60).toString().padStart(2, '0');
+            const el = document.getElementById('frenzelElapsedText');
+            if (el) el.textContent = `${m}:${s}`;
+        }, 1000);
+    },
+
+    stopFrenzel() {
+        if (this.frenzelInterval) {
+            clearInterval(this.frenzelInterval);
+            this.frenzelInterval = null;
+        }
+        if (this.frenzelTimerInterval) {
+            clearInterval(this.frenzelTimerInterval);
+            this.frenzelTimerInterval = null;
+        }
+        const btnStart = document.getElementById('btnFrenzelStart');
+        const btnStop = document.getElementById('btnFrenzelStop');
+        if (btnStart) btnStart.style.display = 'inline-flex';
+        if (btnStop) btnStop.style.display = 'none';
+    },
+
+    resetFrenzel() {
+        this.stopFrenzel();
+        this.frenzelCount = 0;
+        this.frenzelStartTime = null;
+        const repEl = document.getElementById('frenzelRepCount');
+        const timeEl = document.getElementById('frenzelElapsedText');
+        if (repEl) repEl.textContent = '0';
+        if (timeEl) timeEl.textContent = '00:00';
+    },
+
+    tickFrenzelBeat() {
+        this.frenzelCount++;
+        const repEl = document.getElementById('frenzelRepCount');
+        if (repEl) repEl.textContent = this.frenzelCount;
+
+        this.playTone(750, 0.08, 'triangle', 0.28);
+
+        const circle = document.getElementById('frenzelPulseCircle');
+        if (circle) {
+            circle.style.transform = 'scale(1.35)';
+            circle.style.boxShadow = '0 0 25px rgba(0, 242, 254, 0.8)';
+            setTimeout(() => {
+                circle.style.transform = 'scale(1.0)';
+                circle.style.boxShadow = 'none';
+            }, 120);
+        }
+    },
+
+    // ========================================================================
+    // 🏊 2. 실내 수영: 루틴 생성기, 출발 비프 타이머, SWOLF
+    // ========================================================================
+    generateSwimRoutine() {
+        const level = document.getElementById('swimUserLevel')?.value || 'intermediate';
+        const theme = document.getElementById('swimTheme')?.value || 'endurance';
+        const dist = parseInt(document.getElementById('swimGoalDist')?.value || '1000', 10);
+
+        const hasFins = document.getElementById('swimEqFins')?.checked;
+        const hasBoard = document.getElementById('swimEqBoard')?.checked;
+        const hasBuoy = document.getElementById('swimEqBuoy')?.checked;
+        const hasPaddles = document.getElementById('swimEqPaddles')?.checked;
+
+        const container = document.getElementById('swimRoutineResultContainer');
+        if (!container) return;
+
+        const warmDist = dist >= 1500 ? 200 : (dist >= 1000 ? 150 : 100);
+        const coolDist = dist >= 1500 ? 150 : (dist >= 1000 ? 100 : 50);
+        const remain = dist - warmDist - coolDist;
+        const drillDist = Math.max(100, Math.round((remain * 0.3) / 50) * 50);
+        const mainDist = Math.max(100, remain - drillDist);
+
+        let drillItem = "";
+        if (hasBoard && hasFins) {
+            const reps = drillDist / 50;
+            drillItem = `오리발 & 킥판 자유형 킥 50m x ${reps}세트 (발끝 이완 킥, 세트 간 15초 휴식)`;
+        } else if (hasBoard) {
+            const reps = drillDist / 50;
+            drillItem = `킥판 잡고 자유형/접영 킥 50m x ${reps}세트 (코어 고정, 세트 간 20초 휴식)`;
+        } else if (hasBuoy && hasPaddles) {
+            const reps = drillDist / 50;
+            drillItem = `풀부이 끼고 패들 풀(Pull) 50m x ${reps}세트 (하이엘보 캐치 집중, 휴식 15초)`;
+        } else if (hasBuoy) {
+            const reps = drillDist / 50;
+            drillItem = `풀부이 허벅지 착용 자유형 풀(Pull) 50m x ${reps}세트 (상체 롤링 집중, 휴식 15초)`;
+        } else {
+            const reps = drillDist / 50;
+            drillItem = `한 팔 자유형 & 사이드 킥 드릴 50m x ${reps}세트 (글라이딩 연장, 휴식 20초)`;
+        }
+
+        let mainItem = "";
+        if (theme === 'endurance') {
+            const lapDist = (level === 'advanced') ? 200 : 100;
+            const reps = Math.max(1, Math.round(mainDist / lapDist));
+            mainItem = `${lapDist}m x ${reps}세트 페이스 유지 지속주 (세트 간 휴식 20~25초, 심박수 70% 페이스)`;
+        } else if (theme === 'drill') {
+            const reps = Math.max(1, Math.round(mainDist / 50));
+            mainItem = `자유형 스트로크 수 줄이기(DPS 훈련) 50m x ${reps}세트 (글라이딩 최장화, 휴식 20초)`;
+        } else {
+            const sprintReps = Math.max(1, Math.round(mainDist / 50));
+            mainItem = `50m 인터벌 스프린트 x ${sprintReps}세트 (25m 대시 + 25m 이지, 휴식 30초 고강도 심폐)`;
+        }
+
+        const estMinutes = Math.round(dist / (level === 'advanced' ? 35 : (level === 'intermediate' ? 28 : 22)));
+
+        container.innerHTML = `
+            <div style="background: linear-gradient(135deg, rgba(0, 242, 254, 0.12), rgba(0, 119, 182, 0.2)); border: 1.5px solid #00f2fe; border-radius: 16px; padding: 18px; margin-top: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+                    <div style="font-weight: 900; color: #fff; font-size: 1.05rem; display: flex; align-items: center; gap: 6px;">
+                        <span style="color: #00f2fe;">🏊</span> 오늘의 수영 루틴 (총 ${dist}m / 약 ${estMinutes}분 코스)
+                    </div>
+                    <span style="font-size: 0.78rem; background: #00f2fe; color: #070e17; font-weight: 900; padding: 3px 8px; border-radius: 6px;">
+                        ${level.toUpperCase()}
+                    </span>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.86rem; color: #cbd5e1;">
+                    <div style="background: rgba(15, 23, 42, 0.7); padding: 10px 14px; border-radius: 10px; border-left: 3px solid #00e676;">
+                        <strong style="color: #00e676;">1. 워밍업 (${warmDist}m):</strong> 자유형 천천히 길게 스트로크 (호흡 안정 및 어깨 이완)
+                    </div>
+                    <div style="background: rgba(15, 23, 42, 0.7); padding: 10px 14px; border-radius: 10px; border-left: 3px solid #00f2fe;">
+                        <strong style="color: #00f2fe;">2. 킥 & 드릴 세트 (${drillDist}m):</strong> ${drillItem}
+                    </div>
+                    <div style="background: rgba(15, 23, 42, 0.7); padding: 10px 14px; border-radius: 10px; border-left: 3px solid #ffb703;">
+                        <strong style="color: var(--accent-gold);">3. 메인 세트 (${mainDist}m):</strong> ${mainItem}
+                    </div>
+                    <div style="background: rgba(15, 23, 42, 0.7); padding: 10px 14px; border-radius: 10px; border-left: 3px solid #cbd5e1;">
+                        <strong style="color: #fff;">4. 다운 (${coolDist}m):</strong> 배영 또는 헤드업 평영 이지 스윔 (젖산 분해)
+                    </div>
+                </div>
+            </div>
+        `;
+        this.playTone(880, 0.15, 'triangle', 0.25);
+    },
+
+    swimDeckTimerInterval: null,
+    swimDeckRemaining: 60,
+
+    startSwimDeckTimer() {
+        this.initAudio();
+        const cycleSelect = document.getElementById('swimDeckCycleSec');
+        const cycleSec = parseInt(cycleSelect ? cycleSelect.value : 60, 10) || 60;
+
+        const btnStart = document.getElementById('btnSwimDeckStart');
+        const btnStop = document.getElementById('btnSwimDeckStop');
+        if (btnStart) btnStart.style.display = 'none';
+        if (btnStop) btnStop.style.display = 'inline-flex';
+
+        this.swimDeckRemaining = cycleSec;
+        this.updateSwimDeckDisplay();
+
+        if (this.swimDeckTimerInterval) clearInterval(this.swimDeckTimerInterval);
+        this.swimDeckTimerInterval = setInterval(() => {
+            this.swimDeckRemaining--;
+            if (this.swimDeckRemaining === 5 || this.swimDeckRemaining === 4 || this.swimDeckRemaining === 3 || this.swimDeckRemaining === 2 || this.swimDeckRemaining === 1) {
+                this.playTone(600, 0.12, 'sine', 0.28);
+            } else if (this.swimDeckRemaining <= 0) {
+                this.playTone(1050, 0.45, 'triangle', 0.35);
+                this.swimDeckRemaining = cycleSec;
+            }
+            this.updateSwimDeckDisplay();
+        }, 1000);
+    },
+
+    stopSwimDeckTimer() {
+        if (this.swimDeckTimerInterval) {
+            clearInterval(this.swimDeckTimerInterval);
+            this.swimDeckTimerInterval = null;
+        }
+        const btnStart = document.getElementById('btnSwimDeckStart');
+        const btnStop = document.getElementById('btnSwimDeckStop');
+        if (btnStart) btnStart.style.display = 'inline-flex';
+        if (btnStop) btnStop.style.display = 'none';
+    },
+
+    updateSwimDeckDisplay() {
+        const textEl = document.getElementById('swimDeckCountdownText');
+        if (textEl) textEl.textContent = this.swimDeckRemaining;
+    },
+
+    calcSwolf() {
+        const lane = parseInt(document.getElementById('swolfLaneLen')?.value || '25', 10);
+        const sec = parseFloat(document.getElementById('swolfTimeSec')?.value || '23') || 23;
+        const strokes = parseInt(document.getElementById('swolfStrokes')?.value || '18', 10) || 18;
+
+        const score = Math.round(sec + strokes);
+        const resEl = document.getElementById('swolfResultScore');
+        const badgeEl = document.getElementById('swolfGradeBadge');
+        const paceEl = document.getElementById('swolfPaceText');
+
+        if (resEl) resEl.textContent = score;
+
+        const secPer100 = (sec / lane) * 100;
+        const pM = Math.floor(secPer100 / 60).toString().padStart(2, '0');
+        const pS = Math.round(secPer100 % 60).toString().padStart(2, '0');
+        if (paceEl) paceEl.innerHTML = `100m 환산 페이스: <strong>${pM}분 ${pS}초</strong>`;
+
+        if (badgeEl) {
+            const threshold = (lane === 50) ? 75 : 40;
+            if (score <= threshold - 5) {
+                badgeEl.textContent = '🏆 엘리트 / 극강 효율';
+                badgeEl.style.background = '#ffd700';
+                badgeEl.style.color = '#000';
+            } else if (score <= threshold + 3) {
+                badgeEl.textContent = '✨ 우수 (글라이딩 양호)';
+                badgeEl.style.background = '#00e676';
+                badgeEl.style.color = '#000';
+            } else if (score <= threshold + 10) {
+                badgeEl.textContent = '👍 보통 (일반 평균)';
+                badgeEl.style.background = '#00f2fe';
+                badgeEl.style.color = '#000';
+            } else {
+                badgeEl.textContent = '💡 자세 교정 추천 (캐치 집중)';
+                badgeEl.style.background = '#ffb703';
+                badgeEl.style.color = '#000';
+            }
+        }
+    },
+
+    // ========================================================================
+    // 🌊 3. 바다 수영: 실시간 수온 슈트 가이드 & 정조 골든타임
+    // ========================================================================
+    openWaterSpots: [
+        { code: 'HAEUNDAE', name: '부산 해운대 해수욕장', temp: 21.8, wave: 0.5, wind: 3.2, tideHigh: '16:40', tideLow: '10:30' },
+        { code: 'SONGJEONG', name: '부산 송정 해수욕장', temp: 21.4, wave: 0.6, wind: 3.5, tideHigh: '16:45', tideLow: '10:35' },
+        { code: 'GWANGANRI', name: '부산 광안리 해수욕장', temp: 22.1, wave: 0.3, wind: 2.8, tideHigh: '16:40', tideLow: '10:30' },
+        { code: 'HYEOPJAE', name: '제주 협재 해수욕장', temp: 23.5, wave: 0.4, wind: 3.0, tideHigh: '14:20', tideLow: '08:15' },
+        { code: 'HAMDEOK', name: '제주 함덕 해수욕장', temp: 23.2, wave: 0.5, wind: 3.4, tideHigh: '14:30', tideLow: '08:25' },
+        { code: 'JUNGMUN', name: '제주 중문 색달 해수욕장', temp: 23.9, wave: 1.1, wind: 4.8, tideHigh: '13:50', tideLow: '07:40' },
+        { code: 'SOKCHO', name: '강원 속초 해수욕장', temp: 19.2, wave: 0.8, wind: 4.0, tideHigh: '18:10', tideLow: '12:00' },
+        { code: 'GYEONGPO', name: '강릉 경포 해수욕장', temp: 19.8, wave: 0.7, wind: 3.8, tideHigh: '18:00', tideLow: '11:50' },
+        { code: 'SURFYY', name: '양양 서피비치/하조대', temp: 19.5, wave: 0.9, wind: 4.2, tideHigh: '18:05', tideLow: '11:55' },
+        { code: 'YEONGILDAE', name: '포항 영일대 해수욕장', temp: 20.6, wave: 0.6, wind: 3.6, tideHigh: '17:20', tideLow: '11:10' },
+        { code: 'EULWANGRI', name: '인천 을왕리 해수욕장', temp: 22.5, wave: 0.4, wind: 3.1, tideHigh: '18:50', tideLow: '12:30' },
+        { code: 'MALLIPO', name: '태안 만리포 해수욕장', temp: 21.0, wave: 0.5, wind: 3.3, tideHigh: '17:40', tideLow: '11:20' }
+    ],
+
+    initOpenWaterSpots() {
+        const sel = document.getElementById('owSpotSelect');
+        if (!sel || sel.children.length > 1) return;
+
+        let html = '';
+        this.openWaterSpots.forEach(s => {
+            html += `<option value="${s.code}">📍 ${s.name} (${s.temp}℃)</option>`;
+        });
+        sel.innerHTML = html;
+        this.analyzeOpenWaterSpot(this.openWaterSpots[0].code);
+    },
+
+    analyzeOpenWaterSpot(spotCode) {
+        const spot = this.openWaterSpots.find(s => s.code === spotCode) || this.openWaterSpots[0];
+        if (!spot) return;
+
+        const tempEl = document.getElementById('owLiveTempText');
+        const suitBadge = document.getElementById('owSuitGuideBadge');
+        if (tempEl) tempEl.textContent = spot.temp.toFixed(1);
+
+        if (suitBadge) {
+            if (spot.temp >= 24) {
+                suitBadge.textContent = '🩱 24℃ 이상: 래시가드 / 일반 수영복 권장 (수온 쾌적)';
+                suitBadge.style.background = 'rgba(0, 230, 118, 0.15)';
+                suitBadge.style.borderColor = '#00e676';
+                suitBadge.style.color = '#00e676';
+            } else if (spot.temp >= 18) {
+                suitBadge.textContent = '🤿 18~23℃: 2~3mm 오픈워터 웻슈트 착용 권장 (체온 유지/부력 확보)';
+                suitBadge.style.background = 'rgba(0, 242, 254, 0.15)';
+                suitBadge.style.borderColor = '#00f2fe';
+                suitBadge.style.color = '#00f2fe';
+            } else {
+                suitBadge.textContent = '⚠️ 18℃ 미만: 5mm 슈트 + 네오프렌 수모 필수! (저체온증 주의)';
+                suitBadge.style.background = 'rgba(255, 82, 82, 0.15)';
+                suitBadge.style.borderColor = '#ff5252';
+                suitBadge.style.color = '#ff5252';
+            }
+        }
+
+        const lightEl = document.getElementById('owSafetyLightText');
+        const detailEl = document.getElementById('owWaveWindDetail');
+        if (detailEl) detailEl.textContent = `파고 ${spot.wave}m · 풍속 ${spot.wind}m/s`;
+
+        if (lightEl) {
+            if (spot.wave < 0.8 && spot.wind < 5.0) {
+                lightEl.innerHTML = '🟢 입수 적합 (양호)';
+                lightEl.style.color = '#00e676';
+            } else if (spot.wave < 1.4 && spot.wind < 7.5) {
+                lightEl.innerHTML = '🟡 입수 주의 (안전부표 필수)';
+                lightEl.style.color = '#ffb703';
+            } else {
+                lightEl.innerHTML = '🔴 입수 위험 (너울/돌풍 주의)';
+                lightEl.style.color = '#ff5252';
+            }
+        }
+
+        const t1El = document.getElementById('owGoldenTime1');
+        const t2El = document.getElementById('owGoldenTime2');
+
+        const lowH = parseInt(spot.tideLow.split(':')[0], 10);
+        const lowM = parseInt(spot.tideLow.split(':')[1], 10);
+        const highH = parseInt(spot.tideHigh.split(':')[0], 10);
+        const highM = parseInt(spot.tideHigh.split(':')[1], 10);
+
+        function fmtTideWindow(h, m, label) {
+            const startM = (m - 40 < 0) ? (m - 40 + 60) : (m - 40);
+            const startH = (m - 40 < 0) ? (h - 1) : h;
+            const endM = (m + 40 >= 60) ? (m + 40 - 60) : (m + 40);
+            const endH = (m + 40 >= 60) ? (h + 1) : h;
+            const sStr = `${String(startH).padStart(2, '0')}:${String(startM).padStart(2, '0')}`;
+            const eStr = `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
+            return `${sStr} ~ ${eStr} (${label})`;
+        }
+
+        if (t1El) t1El.textContent = fmtTideWindow(lowH, lowM, '간조 정조');
+        if (t2El) t2El.textContent = fmtTideWindow(highH, highM, '만조 정조');
+    },
+
+    // ========================================================================
+    // 🤿 4. 스쿠버: SAC, MOD, 미니 디지털 로그북
+    // ========================================================================
+    calcSacRate() {
+        const tank = parseFloat(document.getElementById('scubaTankSize')?.value || '12');
+        const startBar = parseFloat(document.getElementById('scubaStartBar')?.value || '200');
+        const endBar = parseFloat(document.getElementById('scubaEndBar')?.value || '50');
+        const depth = parseFloat(document.getElementById('scubaAvgDepth')?.value || '15');
+        const time = parseFloat(document.getElementById('scubaDiveTime')?.value || '40');
+
+        const usedBar = Math.max(1, startBar - endBar);
+        const totalAirLiters = usedBar * tank;
+        const ata = (depth / 10) + 1;
+        const sac = totalAirLiters / (ata * time);
+
+        const sacEl = document.getElementById('scubaSacVal');
+        const gradeEl = document.getElementById('scubaSacGrade');
+        const fbEl = document.getElementById('scubaSacFeedback');
+
+        if (sacEl) sacEl.textContent = sac.toFixed(1);
+
+        if (gradeEl && fbEl) {
+            if (sac < 14) {
+                gradeEl.textContent = '🏆 최상급 (극강의 이완)';
+                gradeEl.style.background = '#ffd700';
+                gradeEl.style.color = '#000';
+                fbEl.textContent = '수면 공기 소모율이 매우 낮고 훌륭합니다. 완벽한 트림 자세와 호흡 조절이 이루어지고 있습니다.';
+            } else if (sac <= 19) {
+                gradeEl.textContent = '✨ 양호 (안정적)';
+                gradeEl.style.background = '#00e676';
+                gradeEl.style.color = '#000';
+                fbEl.textContent = '표준 레크리에이션 다이버의 안정적인 호흡 범위 내에 있습니다.';
+            } else if (sac <= 24) {
+                gradeEl.textContent = '👍 보통 (일반 수준)';
+                gradeEl.style.background = '#00f2fe';
+                gradeEl.style.color = '#000';
+                fbEl.textContent = '다이빙 중 유선형 자세 유지와 핀킥 템포를 조금 더 여유롭게 조절해보세요.';
+            } else {
+                gradeEl.textContent = '💡 소모 다소 빠름';
+                gradeEl.style.background = '#ffb703';
+                gradeEl.style.color = '#000';
+                fbEl.textContent = '웨이트가 무겁지 않은지 체크하고, 긴장을 풀고 천천히 복식호흡을 연습해보세요.';
+            }
+        }
+    },
+
+    calcMod() {
+        const o2 = parseFloat(document.getElementById('nitroxO2Pct')?.value || '32');
+        const ppo2 = parseFloat(document.getElementById('nitroxPpo2')?.value || '1.4');
+
+        const mod = ((ppo2 / (o2 / 100)) - 1) * 10;
+        const resEl = document.getElementById('nitroxModResult');
+        const textEl = document.getElementById('nitroxPpo2Text');
+
+        if (resEl) resEl.textContent = Math.max(0, mod).toFixed(1);
+        if (textEl) textEl.textContent = `${ppo2} bar`;
+    },
+
+    initMiniLogs() {
+        const todayInput = document.getElementById('logDate');
+        if (todayInput && !todayInput.value) {
+            todayInput.value = this.getTodayStr();
+        }
+        this.renderMiniLogs();
+    },
+
+    getMiniLogs() {
+        try {
+            return JSON.parse(localStorage.getItem('aqua_toolkit_mini_logs') || '[]');
+        } catch(e) {
+            return [];
+        }
+    },
+
+    saveMiniLogsList(logs) {
+        try {
+            localStorage.setItem('aqua_toolkit_mini_logs', JSON.stringify(logs));
+        } catch(e) {}
+    },
+
+    saveMiniLog() {
+        const date = document.getElementById('logDate')?.value || this.getTodayStr();
+        const spot = document.getElementById('logSpot')?.value?.trim();
+        const maxDepth = document.getElementById('logMaxDepth')?.value || '0';
+        const bottomTime = document.getElementById('logBottomTime')?.value || '0';
+        const memo = document.getElementById('logMemo')?.value?.trim() || '즐거운 다이빙!';
+
+        if (!spot) {
+            alert('다이빙 포인트/지역명을 입력해 주세요 (예: 제주 문섬 새끼섬).');
+            return;
+        }
+
+        const logs = this.getMiniLogs();
+        const newLog = {
+            id: 'log_' + Date.now(),
+            logNum: logs.length + 1,
+            date: date,
+            spot: spot,
+            maxDepth: parseFloat(maxDepth) || 0,
+            bottomTime: parseInt(bottomTime, 10) || 0,
+            memo: memo,
+            createdAt: new Date().toISOString()
+        };
+
+        logs.unshift(newLog);
+        this.saveMiniLogsList(logs);
+
+        // Also stamp today streak!
+        this.stampToday('scuba');
+
+        // Supabase Cloud Sync if logged in
+        if (typeof currentUser !== 'undefined' && currentUser && typeof supabaseClient !== 'undefined' && supabaseClient) {
+            try {
+                supabaseClient.from('posts').insert({
+                    category: 'my_activity',
+                    sports_type: 'scuba',
+                    title: `[다이브 로그 #${newLog.logNum}] ${newLog.spot} (${newLog.maxDepth}m / ${newLog.bottomTime}분)`,
+                    description: newLog.memo,
+                    content: newLog.memo,
+                    user_name: currentUser.name || currentUser.nickname || '다이버',
+                    location_name: newLog.spot,
+                    target_depth: `${newLog.maxDepth}m`
+                }).then(() => console.log("[MiniLog] Synced to Supabase")).catch(err => console.warn(err));
+            } catch(e) {}
+        }
+
+        const spotInput = document.getElementById('logSpot');
+        const depthInput = document.getElementById('logMaxDepth');
+        const timeInput = document.getElementById('logBottomTime');
+        const memoInput = document.getElementById('logMemo');
+        if (spotInput) spotInput.value = '';
+        if (depthInput) depthInput.value = '';
+        if (timeInput) timeInput.value = '';
+        if (memoInput) memoInput.value = '';
+
+        if (typeof showToast === 'function') {
+            showToast(`📖 다이브 로그 #${newLog.logNum}이 안전하게 저장되었습니다!`);
+        }
+        this.renderMiniLogs();
+    },
+
+    deleteMiniLog(logId) {
+        if (!confirm('이 다이브 로그 기록을 삭제하시겠습니까?')) return;
+        let logs = this.getMiniLogs();
+        logs = logs.filter(l => l.id !== logId);
+        this.saveMiniLogsList(logs);
+        this.renderMiniLogs();
+        if (typeof showToast === 'function') {
+            showToast('로그가 삭제되었습니다.');
+        }
+    },
+
+    renderMiniLogs() {
+        const container = document.getElementById('miniLogListContainer');
+        const countText = document.getElementById('miniLogCountText');
+        const nextNumText = document.getElementById('nextLogNumText');
+
+        const logs = this.getMiniLogs();
+        if (countText) countText.textContent = logs.length;
+        if (nextNumText) nextNumText.textContent = logs.length + 1;
+
+        if (!container) return;
+        if (logs.length === 0) {
+            container.innerHTML = `
+                <div style="background: rgba(15, 23, 42, 0.6); border: 1px dashed rgba(255, 255, 255, 0.15); border-radius: 12px; padding: 24px; text-align: center; color: #94a3b8; font-size: 0.85rem;">
+                    🤿 아직 작성된 다이브 로그가 없습니다. 위의 폼에서 나의 첫 번째 다이빙을 기록해 보세요!
+                </div>
+            `;
+            return;
+        }
+
+        const esc = typeof escapeHtml === 'function' ? escapeHtml : (s => s);
+        container.innerHTML = logs.map(l => `
+            <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(0, 242, 254, 0.2); border-radius: 14px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                        <span style="background: var(--accent-cyan); color: #070e17; font-size: 0.72rem; font-weight: 900; padding: 2px 8px; border-radius: 6px;">
+                            #${l.logNum}
+                        </span>
+                        <span style="font-weight: 900; color: #fff; font-size: 0.95rem;">${esc(l.spot)}</span>
+                        <span style="font-size: 0.76rem; color: #94a3b8;">${l.date}</span>
+                    </div>
+                    <div style="display: flex; gap: 12px; font-size: 0.82rem; color: #cbd5e1; margin-bottom: 6px;">
+                        <span><i class="fa-solid fa-arrows-up-down" style="color: #00f2fe;"></i> 최대 수심: <strong>${l.maxDepth}m</strong></span>
+                        <span><i class="fa-regular fa-clock" style="color: var(--accent-gold);"></i> 잠수 시간: <strong>${l.bottomTime}분</strong></span>
+                    </div>
+                    <div style="font-size: 0.8rem; color: #94a3b8; line-height: 1.35;">
+                        📝 ${esc(l.memo)}
+                    </div>
+                </div>
+                <button type="button" onclick="AquaToolkitEngine.deleteMiniLog('${l.id}')" style="background: none; border: 1px solid rgba(255, 71, 87, 0.3); color: #ff5252; padding: 4px 10px; border-radius: 8px; font-size: 0.72rem; cursor: pointer;">
+                    삭제
+                </button>
+            </div>
+        `).join('');
     }
 };
 window.AquaToolkitEngine = AquaToolkitEngine;

@@ -1257,18 +1257,73 @@
 
                     <!-- 4대 종목 탭 바 -->
                     <div style="display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 14px; margin-top: 10px;">
-                        <button type="button" class="toolkit-sport-tab active" onclick="AquaToolkitEngine.switchSport('freediving')" id="toolkitTabFreediving" style="background: linear-gradient(135deg, rgba(0, 242, 254, 0.25), rgba(79, 172, 254, 0.35)); border: 1.5px solid #00f2fe; color: #00f2fe; padding: 8px 16px; border-radius: 12px; font-weight: 800; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                            🤿 프리다이빙 (숨참기 랩)
+                        <button type="button" class="toolkit-sport-tab active" onclick="AquaToolkitEngine.switchSport('freediving')" id="toolkitTabFreediving" style="background: linear-gradient(135deg, rgba(0, 242, 254, 0.25), rgba(79, 172, 254, 0.35)); border: 1.5px solid #00f2fe; color: #00f2fe; padding: 9px 18px; border-radius: 12px; font-weight: 800; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                            🤿 프리다이빙 (숨참기 & 웨이트)
                         </button>
-                        <button type="button" class="toolkit-sport-tab" onclick="AquaToolkitEngine.switchSport('swimming')" id="toolkitTabSwimming" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15); color: #94a3b8; padding: 8px 16px; border-radius: 12px; font-weight: 700; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                            🏊‍♂️ 실내 수영 <span style="font-size: 0.72rem; background: rgba(255, 183, 3, 0.2); color: #ffb703; padding: 1px 6px; border-radius: 6px;">준비중</span>
+                        <button type="button" class="toolkit-sport-tab" onclick="AquaToolkitEngine.switchSport('swimming')" id="toolkitTabSwimming" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15); color: #94a3b8; padding: 9px 18px; border-radius: 12px; font-weight: 700; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                            🏊‍♂️ 실내 수영 (루틴 & SWOLF)
                         </button>
-                        <button type="button" class="toolkit-sport-tab" onclick="AquaToolkitEngine.switchSport('openwater')" id="toolkitTabOpenwater" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15); color: #94a3b8; padding: 8px 16px; border-radius: 12px; font-weight: 700; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                            🌊 바다 수영 <span style="font-size: 0.72rem; background: rgba(255, 183, 3, 0.2); color: #ffb703; padding: 1px 6px; border-radius: 6px;">준비중</span>
+                        <button type="button" class="toolkit-sport-tab" onclick="AquaToolkitEngine.switchSport('openwater')" id="toolkitTabOpenwater" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15); color: #94a3b8; padding: 9px 18px; border-radius: 12px; font-weight: 700; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                            🌊 바다 수영 (슈트 & 정조 골든타임)
                         </button>
-                        <button type="button" class="toolkit-sport-tab" onclick="AquaToolkitEngine.switchSport('scuba')" id="toolkitTabScuba" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15); color: #94a3b8; padding: 8px 16px; border-radius: 12px; font-weight: 700; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                            🤿 스쿠버 <span style="font-size: 0.72rem; background: rgba(255, 183, 3, 0.2); color: #ffb703; padding: 1px 6px; border-radius: 6px;">준비중</span>
+                        <button type="button" class="toolkit-sport-tab" onclick="AquaToolkitEngine.switchSport('scuba')" id="toolkitTabScuba" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15); color: #94a3b8; padding: 9px 18px; border-radius: 12px; font-weight: 700; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                            🤿 스쿠버 (SAC & 미니 로그북)
                         </button>
+                    </div>
+                </div>
+
+                <!-- 💡 [0단계 공통 위젯]: 나의 물생활 잔디 심기 (Streak & Attendance Calendar) -->
+                <div style="background: rgba(13, 23, 38, 0.95); border: 1.5px solid rgba(0, 242, 254, 0.35); border-radius: 20px; padding: 20px 22px; margin-bottom: 22px; box-shadow: 0 8px 32px rgba(0,0,0,0.4);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 1.4rem;">💧</span>
+                            <div>
+                                <h3 style="margin: 0; color: #ffffff; font-size: 1.05rem; font-weight: 900; display: flex; align-items: center; gap: 6px;">
+                                    나의 물생활 잔디 심기 <span style="font-size: 0.76rem; background: rgba(0, 242, 254, 0.15); color: #00f2fe; padding: 2px 8px; border-radius: 8px; font-weight: 800;">DAILY STREAK</span>
+                                </h3>
+                                <p style="margin: 3px 0 0 0; color: #94a3b8; font-size: 0.8rem;">
+                                    오늘 훈련을 마치고 파란 물방울 도장을 찍어 연속 출석 일수를 쌓아보세요!
+                                </p>
+                            </div>
+                        </div>
+                        <button type="button" id="btnStampToday" onclick="AquaToolkitEngine.stampToday()" style="background: linear-gradient(135deg, #00f2fe, #0077b6); color: #070e17; font-weight: 900; font-size: 0.88rem; padding: 10px 20px; border-radius: 12px; border: none; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 16px rgba(0, 242, 254, 0.35); transition: all 0.2s ease;">
+                            <i class="fa-solid fa-droplet"></i> 오늘 훈련 완료! 도장 찍기
+                        </button>
+                    </div>
+
+                    <!-- 스트릭 통계 요약 4열 그리드 -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 16px;">
+                        <div style="background: rgba(255, 71, 87, 0.1); border: 1px solid rgba(255, 71, 87, 0.25); border-radius: 12px; padding: 10px 14px; text-align: center;">
+                            <div style="font-size: 0.72rem; color: #ff7675; font-weight: 700; margin-bottom: 4px;">🔥 현재 연속 스트릭</div>
+                            <div style="font-size: 1.25rem; font-weight: 900; color: #ff5252;"><span id="streakCurrentDays">0</span>일 연속</div>
+                        </div>
+                        <div style="background: rgba(0, 242, 254, 0.1); border: 1px solid rgba(0, 242, 254, 0.25); border-radius: 12px; padding: 10px 14px; text-align: center;">
+                            <div style="font-size: 0.72rem; color: #00f2fe; font-weight: 700; margin-bottom: 4px;">💧 이번 달 누적 도장</div>
+                            <div style="font-size: 1.25rem; font-weight: 900; color: #00f2fe;"><span id="streakMonthCount">0</span>회 완료</div>
+                        </div>
+                        <div style="background: rgba(0, 230, 118, 0.1); border: 1px solid rgba(0, 230, 118, 0.25); border-radius: 12px; padding: 10px 14px; text-align: center;">
+                            <div style="font-size: 0.72rem; color: #00e676; font-weight: 700; margin-bottom: 4px;">🏆 올해 누적 훈련</div>
+                            <div style="font-size: 1.25rem; font-weight: 900; color: #00e676;"><span id="streakYearCount">0</span>일</div>
+                        </div>
+                        <div style="background: rgba(255, 183, 3, 0.1); border: 1px solid rgba(255, 183, 3, 0.25); border-radius: 12px; padding: 10px 14px; text-align: center;">
+                            <div style="font-size: 0.72rem; color: #ffb703; font-weight: 700; margin-bottom: 4px;">🌟 최장 연속 기록</div>
+                            <div style="font-size: 1.25rem; font-weight: 900; color: #ffd700;"><span id="streakBestDays">0</span>일 달성</div>
+                        </div>
+                    </div>
+
+                    <!-- 최근 30일 잔디 타일 그리드 & 당월 캘린더 -->
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-size: 0.8rem; font-weight: 800; color: #cbd5e1; display: flex; align-items: center; gap: 5px;">
+                                <i class="fa-regular fa-calendar-check" style="color: #00f2fe;"></i> 이번 달 출석 현황 (<span id="streakCurrentMonthText">2026년 9월</span>)
+                            </span>
+                            <span style="font-size: 0.72rem; color: #64748b;">
+                                💡 오늘 완료한 종목(🤿 숨참기, 🏊 수영, 🌊 바다)이 자동 기록됩니다
+                            </span>
+                        </div>
+                        <div id="streakCalendarGrid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;">
+                            <!-- Injected dynamically by AquaToolkitEngine.renderStreakCalendar() -->
+                        </div>
                     </div>
                 </div>
 
@@ -1439,42 +1494,542 @@
                         </div>
                     </div>
 
+                        <!-- 🤿 [프리다이빙 서브 도구 1]: 웻슈트 & 적정 웨이트(kg) 계산기 -->
+                        <div id="panelFdWeight" style="background: rgba(13, 23, 38, 0.95); border: 1px solid rgba(0, 242, 254, 0.25); border-radius: 18px; padding: 22px; margin-top: 24px; box-shadow: 0 8px 30px rgba(0,0,0,0.35);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 10px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 1.2rem;">⚖️</span>
+                                    <h4 style="margin: 0; color: #fff; font-size: 1.05rem; font-weight: 900;">웻슈트 & 적정 웨이트(kg) 계산기</h4>
+                                </div>
+                                <span style="font-size: 0.76rem; color: #94a3b8;">체중과 슈트, 수역 환경에 맞춘 최적 부력 산출</span>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 18px;">
+                                <div>
+                                    <label for="fdWeightBody" style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--accent-cyan); margin-bottom: 6px;">나의 체중 (kg)</label>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <input type="number" id="fdWeightBody" min="35" max="130" value="70" oninput="AquaToolkitEngine.calcWeight()" style="width: 100%; padding: 10px 12px; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(0,242,254,0.3); border-radius: 10px; color: #fff; font-weight: 800; font-size: 0.95rem; outline: none;">
+                                        <span style="color: #94a3b8; font-size: 0.85rem; flex-shrink: 0;">kg</span>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label for="fdWeightSuit" style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--accent-cyan); margin-bottom: 6px;">슈트 두께</label>
+                                    <select id="fdWeightSuit" onchange="AquaToolkitEngine.calcWeight()" style="width: 100%; padding: 10px 12px; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(0,242,254,0.3); border-radius: 10px; color: #fff; font-weight: 800; font-size: 0.9rem; outline: none; cursor: pointer;">
+                                        <option value="0">수영복 / 래시가드 (0mm)</option>
+                                        <option value="1.5">1.5mm ~ 2mm 스킨</option>
+                                        <option value="3" selected>3mm 프리다이빙 슈트 (표준)</option>
+                                        <option value="5">5mm 딥/동계 슈트</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label for="fdWeightWater" style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--accent-cyan); margin-bottom: 6px;">다이빙 환경 (염분)</label>
+                                    <select id="fdWeightWater" onchange="AquaToolkitEngine.calcWeight()" style="width: 100%; padding: 10px 12px; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(0,242,254,0.3); border-radius: 10px; color: #fff; font-weight: 800; font-size: 0.9rem; outline: none; cursor: pointer;">
+                                        <option value="pool" selected>🏊‍♂️ 잠수풀 (담수 Fresh Water)</option>
+                                        <option value="ocean">🌊 바다 (염수 Salt Water - 부력 증가)</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label for="fdWeightPurpose" style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--accent-cyan); margin-bottom: 6px;">훈련 목적</label>
+                                    <select id="fdWeightPurpose" onchange="AquaToolkitEngine.calcWeight()" style="width: 100%; padding: 10px 12px; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(0,242,254,0.3); border-radius: 10px; color: #fff; font-weight: 800; font-size: 0.9rem; outline: none; cursor: pointer;">
+                                        <option value="depth" selected>🤿 딥(Depth) 수직 트레이닝 (안전 마진)</option>
+                                        <option value="dyn">🏊 다이내믹(DYN) 수평 잠영 (중성 부력)</option>
+                                        <option value="sta">🛑 스태틱(STA) 숨참기 (수면 편안함)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div style="background: linear-gradient(135deg, rgba(0, 242, 254, 0.1), rgba(0, 119, 182, 0.15)); border: 1.5px solid #00f2fe; border-radius: 14px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                                <div>
+                                    <div style="font-size: 0.8rem; color: #94a3b8; font-weight: 700;">🎯 계산된 추천 적정 웨이트</div>
+                                    <div style="font-size: 1.55rem; font-weight: 900; color: #00f2fe; display: flex; align-items: baseline; gap: 4px;">
+                                        <span id="fdWeightResultVal">2.5 ~ 3.0</span> <span style="font-size: 1rem; color: #fff;">kg</span>
+                                    </div>
+                                    <div id="fdWeightBreakdown" style="font-size: 0.78rem; color: #cbd5e1; margin-top: 4px;">
+                                        (추천 구성: 넥웨이트 1.5kg + 고무벨트 납 1kg ~ 1.5kg)
+                                    </div>
+                                </div>
+                                <div style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 10px 14px; max-width: 340px; font-size: 0.76rem; color: #cbd5e1; line-height: 1.4;">
+                                    💡 <strong>안전 수칙:</strong> 딥 트레이닝 시 수심 10m에서 숨을 내쉬지 않고 가만히 멈추었을 때 위아래로 뜨지 않는 <strong>중성부력(Neutral Buoyancy)</strong>을 맞추는 것이 표준입니다.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 🤿 [프리다이빙 서브 도구 2]: 프렌젤 이퀄라이징 메트로놈 & 훈련 카운터 -->
+                        <div id="panelFdFrenzel" style="background: rgba(13, 23, 38, 0.95); border: 1px solid rgba(0, 242, 254, 0.25); border-radius: 18px; padding: 22px; margin-top: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.35);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 10px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 1.2rem;">⏱️</span>
+                                    <h4 style="margin: 0; color: #fff; font-size: 1.05rem; font-weight: 900;">프렌젤 이퀄라이징 메트로놈 & 훈련 카운터</h4>
+                                </div>
+                                <span style="font-size: 0.76rem; color: #94a3b8;">연구개(Soft Palate) 및 혀뿌리(K-lock) 고립 수축 훈련</span>
+                            </div>
+
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; margin-bottom: 20px;">
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                    <button type="button" class="frenzel-bpm-btn active" onclick="AquaToolkitEngine.setFrenzelBpm(30)" id="btnFrenzelBpm30" style="background: rgba(0, 242, 254, 0.2); border: 1px solid #00f2fe; color: #00f2fe; padding: 8px 14px; border-radius: 10px; font-weight: 800; font-size: 0.84rem; cursor: pointer;">
+                                        30 BPM (2초 템포)
+                                    </button>
+                                    <button type="button" class="frenzel-bpm-btn" onclick="AquaToolkitEngine.setFrenzelBpm(40)" id="btnFrenzelBpm40" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: #94a3b8; padding: 8px 14px; border-radius: 10px; font-weight: 700; font-size: 0.84rem; cursor: pointer;">
+                                        40 BPM (1.5초)
+                                    </button>
+                                    <button type="button" class="frenzel-bpm-btn" onclick="AquaToolkitEngine.setFrenzelBpm(60)" id="btnFrenzelBpm60" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: #94a3b8; padding: 8px 14px; border-radius: 10px; font-weight: 700; font-size: 0.84rem; cursor: pointer;">
+                                        60 BPM (1초 고속)
+                                    </button>
+                                </div>
+
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <button type="button" id="btnFrenzelStart" onclick="AquaToolkitEngine.startFrenzel()" style="background: linear-gradient(135deg, #00f2fe, #00c6ff); color: #070e17; font-weight: 900; font-size: 0.95rem; padding: 10px 22px; border-radius: 12px; border: none; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 15px rgba(0,242,254,0.3);">
+                                        <i class="fa-solid fa-play"></i> 템포 시작
+                                    </button>
+                                    <button type="button" id="btnFrenzelStop" onclick="AquaToolkitEngine.stopFrenzel()" style="display: none; background: rgba(255, 71, 87, 0.15); border: 1px solid #ff4757; color: #ff4757; font-weight: 800; font-size: 0.95rem; padding: 10px 18px; border-radius: 12px; cursor: pointer; align-items: center; gap: 6px;">
+                                        <i class="fa-solid fa-stop"></i> 정지
+                                    </button>
+                                    <button type="button" onclick="AquaToolkitEngine.resetFrenzel()" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #94a3b8; font-size: 0.85rem; padding: 10px 14px; border-radius: 12px; cursor: pointer;">
+                                        초기화
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div style="background: rgba(10, 18, 32, 0.9); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 18px; display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap; gap: 14px;">
+                                <div style="text-align: center;">
+                                    <div id="frenzelPulseCircle" style="width: 54px; height: 54px; border-radius: 50%; background: rgba(0, 242, 254, 0.15); border: 2px solid #00f2fe; margin: 0 auto 8px auto; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: #00f2fe; transition: transform 0.1s ease, box-shadow 0.1s ease;">
+                                        👂
+                                    </div>
+                                    <div id="frenzelActionGuideText" style="font-size: 0.8rem; font-weight: 800; color: #00f2fe;">POP! (이퀄)</div>
+                                </div>
+
+                                <div style="text-align: center;">
+                                    <div style="font-size: 0.74rem; color: #94a3b8; font-weight: 700;">총 이퀄라이징 횟수</div>
+                                    <div style="font-size: 2rem; font-weight: 900; color: #ffffff; font-family: monospace;">
+                                        <span id="frenzelRepCount">0</span> <span style="font-size: 0.9rem; color: #94a3b8;">회</span>
+                                    </div>
+                                </div>
+
+                                <div style="text-align: center;">
+                                    <div style="font-size: 0.74rem; color: #94a3b8; font-weight: 700;">진행 시간</div>
+                                    <div style="font-size: 2rem; font-weight: 900; color: var(--accent-gold); font-family: monospace;">
+                                        <span id="frenzelElapsedText">00:00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
 
-                <!-- 3. [실내 수영 전용 패널 - 준비중 플레이스홀더] -->
-                <div id="toolkitSwimmingPanel" style="display: none; background: rgba(13, 23, 38, 0.95); border: 1px solid rgba(0, 242, 254, 0.2); border-radius: 20px; padding: 40px 20px; text-align: center;">
-                    <div style="font-size: 3rem; margin-bottom: 12px;">🏊‍♂️</div>
-                    <h3 style="color: #fff; font-size: 1.25rem; font-weight: 900; margin-bottom: 8px;">수영 세트 플래너 & SWOLF 계산기</h3>
-                    <p style="color: #94a3b8; font-size: 0.9rem; max-width: 450px; margin: 0 auto 20px auto; line-height: 1.5;">
-                        수영장 갈 때마다 고민되던 훈련 루틴! 초/중/고급 인터벌 표 생성과 페이스 환산기가 곧 업데이트됩니다.
-                    </p>
-                    <span style="background: rgba(255, 183, 3, 0.15); border: 1px solid #ffb703; color: #ffb703; padding: 6px 16px; border-radius: 20px; font-weight: 800; font-size: 0.85rem;">
-                        ⏳ 2단계 출시 예정
-                    </span>
+                <!-- 3. [실내 수영 전용 패널: 루틴 생성기, 출발 비프 타이머, SWOLF] -->
+                <div id="toolkitSwimmingPanel" style="display: none;">
+                    <!-- 🏊 도구 1: 세트 & 인터벌 훈련 루틴 생성기 -->
+                    <div id="panelSwimRoutine" style="background: rgba(13, 23, 38, 0.95); border: 1.5px solid rgba(0, 242, 254, 0.3); border-radius: 20px; padding: 22px; margin-bottom: 22px; box-shadow: 0 8px 32px rgba(0,0,0,0.35);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 1.3rem;">🏊‍♂️</span>
+                                <h3 style="margin: 0; color: #fff; font-size: 1.15rem; font-weight: 900;">수영 세트 & 인터벌 트레이닝 루틴 생성기</h3>
+                            </div>
+                            <span style="font-size: 0.78rem; color: #94a3b8;">오늘 갈 수영장 레인에서 바로 뛰는 맞춤 훈련표</span>
+                        </div>
+
+                        <!-- 옵션 선택 4단 폼 -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 16px;">
+                            <div>
+                                <label for="swimUserLevel" style="display: block; font-size: 0.8rem; font-weight: 800; color: #00f2fe; margin-bottom: 6px;">나의 수영 레벨</label>
+                                <select id="swimUserLevel" style="width: 100%; padding: 10px 12px; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(0,242,254,0.3); border-radius: 10px; color: #fff; font-weight: 800; font-size: 0.88rem; outline: none; cursor: pointer;">
+                                    <option value="beginner">🌱 초급 (자유형/배영 50m 완주, 인터벌 입문)</option>
+                                    <option value="intermediate" selected>🐬 중급 (평영/접영 가능, 1,000m 완주)</option>
+                                    <option value="advanced">🦈 상급/마스터즈 (1,500m+ 인터벌 훈련)</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="swimTheme" style="display: block; font-size: 0.8rem; font-weight: 800; color: #00f2fe; margin-bottom: 6px;">오늘의 훈련 테마</label>
+                                <select id="swimTheme" style="width: 100%; padding: 10px 12px; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(0,242,254,0.3); border-radius: 10px; color: #fff; font-weight: 800; font-size: 0.88rem; outline: none; cursor: pointer;">
+                                    <option value="endurance" selected>🚀 장거리 뺑뺑이 (유산소 지속주 / 페이스 유지)</option>
+                                    <option value="drill">🎯 자세 교정 & 드릴 (캐치/하이엘보/롤링 테크닉)</option>
+                                    <option value="sprint">⚡ 스프린트 & 심폐 인터벌 (고강도 심박수 트레이닝)</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="swimGoalDist" style="display: block; font-size: 0.8rem; font-weight: 800; color: #00f2fe; margin-bottom: 6px;">오늘 목표 총 거리</label>
+                                <select id="swimGoalDist" style="width: 100%; padding: 10px 12px; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(0,242,254,0.3); border-radius: 10px; color: #fff; font-weight: 800; font-size: 0.88rem; outline: none; cursor: pointer;">
+                                    <option value="500">500m (가벼운 30분 운동)</option>
+                                    <option value="1000" selected>1,000m (표준 45분 트레이닝)</option>
+                                    <option value="1500">1,500m (본격 1시간 트레이닝)</option>
+                                    <option value="2000">2,000m (마스터즈 강훈련)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- 챙겨간 장비 체크박스 -->
+                        <div style="background: rgba(15, 23, 42, 0.7); border: 1px dashed rgba(0, 242, 254, 0.25); border-radius: 12px; padding: 12px 16px; margin-bottom: 18px;">
+                            <div style="font-size: 0.8rem; font-weight: 800; color: #cbd5e1; margin-bottom: 8px;">
+                                🧰 오늘 사용할 장비 선택 (다중 선택 가능):
+                            </div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.85rem; color: #fff;">
+                                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                                    <input type="checkbox" id="swimEqFins" checked style="accent-color: #00f2fe; width: 16px; height: 16px;"> 🤿 오리발 (숏핀/롱핀)
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                                    <input type="checkbox" id="swimEqBoard" checked style="accent-color: #00f2fe; width: 16px; height: 16px;"> 🩱 킥판 (Kickboard)
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                                    <input type="checkbox" id="swimEqBuoy" style="accent-color: #00f2fe; width: 16px; height: 16px;"> 🥜 풀부이 (땅콩)
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                                    <input type="checkbox" id="swimEqPaddles" style="accent-color: #00f2fe; width: 16px; height: 16px;"> 🧤 핸드 패들
+                                </label>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
+                            <button type="button" onclick="AquaToolkitEngine.generateSwimRoutine()" style="background: linear-gradient(135deg, #00f2fe, #0077b6); color: #070e17; font-weight: 900; font-size: 0.95rem; padding: 12px 28px; border-radius: 12px; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 18px rgba(0, 242, 254, 0.35);">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> 오늘의 맞춤 수영 루틴 생성하기
+                            </button>
+                        </div>
+
+                        <!-- 생성된 루틴 카드 출력 영역 -->
+                        <div id="swimRoutineResultContainer" style="display: flex; flex-direction: column; gap: 10px;">
+                            <!-- Injected by AquaToolkitEngine.generateSwimRoutine() -->
+                        </div>
+
+                        <!-- 🔔 스마트폰 데크 거치용 인터벌 출발 비프 타이머 -->
+                        <div style="margin-top: 22px; background: rgba(10, 18, 32, 0.95); border: 1.5px solid rgba(255, 183, 3, 0.4); border-radius: 16px; padding: 18px; box-shadow: 0 6px 24px rgba(255, 183, 3, 0.15);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 1.2rem;">⏱️</span>
+                                    <h4 style="margin: 0; color: var(--accent-gold); font-size: 0.98rem; font-weight: 900;">스마트폰 데크 거치용 인터벌 출발 비프 타이머</h4>
+                                </div>
+                                <span style="font-size: 0.74rem; color: #94a3b8;">킥판 위에 폰을 올려두고 소리로 출발 타이밍을 잡으세요!</span>
+                            </div>
+
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <label for="swimDeckCycleSec" style="font-size: 0.8rem; color: #cbd5e1; font-weight: 700;">출발 인터벌 주기:</label>
+                                    <select id="swimDeckCycleSec" style="padding: 8px 12px; background: #0f172a; border: 1px solid var(--accent-gold); border-radius: 8px; color: #fff; font-weight: 800; font-size: 0.86rem; outline: none; cursor: pointer;">
+                                        <option value="45">45초 주기</option>
+                                        <option value="50">50초 주기</option>
+                                        <option value="55">55초 주기</option>
+                                        <option value="60" selected>1분 00초 주기</option>
+                                        <option value="70">1분 10초 주기</option>
+                                        <option value="80">1분 20초 주기</option>
+                                        <option value="90">1분 30초 주기</option>
+                                    </select>
+                                </div>
+
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <div style="font-family: monospace; font-size: 1.8rem; font-weight: 900; color: var(--accent-gold);">
+                                        <span id="swimDeckCountdownText">60</span>s
+                                    </div>
+                                    <button type="button" id="btnSwimDeckStart" onclick="AquaToolkitEngine.startSwimDeckTimer()" style="background: linear-gradient(135deg, #ffb703, #fb8500); color: #070e17; font-weight: 900; font-size: 0.88rem; padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer;">
+                                        <i class="fa-solid fa-play"></i> 출발 타이머 시작
+                                    </button>
+                                    <button type="button" id="btnSwimDeckStop" onclick="AquaToolkitEngine.stopSwimDeckTimer()" style="display: none; background: rgba(255, 71, 87, 0.2); border: 1px solid #ff4757; color: #ff4757; font-weight: 800; font-size: 0.88rem; padding: 10px 16px; border-radius: 10px; cursor: pointer;">
+                                        정지
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 🏊 도구 2: SWOLF & 100m 페이스 환산기 -->
+                    <div id="panelSwimSwolf" style="background: rgba(13, 23, 38, 0.95); border: 1.5px solid rgba(0, 242, 254, 0.3); border-radius: 20px; padding: 22px; box-shadow: 0 8px 32px rgba(0,0,0,0.35);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 1.2rem;">📊</span>
+                                <h4 style="margin: 0; color: #fff; font-size: 1.05rem; font-weight: 900;">SWOLF 지수 & 100m 페이스 환산기</h4>
+                            </div>
+                            <span style="font-size: 0.76rem; color: #94a3b8;">스트로크 수 + 시간 = 나의 수영 효율 지표 (SWOLF)</span>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 16px;">
+                            <div>
+                                <label for="swolfLaneLen" style="display: block; font-size: 0.8rem; font-weight: 800; color: #00f2fe; margin-bottom: 6px;">레인 길이</label>
+                                <select id="swolfLaneLen" onchange="AquaToolkitEngine.calcSwolf()" style="width: 100%; padding: 10px 12px; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(0,242,254,0.3); border-radius: 10px; color: #fff; font-weight: 800; font-size: 0.88rem; outline: none; cursor: pointer;">
+                                    <option value="25" selected>25m 레인 (일반 수영장)</option>
+                                    <option value="50">50m 레인 (국제 정규 규격)</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="swolfTimeSec" style="display: block; font-size: 0.8rem; font-weight: 800; color: #00f2fe; margin-bottom: 6px;">1랩 걸린 시간 (초)</label>
+                                <input type="number" id="swolfTimeSec" value="23" min="10" max="120" oninput="AquaToolkitEngine.calcSwolf()" style="width: 100%; padding: 10px 12px; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(0,242,254,0.3); border-radius: 10px; color: #fff; font-weight: 800; font-size: 0.92rem; outline: none;">
+                            </div>
+
+                            <div>
+                                <label for="swolfStrokes" style="display: block; font-size: 0.8rem; font-weight: 800; color: #00f2fe; margin-bottom: 6px;">1랩 스트로크 수 (팔 젓기)</label>
+                                <input type="number" id="swolfStrokes" value="18" min="5" max="60" oninput="AquaToolkitEngine.calcSwolf()" style="width: 100%; padding: 10px 12px; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(0,242,254,0.3); border-radius: 10px; color: #fff; font-weight: 800; font-size: 0.92rem; outline: none;">
+                            </div>
+                        </div>
+
+                        <!-- SWOLF 결과 영역 -->
+                        <div style="background: linear-gradient(135deg, rgba(0, 242, 254, 0.1), rgba(0, 119, 182, 0.15)); border: 1.5px solid #00f2fe; border-radius: 14px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+                            <div>
+                                <div style="font-size: 0.8rem; color: #94a3b8; font-weight: 700;">내 SWOLF 지수 (낮을수록 효율적)</div>
+                                <div style="font-size: 1.8rem; font-weight: 900; color: #00f2fe; display: flex; align-items: baseline; gap: 8px;">
+                                    <span id="swolfResultScore">41</span>
+                                    <span id="swolfGradeBadge" style="font-size: 0.8rem; background: #00e676; color: #000; padding: 2px 8px; border-radius: 8px; font-weight: 900;">✨ 우수</span>
+                                </div>
+                                <div id="swolfPaceText" style="font-size: 0.82rem; color: #cbd5e1; margin-top: 4px;">
+                                    100m 환산 페이스: <strong>01분 32초</strong>
+                                </div>
+                            </div>
+                            <div style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 10px 14px; max-width: 320px; font-size: 0.76rem; color: #94a3b8; line-height: 1.4;">
+                                💡 <strong>SWOLF란?</strong> Swim + Golf의 합성어로, 골프처럼 타수가 낮을수록 물잡기 추진력이 뛰어남을 의미합니다. 스트로크 수를 줄이면서 글라이딩을 길게 타보세요!
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- 4. [바다 수영 전용 패널 - 준비중 플레이스홀더] -->
-                <div id="toolkitOpenwaterPanel" style="display: none; background: rgba(13, 23, 38, 0.95); border: 1px solid rgba(0, 242, 254, 0.2); border-radius: 20px; padding: 40px 20px; text-align: center;">
-                    <div style="font-size: 3rem; margin-bottom: 12px;">🌊</div>
-                    <h3 style="color: #fff; font-size: 1.25rem; font-weight: 900; margin-bottom: 8px;">실시간 수온별 슈트 가이드 & 정조 안심타이밍</h3>
-                    <p style="color: #94a3b8; font-size: 0.9rem; max-width: 450px; margin: 0 auto 20px auto; line-height: 1.5;">
-                        전국 222개 부이 실시간 수온에 맞춘 웻슈트 추천과 조류가 가장 약한 정조(물돌이) 골든타임 알리미가 곧 찾아옵니다.
-                    </p>
-                    <span style="background: rgba(255, 183, 3, 0.15); border: 1px solid #ffb703; color: #ffb703; padding: 6px 16px; border-radius: 20px; font-weight: 800; font-size: 0.85rem;">
-                        ⏳ 2단계 출시 예정
-                    </span>
+                <!-- 4. [바다 수영 전용 패널: 실시간 수온 슈트 가이드 & 정조 골든타임] -->
+                <div id="toolkitOpenwaterPanel" style="display: none;">
+                    <div style="background: rgba(13, 23, 38, 0.95); border: 1.5px solid rgba(0, 242, 254, 0.3); border-radius: 20px; padding: 22px; box-shadow: 0 8px 32px rgba(0,0,0,0.35);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 1.3rem;">🌊</span>
+                                <h3 style="margin: 0; color: #fff; font-size: 1.15rem; font-weight: 900;">실시간 수온별 슈트 가이드 & 정조(물돌이) 골든타임</h3>
+                            </div>
+                            <span style="font-size: 0.78rem; color: #94a3b8;">전국 222개 해변 실시간 연동 안전 분석</span>
+                        </div>
+
+                        <!-- 해변 스팟 검색/선택 바 -->
+                        <div style="margin-bottom: 18px;">
+                            <label for="owSpotSelect" style="display: block; font-size: 0.8rem; font-weight: 800; color: #00f2fe; margin-bottom: 6px;">입수할 해변 스팟 선택</label>
+                            <select id="owSpotSelect" onchange="AquaToolkitEngine.analyzeOpenWaterSpot(this.value)" style="width: 100%; max-width: 450px; padding: 11px 14px; background: rgba(15, 23, 42, 0.95); border: 1.5px solid #00f2fe; border-radius: 12px; color: #fff; font-weight: 800; font-size: 0.92rem; outline: none; cursor: pointer;">
+                                <!-- Dynamically populated by AquaToolkitEngine -->
+                            </select>
+                        </div>
+
+                        <!-- 스팟 실시간 기상 & 안전 신호등 대시보드 -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 20px;">
+                            <!-- 실시간 수온 & 슈트 가이드 -->
+                            <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(0, 242, 254, 0.25); border-radius: 14px; padding: 16px;">
+                                <div style="font-size: 0.76rem; color: #94a3b8; font-weight: 700; margin-bottom: 4px;">🌡️ 실시간 해양 수온</div>
+                                <div style="font-size: 1.6rem; font-weight: 900; color: #00f2fe; margin-bottom: 8px;">
+                                    <span id="owLiveTempText">21.4</span>℃
+                                </div>
+                                <div id="owSuitGuideBadge" style="background: rgba(0, 242, 254, 0.15); border: 1px solid #00f2fe; color: #00f2fe; padding: 6px 10px; border-radius: 8px; font-size: 0.78rem; font-weight: 800;">
+                                    🤿 2~3mm 오픈워터 웻슈트 착용 권장
+                                </div>
+                            </div>
+
+                            <!-- 입수 안전 신호등 -->
+                            <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 14px; padding: 16px;">
+                                <div style="font-size: 0.76rem; color: #94a3b8; font-weight: 700; margin-bottom: 4px;">🚦 바다수영 입수 안전 신호등</div>
+                                <div id="owSafetyLightText" style="font-size: 1.25rem; font-weight: 900; color: #00e676; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+                                    🟢 입수 적합 (양호)
+                                </div>
+                                <div id="owWaveWindDetail" style="font-size: 0.76rem; color: #94a3b8;">
+                                    파고 0.4m · 풍속 3.2m/s
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 🌟 정조(물돌이) 골든타임 카드 -->
+                        <div style="background: linear-gradient(135deg, rgba(10, 25, 47, 0.95), rgba(7, 14, 28, 0.95)); border: 1.5px solid var(--accent-gold); border-radius: 16px; padding: 20px; box-shadow: 0 8px 30px rgba(255, 183, 3, 0.15);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 1.2rem;">🌟</span>
+                                    <h4 style="margin: 0; color: var(--accent-gold); font-size: 1.05rem; font-weight: 900;">오늘의 조류 없는 안심 수영 골든타임 (정조 시간대)</h4>
+                                </div>
+                                <span style="font-size: 0.74rem; color: #94a3b8;">조류(유속)가 멈추는 만조/간조 전후 45분~1시간</span>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 14px;">
+                                <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 183, 3, 0.3); border-radius: 12px; padding: 12px 16px;">
+                                    <div style="font-size: 0.74rem; color: var(--accent-gold); font-weight: 700;">1차 정조 골든타임</div>
+                                    <div id="owGoldenTime1" style="font-size: 1.15rem; font-weight: 900; color: #fff; margin-top: 2px;">
+                                        11:20 ~ 12:40 (간조 정조)
+                                    </div>
+                                </div>
+
+                                <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 183, 3, 0.3); border-radius: 12px; padding: 12px 16px;">
+                                    <div style="font-size: 0.74rem; color: var(--accent-gold); font-weight: 700;">2차 정조 골든타임</div>
+                                    <div id="owGoldenTime2" style="font-size: 1.15rem; font-weight: 900; color: #fff; margin-top: 2px;">
+                                        17:30 ~ 18:50 (만조 정조)
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="owCurrentTideAlertBanner" style="background: rgba(0, 242, 254, 0.1); border: 1px solid #00f2fe; border-radius: 10px; padding: 10px 14px; font-size: 0.82rem; color: #cbd5e1; display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-circle-info" style="color: #00f2fe;"></i>
+                                <span id="owTideStatusText">현재 시간은 조류가 비교적 안정적인 시간대입니다. 반드시 안전부표(수영부이)를 지참하세요!</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- 5. [스쿠버다이빙 전용 패널 - 준비중 플레이스홀더] -->
-                <div id="toolkitScubaPanel" style="display: none; background: rgba(13, 23, 38, 0.95); border: 1px solid rgba(0, 242, 254, 0.2); border-radius: 20px; padding: 40px 20px; text-align: center;">
-                    <div style="font-size: 3rem; margin-bottom: 12px;">🤿</div>
-                    <h3 style="color: #fff; font-size: 1.25rem; font-weight: 900; margin-bottom: 8px;">SAC 공기소모율 & 나이트록스 MOD 계산기</h3>
-                    <p style="color: #94a3b8; font-size: 0.9rem; max-width: 450px; margin: 0 auto 20px auto; line-height: 1.5;">
-                        내 폐활량과 호흡 효율을 측정하는 분당 공기 소모율(SAC)과 산소 한계 수심 계산기가 탑재될 예정입니다.
-                    </p>
-                    <span style="background: rgba(255, 183, 3, 0.15); border: 1px solid #ffb703; color: #ffb703; padding: 6px 16px; border-radius: 20px; font-weight: 800; font-size: 0.85rem;">
-                        ⏳ 2단계 출시 예정
-                    </span>
+                <!-- 5. [스쿠버다이빙 전용 패널: SAC, MOD, 미니 디지털 로그북] -->
+                <div id="toolkitScubaPanel" style="display: none;">
+                    <!-- 🤿 도구 1: SAC Rate (분당 수면 공기 소모율 L/min) 계산기 -->
+                    <div id="panelScubaSac" style="background: rgba(13, 23, 38, 0.95); border: 1.5px solid rgba(0, 242, 254, 0.3); border-radius: 20px; padding: 22px; margin-bottom: 22px; box-shadow: 0 8px 32px rgba(0,0,0,0.35);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 1.3rem;">🤿</span>
+                                <h3 style="margin: 0; color: #fff; font-size: 1.15rem; font-weight: 900;">SAC Rate (수면 공기 소모율 L/min) 계산기</h3>
+                            </div>
+                            <span style="font-size: 0.78rem; color: #94a3b8;">내 호흡 효율과 공기 소모량을 과학적으로 분석</span>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 18px;">
+                            <div>
+                                <label for="scubaTankSize" style="display: block; font-size: 0.8rem; font-weight: 800; color: #00f2fe; margin-bottom: 6px;">공기통 용량 (L)</label>
+                                <select id="scubaTankSize" onchange="AquaToolkitEngine.calcSacRate()" style="width: 100%; padding: 10px 12px; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(0,242,254,0.3); border-radius: 10px; color: #fff; font-weight: 800; font-size: 0.88rem; outline: none; cursor: pointer;">
+                                    <option value="10">10 리터</option>
+                                    <option value="12" selected>12 리터 (표준 싱글탱크)</option>
+                                    <option value="15">15 리터</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="scubaStartBar" style="display: block; font-size: 0.8rem; font-weight: 800; color: #00f2fe; margin-bottom: 6px;">시작 잔압 (bar)</label>
+                                <input type="number" id="scubaStartBar" value="200" min="100" max="300" oninput="AquaToolkitEngine.calcSacRate()" style="width: 100%; padding: 10px 12px; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(0,242,254,0.3); border-radius: 10px; color: #fff; font-weight: 800; font-size: 0.92rem; outline: none;">
+                            </div>
+
+                            <div>
+                                <label for="scubaEndBar" style="display: block; font-size: 0.8rem; font-weight: 800; color: #00f2fe; margin-bottom: 6px;">출수 잔압 (bar)</label>
+                                <input type="number" id="scubaEndBar" value="50" min="10" max="150" oninput="AquaToolkitEngine.calcSacRate()" style="width: 100%; padding: 10px 12px; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(0,242,254,0.3); border-radius: 10px; color: #fff; font-weight: 800; font-size: 0.92rem; outline: none;">
+                            </div>
+
+                            <div>
+                                <label for="scubaAvgDepth" style="display: block; font-size: 0.8rem; font-weight: 800; color: #00f2fe; margin-bottom: 6px;">평균 수심 (m)</label>
+                                <input type="number" id="scubaAvgDepth" value="15" min="3" max="45" oninput="AquaToolkitEngine.calcSacRate()" style="width: 100%; padding: 10px 12px; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(0,242,254,0.3); border-radius: 10px; color: #fff; font-weight: 800; font-size: 0.92rem; outline: none;">
+                            </div>
+
+                            <div>
+                                <label for="scubaDiveTime" style="display: block; font-size: 0.8rem; font-weight: 800; color: #00f2fe; margin-bottom: 6px;">잠수 시간 (분)</label>
+                                <input type="number" id="scubaDiveTime" value="40" min="10" max="90" oninput="AquaToolkitEngine.calcSacRate()" style="width: 100%; padding: 10px 12px; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(0,242,254,0.3); border-radius: 10px; color: #fff; font-weight: 800; font-size: 0.92rem; outline: none;">
+                            </div>
+                        </div>
+
+                        <!-- SAC 결과 -->
+                        <div style="background: linear-gradient(135deg, rgba(0, 242, 254, 0.1), rgba(0, 119, 182, 0.15)); border: 1.5px solid #00f2fe; border-radius: 14px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+                            <div>
+                                <div style="font-size: 0.8rem; color: #94a3b8; font-weight: 700;">내 분당 수면 공기 소모율 (SAC Rate)</div>
+                                <div style="font-size: 1.8rem; font-weight: 900; color: #00f2fe; display: flex; align-items: baseline; gap: 8px;">
+                                    <span id="scubaSacVal">18.0</span> <span style="font-size: 1rem; color: #fff;">L/min</span>
+                                    <span id="scubaSacGrade" style="font-size: 0.8rem; background: #00e676; color: #000; padding: 2px 8px; border-radius: 8px; font-weight: 900;">✨ 양호 (안정적)</span>
+                                </div>
+                                <div id="scubaSacFeedback" style="font-size: 0.78rem; color: #cbd5e1; margin-top: 4px;">
+                                    표준 레크리에이션 다이버의 안정적인 호흡 범위 내에 있습니다.
+                                </div>
+                            </div>
+                            <div style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 10px 14px; max-width: 320px; font-size: 0.76rem; color: #94a3b8; line-height: 1.4;">
+                                💡 <strong>SAC(Surface Air Consumption)</strong>: 1기압(수면)에서 1분 동안 소모하는 공기량(L)입니다. 중성부력 유지와 느린 복식호흡을 연습하면 공기 소모를 20% 이상 줄일 수 있습니다!
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 🤿 도구 2: 나이트록스(Nitrox) MOD (최대 허용 수심) 계산기 -->
+                    <div id="panelScubaMod" style="background: rgba(13, 23, 38, 0.95); border: 1.5px solid rgba(0, 242, 254, 0.3); border-radius: 20px; padding: 22px; margin-bottom: 22px; box-shadow: 0 8px 32px rgba(0,0,0,0.35);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 1.3rem;">🫧</span>
+                                <h4 style="margin: 0; color: #fff; font-size: 1.15rem; font-weight: 900;">나이트록스(Nitrox) MOD (최대 허용 수심) 계산기</h4>
+                            </div>
+                            <span style="font-size: 0.78rem; color: #94a3b8;">산소 중독(CNS) 방지를 위한 절대 안전 수심 한계 계산</span>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 16px;">
+                            <div>
+                                <label for="nitroxO2Pct" style="display: block; font-size: 0.8rem; font-weight: 800; color: #00f2fe; margin-bottom: 6px;">산소 비율 (EANx %)</label>
+                                <select id="nitroxO2Pct" onchange="AquaToolkitEngine.calcMod()" style="width: 100%; padding: 10px 12px; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(0,242,254,0.3); border-radius: 10px; color: #fff; font-weight: 800; font-size: 0.9rem; outline: none; cursor: pointer;">
+                                    <option value="28">EANx 28%</option>
+                                    <option value="32" selected>EANx 32% (가장 대중적인 표준)</option>
+                                    <option value="36">EANx 36%</option>
+                                    <option value="40">EANx 40%</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="nitroxPpo2" style="display: block; font-size: 0.8rem; font-weight: 800; color: #00f2fe; margin-bottom: 6px;">최대 산소 분압 (PPO2)</label>
+                                <select id="nitroxPpo2" onchange="AquaToolkitEngine.calcMod()" style="width: 100%; padding: 10px 12px; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(0,242,254,0.3); border-radius: 10px; color: #fff; font-weight: 800; font-size: 0.9rem; outline: none; cursor: pointer;">
+                                    <option value="1.4" selected>1.4 bar (레크리에이션 권장 안전 한계)</option>
+                                    <option value="1.6">1.6 bar (감압 정지 절대 한계 Contingency)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- MOD 결과 -->
+                        <div style="background: linear-gradient(135deg, rgba(255, 82, 82, 0.1), rgba(255, 183, 3, 0.15)); border: 1.5px solid #ff5252; border-radius: 14px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+                            <div>
+                                <div style="font-size: 0.8rem; color: #ff7675; font-weight: 700;">⚠️ 최대 허용 하강 수심 (MOD)</div>
+                                <div style="font-size: 2rem; font-weight: 900; color: #ff5252;">
+                                    <span id="nitroxModResult">33.7</span> <span style="font-size: 1rem; color: #fff;">미터 (m)</span>
+                                </div>
+                                <div style="font-size: 0.78rem; color: #cbd5e1; margin-top: 4px;">
+                                    산소 분압 <strong style="color: #ffb703;" id="nitroxPpo2Text">1.4 bar</strong> 기준 절대 초과 금지 수심
+                                </div>
+                            </div>
+                            <div style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 82, 82, 0.3); border-radius: 10px; padding: 10px 14px; max-width: 320px; font-size: 0.76rem; color: #ffebee; line-height: 1.4;">
+                                🛑 <strong>산소 중독(CNS) 경고:</strong> MOD를 초과하여 깊이 내려갈 경우 급성 중추신경계 산소중독으로 인한 경련 및 익수 위험이 발생합니다.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 🤿 도구 3: 간편 모바일 미니 디지털 로그북 (CRUD) -->
+                    <div id="panelScubaLog" style="background: rgba(13, 23, 38, 0.95); border: 1.5px solid rgba(0, 242, 254, 0.3); border-radius: 20px; padding: 22px; box-shadow: 0 8px 32px rgba(0,0,0,0.35);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 1.3rem;">📖</span>
+                                <h3 style="margin: 0; color: #fff; font-size: 1.15rem; font-weight: 900;">간편 모바일 미니 디지털 로그북</h3>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 0.78rem; color: #00f2fe; background: rgba(0,242,254,0.1); padding: 3px 8px; border-radius: 8px; border: 1px solid rgba(0,242,254,0.3);">
+                                    ☁️ 로컬 & Supabase 클라우드 동기화
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- 로그북 입력 폼 (접이식 아코디언) -->
+                        <div style="background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(0, 242, 254, 0.25); border-radius: 14px; padding: 18px; margin-bottom: 20px;">
+                            <h4 style="margin: 0 0 14px 0; color: #00f2fe; font-size: 0.95rem; font-weight: 900; display: flex; align-items: center; gap: 6px;">
+                                <i class="fa-solid fa-pen-to-square"></i> 새 다이브 로그 작성 (#<span id="nextLogNumText">1</span>)
+                            </h4>
+
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 14px;">
+                                <div>
+                                    <label for="logDate" style="display: block; font-size: 0.76rem; color: #cbd5e1; font-weight: 700; margin-bottom: 4px;">다이빙 일자</label>
+                                    <input type="date" id="logDate" style="width: 100%; padding: 9px 12px; background: rgba(10, 18, 32, 0.9); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: #fff; font-size: 0.86rem; outline: none;">
+                                </div>
+                                <div>
+                                    <label for="logSpot" style="display: block; font-size: 0.76rem; color: #cbd5e1; font-weight: 700; margin-bottom: 4px;">포인트 / 지역명</label>
+                                    <input type="text" id="logSpot" placeholder="예: 제주 문섬 새끼섬, K26" style="width: 100%; padding: 9px 12px; background: rgba(10, 18, 32, 0.9); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: #fff; font-size: 0.86rem; outline: none;">
+                                </div>
+                                <div>
+                                    <label for="logMaxDepth" style="display: block; font-size: 0.76rem; color: #cbd5e1; font-weight: 700; margin-bottom: 4px;">최대 수심 (m)</label>
+                                    <input type="number" id="logMaxDepth" placeholder="예: 22.5" step="0.1" style="width: 100%; padding: 9px 12px; background: rgba(10, 18, 32, 0.9); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: #fff; font-size: 0.86rem; outline: none;">
+                                </div>
+                                <div>
+                                    <label for="logBottomTime" style="display: block; font-size: 0.76rem; color: #cbd5e1; font-weight: 700; margin-bottom: 4px;">잠수 시간 (분)</label>
+                                    <input type="number" id="logBottomTime" placeholder="예: 42" style="width: 100%; padding: 9px 12px; background: rgba(10, 18, 32, 0.9); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: #fff; font-size: 0.86rem; outline: none;">
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 14px;">
+                                <label for="logMemo" style="display: block; font-size: 0.76rem; color: #cbd5e1; font-weight: 700; margin-bottom: 4px;">다이빙 메모 & 버디 (수온, 시야, 목격 생물 등)</label>
+                                <input type="text" id="logMemo" placeholder="예: 수온 21도, 시야 10m 양호! 거북이와 씬벵이 발견. 버디: 김버디" style="width: 100%; padding: 9px 12px; background: rgba(10, 18, 32, 0.9); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: #fff; font-size: 0.86rem; outline: none;">
+                            </div>
+
+                            <div style="display: flex; justify-content: flex-end;">
+                                <button type="button" onclick="AquaToolkitEngine.saveMiniLog()" style="background: linear-gradient(135deg, #00f2fe, #0077b6); color: #070e17; font-weight: 900; font-size: 0.88rem; padding: 10px 22px; border-radius: 10px; border: none; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                                    <i class="fa-solid fa-floppy-disk"></i> 로그북 저장하기
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 저장된 로그북 카드 리스트 -->
+                        <div>
+                            <div style="font-size: 0.85rem; font-weight: 800; color: #fff; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                                <span>내 다이브 로그 목록 (<span id="miniLogCountText">0</span>개)</span>
+                            </div>
+                            <div id="miniLogListContainer" style="display: flex; flex-direction: column; gap: 10px;">
+                                <!-- Injected dynamically by AquaToolkitEngine.renderMiniLogs() -->
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
             </div>
@@ -2936,8 +3491,8 @@
 
  
      <!-- App Configuration & Main Logic Script -->
-     <script src="config.js?v=V1632_ADD_VOICE_COACHING_FREEDIVING_TIMER"></script>
-     <script src="app.js?v=V1632_ADD_VOICE_COACHING_FREEDIVING_TIMER"></script>
+     <script src="config.js?v=V1633_AQUA_TOOLKIT_4DISCIPLINES_EXPANSION"></script>
+     <script src="app.js?v=V1633_AQUA_TOOLKIT_4DISCIPLINES_EXPANSION"></script>
      <!-- Toast Notification Container -->
     <div id="toastContainer" class="toast-container"></div>
 
