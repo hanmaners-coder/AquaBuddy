@@ -13724,9 +13724,6 @@ async function fetchAndRenderComments(rawPostId) {
         if (postObj) {
             postObj.comments = comments;
             postObj.comments_count = comments.length;
-            if (supabaseClient) {
-                supabaseClient.from('posts').update({ comments_count: comments.length }).eq('id', postIdStr).then(() => {});
-            }
         }
 
     } catch(err) {
@@ -13735,19 +13732,10 @@ async function fetchAndRenderComments(rawPostId) {
 }
 window.fetchAndRenderComments = fetchAndRenderComments;
 
-var _commentRealtimeChannel = null;
-var _commentRealtimePostId = null;
-var _commentPollTimer = null;
-
 // === subscribeCommentRealtime: Supabase Realtime으로 댓글 작성 감지 수신 ===
 var _commentRealtimeChannel = null;
 var _commentRealtimePostId = null;
 var _commentPollTimer = null;
-
-// === subscribeCommentRealtime: Supabase Realtime으로 댓글 작성 중복 방어 수신 엔진 ===
-var _commentRealtimeChannel = _commentRealtimeChannel || null;
-var _commentRealtimePostId = _commentRealtimePostId || null;
-var _commentPollTimer = _commentPollTimer || null;
 
 function subscribeCommentRealtime(rawPostId) {
     if (!supabaseClient || !rawPostId) return;
@@ -13787,7 +13775,7 @@ function subscribeCommentRealtime(rawPostId) {
     if (_commentPollTimer) clearInterval(_commentPollTimer);
     _commentPollTimer = setInterval(() => {
         fetchAndRenderComments(postIdStr);
-    }, 2000);
+    }, 10000);
 }
 window.subscribeCommentRealtime = subscribeCommentRealtime;
 
@@ -14098,10 +14086,18 @@ async function handleChangePostStatus(postId, targetStatus) {
 window.handleChangePostStatus = handleChangePostStatus;
 
 // === renderDynamicDetailModal: 매너 평가 제거 & 3단계 상태 변경 모달 ===
-function renderDynamicDetailModal(post) {
+function renderDynamicDetailModal(post, isSoftUpdate = false) {
     if (!post) return;
     let existing = document.getElementById("dynamicDetailModalOverlay");
-    if (existing) existing.remove();
+    let prevScrollTop = 0;
+    const samePost = Boolean(existing && existing.dataset && existing.dataset.postId === String(post.id));
+    if (existing) {
+        const prevScrollBox = existing.querySelector("#dynamicDetailModalScrollBox") || existing.querySelector("div[style*='overflow-y: auto']");
+        if (prevScrollBox) {
+            prevScrollTop = prevScrollBox.scrollTop;
+        }
+        existing.remove();
+    }
 
     const isAuthor = (typeof isMyPost === 'function') ? isMyPost(post) : false;
     const isCommunity = post.category === "community";
@@ -14182,6 +14178,7 @@ function renderDynamicDetailModal(post) {
 
     const overlay = document.createElement("div");
     overlay.id = "dynamicDetailModalOverlay";
+    overlay.dataset.postId = String(post.id);
     overlay.style.cssText = `
         position: fixed !important;
         top: 0 !important;
@@ -14198,11 +14195,20 @@ function renderDynamicDetailModal(post) {
         padding: 16px !important;
         box-sizing: border-box !important;
     `;
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+            if (typeof closeDetailModalAndUnsubscribe === 'function') {
+                closeDetailModalAndUnsubscribe();
+            } else {
+                overlay.remove();
+            }
+        }
+    });
 
     const currentStatusKey = post.status || 'recruiting';
 
     overlay.innerHTML = `
-        <div style="background: rgba(13, 23, 38, 0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 2px solid #00f2fe; box-shadow: 0 0 50px rgba(0, 242, 254, 0.5); border-radius: 20px; width: 100%; max-width: 700px; max-height: 88vh; overflow-y: auto; padding: 24px; color: #ffffff; position: relative; font-family: sans-serif; box-sizing: border-box;">
+        <div id="dynamicDetailModalScrollBox" style="background: rgba(13, 23, 38, 0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 2px solid #00f2fe; box-shadow: 0 0 50px rgba(0, 242, 254, 0.5); border-radius: 20px; width: 100%; max-width: 700px; max-height: 88vh; overflow-y: auto; padding: 24px; color: #ffffff; position: relative; font-family: sans-serif; box-sizing: border-box;">
             
             <!-- 1. 헤더 영역 (제목 & 상태 뱃지 & 주최자 상태 3단계 전환 및 수정/삭제) -->
             <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid rgba(0, 242, 254, 0.3); padding-bottom: 14px; margin-bottom: 16px; gap: 10px; flex-wrap: wrap; width: 100%; box-sizing: border-box;">
@@ -14247,7 +14253,7 @@ function renderDynamicDetailModal(post) {
                     <button onclick="editPost('${post.id}')" style="background: rgba(0, 242, 254, 0.15); border: 1px solid #00f2fe; color: #00f2fe; padding: 6px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.82rem;">✏️ 수정</button>
                     <button onclick="openDeleteConfirmModal('${post.id}')" style="background: rgba(255, 82, 82, 0.15); border: 1px solid #ff5252; color: #ff5252; padding: 6px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.82rem;">🗑️ 삭제</button>
                     ` : ''}
-                    <button onclick="document.getElementById('dynamicDetailModalOverlay').remove()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-weight: bold; font-size: 1.3rem; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center;">&times;</button>
+                    <button onclick="typeof closeDetailModalAndUnsubscribe === 'function' ? closeDetailModalAndUnsubscribe() : document.getElementById('dynamicDetailModalOverlay').remove()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-weight: bold; font-size: 1.3rem; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center;">&times;</button>
                 </div>
             </div>
 
@@ -14568,12 +14574,22 @@ function renderDynamicDetailModal(post) {
                     </button>
                     ` : ''}
                 </div>
-                <button onclick="document.getElementById('dynamicDetailModalOverlay').remove()" style="background: linear-gradient(135deg, #ff5252, #d32f2f); border: none; color: #fff; padding: 10px 22px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 0.9rem;">닫기 ✖</button>
+                <button onclick="typeof closeDetailModalAndUnsubscribe === 'function' ? closeDetailModalAndUnsubscribe() : document.getElementById('dynamicDetailModalOverlay').remove()" style="background: linear-gradient(135deg, #ff5252, #d32f2f); border: none; color: #fff; padding: 10px 22px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 0.9rem;">닫기 ✖</button>
             </div>
         </div>
     `;
 
     document.body.appendChild(overlay);
+
+    if (samePost && prevScrollTop > 0) {
+        const scrollBox = document.getElementById("dynamicDetailModalScrollBox");
+        if (scrollBox) {
+            scrollBox.scrollTop = prevScrollTop;
+            requestAnimationFrame(() => {
+                if (scrollBox) scrollBox.scrollTop = prevScrollTop;
+            });
+        }
+    }
 
     // 카카오맵 지오코딩 정밀 연동 (자유글 & 보이스룸 제외)
     if (!isCommunity && locationText) {
@@ -14753,6 +14769,9 @@ function openDetailModal(postId) {
                 })();
             }
         }
+
+        // [최적화] renderDynamicDetailModal에서 모달 렌더링, 카카오맵, 댓글 실시간 구독을 100% 전담하므로 중복 실행 방지를 위해 종료
+        return;
 
         const isInstructor = post.category === "instructor";
         const isMarket = post.category === "market";
@@ -20579,6 +20598,9 @@ window.broadcastPostUpdate = broadcastPostUpdate;
 
 async function refreshCurrentDetailModal(postId) {
     if (!postId) return;
+    const dynamicOverlay = document.getElementById("dynamicDetailModalOverlay");
+    if (!dynamicOverlay || dynamicOverlay.dataset.postId !== String(postId)) return;
+
     const btnIcon = document.querySelector("#dynamicDetailModalOverlay i.fa-arrows-rotate");
     if (btnIcon) btnIcon.classList.add("fa-spin");
 
@@ -20586,7 +20608,7 @@ async function refreshCurrentDetailModal(postId) {
         if (typeof loadPosts === 'function') await loadPosts();
         const freshPost = (posts || []).find(p => String(p.id) === String(postId));
         if (freshPost && typeof renderDynamicDetailModal === 'function') {
-            renderDynamicDetailModal(freshPost);
+            renderDynamicDetailModal(freshPost, true);
         }
         if (typeof showToast === 'function') {
             showToast("🔄 게시글 참가 현황과 상태가 실시간으로 갱신되었습니다!");
@@ -20730,7 +20752,7 @@ function initGlobalRealtimeSubscriptions() {
                 }
 
                 const dynamicOverlay = document.getElementById("dynamicDetailModalOverlay");
-                if (dynamicOverlay && typeof refreshCurrentDetailModal === 'function') {
+                if (dynamicOverlay && dynamicOverlay.dataset.postId === postIdStr && typeof refreshCurrentDetailModal === 'function') {
                     refreshCurrentDetailModal(postIdStr);
                 }
             })
@@ -20762,7 +20784,13 @@ function initGlobalRealtimeSubscriptions() {
                 const detailM = document.getElementById("postDetailModal") || document.getElementById("detailModal");
                 if (detailM && typeof closeModal === 'function') closeModal(detailM);
                 const dynM = document.getElementById("dynamicDetailModalOverlay");
-                if (dynM) dynM.remove();
+                if (dynM && dynM.dataset.postId === delId) {
+                    if (typeof closeDetailModalAndUnsubscribe === 'function') {
+                        closeDetailModalAndUnsubscribe();
+                    } else {
+                        dynM.remove();
+                    }
+                }
                 if (typeof filterAndRender === 'function') {
                     filterAndRender();
                 }
@@ -20786,8 +20814,12 @@ function initGlobalRealtimeSubscriptions() {
                     const dynamicOverlay = document.getElementById("dynamicDetailModalOverlay");
                     if (dynamicOverlay && payload.new && payload.new.id) {
                         const updatedPostId = String(payload.new.id);
-                        if (typeof openDetailModal === 'function') {
-                            openDetailModal(updatedPostId);
+                        const currentOpenId = dynamicOverlay.dataset.postId;
+                        if (currentOpenId && currentOpenId === updatedPostId) {
+                            const freshPost = (posts || []).find(p => String(p.id) === updatedPostId);
+                            if (freshPost && typeof renderDynamicDetailModal === 'function') {
+                                renderDynamicDetailModal(freshPost, true);
+                            }
                         }
                     }
                 } catch(err) {
