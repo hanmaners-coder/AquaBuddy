@@ -23357,54 +23357,273 @@ const AquaToolkitEngine = {
         { code: 'MALLIPO', name: '태안 만리포 해수욕장', temp: 21.0, wave: 0.5, wind: 3.3, tideHigh: '17:40', tideLow: '11:20' }
     ],
 
-    initOpenWaterSpots() {
-        const sel = document.getElementById('owSpotSelect');
-        if (!sel || sel.children.length > 1) return;
+    currentOpenWaterSpot: null,
 
-        let html = '';
-        this.openWaterSpots.forEach(s => {
-            html += `<option value="${s.code}">📍 ${s.name} (${s.temp}℃)</option>`;
+    initOpenWaterSpots() {
+        // Outside click handler for search dropdown
+        document.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('owSearchResultsDropdown');
+            const input = document.getElementById('owBeachSearchInput');
+            if (dropdown && input && !dropdown.contains(e.target) && e.target !== input) {
+                dropdown.style.display = 'none';
+            }
         });
-        sel.innerHTML = html;
-        this.analyzeOpenWaterSpot(this.openWaterSpots[0].code);
+
+        // Default to Busan Songjeong
+        this.selectBeachByName('부산 송정');
     },
 
-    analyzeOpenWaterSpot(spotCode) {
-        const spot = this.openWaterSpots.find(s => s.code === spotCode) || this.openWaterSpots[0];
+    searchOpenWaterBeaches(query) {
+        const dropdown = document.getElementById('owSearchResultsDropdown');
+        if (!dropdown) return;
+
+        const allSpots = (typeof OCEAN_WEATHER_DATA !== 'undefined' && Array.isArray(OCEAN_WEATHER_DATA) && OCEAN_WEATHER_DATA.length > 0)
+            ? OCEAN_WEATHER_DATA
+            : this.openWaterSpots;
+
+        const q = (query || '').trim().toLowerCase();
+        let matches = [];
+
+        if (!q) {
+            matches = allSpots.slice(0, 10);
+        } else {
+            matches = allSpots.filter(s => {
+                const name = (s.name || s.spot_name || '').toLowerCase();
+                const reg = (s.region_cat || '').toLowerCase();
+                return name.includes(q) || reg.includes(q);
+            }).slice(0, 18);
+        }
+
+        if (matches.length === 0) {
+            dropdown.innerHTML = '<div style="padding: 14px; text-align: center; color: #94a3b8; font-size: 0.85rem;">🔍 일치하는 해변 스팟이 없습니다. 다른 이름(예: 송정, 광안리, 협재)으로 검색해 보세요.</div>';
+            dropdown.style.display = 'block';
+            return;
+        }
+
+        let html = '';
+        matches.forEach(s => {
+            const spotId = s.id || s.spot_id || s.code;
+            const name = s.name || s.spot_name;
+            const region = s.region_cat ? `[${s.region_cat.toUpperCase()}] ` : '';
+            html += `
+                <div onclick="AquaToolkitEngine.selectOpenWaterSpot('${spotId}')" 
+                     style="padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.06); cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.15s;"
+                     onmouseover="this.style.background='rgba(0,242,254,0.15)'"
+                     onmouseout="this.style.background='transparent'">
+                    <div>
+                        <span style="color: #00f2fe; font-size: 0.76rem; font-weight: 700;">${region}</span>
+                        <strong style="color: #fff; font-size: 0.88rem;">📍 ${name}</strong>
+                    </div>
+                    <span style="font-size: 0.72rem; color: #94a3b8; background: rgba(255,255,255,0.06); padding: 3px 8px; border-radius: 6px;">선택 ➔</span>
+                </div>
+            `;
+        });
+        dropdown.innerHTML = html;
+        dropdown.style.display = 'block';
+    },
+
+    clearBeachSearch() {
+        const input = document.getElementById('owBeachSearchInput');
+        const dropdown = document.getElementById('owSearchResultsDropdown');
+        if (input) input.value = '';
+        if (dropdown) dropdown.style.display = 'none';
+    },
+
+    selectBeachByName(beachName) {
+        const allSpots = (typeof OCEAN_WEATHER_DATA !== 'undefined' && Array.isArray(OCEAN_WEATHER_DATA) && OCEAN_WEATHER_DATA.length > 0)
+            ? OCEAN_WEATHER_DATA
+            : this.openWaterSpots;
+
+        const clean = (beachName || '').replace(/해수욕장|해변/g, '').trim();
+        let found = allSpots.find(s => {
+            const nm = s.name || s.spot_name || '';
+            return nm.includes(beachName) || (clean && nm.includes(clean));
+        });
+
+        if (!found && allSpots.length > 0) found = allSpots[0];
+        if (found) {
+            this.selectOpenWaterSpot(found.id || found.spot_id || found.code);
+        }
+    },
+
+    async selectOpenWaterSpot(spotId) {
+        const allSpots = (typeof OCEAN_WEATHER_DATA !== 'undefined' && Array.isArray(OCEAN_WEATHER_DATA) && OCEAN_WEATHER_DATA.length > 0)
+            ? OCEAN_WEATHER_DATA
+            : this.openWaterSpots;
+
+        let spot = allSpots.find(s => (s.id === spotId || s.spot_id === spotId || s.code === spotId));
+        if (!spot && allSpots.length > 0) spot = allSpots[0];
         if (!spot) return;
 
+        this.currentOpenWaterSpot = spot;
+
+        // Close dropdown
+        const dropdown = document.getElementById('owSearchResultsDropdown');
+        if (dropdown) dropdown.style.display = 'none';
+
+        // Update search input text & active badge
+        const input = document.getElementById('owBeachSearchInput');
+        const nameBadge = document.getElementById('owSelectedBeachName');
+        const spotName = spot.name || spot.spot_name || '선택된 해변';
+        if (input) input.value = spotName;
+        if (nameBadge) nameBadge.textContent = `📍 ${spotName}`;
+
+        await this.analyzeOpenWaterSpot(spot);
+    },
+
+    async analyzeOpenWaterSpot(spotOrCode) {
+        let spot = null;
+        const allSpots = (typeof OCEAN_WEATHER_DATA !== 'undefined' && Array.isArray(OCEAN_WEATHER_DATA) && OCEAN_WEATHER_DATA.length > 0)
+            ? OCEAN_WEATHER_DATA
+            : this.openWaterSpots;
+
+        if (typeof spotOrCode === 'object' && spotOrCode !== null) {
+            spot = spotOrCode;
+        } else {
+            spot = allSpots.find(s => s.code === spotOrCode || s.spot_id === spotOrCode || s.id === spotOrCode) || allSpots[0];
+        }
+        if (!spot) return;
+
+        const spotId = spot.id || spot.spot_id || spot.code;
+        const nm = spot.name || spot.spot_name || '';
+        const cleanName = nm.replace(/영덕|울진|동해|삼척|강릉|속초|양양|고성|태안|보령|서천|군산|부안|여수|남해|통영|부산|울산|거제|포항|경북|경남|강원|제주|해수욕장|해변|포구|항|해상/g, '').trim();
+
+        // Standard defaults
+        let waterTemp = (typeof spot.temp === 'number') ? spot.temp : 21.4;
+        let waveHeight = (typeof spot.wave === 'number') ? spot.wave : 0.6;
+        let wavePeriod = spot.wave_period || spot.wavePeriod || 6.5;
+        let windSpeed = (typeof spot.wind === 'number') ? spot.wind : 3.5;
+        let airTemp = 21.0;
+        let skyStatus = '맑음';
+        let rainProb = 0;
+        let windDir = '남서풍 ↙';
+        let tideHigh = spot.tideHigh || '16:40';
+        let tideLow = spot.tideLow || '10:30';
+
+        // Direct fetch from Supabase ocean_weather_cache
+        if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+            try {
+                let queryOr = `spot_id.eq.${spotId},spot_name.ilike.%${cleanName || nm}%,spot_name.ilike.%${nm}%`;
+                if (spot.buoy_code) queryOr += `,buoy_code.eq.${spot.buoy_code}`;
+                if (spot.tide_code) queryOr += `,tide_code.eq.${spot.tide_code}`;
+
+                const { data: dbRows } = await supabaseClient
+                    .from('ocean_weather_cache')
+                    .select('*')
+                    .or(queryOr);
+
+                if (dbRows && dbRows.length > 0) {
+                    dbRows.forEach(row => {
+                        if (row.water_temp && row.water_temp !== '정보없음' && row.water_temp !== '-') {
+                            const parsed = parseFloat(row.water_temp);
+                            if (!isNaN(parsed)) waterTemp = parsed;
+                        }
+                        if (row.wave_height && row.wave_height !== '정보없음' && row.wave_height !== '-') {
+                            const parsed = parseFloat(row.wave_height);
+                            if (!isNaN(parsed)) waveHeight = parsed;
+                        }
+                        if (row.wave_period && !isNaN(parseFloat(row.wave_period))) {
+                            wavePeriod = parseFloat(row.wave_period);
+                        }
+                        if (row.wind_speed && row.wind_speed !== '정보없음' && row.wind_speed !== '-') {
+                            const parsed = parseFloat(row.wind_speed);
+                            if (!isNaN(parsed)) windSpeed = parsed;
+                        }
+                        if (row.air_temp && row.air_temp !== '정보없음' && row.air_temp !== '-') {
+                            const parsed = parseFloat(row.air_temp);
+                            if (!isNaN(parsed)) airTemp = parsed;
+                        }
+                        if (row.sky_status) skyStatus = row.sky_status;
+                        if (row.rain_prob !== undefined && row.rain_prob !== null) rainProb = row.rain_prob;
+                        if (row.wind_dir) {
+                            windDir = (typeof formatOceanWindDir === 'function') ? formatOceanWindDir(row.wind_dir) : `${row.wind_dir}°`;
+                        }
+                        if (row.high_tide && row.high_tide !== '정보없음') {
+                            const m = row.high_tide.match(/(\d{2}:\d{2})/);
+                            if (m) tideHigh = m[1];
+                        }
+                        if (row.low_tide && row.low_tide !== '정보없음') {
+                            const m = row.low_tide.match(/(\d{2}:\d{2})/);
+                            if (m) tideLow = m[1];
+                        }
+                    });
+                }
+            } catch (e) {
+                console.warn('[AquaToolkit OpenWater Cache Sync]', e);
+            }
+        }
+
+        // 1. Water Temp & Suit Guide Update
         const tempEl = document.getElementById('owLiveTempText');
         const suitBadge = document.getElementById('owSuitGuideBadge');
-        if (tempEl) tempEl.textContent = spot.temp.toFixed(1);
+        if (tempEl) tempEl.textContent = waterTemp.toFixed(1);
 
         if (suitBadge) {
-            if (spot.temp >= 24) {
-                suitBadge.textContent = '🩱 24℃ 이상: 래시가드 / 일반 수영복 권장 (수온 쾌적)';
+            if (waterTemp >= 24) {
+                suitBadge.innerHTML = '🩱 <strong>24℃ 이상</strong>: 래시가드 / 일반 수영복 권장 (수온 쾌적)';
                 suitBadge.style.background = 'rgba(0, 230, 118, 0.15)';
                 suitBadge.style.borderColor = '#00e676';
                 suitBadge.style.color = '#00e676';
-            } else if (spot.temp >= 18) {
-                suitBadge.textContent = '🤿 18~23℃: 2~3mm 오픈워터 웻슈트 착용 권장 (체온 유지/부력 확보)';
+            } else if (waterTemp >= 18) {
+                suitBadge.innerHTML = '🤿 <strong>18~23℃</strong>: 2~3mm 오픈워터 웻슈트 권장 (체온 유지/부력 확보)';
                 suitBadge.style.background = 'rgba(0, 242, 254, 0.15)';
                 suitBadge.style.borderColor = '#00f2fe';
                 suitBadge.style.color = '#00f2fe';
             } else {
-                suitBadge.textContent = '⚠️ 18℃ 미만: 5mm 슈트 + 네오프렌 수모 필수! (저체온증 주의)';
+                suitBadge.innerHTML = '⚠️ <strong>18℃ 미만</strong>: 3~5mm 풀슈트 + 네오프렌 수모 필수 (저체온증 주의)';
                 suitBadge.style.background = 'rgba(255, 82, 82, 0.15)';
                 suitBadge.style.borderColor = '#ff5252';
                 suitBadge.style.color = '#ff5252';
             }
         }
 
+        // 2. Weather & Air Temp Update
+        const skyIconEl = document.getElementById('owLiveSkyIcon');
+        const skyTextEl = document.getElementById('owLiveSkyText');
+        const airTempEl = document.getElementById('owLiveAirTemp');
+        const rainProbEl = document.getElementById('owLiveRainProb');
+        const windDirEl = document.getElementById('owLiveWindDir');
+
+        let icon = '☀️';
+        if (skyStatus.includes('구름')) icon = '⛅';
+        else if (skyStatus.includes('흐림')) icon = '☁️';
+        else if (skyStatus.includes('비')) icon = '🌧️';
+        else if (skyStatus.includes('눈')) icon = '❄️';
+
+        if (skyIconEl) skyIconEl.textContent = icon;
+        if (skyTextEl) skyTextEl.textContent = skyStatus;
+        if (airTempEl) airTempEl.textContent = `${airTemp.toFixed(1)}°C`;
+        if (rainProbEl) rainProbEl.textContent = `${rainProb}%`;
+        if (windDirEl) windDirEl.textContent = windDir;
+
+        // 3. Safety Traffic Light, Wave Height, Wave Period & Wind Speed
         const lightEl = document.getElementById('owSafetyLightText');
-        const detailEl = document.getElementById('owWaveWindDetail');
-        if (detailEl) detailEl.textContent = `파고 ${spot.wave}m · 풍속 ${spot.wind}m/s`;
+        const waveHeightEl = document.getElementById('owWaveHeightText');
+        const wavePeriodEl = document.getElementById('owWavePeriodText');
+        const windSpeedEl = document.getElementById('owWindSpeedText');
+        const periodTipEl = document.getElementById('owWavePeriodTip');
+
+        if (waveHeightEl) waveHeightEl.textContent = `${waveHeight.toFixed(1)}m`;
+        if (wavePeriodEl) wavePeriodEl.textContent = `${wavePeriod.toFixed(1)}초`;
+        if (windSpeedEl) windSpeedEl.textContent = `${windSpeed.toFixed(1)}m/s`;
+
+        const isGroundSwell = (wavePeriod >= 8.5 && waveHeight >= 0.8);
+
+        if (periodTipEl) {
+            if (wavePeriod >= 8.5) {
+                periodTipEl.innerHTML = '⚠️ <strong>너울성 장주기 파도</strong>: 파주기가 길어 연안에서 파도가 급격히 솟구칠 수 있습니다.';
+                periodTipEl.style.color = '#ffb703';
+            } else {
+                periodTipEl.innerHTML = '🌊 <strong>안정적 파주기</strong>: 비교적 고른 잔파도로 연안 수영 조건 양호';
+                periodTipEl.style.color = '#94a3b8';
+            }
+        }
 
         if (lightEl) {
-            if (spot.wave < 0.8 && spot.wind < 5.0) {
+            if (waveHeight < 0.8 && windSpeed < 5.0 && !isGroundSwell) {
                 lightEl.innerHTML = '🟢 입수 적합 (양호)';
                 lightEl.style.color = '#00e676';
-            } else if (spot.wave < 1.4 && spot.wind < 7.5) {
+            } else if (waveHeight < 1.4 && windSpeed < 7.5) {
                 lightEl.innerHTML = '🟡 입수 주의 (안전부표 필수)';
                 lightEl.style.color = '#ffb703';
             } else {
@@ -23413,19 +23632,20 @@ const AquaToolkitEngine = {
             }
         }
 
+        // 4. Slack Tide Window
         const t1El = document.getElementById('owGoldenTime1');
         const t2El = document.getElementById('owGoldenTime2');
 
-        const lowH = parseInt(spot.tideLow.split(':')[0], 10);
-        const lowM = parseInt(spot.tideLow.split(':')[1], 10);
-        const highH = parseInt(spot.tideHigh.split(':')[0], 10);
-        const highM = parseInt(spot.tideHigh.split(':')[1], 10);
+        const lowH = parseInt(tideLow.split(':')[0], 10) || 10;
+        const lowM = parseInt(tideLow.split(':')[1], 10) || 30;
+        const highH = parseInt(tideHigh.split(':')[0], 10) || 16;
+        const highM = parseInt(tideHigh.split(':')[1], 10) || 45;
 
         function fmtTideWindow(h, m, label) {
             const startM = (m - 40 < 0) ? (m - 40 + 60) : (m - 40);
-            const startH = (m - 40 < 0) ? (h - 1) : h;
+            const startH = (m - 40 < 0) ? (h - 1 + 24) % 24 : h;
             const endM = (m + 40 >= 60) ? (m + 40 - 60) : (m + 40);
-            const endH = (m + 40 >= 60) ? (h + 1) : h;
+            const endH = (m + 40 >= 60) ? (h + 1) % 24 : h;
             const sStr = `${String(startH).padStart(2, '0')}:${String(startM).padStart(2, '0')}`;
             const eStr = `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
             return `${sStr} ~ ${eStr} (${label})`;
