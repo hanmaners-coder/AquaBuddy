@@ -22329,6 +22329,96 @@ const AquaToolkitEngine = {
         });
     },
 
+    switchFreedivingSector(sector) {
+        const sectors = ['all', 'timer', 'weight', 'frenzel'];
+        sectors.forEach(s => {
+            const btn = document.getElementById('fdSectorBtn_' + s);
+            if (btn) {
+                if (s === sector) {
+                    btn.classList.add('active');
+                    btn.style.background = 'rgba(0, 242, 254, 0.2)';
+                    btn.style.borderColor = '#00f2fe';
+                    btn.style.color = '#00f2fe';
+                    btn.style.fontWeight = '800';
+                } else {
+                    btn.classList.remove('active');
+                    btn.style.background = 'rgba(15, 23, 42, 0.8)';
+                    btn.style.borderColor = 'rgba(255,255,255,0.12)';
+                    btn.style.color = '#94a3b8';
+                    btn.style.fontWeight = '700';
+                }
+            }
+        });
+
+        const timerSec = document.getElementById('fdSubSectorTimer');
+        const weightSec = document.getElementById('panelFdWeight');
+        const frenzelSec = document.getElementById('panelFdFrenzel');
+
+        if (timerSec) timerSec.style.display = (sector === 'all' || sector === 'timer') ? 'block' : 'none';
+        if (weightSec) weightSec.style.display = (sector === 'all' || sector === 'weight') ? 'block' : 'none';
+        if (frenzelSec) frenzelSec.style.display = (sector === 'all' || sector === 'frenzel') ? 'block' : 'none';
+    },
+
+    switchSwimmingSector(sector) {
+        const sectors = ['all', 'routine', 'timer', 'swolf'];
+        sectors.forEach(s => {
+            const btn = document.getElementById('swimSectorBtn_' + s);
+            if (btn) {
+                if (s === sector) {
+                    btn.classList.add('active');
+                    btn.style.background = 'rgba(0, 242, 254, 0.2)';
+                    btn.style.borderColor = '#00f2fe';
+                    btn.style.color = '#00f2fe';
+                    btn.style.fontWeight = '800';
+                } else {
+                    btn.classList.remove('active');
+                    btn.style.background = 'rgba(15, 23, 42, 0.8)';
+                    btn.style.borderColor = 'rgba(255,255,255,0.12)';
+                    btn.style.color = '#94a3b8';
+                    btn.style.fontWeight = '700';
+                }
+            }
+        });
+
+        const routineSec = document.getElementById('panelSwimRoutine');
+        const timerSec = document.getElementById('panelSwimDeckTimer');
+        const swolfSec = document.getElementById('panelSwimSwolf');
+
+        if (routineSec) routineSec.style.display = (sector === 'all' || sector === 'routine') ? 'block' : 'none';
+        if (timerSec) timerSec.style.display = (sector === 'all' || sector === 'timer') ? 'block' : 'none';
+        if (swolfSec) swolfSec.style.display = (sector === 'all' || sector === 'swolf') ? 'block' : 'none';
+    },
+
+    switchScubaSector(sector) {
+        const sectors = ['all', 'sac', 'mod', 'log'];
+        sectors.forEach(s => {
+            const btn = document.getElementById('scubaSectorBtn_' + s);
+            if (btn) {
+                if (s === sector) {
+                    btn.classList.add('active');
+                    btn.style.background = 'rgba(0, 242, 254, 0.2)';
+                    btn.style.borderColor = '#00f2fe';
+                    btn.style.color = '#00f2fe';
+                    btn.style.fontWeight = '800';
+                } else {
+                    btn.classList.remove('active');
+                    btn.style.background = 'rgba(15, 23, 42, 0.8)';
+                    btn.style.borderColor = 'rgba(255,255,255,0.12)';
+                    btn.style.color = '#94a3b8';
+                    btn.style.fontWeight = '700';
+                }
+            }
+        });
+
+        const sacSec = document.getElementById('panelScubaSac');
+        const modSec = document.getElementById('panelScubaMod');
+        const logSec = document.getElementById('panelScubaLog');
+
+        if (sacSec) sacSec.style.display = (sector === 'all' || sector === 'sac') ? 'block' : 'none';
+        if (modSec) modSec.style.display = (sector === 'all' || sector === 'mod') ? 'block' : 'none';
+        if (logSec) logSec.style.display = (sector === 'all' || sector === 'log') ? 'block' : 'none';
+    },
+
     setTableMode(mode) {
         if (this.timerInterval) {
             if (!confirm('현재 진행 중인 훈련이 초기화됩니다. 변경하시겠습니까?')) return;
