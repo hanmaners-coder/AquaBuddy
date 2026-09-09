@@ -985,6 +985,7 @@ function switchMainView(viewName) {
     const feedSec = document.getElementById("mainFeedViewSection");
     const tideSec = document.getElementById("tideViewSection");
     const cctvSec = document.getElementById("cctvViewSection");
+    const toolkitSec = document.getElementById("toolkitViewSection");
 
     const categoryBar = document.getElementById("categoryFilterBar");
     const subFilterBar = document.getElementById("instructorSubFilterBar");
@@ -1022,6 +1023,38 @@ function switchMainView(viewName) {
     if (typeof updateCreateButtonText === "function") {
         updateCreateButtonText(viewName);
     }
+
+    // 🛠️ 1.5 아쿠아 툴킷 전용 뷰 (프리다이빙 CO2/O2 타이머, 계산기 허브)
+    if (viewName === "toolkit") {
+        document.body.classList.add("category-view-active", "toolkit-view-active");
+        document.body.classList.remove("tide-view-active", "category-view-tide");
+        if (feedSec) { feedSec.style.display = "none"; feedSec.classList.add("hidden"); }
+        if (tideSec) { tideSec.style.display = "none"; tideSec.classList.add("hidden"); }
+        if (cctvSec) { cctvSec.style.display = "none"; cctvSec.classList.add("hidden"); }
+        if (toolkitSec) { toolkitSec.style.display = "block"; toolkitSec.classList.remove("hidden"); }
+
+        if (categoryBar) categoryBar.style.display = "none";
+        if (subFilterBar) { subFilterBar.style.display = "none"; subFilterBar.classList.add("hidden"); }
+        if (activitySubFilterBar) { activitySubFilterBar.style.display = "none"; activitySubFilterBar.classList.add("hidden"); }
+        const commSubBarEarly = document.getElementById("communitySubFilterBar");
+        if (commSubBarEarly) { commSubBarEarly.style.display = "none"; commSubBarEarly.classList.add("hidden"); }
+        if (partnershipSubFilterBar) { partnershipSubFilterBar.style.display = "none"; partnershipSubFilterBar.classList.add("hidden"); }
+        if (partnershipTeaserBanner) { partnershipTeaserBanner.style.display = "none"; partnershipTeaserBanner.classList.add("hidden"); }
+        if (oceanWeatherSection) oceanWeatherSection.style.display = "none";
+        if (mainBannerSlider) mainBannerSlider.style.display = "none";
+
+        if (typeof window.AquaToolkitEngine !== "undefined" && typeof window.AquaToolkitEngine.init === "function") {
+            window.AquaToolkitEngine.init();
+        }
+        forceScrollToTop();
+        return;
+    }
+
+    if (toolkitSec) {
+        toolkitSec.style.display = "none";
+        toolkitSec.classList.add("hidden");
+    }
+    document.body.classList.remove("toolkit-view-active");
 
     // 2. 🌊 전국 해양 스팟 / CCTV 뷰 전환 (피드 및 홈 블록 100% 완전 은폐)
     if (viewName === "tide" || viewName === "spots" || viewName === "cctv") {
@@ -13436,6 +13469,11 @@ function renderDashboardBlocks() {
     const visiblePosts = (typeof posts !== 'undefined' && Array.isArray(posts))
         ? posts.filter(p => typeof isAuthorBlockedByMe !== 'function' || !isAuthorBlockedByMe(p))
         : [];
+
+    const buddyPosts = visiblePosts.filter(p => ["freediving", "scuba", "swimming", "openwater"].includes(p.category)).slice(0, 4);
+    const instPosts = visiblePosts.filter(p => p.category === "instructor").slice(0, 4);
+    const commPosts = visiblePosts.filter(p => p.category === "community").slice(0, 4);
+    const marketPosts = visiblePosts.filter(p => p.category === "market").slice(0, 4);
 
     const activeVoiceRooms = visiblePosts.filter(p => {
         const isVR = (p.is_voiceroom === true || p.post_type === 'voiceroom' || p.sports_type === 'voiceroom' || p.class_type === 'voiceroom' || p.category === 'voiceroom');
