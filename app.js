@@ -22059,3 +22059,604 @@ if (typeof document !== 'undefined') {
     }
 }
 
+// ============================================================================
+// 🛠️ AQUA TOOLKIT ENGINE (1인 셀프 트레이닝 랩 - 프리다이빙 CO2 / O2 숨참기 타이머)
+// ============================================================================
+const AquaToolkitEngine = {
+    audioCtx: null,
+    soundEnabled: true,
+    currentSport: 'freediving',
+    tableMode: 'CO2', // 'CO2' or 'O2'
+    preset: 'beginner', // 'beginner', 'intermediate', 'advanced', 'custom'
+    holdSec: 60,
+    restSec: 120,
+    roundsCount: 8,
+    plan: [],
+    currentRoundIndex: 0,
+    currentPhase: 'REST', // 'REST' (준비호흡) or 'HOLD' (숨참기) or 'COMPLETED'
+    phaseTotalSec: 120,
+    remainingSec: 120,
+    timerInterval: null,
+    isPaused: false,
+
+    init() {
+        this.loadStats();
+        this.generatePlan();
+        this.renderTablePreview();
+        this.resetTimer(false);
+        this.updateStatsDisplay();
+    },
+
+    // 🔊 Web Audio API 초기화 (모바일 자동재생 정책 방어: 반드시 사용자 제스처 이벤트 내에서 호출)
+    initAudio() {
+        if (!this.audioCtx) {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (AudioContextClass) {
+                this.audioCtx = new AudioContextClass();
+            }
+        }
+        if (this.audioCtx && this.audioCtx.state === 'suspended') {
+            this.audioCtx.resume().catch(err => console.warn('AudioContext resume notice:', err));
+        }
+    },
+
+    playTone(freq, duration, type = 'sine', gainVal = 0.2) {
+        if (!this.soundEnabled) return;
+        this.initAudio();
+        if (!this.audioCtx) return;
+
+        try {
+            const osc = this.audioCtx.createOscillator();
+            const gainNode = this.audioCtx.createGain();
+
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, this.audioCtx.currentTime);
+
+            gainNode.gain.setValueAtTime(gainVal, this.audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.0001, this.audioCtx.currentTime + duration);
+
+            osc.connect(gainNode);
+            gainNode.connect(this.audioCtx.destination);
+
+            osc.start();
+            osc.stop(this.audioCtx.currentTime + duration);
+        } catch(e) {
+            console.warn('Tone playback notice:', e);
+        }
+    },
+
+    playCountdownBeep() {
+        this.playTone(440, 0.12, 'sine', 0.18);
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+            try { navigator.vibrate(80); } catch(e) {}
+        }
+    },
+
+    playPhaseTransition() {
+        this.playTone(880, 0.18, 'triangle', 0.25);
+        setTimeout(() => {
+            this.playTone(1174.66, 0.28, 'sine', 0.25);
+        }, 120);
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+            try { navigator.vibrate([150, 50, 200]); } catch(e) {}
+        }
+    },
+
+    playCompletionFanfare() {
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((freq, idx) => {
+            setTimeout(() => {
+                this.playTone(freq, 0.35, 'triangle', 0.25);
+            }, idx * 170);
+        });
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+            try { navigator.vibrate([200, 100, 200, 100, 400]); } catch(e) {}
+        }
+    },
+
+    toggleSound() {
+        this.soundEnabled = !this.soundEnabled;
+        const icon = document.getElementById('toolkitSoundIcon');
+        const text = document.getElementById('toolkitSoundText');
+        if (icon && text) {
+            if (this.soundEnabled) {
+                icon.className = 'fa-solid fa-volume-high';
+                icon.style.color = '#00f2fe';
+                text.textContent = '소리 켬';
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark';
+                icon.style.color = '#94a3b8';
+                text.textContent = '음소거';
+            }
+        }
+    },
+
+    switchSport(sportKey) {
+        this.currentSport = sportKey;
+        document.querySelectorAll('.toolkit-sport-tab').forEach(tab => {
+            tab.classList.remove('active');
+            tab.style.background = 'rgba(255, 255, 255, 0.05)';
+            tab.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+            tab.style.color = '#94a3b8';
+        });
+
+        const activeTab = document.getElementById('toolkitTab' + sportKey.charAt(0).toUpperCase() + sportKey.slice(1));
+        if (activeTab) {
+            activeTab.classList.add('active');
+            activeTab.style.background = 'linear-gradient(135deg, rgba(0, 242, 254, 0.25), rgba(79, 172, 254, 0.35))';
+            activeTab.style.borderColor = '#00f2fe';
+            activeTab.style.color = '#00f2fe';
+        }
+
+        const panels = {
+            freediving: 'toolkitFreedivingPanel',
+            swimming: 'toolkitSwimmingPanel',
+            openwater: 'toolkitOpenwaterPanel',
+            scuba: 'toolkitScubaPanel'
+        };
+
+        Object.keys(panels).forEach(k => {
+            const p = document.getElementById(panels[k]);
+            if (p) p.style.display = (k === sportKey) ? 'block' : 'none';
+        });
+    },
+
+    setTableMode(mode) {
+        if (this.timerInterval) {
+            if (!confirm('현재 진행 중인 훈련이 초기화됩니다. 변경하시겠습니까?')) return;
+            this.resetTimer(false);
+        }
+        this.tableMode = mode;
+        const btnCO2 = document.getElementById('btnModeCO2');
+        const btnO2 = document.getElementById('btnModeO2');
+        const desc = document.getElementById('tableModeDesc');
+
+        if (mode === 'CO2') {
+            if (btnCO2) { btnCO2.style.background = '#00f2fe'; btnCO2.style.color = '#000'; }
+            if (btnO2) { btnO2.style.background = 'transparent'; btnO2.style.color = '#94a3b8'; }
+            if (desc) {
+                desc.innerHTML = '💡 <strong>CO2 테이블:</strong> 숨참기 시간(Hold)은 8라운드 내내 일정하게 유지하고, 준비호흡(Rest) 시간을 0:15씩 줄여 체내 이산화탄소 축적에 적응합니다.';
+            }
+        } else {
+            if (btnCO2) { btnCO2.style.background = 'transparent'; btnCO2.style.color = '#94a3b8'; }
+            if (btnO2) { btnO2.style.background = '#00f2fe'; btnO2.style.color = '#000'; }
+            if (desc) {
+                desc.innerHTML = '💨 <strong>O2 테이블:</strong> 준비호흡 시간(Rest)은 2분으로 고정하고, 숨참기(Hold) 시간을 매 라운드 0:15씩 늘려 저산소 내성을 강화합니다.';
+            }
+        }
+
+        this.applyPreset(this.preset);
+    },
+
+    applyPreset(presetKey) {
+        this.preset = presetKey;
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.classList.remove('active');
+            btn.style.background = 'rgba(255, 255, 255, 0.06)';
+            btn.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+            btn.style.color = '#cbd5e1';
+        });
+
+        const activeBtn = document.getElementById('preset' + presetKey.charAt(0).toUpperCase() + presetKey.slice(1));
+        if (activeBtn) {
+            activeBtn.classList.add('active');
+            activeBtn.style.background = 'rgba(0, 242, 254, 0.15)';
+            activeBtn.style.borderColor = '#00f2fe';
+            activeBtn.style.color = '#00f2fe';
+        }
+
+        if (presetKey === 'beginner') {
+            this.holdSec = 60;
+            this.restSec = 120;
+            this.roundsCount = 8;
+        } else if (presetKey === 'intermediate') {
+            this.holdSec = 90;
+            this.restSec = 120;
+            this.roundsCount = 8;
+        } else if (presetKey === 'advanced') {
+            this.holdSec = 135;
+            this.restSec = 135;
+            this.roundsCount = 8;
+        }
+
+        const inpHold = document.getElementById('inputHoldSec');
+        const inpRest = document.getElementById('inputRestSec');
+        const selRounds = document.getElementById('selectRounds');
+
+        if (inpHold) inpHold.value = this.holdSec;
+        if (inpRest) inpRest.value = this.restSec;
+        if (selRounds) selRounds.value = this.roundsCount;
+
+        this.generatePlan();
+        this.renderTablePreview();
+        this.resetTimer(false);
+    },
+
+    onCustomParamsChange() {
+        this.preset = 'custom';
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.classList.remove('active');
+            btn.style.background = 'rgba(255, 255, 255, 0.06)';
+            btn.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+            btn.style.color = '#cbd5e1';
+        });
+        const customBtn = document.getElementById('presetCustom');
+        if (customBtn) {
+            customBtn.classList.add('active');
+            customBtn.style.background = 'rgba(0, 242, 254, 0.15)';
+            customBtn.style.borderColor = '#00f2fe';
+            customBtn.style.color = '#00f2fe';
+        }
+
+        const inpHold = document.getElementById('inputHoldSec');
+        const inpRest = document.getElementById('inputRestSec');
+        const selRounds = document.getElementById('selectRounds');
+
+        if (inpHold) this.holdSec = Math.max(15, parseInt(inpHold.value, 10) || 60);
+        if (inpRest) this.restSec = Math.max(15, parseInt(inpRest.value, 10) || 120);
+        if (selRounds) this.roundsCount = parseInt(selRounds.value, 10) || 8;
+
+        this.generatePlan();
+        this.renderTablePreview();
+        this.resetTimer(false);
+    },
+
+    generatePlan() {
+        this.plan = [];
+        for (let i = 0; i < this.roundsCount; i++) {
+            let rTime, hTime;
+            if (this.tableMode === 'CO2') {
+                hTime = this.holdSec;
+                rTime = Math.max(15, this.restSec - (i * 15));
+            } else {
+                rTime = this.restSec;
+                hTime = this.holdSec + (i * 15);
+            }
+            this.plan.push({
+                round: i + 1,
+                rest: rTime,
+                hold: hTime
+            });
+        }
+    },
+
+    renderTablePreview() {
+        const grid = document.getElementById('tablePreviewGrid');
+        const totalText = document.getElementById('previewTotalTimeText');
+        if (!grid) return;
+
+        let totalSec = 0;
+        let html = '';
+
+        this.plan.forEach((item, idx) => {
+            totalSec += (item.rest + item.hold);
+            const isCurrent = (idx === this.currentRoundIndex && this.timerInterval !== null);
+            const borderStyle = isCurrent ? '2px solid #00f2fe' : '1px solid rgba(255, 255, 255, 0.08)';
+            const bgStyle = isCurrent ? 'rgba(0, 242, 254, 0.15)' : 'rgba(15, 23, 42, 0.85)';
+            const glowStyle = isCurrent ? 'box-shadow: 0 0 16px rgba(0, 242, 254, 0.4);' : '';
+
+            html += `
+                <div style="background: ${bgStyle}; border: ${borderStyle}; ${glowStyle} border-radius: 12px; padding: 10px 12px; font-size: 0.82rem; transition: all 0.3s ease;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span style="font-weight: 900; color: ${isCurrent ? '#00f2fe' : '#ffffff'};">Round ${item.round}</span>
+                        ${isCurrent ? '<span style="font-size: 0.7rem; background: #00f2fe; color: #000; padding: 1px 6px; border-radius: 6px; font-weight: 900;">진행중</span>' : ''}
+                    </div>
+                    <div style="display: flex; justify-content: space-between; color: #cbd5e1; font-size: 0.78rem;">
+                        <span>🫁 호흡: <strong style="color:#00f2fe;">${this.formatMMSS(item.rest)}</strong></span>
+                        <span>🛑 숨참기: <strong style="color:#ff5252;">${this.formatMMSS(item.hold)}</strong></span>
+                    </div>
+                </div>
+            `;
+        });
+
+        grid.innerHTML = html;
+        if (totalText) {
+            const min = Math.floor(totalSec / 60);
+            const sec = totalSec % 60;
+            totalText.textContent = `총 ${min}분 ${sec.toString().padStart(2, '0')}초`;
+        }
+    },
+
+    startTimer() {
+        this.initAudio();
+
+        if (this.currentPhase === 'COMPLETED') {
+            this.currentRoundIndex = 0;
+            this.currentPhase = 'REST';
+        }
+
+        const curPlan = this.plan[this.currentRoundIndex] || this.plan[0];
+        if (!this.isPaused) {
+            this.currentPhase = 'REST';
+            this.phaseTotalSec = curPlan.rest;
+            this.remainingSec = curPlan.rest;
+        }
+        this.isPaused = false;
+
+        const btnStart = document.getElementById('btnTimerStart');
+        const btnPause = document.getElementById('btnTimerPause');
+        if (btnStart) btnStart.style.display = 'none';
+        if (btnPause) { btnPause.style.display = 'inline-flex'; btnPause.innerHTML = '<i class="fa-solid fa-pause"></i> 일시정지'; }
+
+        this.updateTimerDisplay();
+        this.renderTablePreview();
+
+        if (this.timerInterval) clearInterval(this.timerInterval);
+        this.timerInterval = setInterval(() => this.tick(), 1000);
+    },
+
+    pauseTimer() {
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
+        }
+        this.isPaused = true;
+        const btnStart = document.getElementById('btnTimerStart');
+        const btnPause = document.getElementById('btnTimerPause');
+        if (btnStart) {
+            btnStart.style.display = 'inline-flex';
+            btnStart.innerHTML = '<i class="fa-solid fa-play"></i> 계속하기';
+        }
+        if (btnPause) btnPause.style.display = 'none';
+
+        const subMsg = document.getElementById('timerSubMessage');
+        if (subMsg) subMsg.textContent = '⏸️ 훈련이 일시정지되었습니다. 준비가 되면 [계속하기]를 누르세요.';
+    },
+
+    skipPhase() {
+        if (!this.plan || this.plan.length === 0) return;
+        this.initAudio();
+        this.advancePhase();
+    },
+
+    resetTimer(shouldConfirm = true) {
+        if (shouldConfirm && this.timerInterval) {
+            if (!confirm('훈련을 중단하고 처음으로 리셋하시겠습니까?')) return;
+        }
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
+        }
+        this.isPaused = false;
+        this.currentRoundIndex = 0;
+        this.currentPhase = 'REST';
+        const curPlan = this.plan[0] || { rest: 120, hold: 60 };
+        this.phaseTotalSec = curPlan.rest;
+        this.remainingSec = curPlan.rest;
+
+        const btnStart = document.getElementById('btnTimerStart');
+        const btnPause = document.getElementById('btnTimerPause');
+        if (btnStart) {
+            btnStart.style.display = 'inline-flex';
+            btnStart.innerHTML = '<i class="fa-solid fa-play"></i> 훈련 시작';
+        }
+        if (btnPause) btnPause.style.display = 'none';
+
+        this.updateTimerDisplay();
+        this.renderTablePreview();
+    },
+
+    tick() {
+        this.remainingSec--;
+
+        if (this.remainingSec === 10 || this.remainingSec === 5 || this.remainingSec === 4 || this.remainingSec === 3 || this.remainingSec === 2 || this.remainingSec === 1) {
+            this.playCountdownBeep();
+        }
+
+        if (this.remainingSec <= 0) {
+            this.advancePhase();
+        } else {
+            this.updateTimerDisplay();
+        }
+    },
+
+    advancePhase() {
+        this.playPhaseTransition();
+
+        if (this.currentPhase === 'REST') {
+            this.currentPhase = 'HOLD';
+            const curPlan = this.plan[this.currentRoundIndex];
+            this.phaseTotalSec = curPlan.hold;
+            this.remainingSec = curPlan.hold;
+        } else {
+            if (this.currentRoundIndex < this.plan.length - 1) {
+                this.currentRoundIndex++;
+                this.currentPhase = 'REST';
+                const curPlan = this.plan[this.currentRoundIndex];
+                this.phaseTotalSec = curPlan.rest;
+                this.remainingSec = curPlan.rest;
+            } else {
+                this.finishSession();
+                return;
+            }
+        }
+
+        this.updateTimerDisplay();
+        this.renderTablePreview();
+    },
+
+    finishSession() {
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
+        }
+        this.currentPhase = 'COMPLETED';
+        this.playCompletionFanfare();
+
+        const badge = document.getElementById('timerPhaseBadge');
+        const timeDisp = document.getElementById('timerTimeDisplay');
+        const subMsg = document.getElementById('timerSubMessage');
+        const board = document.getElementById('toolkitTimerBoard');
+        const bar = document.getElementById('timerPhaseProgressBar');
+        const btnStart = document.getElementById('btnTimerStart');
+        const btnPause = document.getElementById('btnTimerPause');
+
+        if (board) {
+            board.style.borderColor = '#ffd700';
+            board.style.boxShadow = '0 0 50px rgba(255, 215, 0, 0.4)';
+        }
+        if (badge) {
+            badge.style.background = 'rgba(255, 215, 0, 0.2)';
+            badge.style.borderColor = '#ffd700';
+            badge.style.color = '#ffd700';
+            badge.innerHTML = '🎉 세션 완주 성공! (COMPLETED)';
+        }
+        if (timeDisp) {
+            timeDisp.style.color = '#ffd700';
+            timeDisp.style.textShadow = '0 0 30px rgba(255, 215, 0, 0.6)';
+            timeDisp.textContent = 'DONE!';
+        }
+        if (subMsg) {
+            subMsg.textContent = '수고하셨습니다! 규칙적인 지상 훈련으로 숨참기 능력이 더욱 향상됩니다.';
+        }
+        if (bar) {
+            bar.style.width = '100%';
+            bar.style.background = 'linear-gradient(90deg, #ffd700, #ffb703)';
+        }
+        if (btnStart) {
+            btnStart.style.display = 'inline-flex';
+            btnStart.innerHTML = '<i class="fa-solid fa-rotate-left"></i> 새 훈련 시작';
+        }
+        if (btnPause) btnPause.style.display = 'none';
+
+        this.incrementCompletedSession();
+        if (typeof showToast === 'function') {
+            showToast('🎉 프리다이빙 숨참기 테이블 훈련을 성공적으로 완주했습니다!');
+        }
+    },
+
+    updateTimerDisplay() {
+        const badge = document.getElementById('timerPhaseBadge');
+        const roundDisp = document.getElementById('timerRoundDisplay');
+        const timeDisp = document.getElementById('timerTimeDisplay');
+        const subMsg = document.getElementById('timerSubMessage');
+        const bar = document.getElementById('timerPhaseProgressBar');
+        const board = document.getElementById('toolkitTimerBoard');
+
+        if (roundDisp) {
+            roundDisp.textContent = `Round ${this.currentRoundIndex + 1} of ${this.plan.length}`;
+        }
+        if (timeDisp) {
+            timeDisp.textContent = this.formatMMSS(Math.max(0, this.remainingSec));
+        }
+
+        const pct = this.phaseTotalSec > 0 ? Math.min(100, Math.max(0, ((this.phaseTotalSec - this.remainingSec) / this.phaseTotalSec) * 100)) : 0;
+        if (bar) {
+            bar.style.width = pct + '%';
+        }
+
+        if (this.currentPhase === 'REST') {
+            if (board) {
+                board.style.borderColor = '#00f2fe';
+                board.style.boxShadow = '0 0 50px rgba(0, 242, 254, 0.25)';
+            }
+            if (badge) {
+                badge.style.background = 'rgba(0, 242, 254, 0.2)';
+                badge.style.borderColor = '#00f2fe';
+                badge.style.color = '#00f2fe';
+                badge.style.boxShadow = '0 0 16px rgba(0, 242, 254, 0.3)';
+                badge.innerHTML = '🫁 준비호흡 (BREATHE-UP)';
+            }
+            if (timeDisp) {
+                timeDisp.style.color = '#00f2fe';
+                timeDisp.style.textShadow = '0 0 35px rgba(0, 242, 254, 0.6)';
+            }
+            if (bar) {
+                bar.style.background = 'linear-gradient(90deg, #00f2fe, #4facfe)';
+            }
+            if (subMsg && !this.isPaused) {
+                subMsg.textContent = '천천히 복식호흡을 하며 심박수를 낮추세요.';
+            }
+        } else if (this.currentPhase === 'HOLD') {
+            if (board) {
+                board.style.borderColor = '#ff5252';
+                board.style.boxShadow = '0 0 60px rgba(255, 82, 82, 0.35)';
+            }
+            if (badge) {
+                badge.style.background = 'rgba(255, 82, 82, 0.25)';
+                badge.style.borderColor = '#ff5252';
+                badge.style.color = '#ff5252';
+                badge.style.boxShadow = '0 0 20px rgba(255, 82, 82, 0.5)';
+                badge.innerHTML = '🛑 숨참기 (HOLD BREATH)';
+            }
+            if (timeDisp) {
+                timeDisp.style.color = '#ff5252';
+                timeDisp.style.textShadow = '0 0 40px rgba(255, 82, 82, 0.7)';
+            }
+            if (bar) {
+                bar.style.background = 'linear-gradient(90deg, #ff5252, #ff7675)';
+            }
+            if (subMsg && !this.isPaused) {
+                subMsg.textContent = '몸의 긴장을 풀고 편안한 생각을 떠올리세요. 이산화탄소 상승을 온전히 받아들입니다.';
+            }
+        }
+    },
+
+    formatMMSS(sec) {
+        const m = Math.floor(sec / 60);
+        const s = sec % 60;
+        return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    },
+
+    loadStats() {
+        try {
+            const pbVal = localStorage.getItem('aqua_freediving_pb');
+            this.personalBest = pbVal ? parseInt(pbVal, 10) : 150; // 기본 2분 30초
+            const todayKey = 'aqua_toolkit_sessions_' + new Date().toISOString().slice(0, 10);
+            this.completedSessions = parseInt(localStorage.getItem(todayKey) || '0', 10);
+        } catch(e) {
+            this.personalBest = 150;
+            this.completedSessions = 0;
+        }
+    },
+
+    incrementCompletedSession() {
+        try {
+            const todayKey = 'aqua_toolkit_sessions_' + new Date().toISOString().slice(0, 10);
+            this.completedSessions = (this.completedSessions || 0) + 1;
+            localStorage.setItem(todayKey, String(this.completedSessions));
+            this.updateStatsDisplay();
+        } catch(e) {}
+    },
+
+    updateStatsDisplay() {
+        const pbEl = document.getElementById('displayPB');
+        const sessEl = document.getElementById('displayCompletedSessions');
+        if (pbEl) {
+            const m = Math.floor(this.personalBest / 60);
+            const s = this.personalBest % 60;
+            pbEl.textContent = `${m.toString().padStart(2, '0')}분 ${s.toString().padStart(2, '0')}초`;
+        }
+        if (sessEl) {
+            sessEl.textContent = this.completedSessions || 0;
+        }
+    },
+
+    editPB() {
+        const curMin = Math.floor(this.personalBest / 60);
+        const curSec = this.personalBest % 60;
+        const input = prompt('나의 스태틱 숨참기 최고 기록(STA PB)을 초 단위 또는 분:초 형식으로 입력하세요:\n(예: 150 또는 2:30)', `${curMin}:${curSec.toString().padStart(2, '0')}`);
+        if (!input) return;
+
+        let totalSeconds = 0;
+        if (input.includes(':')) {
+            const parts = input.split(':');
+            totalSeconds = (parseInt(parts[0], 10) || 0) * 60 + (parseInt(parts[1], 10) || 0);
+        } else {
+            totalSeconds = parseInt(input, 10) || 0;
+        }
+
+        if (totalSeconds >= 10 && totalSeconds <= 600) {
+            this.personalBest = totalSeconds;
+            try { localStorage.setItem('aqua_freediving_pb', String(totalSeconds)); } catch(e) {}
+            this.updateStatsDisplay();
+            if (typeof showToast === 'function') {
+                showToast(`🏆 최고 기록(PB)이 ${this.formatMMSS(totalSeconds)}로 갱신되었습니다!`);
+            }
+        } else {
+            alert('올바른 시간을 입력해 주세요 (10초 ~ 600초).');
+        }
+    }
+};
+window.AquaToolkitEngine = AquaToolkitEngine;
+

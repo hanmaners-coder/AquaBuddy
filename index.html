@@ -35,6 +35,8 @@
                     text = "제휴 입점 문의하기";
                 } else if (catKey === "my_activity") {
                     text = "새 모집글 등록하기";
+                } else if (catKey === "toolkit") {
+                    text = "새 훈련 기록하기";
                 }
                 btnTextEls.forEach(function(el) { el.textContent = text; });
             };
@@ -65,10 +67,11 @@
 
                 window.updateCreateButtonText(viewName);
 
-                // 2. 주요 섹션 (피드 / 해양스팟 / CCTV) 뷰 분기
+                // 2. 주요 섹션 (피드 / 해양스팟 / CCTV / 아쿠아툴킷) 뷰 분기
                 var feedSec = document.getElementById("mainFeedViewSection");
                 var tideSec = document.getElementById("tideViewSection");
                 var cctvSec = document.getElementById("cctvViewSection");
+                var toolkitSec = document.getElementById("toolkitViewSection");
 
                 var categoryBar = document.getElementById("categoryFilterBar");
                 var subFilterBar = document.getElementById("instructorSubFilterBar");
@@ -77,6 +80,33 @@
                 var partnershipTeaserBanner = document.getElementById("partnershipTeaserBanner");
                 var oceanWeatherSection = document.getElementById("oceanWeatherSection");
                 var mainBannerSlider = document.getElementById("mainBannerSlider");
+
+                // 🛠️ 아쿠아 툴킷 전용 뷰 (프리다이빙 CO2/O2 타이머, 계산기 허브)
+                if (viewName === "toolkit") {
+                    document.body.classList.add("category-view-active", "toolkit-view-active");
+                    document.body.classList.remove("tide-view-active", "category-view-tide");
+                    if (feedSec) { feedSec.style.display = "none"; feedSec.classList.add("hidden"); }
+                    if (tideSec) { tideSec.style.display = "none"; tideSec.classList.add("hidden"); }
+                    if (cctvSec) { cctvSec.style.display = "none"; cctvSec.classList.add("hidden"); }
+                    if (toolkitSec) { toolkitSec.style.display = "block"; toolkitSec.classList.remove("hidden"); }
+
+                    if (categoryBar) categoryBar.style.display = "none";
+                    if (subFilterBar) { subFilterBar.style.display = "none"; subFilterBar.classList.add("hidden"); }
+                    if (activitySubFilterBar) { activitySubFilterBar.style.display = "none"; activitySubFilterBar.classList.add("hidden"); }
+                    if (partnershipSubFilterBar) { partnershipSubFilterBar.style.display = "none"; partnershipSubFilterBar.classList.add("hidden"); }
+                    if (partnershipTeaserBanner) { partnershipTeaserBanner.style.display = "none"; partnershipTeaserBanner.classList.add("hidden"); }
+                    if (oceanWeatherSection) oceanWeatherSection.style.display = "none";
+                    if (mainBannerSlider) mainBannerSlider.style.display = "none";
+
+                    if (typeof window.AquaToolkitEngine !== "undefined" && typeof window.AquaToolkitEngine.init === "function") {
+                        window.AquaToolkitEngine.init();
+                    }
+                    window.forceScrollToTop();
+                    return;
+                }
+
+                if (toolkitSec) { toolkitSec.style.display = "none"; toolkitSec.classList.add("hidden"); }
+                document.body.classList.remove("toolkit-view-active");
 
                 // 🌊 전국 해양 스팟 / CCTV 뷰
                 if (viewName === "tide" || viewName === "spots" || viewName === "cctv") {
@@ -681,6 +711,9 @@
                  <a href="#" class="nav-item" id="navLinkTide" onclick="switchMainView('tide'); return false;">
                      <i class="fa-solid fa-water"></i> 🌊 전국 해양 스팟
                  </a>
+                 <a href="#" class="nav-item" id="navLinkToolkit" onclick="switchMainView('toolkit'); return false;" style="background: rgba(0, 242, 254, 0.08); border: 1px solid rgba(0, 242, 254, 0.35); font-weight: 800;">
+                     <i class="fa-solid fa-stopwatch-20" style="color: #00f2fe;"></i> 🛠️ 아쿠아 툴킷
+                 </a>
              </nav>
          </div>
      </header>
@@ -753,6 +786,9 @@
                     </button>
                     <button class="tab-btn partnership-tab" data-category="partnership" onclick="filterByCategory('partnership'); return false;">
                         <i class="fa-solid fa-handshake"></i> 투어 & 제휴
+                    </button>
+                    <button class="tab-btn toolkit-tab" data-category="toolkit" onclick="switchMainView('toolkit'); return false;" style="background: rgba(0, 242, 254, 0.12); border: 1.5px solid #00f2fe; color: #00f2fe; font-weight: 800;">
+                        <i class="fa-solid fa-stopwatch-20"></i> 🛠️ 아쿠아 툴킷
                     </button>
                 </div>
  
@@ -1186,20 +1222,265 @@
                  <div class="filter-item search-box" style="margin-bottom: 20px; max-width: 500px;">
                      <i class="fa-solid fa-magnifying-glass"></i>
                      <input type="text" id="cctvSearchInput" placeholder="해양 CCTV 관측 스팟 검색 (예: 해운대, 임랑, 서귀포, 독도, 오륙도)..." oninput="handleCctvSearch(this.value)">
-                 </div>
- 
-                 <!-- Dynamically rendered CCTV Cards (4-Column Command Center View on PC) -->
                  <div class="webcam-grid" id="webcamGrid">
                  </div>
-             </section>
-         </div>
- 
-     </main>
+              </section>
+          </div>
+  
+        <!-- VIEW 4: Dedicated Aqua Toolkit View Section (#toolkitViewSection) -->
+        <div id="toolkitViewSection" class="hidden" style="display: none; width: 100%; box-sizing: border-box; margin-bottom: 40px;">
+            <div class="toolkit-container" style="max-width: 900px; margin: 0 auto; width: 100%; box-sizing: border-box;">
+                
+                <!-- 1. Toolkit Header / Intro Banner -->
+                <div style="background: linear-gradient(135deg, rgba(13, 23, 38, 0.95), rgba(15, 30, 55, 0.95)); border: 1.5px solid rgba(0, 242, 254, 0.4); border-radius: 20px; padding: 22px 24px; margin-bottom: 20px; box-shadow: 0 10px 40px rgba(0, 242, 254, 0.15); backdrop-filter: blur(12px);">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+                        <div>
+                            <span style="background: rgba(0, 242, 254, 0.15); border: 1px solid #00f2fe; color: #00f2fe; font-size: 0.8rem; font-weight: 800; padding: 4px 12px; border-radius: 12px; display: inline-block; margin-bottom: 6px;">
+                                🛠️ AquaBuddy Pro Toolkit
+                            </span>
+                            <h2 style="margin: 0; color: #ffffff; font-size: 1.45rem; font-weight: 900; display: flex; align-items: center; gap: 10px;">
+                                <i class="fa-solid fa-stopwatch-20" style="color: #00f2fe;"></i> 아쿠아 툴킷 (셀프 트레이닝 랩)
+                            </h2>
+                            <p style="margin: 6px 0 0 0; color: #94a3b8; font-size: 0.86rem; line-height: 1.4;">
+                                혼자서도 실력을 키우는 다이버 & 수영인을 위한 전문 계산기 및 인터벌 트레이너
+                            </p>
+                        </div>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <button type="button" onclick="AquaToolkitEngine.toggleSound()" id="toolkitSoundToggleBtn" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 8px 14px; border-radius: 12px; font-size: 0.82rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                                <i class="fa-solid fa-volume-high" id="toolkitSoundIcon" style="color: #00f2fe;"></i> <span id="toolkitSoundText">소리 켬</span>
+                            </button>
+                        </div>
+                    </div>
 
-        <!-- Main Footer & Customer Center -->
+                    <!-- 4대 종목 탭 바 -->
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 14px; margin-top: 10px;">
+                        <button type="button" class="toolkit-sport-tab active" onclick="AquaToolkitEngine.switchSport('freediving')" id="toolkitTabFreediving" style="background: linear-gradient(135deg, rgba(0, 242, 254, 0.25), rgba(79, 172, 254, 0.35)); border: 1.5px solid #00f2fe; color: #00f2fe; padding: 8px 16px; border-radius: 12px; font-weight: 800; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                            🤿 프리다이빙 (숨참기 랩)
+                        </button>
+                        <button type="button" class="toolkit-sport-tab" onclick="AquaToolkitEngine.switchSport('swimming')" id="toolkitTabSwimming" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15); color: #94a3b8; padding: 8px 16px; border-radius: 12px; font-weight: 700; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                            🏊‍♂️ 실내 수영 <span style="font-size: 0.72rem; background: rgba(255, 183, 3, 0.2); color: #ffb703; padding: 1px 6px; border-radius: 6px;">준비중</span>
+                        </button>
+                        <button type="button" class="toolkit-sport-tab" onclick="AquaToolkitEngine.switchSport('openwater')" id="toolkitTabOpenwater" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15); color: #94a3b8; padding: 8px 16px; border-radius: 12px; font-weight: 700; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                            🌊 바다 수영 <span style="font-size: 0.72rem; background: rgba(255, 183, 3, 0.2); color: #ffb703; padding: 1px 6px; border-radius: 6px;">준비중</span>
+                        </button>
+                        <button type="button" class="toolkit-sport-tab" onclick="AquaToolkitEngine.switchSport('scuba')" id="toolkitTabScuba" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15); color: #94a3b8; padding: 8px 16px; border-radius: 12px; font-weight: 700; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                            🤿 스쿠버 <span style="font-size: 0.72rem; background: rgba(255, 183, 3, 0.2); color: #ffb703; padding: 1px 6px; border-radius: 6px;">준비중</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2. [프리다이빙 전용 패널] -->
+                <div id="toolkitFreedivingPanel">
+                    <!-- 안전 경고 배너 -->
+                    <div style="background: rgba(255, 71, 87, 0.1); border: 1.5px solid #ff4757; border-radius: 14px; padding: 12px 16px; margin-bottom: 20px; display: flex; align-items: flex-start; gap: 12px; box-shadow: 0 4px 20px rgba(255, 71, 87, 0.15);">
+                        <i class="fa-solid fa-triangle-exclamation" style="color: #ff4757; font-size: 1.3rem; margin-top: 2px; flex-shrink: 0;"></i>
+                        <div style="font-size: 0.84rem; color: #ffebee; line-height: 1.5;">
+                            <strong style="color: #ff4757; font-weight: 900;">⚠️ [절대 안전 수칙 - 단독 입수 금지]</strong><br>
+                            스태틱(숨참기) 훈련 중 블랙아웃(LMC/BO) 위험이 있으므로, <strong>절대로 물속(욕조, 수영장, 바다)에서 혼자 연습하지 마세요!</strong> 반드시 침대, 바닥 등 안전한 지상 환경에서 누운 상태로 진행해야 합니다.
+                        </div>
+                    </div>
+
+                    <!-- 트레이닝 테이블 설정 카드 -->
+                    <div style="background: rgba(13, 23, 38, 0.95); border: 1px solid rgba(0, 242, 254, 0.3); border-radius: 18px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.35);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-sliders" style="color: #00f2fe;"></i>
+                                <span style="color: #fff; font-weight: 800; font-size: 1rem;">훈련 모드 & 테이블 설정</span>
+                            </div>
+                            <!-- CO2 / O2 모드 토글 -->
+                            <div style="display: flex; background: rgba(0,0,0,0.4); border-radius: 10px; padding: 3px; border: 1px solid rgba(0, 242, 254, 0.3);">
+                                <button type="button" id="btnModeCO2" onclick="AquaToolkitEngine.setTableMode('CO2')" style="background: #00f2fe; color: #000; border: none; padding: 6px 14px; border-radius: 8px; font-weight: 800; font-size: 0.82rem; cursor: pointer; transition: all 0.2s ease;">
+                                    CO2 내성 테이블
+                                </button>
+                                <button type="button" id="btnModeO2" onclick="AquaToolkitEngine.setTableMode('O2')" style="background: transparent; color: #94a3b8; border: none; padding: 6px 14px; border-radius: 8px; font-weight: 800; font-size: 0.82rem; cursor: pointer; transition: all 0.2s ease;">
+                                    O2 저산소 테이블
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 모드 안내 설명 문구 -->
+                        <div id="tableModeDesc" style="background: rgba(0, 242, 254, 0.08); border-left: 3px solid #00f2fe; padding: 8px 12px; border-radius: 0 8px 8px 0; margin-bottom: 16px; font-size: 0.82rem; color: #e2e8f0;">
+                            💡 <strong>CO2 테이블:</strong> 숨참기 시간(Hold)은 8라운드 내내 일정하게 유지하고, 준비호흡(Rest) 시간을 2:00부터 0:15씩 줄여 체내 이산화탄소 상승에 적응합니다.
+                        </div>
+
+                        <!-- 난이도 프리셋 버튼 & 커스텀 세팅 -->
+                        <div style="margin-bottom: 16px;">
+                            <div style="font-size: 0.82rem; color: #94a3b8; font-weight: 700; margin-bottom: 8px;">🎯 난이도 프리셋 (원클릭 세팅):</div>
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                <button type="button" class="preset-btn active" onclick="AquaToolkitEngine.applyPreset('beginner')" id="presetBeginner" style="background: rgba(0, 242, 254, 0.15); border: 1px solid #00f2fe; color: #00f2fe; padding: 6px 14px; border-radius: 8px; font-weight: 700; font-size: 0.82rem; cursor: pointer;">
+                                    🌱 입문 (숨참기 1분)
+                                </button>
+                                <button type="button" class="preset-btn" onclick="AquaToolkitEngine.applyPreset('intermediate')" id="presetIntermediate" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.2); color: #cbd5e1; padding: 6px 14px; border-radius: 8px; font-weight: 700; font-size: 0.82rem; cursor: pointer;">
+                                    🏊‍♂️ 중급 (숨참기 1분 30초)
+                                </button>
+                                <button type="button" class="preset-btn" onclick="AquaToolkitEngine.applyPreset('advanced')" id="presetAdvanced" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.2); color: #cbd5e1; padding: 6px 14px; border-radius: 8px; font-weight: 700; font-size: 0.82rem; cursor: pointer;">
+                                    🐬 고급 (숨참기 2분 15초)
+                                </button>
+                                <button type="button" class="preset-btn" onclick="AquaToolkitEngine.applyPreset('custom')" id="presetCustom" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.2); color: #cbd5e1; padding: 6px 14px; border-radius: 8px; font-weight: 700; font-size: 0.82rem; cursor: pointer;">
+                                    ⚙️ 직접 커스텀
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 커스텀 시간 입력 (접이식/조건부 노출) -->
+                        <div id="customSettingsArea" style="display: flex; gap: 14px; flex-wrap: wrap; align-items: center; background: rgba(0,0,0,0.3); padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
+                            <div style="flex: 1; min-width: 140px;">
+                                <label style="display: block; font-size: 0.78rem; color: #94a3b8; font-weight: 700; margin-bottom: 4px;">기준 숨참기(Hold)</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <input type="number" id="inputHoldSec" min="15" max="360" step="5" value="60" onchange="AquaToolkitEngine.onCustomParamsChange()" style="width: 100%; background: #070e17; border: 1px solid rgba(0,242,254,0.4); color: #fff; padding: 7px 10px; border-radius: 8px; font-weight: 800; font-size: 0.9rem; outline: none;">
+                                    <span style="color: #94a3b8; font-size: 0.8rem;">초</span>
+                                </div>
+                            </div>
+                            <div style="flex: 1; min-width: 140px;">
+                                <label style="display: block; font-size: 0.78rem; color: #94a3b8; font-weight: 700; margin-bottom: 4px;">첫 호흡시간(Rest)</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <input type="number" id="inputRestSec" min="30" max="300" step="5" value="120" onchange="AquaToolkitEngine.onCustomParamsChange()" style="width: 100%; background: #070e17; border: 1px solid rgba(0,242,254,0.4); color: #fff; padding: 7px 10px; border-radius: 8px; font-weight: 800; font-size: 0.9rem; outline: none;">
+                                    <span style="color: #94a3b8; font-size: 0.8rem;">초</span>
+                                </div>
+                            </div>
+                            <div style="flex: 1; min-width: 110px;">
+                                <label style="display: block; font-size: 0.78rem; color: #94a3b8; font-weight: 700; margin-bottom: 4px;">총 라운드 수</label>
+                                <select id="selectRounds" onchange="AquaToolkitEngine.onCustomParamsChange()" style="width: 100%; background: #070e17; border: 1px solid rgba(0,242,254,0.4); color: #fff; padding: 7px 10px; border-radius: 8px; font-weight: 800; font-size: 0.9rem; outline: none;">
+                                    <option value="6">6 라운드</option>
+                                    <option value="8" selected>8 라운드</option>
+                                    <option value="10">10 라운드</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. 메인 디지털 타이머 보드 (Dark/Neon High-Visibility) -->
+                    <div id="toolkitTimerBoard" style="background: linear-gradient(180deg, rgba(8, 16, 28, 0.98), rgba(4, 8, 16, 0.98)); border: 2px solid #00f2fe; border-radius: 24px; padding: 30px 20px; margin-bottom: 24px; text-align: center; box-shadow: 0 0 50px rgba(0, 242, 254, 0.25); position: relative; overflow: hidden; transition: all 0.3s ease;">
+                        
+                        <!-- 현재 상태 뱃지 -->
+                        <div style="margin-bottom: 8px;">
+                            <span id="timerPhaseBadge" style="background: rgba(0, 242, 254, 0.2); border: 1.5px solid #00f2fe; color: #00f2fe; font-size: 1.05rem; font-weight: 900; padding: 6px 20px; border-radius: 20px; letter-spacing: 0.5px; display: inline-block; transition: all 0.3s ease; box-shadow: 0 0 16px rgba(0, 242, 254, 0.3);">
+                                🫁 준비호흡 (BREATHE-UP)
+                            </span>
+                        </div>
+
+                        <!-- 라운드 정보 -->
+                        <div id="timerRoundDisplay" style="color: #94a3b8; font-size: 0.92rem; font-weight: 800; margin-bottom: 12px;">
+                            Round 1 of 8
+                        </div>
+
+                        <!-- 대형 디지털 시간 표시기 -->
+                        <div id="timerTimeDisplay" style="font-size: clamp(3.8rem, 12vw, 5.5rem); font-weight: 900; font-family: monospace, sans-serif; color: #00f2fe; text-shadow: 0 0 35px rgba(0, 242, 254, 0.6); line-height: 1.1; margin: 10px 0; letter-spacing: 2px; transition: all 0.3s ease;">
+                            02:00
+                        </div>
+
+                        <!-- 안내 서브텍스트 -->
+                        <div id="timerSubMessage" style="color: #cbd5e1; font-size: 0.88rem; font-weight: 600; min-height: 22px; margin-bottom: 18px;">
+                            천천히 복식호흡을 하며 심박수를 낮추세요.
+                        </div>
+
+                        <!-- 현재 단계 프로그레스 바 -->
+                        <div style="width: 100%; max-width: 480px; height: 10px; background: rgba(255, 255, 255, 0.1); border-radius: 10px; margin: 0 auto 24px auto; overflow: hidden;">
+                            <div id="timerPhaseProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #00f2fe, #4facfe); border-radius: 10px; transition: width 0.2s linear;"></div>
+                        </div>
+
+                        <!-- 컨트롤 버튼 그룹 -->
+                        <div style="display: flex; justify-content: center; align-items: center; gap: 12px; flex-wrap: wrap;">
+                            <button type="button" id="btnTimerStart" onclick="AquaToolkitEngine.startTimer()" style="background: linear-gradient(135deg, #00f2fe, #00c6ff); color: #070e17; font-weight: 900; font-size: 1.15rem; padding: 14px 34px; border-radius: 14px; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 6px 20px rgba(0, 242, 254, 0.4); transition: all 0.2s ease;">
+                                <i class="fa-solid fa-play"></i> 훈련 시작
+                            </button>
+                            <button type="button" id="btnTimerPause" onclick="AquaToolkitEngine.pauseTimer()" style="display: none; background: rgba(255, 183, 3, 0.2); border: 1.5px solid #ffb703; color: #ffb703; font-weight: 900; font-size: 1.15rem; padding: 14px 28px; border-radius: 14px; cursor: pointer; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-pause"></i> 일시정지
+                            </button>
+                            <button type="button" id="btnTimerSkip" onclick="AquaToolkitEngine.skipPhase()" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-weight: 700; font-size: 0.95rem; padding: 14px 20px; border-radius: 14px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                                <i class="fa-solid fa-forward-step"></i> 다음 단계
+                            </button>
+                            <button type="button" id="btnTimerReset" onclick="AquaToolkitEngine.resetTimer()" style="background: rgba(255, 71, 87, 0.12); border: 1px solid #ff4757; color: #ff4757; font-weight: 700; font-size: 0.95rem; padding: 14px 20px; border-radius: 14px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                                <i class="fa-solid fa-rotate-left"></i> 리셋
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 4. 8-Round 테이블 프리뷰 카드 그리드 -->
+                    <div style="background: rgba(13, 23, 38, 0.9); border: 1px solid rgba(0, 242, 254, 0.2); border-radius: 18px; padding: 20px; margin-bottom: 24px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+                            <span style="color: #fff; font-weight: 800; font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">
+                                <i class="fa-solid fa-table-list" style="color: #00f2fe;"></i> 테이블 라운드 플랜 (<span id="previewTotalTimeText">총 20분 00초</span>)
+                            </span>
+                            <span style="font-size: 0.8rem; color: #94a3b8;">현재 진행 중인 라운드가 네온으로 빛납니다</span>
+                        </div>
+                        <div id="tablePreviewGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px;">
+                            <!-- Injected dynamically by AquaToolkitEngine.renderTablePreview() -->
+                        </div>
+                    </div>
+
+                    <!-- 5. 개인 기록 및 PB 다이어리 카드 -->
+                    <div style="background: rgba(13, 23, 38, 0.9); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 18px; padding: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+                        <div style="display: flex; align-items: center; gap: 14px;">
+                            <div style="width: 48px; height: 48px; border-radius: 14px; background: linear-gradient(135deg, rgba(255, 183, 3, 0.2), rgba(251, 133, 0, 0.3)); border: 1px solid #ffb703; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: #ffb703;">
+                                🏆
+                            </div>
+                            <div>
+                                <div style="font-size: 0.8rem; color: #94a3b8; font-weight: 700;">내 스태틱 최고 기록 (STA PB)</div>
+                                <div style="font-size: 1.15rem; font-weight: 900; color: #ffffff; display: flex; align-items: center; gap: 8px;">
+                                    <span id="displayPB">02분 30초</span>
+                                    <button type="button" onclick="AquaToolkitEngine.editPB()" style="background: none; border: 1px solid rgba(255,255,255,0.2); color: #94a3b8; font-size: 0.72rem; padding: 2px 8px; border-radius: 6px; cursor: pointer;">수정</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 14px;">
+                            <div style="width: 48px; height: 48px; border-radius: 14px; background: rgba(0, 230, 118, 0.15); border: 1px solid #00e676; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: #00e676;">
+                                🔥
+                            </div>
+                            <div>
+                                <div style="font-size: 0.8rem; color: #94a3b8; font-weight: 700;">오늘 완주한 세션</div>
+                                <div style="font-size: 1.15rem; font-weight: 900; color: #00e676;">
+                                    <span id="displayCompletedSessions">0</span>회 완주
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- 3. [실내 수영 전용 패널 - 준비중 플레이스홀더] -->
+                <div id="toolkitSwimmingPanel" style="display: none; background: rgba(13, 23, 38, 0.95); border: 1px solid rgba(0, 242, 254, 0.2); border-radius: 20px; padding: 40px 20px; text-align: center;">
+                    <div style="font-size: 3rem; margin-bottom: 12px;">🏊‍♂️</div>
+                    <h3 style="color: #fff; font-size: 1.25rem; font-weight: 900; margin-bottom: 8px;">수영 세트 플래너 & SWOLF 계산기</h3>
+                    <p style="color: #94a3b8; font-size: 0.9rem; max-width: 450px; margin: 0 auto 20px auto; line-height: 1.5;">
+                        수영장 갈 때마다 고민되던 훈련 루틴! 초/중/고급 인터벌 표 생성과 페이스 환산기가 곧 업데이트됩니다.
+                    </p>
+                    <span style="background: rgba(255, 183, 3, 0.15); border: 1px solid #ffb703; color: #ffb703; padding: 6px 16px; border-radius: 20px; font-weight: 800; font-size: 0.85rem;">
+                        ⏳ 2단계 출시 예정
+                    </span>
+                </div>
+
+                <!-- 4. [바다 수영 전용 패널 - 준비중 플레이스홀더] -->
+                <div id="toolkitOpenwaterPanel" style="display: none; background: rgba(13, 23, 38, 0.95); border: 1px solid rgba(0, 242, 254, 0.2); border-radius: 20px; padding: 40px 20px; text-align: center;">
+                    <div style="font-size: 3rem; margin-bottom: 12px;">🌊</div>
+                    <h3 style="color: #fff; font-size: 1.25rem; font-weight: 900; margin-bottom: 8px;">실시간 수온별 슈트 가이드 & 정조 안심타이밍</h3>
+                    <p style="color: #94a3b8; font-size: 0.9rem; max-width: 450px; margin: 0 auto 20px auto; line-height: 1.5;">
+                        전국 222개 부이 실시간 수온에 맞춘 웻슈트 추천과 조류가 가장 약한 정조(물돌이) 골든타임 알리미가 곧 찾아옵니다.
+                    </p>
+                    <span style="background: rgba(255, 183, 3, 0.15); border: 1px solid #ffb703; color: #ffb703; padding: 6px 16px; border-radius: 20px; font-weight: 800; font-size: 0.85rem;">
+                        ⏳ 2단계 출시 예정
+                    </span>
+                </div>
+
+                <!-- 5. [스쿠버다이빙 전용 패널 - 준비중 플레이스홀더] -->
+                <div id="toolkitScubaPanel" style="display: none; background: rgba(13, 23, 38, 0.95); border: 1px solid rgba(0, 242, 254, 0.2); border-radius: 20px; padding: 40px 20px; text-align: center;">
+                    <div style="font-size: 3rem; margin-bottom: 12px;">🤿</div>
+                    <h3 style="color: #fff; font-size: 1.25rem; font-weight: 900; margin-bottom: 8px;">SAC 공기소모율 & 나이트록스 MOD 계산기</h3>
+                    <p style="color: #94a3b8; font-size: 0.9rem; max-width: 450px; margin: 0 auto 20px auto; line-height: 1.5;">
+                        내 폐활량과 호흡 효율을 측정하는 분당 공기 소모율(SAC)과 산소 한계 수심 계산기가 탑재될 예정입니다.
+                    </p>
+                    <span style="background: rgba(255, 183, 3, 0.15); border: 1px solid #ffb703; color: #ffb703; padding: 6px 16px; border-radius: 20px; font-weight: 800; font-size: 0.85rem;">
+                        ⏳ 2단계 출시 예정
+                    </span>
+                </div>
+
+            </div>
+        </div>
+  
+      </main>
+
     <footer class="main-footer" style="background: rgba(10, 25, 47, 0.95); color: #94a3b8; padding: 45px 20px 60px; font-size: 0.88rem; border-top: 1px solid rgba(0, 242, 254, 0.2); margin-top: 50px; position: relative; z-index: 10;">
         <div class="footer-container" style="max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; text-align: center;">
-            
             <!-- Global Footer Ad Banner: 바다수영 & 해양 장비 특가 기획전 -->
             <div class="ad-banner-panel glass-panel footer-ad-banner" style="margin-bottom: 8px; width: 100%; box-sizing: border-box;">
                 <div class="ad-content">
@@ -2652,8 +2933,8 @@
 
  
      <!-- App Configuration & Main Logic Script -->
-     <script src="config.js?v=V1629_FIX_POST_DETAIL_MAP_FLICKER_AND_SCROLL_LOOP"></script>
-     <script src="app.js?v=V1629_FIX_POST_DETAIL_MAP_FLICKER_AND_SCROLL_LOOP"></script>
+     <script src="config.js?v=V1630_ADD_AQUA_TOOLKIT_FREEDIVING_CO2_O2_TIMER"></script>
+     <script src="app.js?v=V1630_ADD_AQUA_TOOLKIT_FREEDIVING_CO2_O2_TIMER"></script>
      <!-- Toast Notification Container -->
     <div id="toastContainer" class="toast-container"></div>
 
