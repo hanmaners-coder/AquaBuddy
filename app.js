@@ -22103,6 +22103,8 @@ if (typeof document !== 'undefined') {
 const AquaToolkitEngine = {
     audioCtx: null,
     soundEnabled: true,
+    voiceEnabled: true,
+    _cachedVoice: null,
     currentSport: 'freediving',
     tableMode: 'CO2', // 'CO2' or 'O2'
     preset: 'beginner', // 'beginner', 'intermediate', 'advanced', 'custom'
@@ -22123,6 +22125,7 @@ const AquaToolkitEngine = {
         this.renderTablePreview();
         this.resetTimer(false);
         this.updateStatsDisplay();
+        this.cacheEnVoice();
     },
 
     // 🔊 Web Audio API 초기화 (모바일 자동재생 정책 방어: 반드시 사용자 제스처 이벤트 내에서 호출)
@@ -22135,6 +22138,43 @@ const AquaToolkitEngine = {
         }
         if (this.audioCtx && this.audioCtx.state === 'suspended') {
             this.audioCtx.resume().catch(err => console.warn('AudioContext resume notice:', err));
+        }
+    },
+
+    // 🗣️ Web Speech API 음성 코칭 엔진 (눈감고 하는 트레이닝 전용)
+    cacheEnVoice() {
+        if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
+        try {
+            const voices = window.speechSynthesis.getVoices();
+            if (!voices || voices.length === 0) return null;
+            const preferred = voices.find(v => (v.lang === 'en-US' || v.lang.startsWith('en')) && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Siri')))
+                           || voices.find(v => v.lang === 'en-US')
+                           || voices.find(v => v.lang && v.lang.startsWith('en'));
+            if (preferred) this._cachedVoice = preferred;
+            return this._cachedVoice;
+        } catch(e) { return null; }
+    },
+
+    speak(text, cancelCurrent = true) {
+        if (!this.soundEnabled || !this.voiceEnabled) return;
+        if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+
+        try {
+            if (cancelCurrent) {
+                window.speechSynthesis.cancel();
+            }
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang = 'en-US';
+            u.rate = 1.15; // 타이머 싱크를 위한 선명하고 경쾌한 발음 속도
+            u.pitch = 1.0;
+            u.volume = 1.0;
+
+            const voice = this._cachedVoice || this.cacheEnVoice();
+            if (voice) u.voice = voice;
+
+            window.speechSynthesis.speak(u);
+        } catch (e) {
+            console.warn('SpeechSynthesis error:', e);
         }
     },
 
@@ -22167,6 +22207,18 @@ const AquaToolkitEngine = {
         this.playTone(440, 0.12, 'sine', 0.18);
         if (typeof navigator !== 'undefined' && navigator.vibrate) {
             try { navigator.vibrate(80); } catch(e) {}
+        }
+    },
+
+    // 🛑 숨참기(HOLD) 중 10초 남았을 때 부드러운 2중 비프 경고음
+    playHoldTenSecWarning() {
+        if (!this.soundEnabled) return;
+        this.playTone(587.33, 0.16, 'sine', 0.26); // D5
+        setTimeout(() => {
+            this.playTone(880.00, 0.22, 'sine', 0.28); // A5
+        }, 130);
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+            try { navigator.vibrate([120, 60, 120]); } catch(e) {}
         }
     },
 
@@ -22205,6 +22257,37 @@ const AquaToolkitEngine = {
                 icon.className = 'fa-solid fa-volume-xmark';
                 icon.style.color = '#94a3b8';
                 text.textContent = '음소거';
+                if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                }
+            }
+        }
+    },
+
+    toggleVoice() {
+        this.voiceEnabled = !this.voiceEnabled;
+        const icon = document.getElementById('toolkitVoiceIcon');
+        const text = document.getElementById('toolkitVoiceText');
+        const btn = document.getElementById('toolkitVoiceToggleBtn');
+        if (icon && text && btn) {
+            if (this.voiceEnabled) {
+                btn.style.background = 'rgba(0, 242, 254, 0.15)';
+                btn.style.borderColor = '#00f2fe';
+                btn.style.color = '#00f2fe';
+                icon.className = 'fa-solid fa-headphones';
+                icon.style.color = '#00f2fe';
+                text.textContent = '음성 코칭 켬';
+                this.speak('Voice coaching on');
+            } else {
+                btn.style.background = 'rgba(255, 255, 255, 0.05)';
+                btn.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                btn.style.color = '#94a3b8';
+                icon.className = 'fa-solid fa-headphones-simple';
+                icon.style.color = '#94a3b8';
+                text.textContent = '음성 끔';
+                if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                }
             }
         }
     },
@@ -22408,6 +22491,10 @@ const AquaToolkitEngine = {
             this.currentPhase = 'REST';
             this.phaseTotalSec = curPlan.rest;
             this.remainingSec = curPlan.rest;
+            // 🎙️ 1라운드 시작 시 "Round 1" 음성 안내
+            this.speak('Round ' + (this.currentRoundIndex + 1));
+        } else {
+            this.speak('Resume');
         }
         this.isPaused = false;
 
@@ -22429,6 +22516,7 @@ const AquaToolkitEngine = {
             this.timerInterval = null;
         }
         this.isPaused = true;
+        this.speak('Paused');
         const btnStart = document.getElementById('btnTimerStart');
         const btnPause = document.getElementById('btnTimerPause');
         if (btnStart) {
@@ -22455,6 +22543,9 @@ const AquaToolkitEngine = {
             clearInterval(this.timerInterval);
             this.timerInterval = null;
         }
+        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+        }
         this.isPaused = false;
         this.currentRoundIndex = 0;
         this.currentPhase = 'REST';
@@ -22477,8 +22568,59 @@ const AquaToolkitEngine = {
     tick() {
         this.remainingSec--;
 
-        if (this.remainingSec === 10 || this.remainingSec === 5 || this.remainingSec === 4 || this.remainingSec === 3 || this.remainingSec === 2 || this.remainingSec === 1) {
-            this.playCountdownBeep();
+        if (this.currentPhase === 'REST') {
+            // 🫁 REST (준비 호흡): 10초 남았을 때부터 영어 10, 9, 8 ... 1 음성 카운트다운
+            if (this.remainingSec === 10) {
+                this.speak('Ten');
+                this.playCountdownBeep();
+            } else if (this.remainingSec === 9) {
+                this.speak('Nine');
+                this.playCountdownBeep();
+            } else if (this.remainingSec === 8) {
+                this.speak('Eight');
+                this.playCountdownBeep();
+            } else if (this.remainingSec === 7) {
+                this.speak('Seven');
+                this.playCountdownBeep();
+            } else if (this.remainingSec === 6) {
+                this.speak('Six');
+                this.playCountdownBeep();
+            } else if (this.remainingSec === 5) {
+                this.speak('Five');
+                this.playCountdownBeep();
+            } else if (this.remainingSec === 4) {
+                this.speak('Four');
+                this.playCountdownBeep();
+            } else if (this.remainingSec === 3) {
+                this.speak('Three');
+                this.playCountdownBeep();
+            } else if (this.remainingSec === 2) {
+                this.speak('Two');
+                this.playCountdownBeep();
+            } else if (this.remainingSec === 1) {
+                this.speak('One');
+                this.playCountdownBeep();
+            }
+        } else if (this.currentPhase === 'HOLD') {
+            // 🛑 HOLD (숨참기): 10초 남았을 때 2중 비프음 경고, 5초 남았을 때부터 5, 4, 3, 2, 1 음성 카운트다운
+            if (this.remainingSec === 10) {
+                this.playHoldTenSecWarning();
+            } else if (this.remainingSec === 5) {
+                this.speak('Five');
+                this.playCountdownBeep();
+            } else if (this.remainingSec === 4) {
+                this.speak('Four');
+                this.playCountdownBeep();
+            } else if (this.remainingSec === 3) {
+                this.speak('Three');
+                this.playCountdownBeep();
+            } else if (this.remainingSec === 2) {
+                this.speak('Two');
+                this.playCountdownBeep();
+            } else if (this.remainingSec === 1) {
+                this.speak('One');
+                this.playCountdownBeep();
+            }
         }
 
         if (this.remainingSec <= 0) {
@@ -22492,17 +22634,21 @@ const AquaToolkitEngine = {
         this.playPhaseTransition();
 
         if (this.currentPhase === 'REST') {
+            // 호흡 종료 -> 숨참기(HOLD) 시작! "Hold breath"
             this.currentPhase = 'HOLD';
             const curPlan = this.plan[this.currentRoundIndex];
             this.phaseTotalSec = curPlan.hold;
             this.remainingSec = curPlan.hold;
+            this.speak('Hold breath');
         } else {
+            // 숨참기 종료 -> "Take breath. Round N" 안내 또는 완주!
             if (this.currentRoundIndex < this.plan.length - 1) {
                 this.currentRoundIndex++;
                 this.currentPhase = 'REST';
                 const curPlan = this.plan[this.currentRoundIndex];
                 this.phaseTotalSec = curPlan.rest;
                 this.remainingSec = curPlan.rest;
+                this.speak('Take breath. Round ' + (this.currentRoundIndex + 1));
             } else {
                 this.finishSession();
                 return;
@@ -22520,6 +22666,7 @@ const AquaToolkitEngine = {
         }
         this.currentPhase = 'COMPLETED';
         this.playCompletionFanfare();
+        this.speak('Take breath. Training complete. Great job!');
 
         const badge = document.getElementById('timerPhaseBadge');
         const timeDisp = document.getElementById('timerTimeDisplay');

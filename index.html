@@ -1245,7 +1245,10 @@
                                 혼자서도 실력을 키우는 다이버 & 수영인을 위한 전문 계산기 및 인터벌 트레이너
                             </p>
                         </div>
-                        <div style="display: flex; gap: 8px; align-items: center;">
+                        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                            <button type="button" onclick="AquaToolkitEngine.toggleVoice()" id="toolkitVoiceToggleBtn" style="background: rgba(0, 242, 254, 0.15); border: 1.5px solid #00f2fe; color: #00f2fe; padding: 8px 14px; border-radius: 12px; font-size: 0.82rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px;" title="눈감고 훈련하는 다이버를 위한 영어 음성 코칭">
+                                <i class="fa-solid fa-headphones" id="toolkitVoiceIcon" style="color: #00f2fe;"></i> <span id="toolkitVoiceText">음성 코칭 켬</span>
+                            </button>
                             <button type="button" onclick="AquaToolkitEngine.toggleSound()" id="toolkitSoundToggleBtn" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 8px 14px; border-radius: 12px; font-size: 0.82rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;">
                                 <i class="fa-solid fa-volume-high" id="toolkitSoundIcon" style="color: #00f2fe;"></i> <span id="toolkitSoundText">소리 켬</span>
                             </button>
@@ -2933,8 +2936,8 @@
 
  
      <!-- App Configuration & Main Logic Script -->
-     <script src="config.js?v=V1631_FIX_TOOLKIT_VIEW_SWITCH_AND_DASHBOARD_BLOCKS"></script>
-     <script src="app.js?v=V1631_FIX_TOOLKIT_VIEW_SWITCH_AND_DASHBOARD_BLOCKS"></script>
+     <script src="config.js?v=V1632_ADD_VOICE_COACHING_FREEDIVING_TIMER"></script>
+     <script src="app.js?v=V1632_ADD_VOICE_COACHING_FREEDIVING_TIMER"></script>
      <!-- Toast Notification Container -->
     <div id="toastContainer" class="toast-container"></div>
 
