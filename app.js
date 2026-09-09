@@ -23265,6 +23265,7 @@ const AquaToolkitEngine = {
     // ========================================================================
     generateSwimRoutine() {
         const level = document.getElementById('swimUserLevel')?.value || 'intermediate';
+        const focus = document.getElementById('swimFocusStroke')?.value || 'all';
         const theme = document.getElementById('swimTheme')?.value || 'endurance';
         const dist = parseInt(document.getElementById('swimGoalDist')?.value || '1000', 10);
 
@@ -23281,37 +23282,164 @@ const AquaToolkitEngine = {
         const remain = dist - warmDist - coolDist;
         const drillDist = Math.max(100, Math.round((remain * 0.3) / 50) * 50);
         const mainDist = Math.max(100, remain - drillDist);
+        const drillReps = Math.max(1, drillDist / 50);
 
+        // 1. 영법 집중 & 장비 맞춤 킥/드릴 세트 구성
         let drillItem = "";
-        if (hasBoard && hasFins) {
-            const reps = drillDist / 50;
-            drillItem = `오리발 & 킥판 자유형 킥 50m x ${reps}세트 (발끝 이완 킥, 세트 간 15초 휴식)`;
-        } else if (hasBoard) {
-            const reps = drillDist / 50;
-            drillItem = `킥판 잡고 자유형/접영 킥 50m x ${reps}세트 (코어 고정, 세트 간 20초 휴식)`;
-        } else if (hasBuoy && hasPaddles) {
-            const reps = drillDist / 50;
-            drillItem = `풀부이 끼고 패들 풀(Pull) 50m x ${reps}세트 (하이엘보 캐치 집중, 휴식 15초)`;
-        } else if (hasBuoy) {
-            const reps = drillDist / 50;
-            drillItem = `풀부이 허벅지 착용 자유형 풀(Pull) 50m x ${reps}세트 (상체 롤링 집중, 휴식 15초)`;
+        if (focus === 'butterfly') {
+            if (hasBoard && hasFins) {
+                drillItem = `오리발 & 킥판 언더워터 돌핀킥 50m x ${drillReps}세트 (가슴 누르기 웨이브 집중, 세트 간 15초 휴식)`;
+            } else if (hasFins) {
+                drillItem = `오리발 착용 1비트 한 팔 접영 50m x ${drillReps}세트 (왼팔 25m + 오른팔 25m, 세트 간 15초 휴식)`;
+            } else if (hasBoard) {
+                drillItem = `킥판 잡고 수면 2비트 돌핀킥 50m x ${drillReps}세트 (코어 수축 및 골반 리듬, 세트 간 20초 휴식)`;
+            } else if (hasBuoy) {
+                drillItem = `풀부이 허벅지 착용 접영 풀(Pull) 50m x ${drillReps}세트 (물잡기 하이엘보 및 출수 슈팅, 세트 간 20초 휴식)`;
+            } else {
+                drillItem = `차렷 자세 바디 웨이브 & 양팔 접영 50m x ${drillReps}세트 (출수 후 턱 당기기, 세트 간 20초 휴식)`;
+            }
+        } else if (focus === 'backstroke') {
+            if (hasBoard && hasFins) {
+                drillItem = `오리발 착용 킥판 머리 위 배영 발차기 50m x ${drillReps}세트 (무릎 수면 아래 억제, 세트 간 15초 휴식)`;
+            } else if (hasFins) {
+                drillItem = `오리발 착용 배영 6비트 킥 & 원암 롤링 50m x ${drillReps}세트 (어깨 45도 롤링 회전, 세트 간 15초 휴식)`;
+            } else if (hasBuoy) {
+                drillItem = `풀부이 착용 배영 더블암 풀 50m x ${drillReps}세트 (가슴 확장 및 딥캐치 물잡기, 세트 간 20초 휴식)`;
+            } else if (hasPaddles) {
+                drillItem = `패들 착용 배영 하이엘보 풀 50m x ${drillReps}세트 (허벅지 스치며 밀어내기, 세트 간 15초 휴식)`;
+            } else {
+                drillItem = `배영 한 팔 정지 & 반대 팔 교차 드릴 50m x ${drillReps}세트 (시선 천장 고정, 세트 간 20초 휴식)`;
+            }
+        } else if (focus === 'breaststroke') {
+            if (hasBoard) {
+                drillItem = `킥판 잡고 평영 윕킥(Whip Kick) 50m x ${drillReps}세트 (발뒤꿈치 당김 & 발목 외회전 스냅, 세트 간 20초 휴식)`;
+            } else if (hasBuoy) {
+                drillItem = `풀부이 허벅지 착용 평영 풀(Pull) 50m x ${drillReps}세트 (인스윕 고속 턱밑 모으기 & 전방 슈팅, 세트 간 15초 휴식)`;
+            } else if (hasPaddles) {
+                drillItem = `패들 착용 평영 스컬링 & 풀 50m x ${drillReps}세트 (물잡기 면적 확장, 세트 간 20초 휴식)`;
+            } else if (hasFins) {
+                drillItem = `오리발 착용 돌핀킥 평영 풀 50m x ${drillReps}세트 (상체 부력 및 호흡 타이밍, 세트 간 20초 휴식)`;
+            } else {
+                drillItem = `평영 2킥 1풀 글라이딩 드릴 50m x ${drillReps}세트 (머리 입수 후 3초 스트림라인 유지, 세트 간 20초 휴식)`;
+            }
+        } else if (focus === 'crawl') {
+            if (hasBoard && hasFins) {
+                drillItem = `오리발 & 킥판 자유형 6비트 파워 킥 50m x ${drillReps}세트 (발끝 스냅, 세트 간 15초 휴식)`;
+            } else if (hasBoard) {
+                drillItem = `킥판 잡고 자유형 킥 50m x ${drillReps}세트 (코어 고정 및 골반 띄우기, 세트 간 20초 휴식)`;
+            } else if (hasBuoy && hasPaddles) {
+                drillItem = `풀부이 & 핸드패들 하이엘보 캐치 풀 50m x ${drillReps}세트 (물 밀어내기 끝까지 푸시, 세트 간 15초 휴식)`;
+            } else if (hasBuoy) {
+                drillItem = `풀부이 착용 자유형 풀(Pull) 50m x ${drillReps}세트 (몸통 롤링 축 유지, 세트 간 15초 휴식)`;
+            } else {
+                drillItem = `캐치업 드릴(Catch-up) & 피스트 스윔 50m x ${drillReps}세트 (물감각 극대화, 세트 간 20초 휴식)`;
+            }
         } else {
-            const reps = drillDist / 50;
-            drillItem = `한 팔 자유형 & 사이드 킥 드릴 50m x ${reps}세트 (글라이딩 연장, 휴식 20초)`;
+            // 올라운드 / 혼계영
+            if (hasBoard && hasFins) {
+                drillItem = `오리발 & 킥판 (접-배-평-자) 킥 50m x ${drillReps}세트 (영법별 킥 전환 훈련, 세트 간 15초 휴식)`;
+            } else if (hasBuoy) {
+                drillItem = `풀부이 착용 (접영 풀 + 배영 풀 + 평영 풀 + 자유형 풀) 50m x ${drillReps}세트 (세트 간 20초 휴식)`;
+            } else {
+                drillItem = `영법 전환 드릴 50m x ${drillReps}세트 (접영25+배영25 / 평영25+자유형25 콤비, 세트 간 20초 휴식)`;
+            }
         }
 
+        // 2. 영법 집중 & 훈련 테마 메인 세트 구성
         let mainItem = "";
-        if (theme === 'endurance') {
-            const lapDist = (level === 'advanced') ? 200 : 100;
-            const reps = Math.max(1, Math.round(mainDist / lapDist));
-            mainItem = `${lapDist}m x ${reps}세트 페이스 유지 지속주 (세트 간 휴식 20~25초, 심박수 70% 페이스)`;
-        } else if (theme === 'drill') {
+        if (focus === 'butterfly') {
             const reps = Math.max(1, Math.round(mainDist / 50));
-            mainItem = `자유형 스트로크 수 줄이기(DPS 훈련) 50m x ${reps}세트 (글라이딩 최장화, 휴식 20초)`;
+            if (theme === 'endurance') {
+                mainItem = `접영 25m + 자유형 25m 페이스 유지주 50m x ${reps}세트 (심박수 75% 지속주, 세트 간 20초 휴식)`;
+            } else if (theme === 'drill') {
+                mainItem = `접영 스트로크 수 8~10개 이내 유지 DPS 훈련 50m x ${reps}세트 (글라이딩 최장화, 세트 간 25초 휴식)`;
+            } else {
+                mainItem = `25m 접영 전력 질주(Max Sprint) + 25m 이지 x ${reps}세트 (폭발적 파워 및 젖산 내성, 세트 간 30초 휴식)`;
+            }
+        } else if (focus === 'backstroke') {
+            const reps50 = Math.max(1, Math.round(mainDist / 50));
+            if (theme === 'endurance') {
+                const lapDist = (level === 'advanced') ? 200 : 100;
+                const reps = Math.max(1, Math.round(mainDist / lapDist));
+                mainItem = `배영 페이스 지속주 ${lapDist}m x ${reps}세트 (일정한 6비트 킥 & 호흡 리듬 유지, 세트 간 20~25초 휴식)`;
+            } else if (theme === 'drill') {
+                mainItem = `배영 DPS 스트로크 최소화 및 깊은 물잡기 50m x ${reps50}세트 (수면 롤링 45도 유지, 세트 간 20초 휴식)`;
+            } else {
+                mainItem = `배영 50m 인터벌 스프린트 x ${reps50}세트 (강한 스타트 킥 + 고속 회전, 세트 간 30초 휴식)`;
+            }
+        } else if (focus === 'breaststroke') {
+            const reps = Math.max(1, Math.round(mainDist / 50));
+            if (theme === 'endurance') {
+                mainItem = `평영 페이스 유지 지속주 50m x ${reps}세트 (스트로크 후 2초 글라이딩 정확히 유지, 세트 간 20초 휴식)`;
+            } else if (theme === 'drill') {
+                mainItem = `평영 DPS 드릴 (1스트로크당 최대 전진 거리 확보 훈련) 50m x ${reps}세트 (세트 간 25초 휴식)`;
+            } else {
+                mainItem = `평영 파워 스프린트 50m x ${reps}세트 (폭발적 인스윕 & 강한 킥 피니시, 세트 간 30초 고강도)`;
+            }
+        } else if (focus === 'crawl') {
+            if (theme === 'endurance') {
+                const lapDist = (level === 'advanced') ? 200 : 100;
+                const reps = Math.max(1, Math.round(mainDist / lapDist));
+                mainItem = `자유형 ${lapDist}m x ${reps}세트 페이스 유지 지속주 (세트 간 휴식 20~25초, 심박수 70% 페이스)`;
+            } else if (theme === 'drill') {
+                const reps = Math.max(1, Math.round(mainDist / 50));
+                mainItem = `자유형 스트로크 수 줄이기(DPS 훈련) 50m x ${reps}세트 (글라이딩 최장화, 세트 간 20초 휴식)`;
+            } else {
+                const sprintReps = Math.max(1, Math.round(mainDist / 50));
+                mainItem = `자유형 50m 인터벌 스프린트 x ${sprintReps}세트 (25m 대시 + 25m 이지, 세트 간 30초 휴식)`;
+            }
         } else {
-            const sprintReps = Math.max(1, Math.round(mainDist / 50));
-            mainItem = `50m 인터벌 스프린트 x ${sprintReps}세트 (25m 대시 + 25m 이지, 휴식 30초 고강도 심폐)`;
+            // 혼계영 올라운드
+            if (theme === 'endurance') {
+                const reps = Math.max(1, Math.round(mainDist / 100));
+                mainItem = `100m 개인혼영(IM: 접-배-평-자) x ${reps}세트 (영법별 균형 심폐 지속주, 세트 간 25초 휴식)`;
+            } else if (theme === 'drill') {
+                const reps = Math.max(1, Math.round(mainDist / 50));
+                mainItem = `영법 전환 콤비네이션 50m x ${reps}세트 (접-배 / 배-평 / 평-자 순환 드릴, 세트 간 20초 휴식)`;
+            } else {
+                const reps = Math.max(1, Math.round(mainDist / 100));
+                mainItem = `100m IM 인터벌 스프린트 x ${reps}세트 (접영/자유형 전력 대시, 세트 간 35초 휴식)`;
+            }
         }
+
+        // 3. 5가지 다운(쿨다운) 옵션 중 랜덤 선택 (자유형 필수 포함)
+        const halfCool = Math.max(25, Math.round(coolDist / 2 / 25) * 25);
+        const otherHalf = Math.max(25, coolDist - halfCool);
+
+        const coolDownOptions = [
+            {
+                title: `천천히 길게 타는 이지 자유형 (${coolDist}m)`,
+                desc: `글라이딩을 최대한 길게 타며 2비트 킥으로 심박수를 100bpm 이하로 낮추는 릴랙스 스윔`
+            },
+            {
+                title: `어깨 근육 회복 콤보 (이지 자유형 ${halfCool}m + 릴랙스 배영 ${otherHalf}m)`,
+                desc: `수축된 가슴과 어깨 전면 근육을 활짝 열어주며 상체 젖산을 빠르게 털어내는 쿨다운`
+            },
+            {
+                title: `호흡 안정 콤보 (이지 자유형 ${halfCool}m + 헤드업 평영 ${otherHalf}m)`,
+                desc: `고개를 들고 천천히 긴 호흡을 내쉬며 하체 긴장과 심폐 부하를 안정시키는 다운`
+            },
+            {
+                title: `척추 정렬 & 릴랙스 (이지 배영 ${halfCool}m + 스컬링 글라이딩 ${otherHalf}m)`,
+                desc: `수면에 편안히 누워 가벼운 발차기와 손바닥 스컬링으로 온몸의 힘을 빼는 마무리`
+            },
+            {
+                title: `림프 순환 사이드 글라이딩 (${halfCool}m) + 천천히 자유형 (${otherHalf}m)`,
+                desc: `부드러운 측면 글라이딩과 느린 스트로크로 훈련 중 쌓인 피로 물질을 원활히 배출`
+            }
+        ];
+
+        const coolDownPick = coolDownOptions[Math.floor(Math.random() * coolDownOptions.length)];
+
+        // 포커스 뱃지 라벨
+        const focusLabels = {
+            all: '🌈 올라운드(4영법)',
+            crawl: '🏊‍♂️ 자유형 집중',
+            butterfly: '🐬 접영 집중',
+            backstroke: '🏊‍♀️ 배영 집중',
+            breaststroke: '🐸 평영 집중'
+        };
+        const focusBadge = focusLabels[focus] || '🏊‍♂️ 수영';
 
         const estMinutes = Math.round(dist / (level === 'advanced' ? 35 : (level === 'intermediate' ? 28 : 22)));
 
@@ -23321,9 +23449,14 @@ const AquaToolkitEngine = {
                     <div style="font-weight: 900; color: #fff; font-size: 1.05rem; display: flex; align-items: center; gap: 6px;">
                         <span style="color: #00f2fe;">🏊</span> 오늘의 수영 루틴 (총 ${dist}m / 약 ${estMinutes}분 코스)
                     </div>
-                    <span style="font-size: 0.78rem; background: #00f2fe; color: #070e17; font-weight: 900; padding: 3px 8px; border-radius: 6px;">
-                        ${level.toUpperCase()}
-                    </span>
+                    <div style="display: flex; gap: 6px;">
+                        <span style="font-size: 0.76rem; background: rgba(0, 242, 254, 0.2); border: 1px solid #00f2fe; color: #00f2fe; font-weight: 800; padding: 3px 8px; border-radius: 6px;">
+                            ${focusBadge}
+                        </span>
+                        <span style="font-size: 0.76rem; background: #00f2fe; color: #070e17; font-weight: 900; padding: 3px 8px; border-radius: 6px;">
+                            ${level.toUpperCase()}
+                        </span>
+                    </div>
                 </div>
 
                 <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.86rem; color: #cbd5e1;">
@@ -23337,7 +23470,8 @@ const AquaToolkitEngine = {
                         <strong style="color: var(--accent-gold);">3. 메인 세트 (${mainDist}m):</strong> ${mainItem}
                     </div>
                     <div style="background: rgba(15, 23, 42, 0.7); padding: 10px 14px; border-radius: 10px; border-left: 3px solid #cbd5e1;">
-                        <strong style="color: #fff;">4. 다운 (${coolDist}m):</strong> 배영 또는 헤드업 평영 이지 스윔 (젖산 분해)
+                        <strong style="color: #fff;">4. 다운 (${coolDist}m):</strong> ${coolDownPick.title} <br>
+                        <span style="font-size: 0.78rem; color: #94a3b8; display: inline-block; margin-top: 3px;">💡 ${coolDownPick.desc}</span>
                     </div>
                 </div>
             </div>

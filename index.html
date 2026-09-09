@@ -1680,13 +1680,24 @@
                         </div>
 
                         <!-- 옵션 선택 4단 폼 -->
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 16px;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 16px;">
                             <div>
                                 <label for="swimUserLevel" style="display: block; font-size: 0.8rem; font-weight: 800; color: #00f2fe; margin-bottom: 6px;">나의 수영 레벨</label>
                                 <select id="swimUserLevel" style="width: 100%; padding: 10px 12px; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(0,242,254,0.3); border-radius: 10px; color: #fff; font-weight: 800; font-size: 0.88rem; outline: none; cursor: pointer;">
                                     <option value="beginner">🌱 초급 (자유형/배영 50m 완주, 인터벌 입문)</option>
                                     <option value="intermediate" selected>🐬 중급 (평영/접영 가능, 1,000m 완주)</option>
                                     <option value="advanced">🦈 상급/마스터즈 (1,500m+ 인터벌 훈련)</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="swimFocusStroke" style="display: block; font-size: 0.8rem; font-weight: 800; color: #00f2fe; margin-bottom: 6px;">오늘의 집중 영법</label>
+                                <select id="swimFocusStroke" style="width: 100%; padding: 10px 12px; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(0,242,254,0.3); border-radius: 10px; color: #fff; font-weight: 800; font-size: 0.88rem; outline: none; cursor: pointer;">
+                                    <option value="all" selected>🌈 혼계영 / 올라운드 (4대 영법 골고루)</option>
+                                    <option value="crawl">🏊‍♂️ 자유형 (자세교정 / 페이스 / 롤링)</option>
+                                    <option value="butterfly">🐬 접영 (돌핀킥 / 웨이브 / 출수 타이밍)</option>
+                                    <option value="backstroke">🏊‍♀️ 배영 (롤링 / 하이엘보 / 헤드포지션)</option>
+                                    <option value="breaststroke">🐸 평영 (윕킥 / 글라이딩 / 스트로크 콤보)</option>
                                 </select>
                             </div>
 
@@ -1741,42 +1752,42 @@
                         <div id="swimRoutineResultContainer" style="display: flex; flex-direction: column; gap: 10px;">
                             <!-- Injected by AquaToolkitEngine.generateSwimRoutine() -->
                         </div>
+                    </div> <!-- /#panelSwimRoutine -->
 
-                        <!-- 🔔 스마트폰 데크 거치용 인터벌 출발 비프 타이머 -->
-                        <div style="margin-top: 22px; background: rgba(10, 18, 32, 0.95); border: 1.5px solid rgba(255, 183, 3, 0.4); border-radius: 16px; padding: 18px; box-shadow: 0 6px 24px rgba(255, 183, 3, 0.15);">
-                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <span style="font-size: 1.2rem;">⏱️</span>
-                                    <h4 style="margin: 0; color: var(--accent-gold); font-size: 0.98rem; font-weight: 900;">스마트폰 데크 거치용 인터벌 출발 비프 타이머</h4>
-                                </div>
-                                <span style="font-size: 0.74rem; color: #94a3b8;">킥판 위에 폰을 올려두고 소리로 출발 타이밍을 잡으세요!</span>
+                    <!-- 🏊 도구 2: 스마트폰 데크 거치용 인터벌 출발 비프 타이머 (독립 카드) -->
+                    <div id="panelSwimDeckTimer" style="background: rgba(13, 23, 38, 0.95); border: 1.5px solid rgba(255, 183, 3, 0.4); border-radius: 20px; padding: 22px; margin-bottom: 22px; box-shadow: 0 8px 32px rgba(0,0,0,0.35);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 1.3rem;">⏱️</span>
+                                <h4 style="margin: 0; color: var(--accent-gold); font-size: 1.05rem; font-weight: 900;">스마트폰 데크 거치용 인터벌 출발 비프 타이머</h4>
+                            </div>
+                            <span style="font-size: 0.76rem; color: #94a3b8;">킥판 위에 폰을 올려두고 소리로 출발 타이밍을 잡으세요!</span>
+                        </div>
+
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; background: rgba(10, 18, 32, 0.85); border: 1px solid rgba(255, 183, 3, 0.2); border-radius: 14px; padding: 18px 20px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <label for="swimDeckCycleSec" style="font-size: 0.85rem; color: #cbd5e1; font-weight: 700;">출발 인터벌 주기:</label>
+                                <select id="swimDeckCycleSec" style="padding: 9px 14px; background: #0f172a; border: 1.5px solid var(--accent-gold); border-radius: 10px; color: #fff; font-weight: 800; font-size: 0.9rem; outline: none; cursor: pointer;">
+                                    <option value="45">45초 주기</option>
+                                    <option value="50">50초 주기</option>
+                                    <option value="55">55초 주기</option>
+                                    <option value="60" selected>1분 00초 주기</option>
+                                    <option value="70">1분 10초 주기</option>
+                                    <option value="80">1분 20초 주기</option>
+                                    <option value="90">1분 30초 주기</option>
+                                </select>
                             </div>
 
-                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <label for="swimDeckCycleSec" style="font-size: 0.8rem; color: #cbd5e1; font-weight: 700;">출발 인터벌 주기:</label>
-                                    <select id="swimDeckCycleSec" style="padding: 8px 12px; background: #0f172a; border: 1px solid var(--accent-gold); border-radius: 8px; color: #fff; font-weight: 800; font-size: 0.86rem; outline: none; cursor: pointer;">
-                                        <option value="45">45초 주기</option>
-                                        <option value="50">50초 주기</option>
-                                        <option value="55">55초 주기</option>
-                                        <option value="60" selected>1분 00초 주기</option>
-                                        <option value="70">1분 10초 주기</option>
-                                        <option value="80">1분 20초 주기</option>
-                                        <option value="90">1분 30초 주기</option>
-                                    </select>
+                            <div style="display: flex; align-items: center; gap: 16px;">
+                                <div style="font-family: monospace; font-size: 2.2rem; font-weight: 900; color: var(--accent-gold); min-width: 90px; text-align: right;">
+                                    <span id="swimDeckCountdownText">60</span>s
                                 </div>
-
-                                <div style="display: flex; align-items: center; gap: 12px;">
-                                    <div style="font-family: monospace; font-size: 1.8rem; font-weight: 900; color: var(--accent-gold);">
-                                        <span id="swimDeckCountdownText">60</span>s
-                                    </div>
-                                    <button type="button" id="btnSwimDeckStart" onclick="AquaToolkitEngine.startSwimDeckTimer()" style="background: linear-gradient(135deg, #ffb703, #fb8500); color: #070e17; font-weight: 900; font-size: 0.88rem; padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer;">
-                                        <i class="fa-solid fa-play"></i> 출발 타이머 시작
-                                    </button>
-                                    <button type="button" id="btnSwimDeckStop" onclick="AquaToolkitEngine.stopSwimDeckTimer()" style="display: none; background: rgba(255, 71, 87, 0.2); border: 1px solid #ff4757; color: #ff4757; font-weight: 800; font-size: 0.88rem; padding: 10px 16px; border-radius: 10px; cursor: pointer;">
-                                        정지
-                                    </button>
-                                </div>
+                                <button type="button" id="btnSwimDeckStart" onclick="AquaToolkitEngine.startSwimDeckTimer()" style="background: linear-gradient(135deg, #ffb703, #fb8500); color: #070e17; font-weight: 900; font-size: 0.92rem; padding: 11px 22px; border-radius: 12px; border: none; cursor: pointer; box-shadow: 0 4px 15px rgba(255, 183, 3, 0.35);">
+                                    <i class="fa-solid fa-play"></i> 출발 타이머 시작
+                                </button>
+                                <button type="button" id="btnSwimDeckStop" onclick="AquaToolkitEngine.stopSwimDeckTimer()" style="display: none; background: rgba(255, 71, 87, 0.2); border: 1.5px solid #ff4757; color: #ff4757; font-weight: 800; font-size: 0.92rem; padding: 11px 20px; border-radius: 12px; cursor: pointer;">
+                                    <i class="fa-solid fa-stop"></i> 정지
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -3629,8 +3640,8 @@
 
  
      <!-- App Configuration & Main Logic Script -->
-     <script src="config.js?v=V1635_AQUA_TOOLKIT_SUBSECTOR_SELECTOR"></script>
-     <script src="app.js?v=V1635_AQUA_TOOLKIT_SUBSECTOR_SELECTOR"></script>
+     <script src="config.js?v=V1636_SWIMMING_FOCUS_STROKE_AND_LAYOUT_FIX"></script>
+     <script src="app.js?v=V1636_SWIMMING_FOCUS_STROKE_AND_LAYOUT_FIX"></script>
      <!-- Toast Notification Container -->
     <div id="toastContainer" class="toast-container"></div>
 
