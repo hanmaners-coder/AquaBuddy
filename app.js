@@ -12918,17 +12918,23 @@ function filterAndRender(resetPagination = true) {
 
             if (activeVoiceRooms.length > 0) {
                 const room = activeVoiceRooms[0];
+                if (typeof parseVoiceRoomMeta === 'function') parseVoiceRoomMeta(room);
                 const hostName = room.user_name || room.author || '주최자';
                 const listenersCount = (Array.isArray(voiceRoomAudience) && voiceRoomAudience.length > 0) ? voiceRoomAudience.length : (room.listeners_count || 0);
                 const spkCount = (Array.isArray(voiceRoomSpeakers) ? voiceRoomSpeakers.filter(s => s !== null).length : 1) || 1;
 
                 liveVoiceContainer.innerHTML = `
-                    <div class="live-voiceroom-banner" onclick="openVoiceRoomModal('${room.id}')">
+                    <div class="live-voiceroom-banner" onclick="openVoiceRoomModal('${room.id}')" style="${room.is_private ? 'border-color: rgba(255, 71, 87, 0.45) !important;' : ''}">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <span class="live-pulse-dot" style="background: #ff4757; color: #fff; font-size: 0.72rem; font-weight: 900; padding: 2px 8px; border-radius: 12px; box-shadow: 0 0 10px rgba(255, 71, 87, 0.6);">
                                     🔴 LIVE
                                 </span>
+                                ${room.is_private ? `
+                                <span style="background: rgba(255, 71, 87, 0.2); color: #ff6b81; border: 1px solid #ff4757; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 12px; display: inline-flex; align-items: center; gap: 4px;">
+                                    <i class="fa-solid fa-lock"></i> 비공개
+                                </span>
+                                ` : ''}
                                 <span style="font-size: 0.78rem; color: #94a3b8; font-weight: bold;">
                                     자유글 & 보이스룸 실시간 보이스룸
                                 </span>
@@ -12938,7 +12944,7 @@ function filterAndRender(resetPagination = true) {
                             </span>
                         </div>
                         <h3 style="margin: 0 0 10px 0; font-size: 1.05rem; font-weight: 900; color: #fff; line-height: 1.35;">
-                            ${typeof escapeHtml === 'function' ? escapeHtml(room.title) : room.title}
+                            ${room.is_private ? '🔒 ' : ''}${typeof escapeHtml === 'function' ? escapeHtml(room.title) : room.title}
                         </h3>
                         <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 10px; flex-wrap: wrap; gap: 8px;">
                             <div style="display: flex; align-items: center; gap: 6px;">
@@ -12948,8 +12954,8 @@ function filterAndRender(resetPagination = true) {
                                 <span style="font-size: 0.82rem; font-weight: 800; color: #fff;">${typeof escapeHtml === 'function' ? escapeHtml(hostName) : hostName}</span>
                                 <span style="font-size: 0.75rem; color: #94a3b8; margin-left: 4px;">(발언석 ${spkCount}/6명)</span>
                             </div>
-                            <button type="button" class="btn" onclick="event.stopPropagation(); openVoiceRoomModal('${room.id}');" style="background: linear-gradient(135deg, #00f2fe, #4facfe); color: #070e17; font-weight: 900; font-size: 0.82rem; padding: 7px 16px; border-radius: 10px; border: none; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 3px 12px rgba(0, 242, 254, 0.35);">
-                                <span>입장하기</span> <i class="fa-solid fa-arrow-right"></i>
+                            <button type="button" class="btn" onclick="event.stopPropagation(); openVoiceRoomModal('${room.id}');" style="background: ${room.is_private ? 'linear-gradient(135deg, #ff4757, #ff6b81)' : 'linear-gradient(135deg, #00f2fe, #4facfe)'}; color: ${room.is_private ? '#fff' : '#070e17'}; font-weight: 900; font-size: 0.82rem; padding: 7px 16px; border-radius: 10px; border: none; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 3px 12px ${room.is_private ? 'rgba(255, 71, 87, 0.35)' : 'rgba(0, 242, 254, 0.35)'};">
+                                <span>${room.is_private ? '🔒 비밀번호 입력 후 입장' : '입장하기'}</span> <i class="fa-solid fa-arrow-right"></i>
                             </button>
                         </div>
                     </div>
@@ -13316,9 +13322,12 @@ function renderGrid(filteredPosts) {
             : "";
 
         const isVR = Boolean(post.is_voiceroom === true || post.sports_type === 'voiceroom' || post.class_type === 'voiceroom' || post.category === 'voiceroom');
+        if (isVR && typeof parseVoiceRoomMeta === 'function') {
+            parseVoiceRoomMeta(post);
+        }
 
         return `
-            <div class="post-card post-card-slim ${isVR ? 'voiceroom-card-highlight' : ''}" data-post-id="${post.id}" onclick="openPostDetailModal('${post.id}')" style="cursor: pointer; ${isVR ? 'border: 1.5px solid rgba(0, 242, 254, 0.45) !important; box-shadow: 0 4px 20px rgba(0, 242, 254, 0.15) !important;' : ''}">
+            <div class="post-card post-card-slim ${isVR ? 'voiceroom-card-highlight' : ''}" data-post-id="${post.id}" onclick="openPostDetailModal('${post.id}')" style="cursor: pointer; ${isVR ? (post.is_private ? 'border: 1.5px solid rgba(255, 71, 87, 0.45) !important; box-shadow: 0 4px 20px rgba(255, 71, 87, 0.15) !important;' : 'border: 1.5px solid rgba(0, 242, 254, 0.45) !important; box-shadow: 0 4px 20px rgba(0, 242, 254, 0.15) !important;') : ''}">
                 <div class="slim-card-inner">
                     <!-- Line 1: 카테고리, 상태 뱃지, 닉네임 (강사클래스는 4대 세부채널 종목 + 실제 단체명 + 실명 표기) -->
                     <div class="card-line-1" style="display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
@@ -13326,9 +13335,15 @@ function renderGrid(filteredPosts) {
                         <span class="slim-cat-badge" style="color:#ff4757; border-color:#ff4757; background: rgba(255, 71, 87, 0.12); flex-shrink:0; font-weight: 900;">
                             <i class="fa-solid fa-microphone-lines"></i> 🔴 LIVE 보이스룸
                         </span>
+                        ${post.is_private ? `
+                        <span style="background: rgba(255, 71, 87, 0.2); color: #ff6b81; border: 1px solid #ff4757; padding:2px 8px; border-radius:6px; font-size:0.72rem; font-weight:800; flex-shrink:0; display: inline-flex; align-items: center; gap: 4px;">
+                            <i class="fa-solid fa-lock"></i> 비공개
+                        </span>
+                        ` : `
                         <span style="background: rgba(0,242,254,0.15); color: #00f2fe; border: 1px solid rgba(0,242,254,0.35); padding:2px 8px; border-radius:6px; font-size:0.72rem; font-weight:800; flex-shrink:0;">
                             🎙️ 실시간 음성대화
                         </span>
+                        `}
                         ` : `
                         <span class="slim-cat-badge" style="color:${catColor}; border-color:${catColor}; flex-shrink:0;">
                             <i class="fa-solid ${catIcon}"></i> ${catLabel}
@@ -13483,17 +13498,23 @@ function renderDashboardBlocks() {
     let liveVoiceBannerHtml = "";
     if (activeVoiceRooms.length > 0) {
         const room = activeVoiceRooms[0];
+        if (typeof parseVoiceRoomMeta === 'function') parseVoiceRoomMeta(room);
         const hostName = room.user_name || room.author || '주최자';
         const listenersCount = (Array.isArray(voiceRoomAudience) && voiceRoomAudience.length > 0) ? voiceRoomAudience.length : (room.listeners_count || 0);
         const spkCount = (Array.isArray(voiceRoomSpeakers) ? voiceRoomSpeakers.filter(s => s !== null).length : 1) || 1;
 
         liveVoiceBannerHtml = `
-            <div class="live-voiceroom-banner" onclick="openVoiceRoomModal('${room.id}')" style="grid-column: 1 / -1; width: 100%; box-sizing: border-box; margin-bottom: 16px;">
+            <div class="live-voiceroom-banner" onclick="openVoiceRoomModal('${room.id}')" style="grid-column: 1 / -1; width: 100%; box-sizing: border-box; margin-bottom: 16px; ${room.is_private ? 'border-color: rgba(255, 71, 87, 0.45) !important;' : ''}">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <span class="live-pulse-dot" style="background: #ff4757; color: #fff; font-size: 0.72rem; font-weight: 900; padding: 2px 8px; border-radius: 12px; box-shadow: 0 0 10px rgba(255, 71, 87, 0.6);">
                             🔴 LIVE
                         </span>
+                        ${room.is_private ? `
+                        <span style="background: rgba(255, 71, 87, 0.2); color: #ff6b81; border: 1px solid #ff4757; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 12px; display: inline-flex; align-items: center; gap: 4px;">
+                            <i class="fa-solid fa-lock"></i> 비공개
+                        </span>
+                        ` : ''}
                         <span style="font-size: 0.78rem; color: #94a3b8; font-weight: bold;">
                             실시간 라이브 보이스룸 진행 중!
                         </span>
@@ -13503,7 +13524,7 @@ function renderDashboardBlocks() {
                     </span>
                 </div>
                 <h3 style="margin: 0 0 10px 0; font-size: 1.05rem; font-weight: 900; color: #fff; line-height: 1.35;">
-                    ${typeof escapeHtml === 'function' ? escapeHtml(room.title) : room.title}
+                    ${room.is_private ? '🔒 ' : ''}${typeof escapeHtml === 'function' ? escapeHtml(room.title) : room.title}
                 </h3>
                 <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 10px; flex-wrap: wrap; gap: 8px;">
                     <div style="display: flex; align-items: center; gap: 6px;">
@@ -13513,8 +13534,8 @@ function renderDashboardBlocks() {
                         <span style="font-size: 0.82rem; font-weight: 800; color: #fff;">${typeof escapeHtml === 'function' ? escapeHtml(hostName) : hostName}</span>
                         <span style="font-size: 0.75rem; color: #94a3b8; margin-left: 4px;">(발언석 ${spkCount}/5명)</span>
                     </div>
-                    <button type="button" class="btn" onclick="event.stopPropagation(); openVoiceRoomModal('${room.id}');" style="background: linear-gradient(135deg, #00f2fe, #4facfe); color: #070e17; font-weight: 900; font-size: 0.82rem; padding: 7px 16px; border-radius: 10px; border: none; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 3px 12px rgba(0, 242, 254, 0.35);">
-                        <span>보이스룸 바로입장</span> <i class="fa-solid fa-arrow-right"></i>
+                    <button type="button" class="btn" onclick="event.stopPropagation(); openVoiceRoomModal('${room.id}');" style="background: ${room.is_private ? 'linear-gradient(135deg, #ff4757, #ff6b81)' : 'linear-gradient(135deg, #00f2fe, #4facfe)'}; color: ${room.is_private ? '#fff' : '#070e17'}; font-weight: 900; font-size: 0.82rem; padding: 7px 16px; border-radius: 10px; border: none; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 3px 12px ${room.is_private ? 'rgba(255, 71, 87, 0.35)' : 'rgba(0, 242, 254, 0.35)'};">
+                        <span>${room.is_private ? '🔒 비밀번호 입력 후 입장' : '보이스룸 바로입장'}</span> <i class="fa-solid fa-arrow-right"></i>
                     </button>
                 </div>
             </div>
@@ -17633,6 +17654,76 @@ const rtcIceConfig = {
 let voiceRoomChannel = null;
 const voiceClientSessionId = 'vc_' + Math.random().toString(36).substring(2, 9) + Date.now();
 
+// 🔒 비공개 보이스룸 세션 인증 메모리 캐시
+if (typeof window._unlockedVoiceRooms === 'undefined') {
+    window._unlockedVoiceRooms = new Set();
+}
+
+// 🔒 보이스룸 메타데이터 안전 파싱 유틸리티 (DB 스키마 변경 없이 메타 복원)
+function parseVoiceRoomMeta(room) {
+    if (!room) return;
+    if (room.desc && typeof room.desc === 'string' && room.desc.includes('<!--VR_META:')) {
+        try {
+            const metaStr = room.desc.split('<!--VR_META:')[1].split('-->')[0];
+            const meta = JSON.parse(metaStr);
+            if (meta.is_private) room.is_private = true;
+            if (meta.password) room.password = String(meta.password);
+        } catch(e) {}
+    }
+}
+window.parseVoiceRoomMeta = parseVoiceRoomMeta;
+
+// 🔒 공개 / 비공개 토글 UI 컨트롤러
+function setVoiceRoomPrivacy(privacy, context = 'modal') {
+    const isPrivate = (privacy === 'private');
+    if (context === 'modal') {
+        const pubBtn = document.getElementById("commVoicePrivacyPublicBtn");
+        const privBtn = document.getElementById("commVoicePrivacyPrivateBtn");
+        const pwdContainer = document.getElementById("commVoicePasswordContainer");
+        const hiddenInput = document.getElementById("commVoiceRoomPrivacy");
+        const pwdInput = document.getElementById("commVoiceRoomPasswordInput");
+
+        if (pubBtn) {
+            pubBtn.className = isPrivate ? "voice-privacy-btn" : "voice-privacy-btn active";
+            pubBtn.style.borderColor = isPrivate ? "rgba(255,255,255,0.15)" : "#00f2fe";
+            pubBtn.style.background = isPrivate ? "rgba(15, 23, 42, 0.6)" : "rgba(0, 242, 254, 0.15)";
+            pubBtn.style.color = isPrivate ? "#94a3b8" : "#00f2fe";
+        }
+        if (privBtn) {
+            privBtn.className = isPrivate ? "voice-privacy-btn active" : "voice-privacy-btn";
+            privBtn.style.borderColor = isPrivate ? "#ff4757" : "rgba(255,255,255,0.15)";
+            privBtn.style.background = isPrivate ? "rgba(255, 71, 87, 0.18)" : "rgba(15, 23, 42, 0.6)";
+            privBtn.style.color = isPrivate ? "#ff6b81" : "#94a3b8";
+        }
+        if (pwdContainer) pwdContainer.style.display = isPrivate ? "block" : "none";
+        if (hiddenInput) hiddenInput.value = isPrivate ? "private" : "public";
+        if (isPrivate && pwdInput) setTimeout(() => pwdInput.focus(), 150);
+    } else {
+        const pubBtn = document.getElementById("standaloneVoicePrivacyPublicBtn");
+        const privBtn = document.getElementById("standaloneVoicePrivacyPrivateBtn");
+        const pwdContainer = document.getElementById("standaloneVoicePasswordContainer");
+        const hiddenInput = document.getElementById("standaloneVoiceRoomPrivacy");
+        const pwdInput = document.getElementById("standaloneVoiceRoomPasswordInput");
+
+        if (pubBtn) {
+            pubBtn.className = isPrivate ? "voice-privacy-btn" : "voice-privacy-btn active";
+            pubBtn.style.borderColor = isPrivate ? "rgba(255,255,255,0.15)" : "#00f2fe";
+            pubBtn.style.background = isPrivate ? "rgba(15, 23, 42, 0.6)" : "rgba(0, 242, 254, 0.15)";
+            pubBtn.style.color = isPrivate ? "#94a3b8" : "#00f2fe";
+        }
+        if (privBtn) {
+            privBtn.className = isPrivate ? "voice-privacy-btn active" : "voice-privacy-btn";
+            privBtn.style.borderColor = isPrivate ? "#ff4757" : "rgba(255,255,255,0.15)";
+            privBtn.style.background = isPrivate ? "rgba(255, 71, 87, 0.18)" : "rgba(15, 23, 42, 0.6)";
+            privBtn.style.color = isPrivate ? "#ff6b81" : "#94a3b8";
+        }
+        if (pwdContainer) pwdContainer.style.display = isPrivate ? "block" : "none";
+        if (hiddenInput) hiddenInput.value = isPrivate ? "private" : "public";
+        if (isPrivate && pwdInput) setTimeout(() => pwdInput.focus(), 150);
+    }
+}
+window.setVoiceRoomPrivacy = setVoiceRoomPrivacy;
+
 // 1. 보이스룸 개설 모달 열기 (통합 작성 모달 #createModal의 보이스룸 탭으로 자연스럽게 전환)
 function openCreateVoiceRoomModal() {
     if (!currentUser || !currentUser.name) {
@@ -17647,6 +17738,7 @@ function openCreateVoiceRoomModal() {
         if (typeof resetCreatePostForm === "function") resetCreatePostForm();
         if (typeof preselectModalCategory === "function") preselectModalCategory("community", false);
         if (typeof switchCommunityCreateType === "function") switchCommunityCreateType("voiceroom");
+        setVoiceRoomPrivacy('public', 'modal');
         openModal(createModalEl);
         return;
     }
@@ -17654,6 +17746,7 @@ function openCreateVoiceRoomModal() {
     if (modal) {
         const titleInput = document.getElementById("voiceRoomTitleInput");
         if (titleInput) titleInput.value = "";
+        setVoiceRoomPrivacy('public', 'standalone');
         openModal(modal);
     }
 }
@@ -17670,6 +17763,8 @@ async function handleCreateVoiceRoomFromModal(e) {
     const titleInput = document.getElementById("postTitle");
     const regionSelect = document.getElementById("commVoiceRoomRegionSelect");
     const topicSelect = document.getElementById("commVoiceRoomTopicSelect");
+    const privacyEl = document.getElementById("commVoiceRoomPrivacy");
+    const isPrivate = (privacyEl && privacyEl.value === 'private');
 
     const title = titleInput ? titleInput.value.trim() : "";
     if (!title) {
@@ -17681,10 +17776,26 @@ async function handleCreateVoiceRoomFromModal(e) {
         return;
     }
 
+    let password = "";
+    if (isPrivate) {
+        const pwdInput = document.getElementById("commVoiceRoomPasswordInput");
+        password = pwdInput ? pwdInput.value.trim() : "";
+        if (!password || password.length < 4) {
+            showToast("⚠️ 비공개방 비밀번호를 4자리 이상 입력해 주세요!");
+            if (pwdInput) {
+                highlightInvalidInput(pwdInput);
+                pwdInput.focus();
+            }
+            return;
+        }
+    }
+
     const region = regionSelect ? regionSelect.value : "all";
     const topic = topicSelect ? topicSelect.value : "free_talk";
     const userNick = currentUser.nickname || currentUser.name || "다이버";
     const roomId = 'vr_' + Date.now();
+
+    const metaTag = isPrivate ? `<!--VR_META:${JSON.stringify({ is_private: true, password: password })}-->` : '';
 
     const newRoom = {
         id: roomId,
@@ -17695,6 +17806,8 @@ async function handleCreateVoiceRoomFromModal(e) {
         class_type: "voiceroom",
         post_type: "voiceroom",
         is_voiceroom: true,
+        is_private: isPrivate,
+        password: password,
         region: region,
         topic: topic,
         capacity: 36, // 6 발언자 + 30 청취자
@@ -17704,10 +17817,18 @@ async function handleCreateVoiceRoomFromModal(e) {
         real_name: currentUser.real_name || currentUser.name || userNick,
         author: currentUser.email || userNick,
         status: "open",
-        desc: `🎙️ 실시간 라이브 보이스룸: ${title} (발언 6명 / 청취 최대 30명)`,
+        desc: `🎙️ 실시간 라이브 보이스룸: ${title} (발언 6명 / 청취 최대 30명)${metaTag}`,
         created_at: (typeof getKSTIsoString === "function") ? getKSTIsoString() : new Date().toISOString(),
         listeners_count: 0
     };
+
+    // 방장은 세션 인증 자동 등록
+    if (isPrivate && password) {
+        try {
+            sessionStorage.setItem('unlocked_vr_' + roomId, password);
+            if (window._unlockedVoiceRooms) window._unlockedVoiceRooms.add(roomId);
+        } catch(e) {}
+    }
 
     posts.unshift(newRoom);
 
@@ -17735,6 +17856,14 @@ async function handleCreateVoiceRoomFromModal(e) {
                 newRoom.id = data[0].id;
                 const pIdx = posts.findIndex(p => p.id === roomId);
                 if (pIdx !== -1) posts[pIdx].id = data[0].id;
+
+                if (isPrivate && password) {
+                    try {
+                        sessionStorage.setItem('unlocked_vr_' + data[0].id, password);
+                        if (window._unlockedVoiceRooms) window._unlockedVoiceRooms.add(data[0].id);
+                    } catch(e) {}
+                }
+
                 console.log("✨ Supabase 보이스룸 생성 성공:", data[0].id);
 
                 if (_globalRealtimeChannel) {
@@ -17755,11 +17884,11 @@ async function handleCreateVoiceRoomFromModal(e) {
     }
 
     closeModal(document.getElementById("createModal"));
-    showToast(`🎙️ '${title}' 보이스룸이 개설되었습니다!`);
+    showToast(`🎙️ '${title}' ${isPrivate ? '🔒 비공개' : ''} 보이스룸이 개설되었습니다!`);
 
     switchMainView('community');
     setTimeout(function() {
-        openVoiceRoomModal(newRoom.id);
+        openVoiceRoomModal(newRoom.id, true);
     }, 250);
 }
 window.handleCreateVoiceRoomFromModal = handleCreateVoiceRoomFromModal;
@@ -17775,6 +17904,8 @@ async function handleCreateVoiceRoom(e) {
     const titleInput = document.getElementById("voiceRoomTitleInput");
     const regionSelect = document.getElementById("voiceRoomRegionSelect");
     const topicSelect = document.getElementById("voiceRoomTopicSelect");
+    const privacyEl = document.getElementById("standaloneVoiceRoomPrivacy");
+    const isPrivate = (privacyEl && privacyEl.value === 'private');
 
     const title = titleInput ? titleInput.value.trim() : "";
     if (!title) {
@@ -17782,10 +17913,26 @@ async function handleCreateVoiceRoom(e) {
         return;
     }
 
+    let password = "";
+    if (isPrivate) {
+        const pwdInput = document.getElementById("standaloneVoiceRoomPasswordInput");
+        password = pwdInput ? pwdInput.value.trim() : "";
+        if (!password || password.length < 4) {
+            showToast("⚠️ 비공개방 비밀번호를 4자리 이상 입력해 주세요!");
+            if (pwdInput) {
+                highlightInvalidInput(pwdInput);
+                pwdInput.focus();
+            }
+            return;
+        }
+    }
+
     const region = regionSelect ? regionSelect.value : "all";
     const topic = topicSelect ? topicSelect.value : "free_talk";
     const userNick = currentUser.nickname || currentUser.name || "다이버";
     const roomId = 'vr_' + Date.now();
+
+    const metaTag = isPrivate ? `<!--VR_META:${JSON.stringify({ is_private: true, password: password })}-->` : '';
 
     const newRoom = {
         id: roomId,
@@ -17796,6 +17943,8 @@ async function handleCreateVoiceRoom(e) {
         class_type: "voiceroom",
         post_type: "voiceroom",
         is_voiceroom: true,
+        is_private: isPrivate,
+        password: password,
         region: region,
         topic: topic,
         capacity: 36, // 6 발언자 + 30 청취자
@@ -17805,10 +17954,17 @@ async function handleCreateVoiceRoom(e) {
         real_name: currentUser.real_name || currentUser.name || userNick,
         author: currentUser.email || userNick,
         status: "open",
-        desc: `🎙️ 실시간 라이브 보이스룸: ${title} (발언 6명 / 청취 최대 30명)`,
+        desc: `🎙️ 실시간 라이브 보이스룸: ${title} (발언 6명 / 청취 최대 30명)${metaTag}`,
         created_at: (typeof getKSTIsoString === "function") ? getKSTIsoString() : new Date().toISOString(),
         listeners_count: 0
     };
+
+    if (isPrivate && password) {
+        try {
+            sessionStorage.setItem('unlocked_vr_' + roomId, password);
+            if (window._unlockedVoiceRooms) window._unlockedVoiceRooms.add(roomId);
+        } catch(e) {}
+    }
 
     // 로컬 posts 배열 최우선 삽입
     posts.unshift(newRoom);
@@ -17838,6 +17994,14 @@ async function handleCreateVoiceRoom(e) {
                 newRoom.id = data[0].id;
                 const pIdx = posts.findIndex(p => p.id === roomId);
                 if (pIdx !== -1) posts[pIdx].id = data[0].id;
+
+                if (isPrivate && password) {
+                    try {
+                        sessionStorage.setItem('unlocked_vr_' + data[0].id, password);
+                        if (window._unlockedVoiceRooms) window._unlockedVoiceRooms.add(data[0].id);
+                    } catch(e) {}
+                }
+
                 console.log("✨ Supabase 보이스룸 생성 성공:", data[0].id);
 
                 // 실시간 전역 브로드캐스트로 모바일 등 모든 접속 기기에 0.05초 즉시 동기화
@@ -17861,12 +18025,12 @@ async function handleCreateVoiceRoom(e) {
     }
 
     closeModal(document.getElementById("createVoiceRoomModal"));
-    showToast(`🎙️ '${title}' 보이스룸이 개설되었습니다!`);
+    showToast(`🎙️ '${title}' ${isPrivate ? '🔒 비공개' : ''} 보이스룸이 개설되었습니다!`);
 
     // 자유글 & 보이스룸 뷰로 자동 이동 후 방 즉시 입장
     switchMainView('community');
     setTimeout(function() {
-        openVoiceRoomModal(newRoom.id);
+        openVoiceRoomModal(newRoom.id, true);
     }, 250);
 }
 window.handleCreateVoiceRoom = handleCreateVoiceRoom;
@@ -17912,13 +18076,13 @@ function isVoiceRoomHost(room) {
 }
 window.isVoiceRoomHost = isVoiceRoomHost;
 
-// 3. 보이스룸 모달 열기 & 입장
-async function openVoiceRoomModal(roomId) {
+// 3. 보이스룸 모달 열기 & 입장 (비공개방 비밀번호 게이트키퍼 통합)
+async function openVoiceRoomModal(roomId, isBypassed = false) {
     if (!roomId) return;
     const roomIdStr = String(roomId).trim();
     if (!currentUser || !currentUser.name) {
         showToast("🔑 로그인 후 보이스룸에 입장하실 수 있습니다!");
-        pendingLoginAction = function() { openVoiceRoomModal(roomIdStr); };
+        pendingLoginAction = function() { openVoiceRoomModal(roomIdStr, isBypassed); };
         if (typeof switchAuthTab === "function") switchAuthTab('login');
         openModal(document.getElementById("authModal"));
         return;
@@ -17968,6 +18132,38 @@ async function openVoiceRoomModal(roomId) {
             return;
         }
 
+        parseVoiceRoomMeta(room);
+
+        const amIHost = isVoiceRoomHost(room);
+
+        // 🔒 [비공개방 보안 게이트키퍼]
+        if (room.is_private && room.password && isBypassed !== true) {
+            let isAuthorized = false;
+            // 1. 방장은 즉시 통과
+            if (amIHost) {
+                isAuthorized = true;
+            }
+            // 2. 세션 스토리지 인증 기록 검증
+            if (!isAuthorized) {
+                try {
+                    const sessionSavedPwd = sessionStorage.getItem('unlocked_vr_' + room.id);
+                    if (sessionSavedPwd && sessionSavedPwd === room.password) {
+                        isAuthorized = true;
+                    }
+                } catch(e) {}
+            }
+            // 3. 메모리 내 인증 캐시 검증
+            if (!isAuthorized && window._unlockedVoiceRooms && window._unlockedVoiceRooms.has(room.id)) {
+                isAuthorized = true;
+            }
+
+            // 미인증 시 비밀번호 입력 모달 호출 및 진입 차단
+            if (!isAuthorized) {
+                openVoiceRoomPasswordModal(room);
+                return;
+            }
+        }
+
         currentVoiceRoom = room;
         const myNick = (currentUser && currentUser.nickname) ? currentUser.nickname.trim() : "";
         const myDisplayName = (currentUser && currentUser.name) ? currentUser.name.trim() : "";
@@ -17976,7 +18172,6 @@ async function openVoiceRoomModal(roomId) {
 
         // 실제 방 주최자의 표시명 (게스트 접속 시 절대 게스트 이름으로 변조되지 않음)
         const hostDisplayName = (room.user_name || "주최자").trim();
-        const amIHost = isVoiceRoomHost(room);
 
         // 발언자 슬롯 초기화: DB에 저장된 발언자 슬롯이 있다면 우선 복원, 없다면 주최자 0번 고정
         let savedSpeakers = room.participants;
@@ -18002,6 +18197,24 @@ async function openVoiceRoomModal(roomId) {
         const hostInfoEl = document.getElementById("voiceRoomHostInfo");
         if (hostInfoEl) {
             hostInfoEl.textContent = `👑 주최자: ${hostDisplayName} ${amIHost ? '(나)' : ''}`;
+        }
+
+        // 비공개방 뱃지 및 방장 비번 복사 버튼 바인딩
+        const privBadge = document.getElementById("voiceRoomPrivateBadge");
+        const copyPwdBtn = document.getElementById("voiceRoomHostCopyPwdBtn");
+        const hostPwdText = document.getElementById("voiceRoomHostPwdText");
+
+        if (room.is_private) {
+            if (privBadge) privBadge.style.display = "inline-flex";
+            if (amIHost && copyPwdBtn) {
+                copyPwdBtn.style.display = "inline-flex";
+                if (hostPwdText) hostPwdText.textContent = `비번: ${room.password} [복사]`;
+            } else if (copyPwdBtn) {
+                copyPwdBtn.style.display = "none";
+            }
+        } else {
+            if (privBadge) privBadge.style.display = "none";
+            if (copyPwdBtn) copyPwdBtn.style.display = "none";
         }
 
         // 6석 무대 렌더링
@@ -18037,6 +18250,139 @@ async function openVoiceRoomModal(roomId) {
     }
 }
 window.openVoiceRoomModal = openVoiceRoomModal;
+
+// 🔒 3.2 비공개 보이스룸 비밀번호 입력 모달 열기
+function openVoiceRoomPasswordModal(room) {
+    if (!room) return;
+    const modal = document.getElementById("voiceRoomPasswordModal");
+    if (!modal) return;
+
+    const targetIdInput = document.getElementById("voiceRoomGateTargetId");
+    const pwdInput = document.getElementById("voiceRoomGatePasswordInput");
+    const titleEl = document.getElementById("vrPwdModalRoomTitle");
+    const hostEl = document.getElementById("vrPwdModalHostInfo");
+
+    if (targetIdInput) targetIdInput.value = room.id;
+    if (pwdInput) pwdInput.value = "";
+    if (titleEl) titleEl.textContent = room.title || "비공개 보이스룸";
+    if (hostEl) hostEl.textContent = `👑 주최자: ${room.user_name || '다이버'}`;
+
+    if (typeof openModal === "function") {
+        openModal(modal);
+    } else {
+        modal.classList.remove("hidden");
+        modal.style.display = "flex";
+    }
+
+    setTimeout(() => {
+        if (pwdInput) {
+            pwdInput.focus();
+            pwdInput.select();
+        }
+    }, 200);
+}
+window.openVoiceRoomPasswordModal = openVoiceRoomPasswordModal;
+
+// 🔒 3.3 비공개 보이스룸 비밀번호 제출 및 세션 검증
+async function handleVoiceRoomPasswordSubmit(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const targetIdInput = document.getElementById("voiceRoomGateTargetId");
+    const pwdInput = document.getElementById("voiceRoomGatePasswordInput");
+    const modal = document.getElementById("voiceRoomPasswordModal");
+
+    const roomId = targetIdInput ? targetIdInput.value : "";
+    const inputPwd = pwdInput ? pwdInput.value.trim() : "";
+
+    if (!roomId) return;
+    let room = posts.find(p => String(p.id).trim() === String(roomId).trim());
+    if (!room && supabaseClient) {
+        try {
+            const { data } = await supabaseClient.from('posts').select('*').eq('id', roomId);
+            if (data && data[0]) room = data[0];
+        } catch(err) {}
+    }
+
+    if (!room) {
+        showToast("⚠️ 보이스룸 정보를 찾을 수 없습니다.");
+        if (modal) closeModal(modal);
+        return;
+    }
+
+    parseVoiceRoomMeta(room);
+
+    if (inputPwd === String(room.password || '').trim()) {
+        // 일치! 세션 스토리지 및 전역 메모리에 인증 상태 저장
+        try {
+            sessionStorage.setItem('unlocked_vr_' + room.id, room.password);
+            if (typeof window._unlockedVoiceRooms !== 'undefined') {
+                window._unlockedVoiceRooms.add(room.id);
+            }
+        } catch(err) {}
+
+        if (modal) closeModal(modal);
+        showToast("🔓 비밀번호가 확인되었습니다! 입장합니다.");
+        openVoiceRoomModal(room.id, true);
+    } else {
+        showToast("❌ 비밀번호가 일치하지 않습니다. 다시 확인해 주세요!");
+        if (pwdInput) {
+            highlightInvalidInput(pwdInput);
+            pwdInput.value = "";
+            pwdInput.focus();
+        }
+    }
+}
+window.handleVoiceRoomPasswordSubmit = handleVoiceRoomPasswordSubmit;
+
+// 🔒 3.4 방장용 비밀번호 복사 유틸리티 (navigator.clipboard + execCommand Fallback 완벽 방어)
+function copyVoiceRoomPassword() {
+    if (!currentVoiceRoom || !currentVoiceRoom.password) {
+        showToast("⚠️ 복사할 비밀번호가 없습니다.");
+        return;
+    }
+
+    const pwd = String(currentVoiceRoom.password);
+    const successMsg = `📋 비공개방 비밀번호 [${pwd}]가 복사되었습니다! 팀원들에게 공유해 주세요.`;
+
+    // 1. 최신 navigator.clipboard.writeText 시도
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        navigator.clipboard.writeText(pwd).then(() => {
+            showToast(successMsg);
+        }).catch(err => {
+            console.warn("navigator.clipboard 실패, Fallback 실행:", err);
+            fallbackCopyText(pwd, successMsg);
+        });
+    } else {
+        // 2. 미지원 또는 보안 차단 환경을 위한 document.execCommand Fallback
+        fallbackCopyText(pwd, successMsg);
+    }
+}
+window.copyVoiceRoomPassword = copyVoiceRoomPassword;
+
+// 🔒 3.5 클립보드 복사 Fallback 방어 코드
+function fallbackCopyText(text, successMsg) {
+    try {
+        const tempTextArea = document.createElement("textarea");
+        tempTextArea.value = text;
+        tempTextArea.style.position = "fixed";
+        tempTextArea.style.left = "-9999px";
+        tempTextArea.style.top = "0";
+        tempTextArea.setAttribute("readonly", "");
+        document.body.appendChild(tempTextArea);
+        tempTextArea.focus();
+        tempTextArea.select();
+        const successful = document.execCommand('copy');
+        document.body.removeChild(tempTextArea);
+        if (successful) {
+            showToast(successMsg || "📋 클립보드에 복사되었습니다!");
+        } else {
+            prompt("아래 비밀번호를 직접 복사(Ctrl+C)하세요:", text);
+        }
+    } catch (err) {
+        console.error("클립보드 Fallback 복사 실패:", err);
+        prompt("아래 비밀번호를 직접 복사(Ctrl+C)하세요:", text);
+    }
+}
+window.fallbackCopyText = fallbackCopyText;
 
 // 4. 6석 발언 무대 슬롯 렌더링 (주최자 1석 + 발언자 5석)
 function renderVoiceRoomStage() {

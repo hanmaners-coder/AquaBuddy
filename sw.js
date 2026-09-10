@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1637-freediving-hud-dive-computer-upgrade";
+const CACHE_NAME = "aquabuddy-cache-v1638-private-voice-room-password";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

@@ -257,7 +257,7 @@
      <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=7c316726691ea5e02f234a85f5a20bab&libraries=services,clusterer"></script>
      
      <!-- Custom CSS -->
-     <link rel="stylesheet" href="styles.css?v=V1637_FREEDIVING_HUD_DIVE_COMPUTER_UPGRADE">
+     <link rel="stylesheet" href="styles.css?v=V1638_PRIVATE_VOICE_ROOM_PASSWORD">
      <!-- PWA Manifest and Meta Tags -->
      <link rel="manifest" href="manifest.json">
      <link rel="apple-touch-icon" href="icon-192.png">
@@ -2780,6 +2780,34 @@
                              </select>
                          </div>
                      </div>
+
+                    <!-- 🔒 보이스룸 공개 / 비밀번호 비공개 설정 -->
+                    <div style="margin-bottom: 12px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(0, 242, 254, 0.25); border-radius: 12px; padding: 12px;">
+                        <label style="display: block; font-size: 0.82rem; font-weight: 800; color: #e2e8f0; margin-bottom: 8px;">
+                            🔒 공개 여부 설정 *
+                        </label>
+                        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                            <button type="button" id="commVoicePrivacyPublicBtn" onclick="setVoiceRoomPrivacy('public', 'modal')" class="voice-privacy-btn active" style="flex: 1; padding: 9px 8px; border-radius: 10px; border: 1.5px solid #00f2fe; background: rgba(0, 242, 254, 0.15); color: #00f2fe; font-weight: 800; font-size: 0.84rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; transition: all 0.2s;">
+                                🌐 공개방 (자유 입장)
+                            </button>
+                            <button type="button" id="commVoicePrivacyPrivateBtn" onclick="setVoiceRoomPrivacy('private', 'modal')" class="voice-privacy-btn" style="flex: 1; padding: 9px 8px; border-radius: 10px; border: 1.5px solid rgba(255,255,255,0.15); background: rgba(15, 23, 42, 0.6); color: #94a3b8; font-weight: 800; font-size: 0.84rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; transition: all 0.2s;">
+                                🔒 비공개방 (비밀번호)
+                            </button>
+                        </div>
+                        <div id="commVoicePasswordContainer" style="display: none; margin-top: 10px;">
+                            <label for="commVoiceRoomPasswordInput" style="display: block; font-size: 0.78rem; font-weight: 800; color: #ff6b81; margin-bottom: 5px;">
+                                🔑 입장 비밀번호 설정 (4자리 이상) *
+                            </label>
+                            <div style="position: relative;">
+                                <input type="text" id="commVoiceRoomPasswordInput" placeholder="예: 1234 또는 비밀코드" maxlength="16" style="width: 100%; padding: 10px 12px; background: rgba(15, 23, 42, 0.95); border: 1.5px solid #ff4757; border-radius: 8px; color: #fff; font-weight: 800; font-size: 0.88rem; outline: none; box-sizing: border-box; letter-spacing: 1px;">
+                            </div>
+                            <p style="margin: 6px 0 0 0; font-size: 0.74rem; color: #94a3b8; line-height: 1.4;">
+                                💡 트레이닝 크루, 브리핑, 비공개 Q&A: 비밀번호를 아는 멤버들만 입장할 수 있습니다.
+                            </p>
+                        </div>
+                        <input type="hidden" id="commVoiceRoomPrivacy" value="public">
+                    </div>
+
                      <!-- 6석 발언 무대 + 청취 30명 안내 -->
                      <div style="background: rgba(0, 242, 254, 0.08); border: 1px dashed rgba(0, 242, 254, 0.4); border-radius: 12px; padding: 12px 14px; font-size: 0.82rem; line-height: 1.5; color: #cbd5e1;">
                          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
@@ -3583,6 +3611,33 @@
                     </div>
                 </div>
 
+                <!-- 🔒 보이스룸 공개 / 비밀번호 비공개 설정 -->
+                <div style="margin-bottom: 14px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(0, 242, 254, 0.25); border-radius: 12px; padding: 12px;">
+                    <label style="display: block; font-size: 0.82rem; font-weight: 800; color: #e2e8f0; margin-bottom: 8px;">
+                        🔒 공개 여부 설정 *
+                    </label>
+                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                        <button type="button" id="standaloneVoicePrivacyPublicBtn" onclick="setVoiceRoomPrivacy('public', 'standalone')" class="voice-privacy-btn active" style="flex: 1; padding: 9px 8px; border-radius: 10px; border: 1.5px solid #00f2fe; background: rgba(0, 242, 254, 0.15); color: #00f2fe; font-weight: 800; font-size: 0.84rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; transition: all 0.2s;">
+                            🌐 공개방 (자유 입장)
+                        </button>
+                        <button type="button" id="standaloneVoicePrivacyPrivateBtn" onclick="setVoiceRoomPrivacy('private', 'standalone')" class="voice-privacy-btn" style="flex: 1; padding: 9px 8px; border-radius: 10px; border: 1.5px solid rgba(255,255,255,0.15); background: rgba(15, 23, 42, 0.6); color: #94a3b8; font-weight: 800; font-size: 0.84rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; transition: all 0.2s;">
+                            🔒 비공개방 (비밀번호)
+                        </button>
+                    </div>
+                    <div id="standaloneVoicePasswordContainer" style="display: none; margin-top: 10px;">
+                        <label for="standaloneVoiceRoomPasswordInput" style="display: block; font-size: 0.78rem; font-weight: 800; color: #ff6b81; margin-bottom: 5px;">
+                            🔑 입장 비밀번호 설정 (4자리 이상) *
+                        </label>
+                        <div style="position: relative;">
+                            <input type="text" id="standaloneVoiceRoomPasswordInput" placeholder="예: 1234 또는 비밀코드" maxlength="16" style="width: 100%; padding: 10px 12px; background: rgba(15, 23, 42, 0.95); border: 1.5px solid #ff4757; border-radius: 8px; color: #fff; font-weight: 800; font-size: 0.88rem; outline: none; box-sizing: border-box; letter-spacing: 1px;">
+                        </div>
+                        <p style="margin: 6px 0 0 0; font-size: 0.74rem; color: #94a3b8; line-height: 1.4;">
+                            💡 트레이닝 크루, 브리핑, 비공개 Q&A: 비밀번호를 아는 멤버들만 입장할 수 있습니다.
+                        </p>
+                    </div>
+                    <input type="hidden" id="standaloneVoiceRoomPrivacy" value="public">
+                </div>
+
                 <!-- 규격 안내 박스 (발언자 6명 / 청취자 30명) -->
                 <div style="background: rgba(0, 242, 254, 0.08); border: 1px dashed rgba(0, 242, 254, 0.4); border-radius: 12px; padding: 12px 14px; margin-bottom: 18px; font-size: 0.82rem; line-height: 1.5; color: #cbd5e1;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
@@ -3645,6 +3700,45 @@
         </div>
     </div>
 
+    <!-- 🔒 Voice Room Password Verification Gatekeeper Modal (#voiceRoomPasswordModal) -->
+    <div class="modal-overlay hidden" id="voiceRoomPasswordModal" style="z-index: 9999997 !important; padding: 16px; box-sizing: border-box;">
+        <div class="modal-container glass-panel" style="max-width: 420px; width: 94%; background: rgba(10, 18, 35, 0.98); border: 2px solid #ff4757; border-radius: 22px; box-shadow: 0 16px 50px rgba(255, 71, 87, 0.35), 0 0 40px rgba(0, 0, 0, 0.9); padding: 24px 20px; color: #fff; text-align: center;">
+            <div style="width: 54px; height: 54px; border-radius: 50%; background: rgba(255, 71, 87, 0.15); border: 2px solid #ff4757; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px auto; font-size: 1.5rem; color: #ff6b81; box-shadow: 0 0 20px rgba(255, 71, 87, 0.4);">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <h3 style="margin: 0 0 6px 0; font-size: 1.18rem; font-weight: 900; color: #fff;">
+                비공개 보이스룸 입장
+            </h3>
+            <p style="margin: 0 0 14px 0; font-size: 0.82rem; color: #94a3b8; line-height: 1.4;">
+                이 방은 비밀번호로 보호되어 있습니다.<br>
+                주최자 또는 팀원에게 공유받은 비밀번호를 입력해 주세요.
+            </p>
+            
+            <div style="background: rgba(0,0,0,0.4); border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.08); text-align: left;">
+                <div style="font-size: 0.74rem; color: #ff6b81; font-weight: 800; margin-bottom: 3px;" id="vrPwdModalRoomBadge">🔒 PRIVATE VOICE ROOM</div>
+                <div style="font-size: 0.94rem; font-weight: 900; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" id="vrPwdModalRoomTitle">보이스룸 제목</div>
+                <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 4px;" id="vrPwdModalHostInfo">👑 주최자: -</div>
+            </div>
+
+            <form onsubmit="handleVoiceRoomPasswordSubmit(event)">
+                <div style="margin-bottom: 18px; text-align: left;">
+                    <label for="voiceRoomGatePasswordInput" style="display: block; font-size: 0.82rem; font-weight: 800; color: #e2e8f0; margin-bottom: 6px;">
+                        🔑 입장 비밀번호
+                    </label>
+                    <input type="password" id="voiceRoomGatePasswordInput" placeholder="비밀번호 입력" required maxlength="16" autocomplete="off" style="width: 100%; padding: 12px 14px; background: rgba(15, 23, 42, 0.95); border: 1.5px solid #ff4757; border-radius: 10px; color: #fff; font-weight: 800; font-size: 1.05rem; text-align: center; letter-spacing: 2px; outline: none; box-sizing: border-box;">
+                    <input type="hidden" id="voiceRoomGateTargetId" value="">
+                </div>
+
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal(document.getElementById('voiceRoomPasswordModal'))" style="flex: 1; padding: 11px; border-radius: 10px; font-weight: 700; font-size: 0.88rem;">취소</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 1.4; padding: 11px; border-radius: 10px; background: linear-gradient(135deg, #ff4757, #ff6b81); border: none; color: #fff; font-weight: 900; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 18px rgba(255, 71, 87, 0.4);">
+                        <i class="fa-solid fa-key"></i> 입장하기
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- 🎙️ Hybrid Live Voice Room & Chat Modal Overlay (#voiceRoomModalOverlay) -->
     <div class="modal-overlay hidden" id="voiceRoomModalOverlay" style="z-index: 9999995 !important; padding: 12px; box-sizing: border-box;">
         <div class="glass-panel modal-container" style="background: rgba(10, 18, 35, 0.98); border: 2px solid var(--accent-cyan); border-radius: 24px; box-shadow: 0 16px 60px rgba(0, 0, 0, 0.9); width: 100%; max-width: 580px; height: 90vh; max-height: 740px; display: flex; flex-direction: column; overflow: hidden; position: relative; color: #fff; padding: 0 !important;">
@@ -3659,8 +3753,12 @@
                         <h3 id="voiceRoomModalTitle" style="margin: 0; font-size: 1.05rem; font-weight: 900; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                             제주 서귀포 실시간 파도 상황 & 물때
                         </h3>
-                        <div style="font-size: 0.76rem; color: #94a3b8; display: flex; align-items: center; gap: 8px; margin-top: 2px;">
+                        <div style="font-size: 0.76rem; color: #94a3b8; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 2px;">
                             <span id="voiceRoomHostInfo">👑 주최자: 김동욱</span>
+                            <span id="voiceRoomPrivateBadge" style="display: none; background: rgba(255, 71, 87, 0.2); color: #ff6b81; border: 1px solid #ff4757; padding: 1px 7px; border-radius: 6px; font-size: 0.7rem; font-weight: 800;"><i class="fa-solid fa-lock"></i> 비공개</span>
+                            <button type="button" id="voiceRoomHostCopyPwdBtn" onclick="copyVoiceRoomPassword()" style="display: none; background: rgba(255, 183, 3, 0.18); border: 1px solid #ffb703; color: #ffd166; padding: 1px 7px; border-radius: 6px; font-size: 0.72rem; font-weight: 800; cursor: pointer;" title="팀원들에게 공유할 비밀번호 복사">
+                                <i class="fa-solid fa-key"></i> <span id="voiceRoomHostPwdText">비번 복사</span>
+                            </button>
                             <span>•</span>
                             <span id="voiceRoomHeaderAudienceBtn" style="color: var(--accent-cyan); cursor: pointer; font-weight: 700;" onclick="toggleAudienceDrawer()">
                                 <i class="fa-solid fa-users"></i> 청취자 <span id="voiceRoomHeaderAudienceCount">0</span>/30명 ➔
@@ -3774,8 +3872,8 @@
 
  
      <!-- App Configuration & Main Logic Script -->
-     <script src="config.js?v=V1637_FREEDIVING_HUD_DIVE_COMPUTER_UPGRADE"></script>
-     <script src="app.js?v=V1637_FREEDIVING_HUD_DIVE_COMPUTER_UPGRADE"></script>
+     <script src="config.js?v=V1638_PRIVATE_VOICE_ROOM_PASSWORD"></script>
+     <script src="app.js?v=V1638_PRIVATE_VOICE_ROOM_PASSWORD"></script>
      <!-- Toast Notification Container -->
     <div id="toastContainer" class="toast-container"></div>
 

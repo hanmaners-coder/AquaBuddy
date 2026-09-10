@@ -2301,3 +2301,24 @@ button:active, .btn:active, .action-btn:active, .category-pill:active {
     overflow: hidden;
     transition: all 0.3s ease;
 }
+
+/* ==========================================================================
+   🔒 AQUA TOOLKIT & VOICE ROOM - PRIVATE ROOM STYLING
+   ========================================================================== */
+.voice-privacy-btn {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    user-select: none;
+}
+.voice-privacy-btn:hover {
+    filter: brightness(1.15);
+    transform: translateY(-1px);
+}
+.voice-privacy-btn:active {
+    transform: translateY(0);
+}
+.voice-privacy-btn.active {
+    box-shadow: 0 0 14px rgba(0, 242, 254, 0.35);
+}
+#commVoicePrivacyPrivateBtn.active, #standaloneVoicePrivacyPrivateBtn.active {
+    box-shadow: 0 0 14px rgba(255, 71, 87, 0.4);
+}
