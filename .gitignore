@@ -44,3 +44,7 @@ promo_studio/
 *.wav
 *.mp3
 
+
+*.bak*
+*.zip
+

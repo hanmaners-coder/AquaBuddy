@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1560-seo-search-console-sitemap-robots-complete";
+const CACHE_NAME = "aquabuddy-cache-v1637-freediving-hud-dive-computer-upgrade";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

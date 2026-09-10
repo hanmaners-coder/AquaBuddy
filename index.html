@@ -242,7 +242,7 @@
      <!-- Google Fonts -->
      <link rel="preconnect" href="https://fonts.googleapis.com">
      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Outfit:wght@400;600;800;900&family=Orbitron:wght@600;800;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
      
      <!-- FontAwesome Icons -->
      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -257,7 +257,7 @@
      <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=7c316726691ea5e02f234a85f5a20bab&libraries=services,clusterer"></script>
      
      <!-- Custom CSS -->
-     <link rel="stylesheet" href="styles.css?v=V1611_VOICEROOM_MODAL_AUTO_ENTER_FIX">
+     <link rel="stylesheet" href="styles.css?v=V1637_FREEDIVING_HUD_DIVE_COMPUTER_UPGRADE">
      <!-- PWA Manifest and Meta Tags -->
      <link rel="manifest" href="manifest.json">
      <link rel="apple-touch-icon" href="icon-192.png">
@@ -1431,51 +1431,185 @@
                         </div>
                     </div>
 
-                    <!-- 3. 메인 디지털 타이머 보드 (Dark/Neon High-Visibility) -->
-                    <div id="toolkitTimerBoard" style="background: linear-gradient(180deg, rgba(8, 16, 28, 0.98), rgba(4, 8, 16, 0.98)); border: 2px solid #00f2fe; border-radius: 24px; padding: 30px 20px; margin-bottom: 24px; text-align: center; box-shadow: 0 0 50px rgba(0, 242, 254, 0.25); position: relative; overflow: hidden; transition: all 0.3s ease;">
+                    <!-- 3. 메인 디지털 타이머 보드 (심해 원형 HUD 다이브 컴퓨터) -->
+                    <div id="toolkitTimerBoard" class="ocean-hud-board" style="padding: 24px 16px; margin-bottom: 24px; text-align: center;">
                         
-                        <!-- 현재 상태 뱃지 -->
-                        <div style="margin-bottom: 8px;">
-                            <span id="timerPhaseBadge" style="background: rgba(0, 242, 254, 0.2); border: 1.5px solid #00f2fe; color: #00f2fe; font-size: 1.05rem; font-weight: 900; padding: 6px 20px; border-radius: 20px; letter-spacing: 0.5px; display: inline-block; transition: all 0.3s ease; box-shadow: 0 0 16px rgba(0, 242, 254, 0.3);">
-                                🫁 준비호흡 (BREATHE-UP)
-                            </span>
+                        <!-- 배경 심해 은은한 조명 & 수포 효과 -->
+                        <div style="position: absolute; inset: 0; pointer-events: none; opacity: 0.15; overflow: hidden;">
+                            <div style="position: absolute; width: 6px; height: 6px; border-radius: 50%; background: #00f2fe; top: 75%; left: 25%; filter: blur(1px);"></div>
+                            <div style="position: absolute; width: 8px; height: 8px; border-radius: 50%; background: #38ef7d; top: 45%; right: 20%; filter: blur(1px);"></div>
                         </div>
 
-                        <!-- 라운드 정보 -->
-                        <div id="timerRoundDisplay" style="color: #94a3b8; font-size: 0.92rem; font-weight: 800; margin-bottom: 12px;">
-                            Round 1 of 8
+                        <!-- 1. 상단 HUD 상태 바 -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; position: relative; z-index: 2; flex-wrap: wrap; gap: 8px;">
+                            <!-- 좌측: 오디오 / 라운드 상태 -->
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-family: 'Rajdhani', sans-serif; font-size: 0.78rem; font-weight: 700; color: #00f2fe; letter-spacing: 1px; display: flex; align-items: center; gap: 5px;">
+                                    <span style="width: 7px; height: 7px; border-radius: 50%; background: #00f2fe; display: inline-block; box-shadow: 0 0 8px #00f2fe;"></span>
+                                    APNEA HUD
+                                </span>
+                                <span id="timerRoundDisplay" style="color: #94a3b8; font-size: 0.8rem; font-weight: 800; font-family: 'Orbitron', monospace;">
+                                    Round 1 of 8
+                                </span>
+                            </div>
+
+                            <!-- 중앙: 현재 상태 뱃지 -->
+                            <div>
+                                <span id="timerPhaseBadge" style="background: rgba(0, 242, 254, 0.2); border: 1.5px solid #00f2fe; color: #00f2fe; font-size: 0.88rem; font-weight: 900; padding: 4px 16px; border-radius: 20px; letter-spacing: 0.5px; display: inline-block; transition: all 0.3s ease; box-shadow: 0 0 16px rgba(0, 242, 254, 0.3);">
+                                    🫁 준비호흡 (BREATHE-UP)
+                                </span>
+                            </div>
+
+                            <!-- 우측: 모드 인디케이터 태그 -->
+                            <div>
+                                <span id="hudModeBadge" style="background: rgba(0,0,0,0.5); border: 1px solid rgba(0,242,254,0.4); color: #00f2fe; font-size: 0.75rem; font-weight: 800; padding: 3px 10px; border-radius: 12px; font-family: 'Orbitron', monospace;">
+                                    CO2 HOLD
+                                </span>
+                            </div>
                         </div>
 
-                        <!-- 대형 디지털 시간 표시기 -->
-                        <div id="timerTimeDisplay" style="font-size: clamp(3.8rem, 12vw, 5.5rem); font-weight: 900; font-family: monospace, sans-serif; color: #00f2fe; text-shadow: 0 0 35px rgba(0, 242, 254, 0.6); line-height: 1.1; margin: 10px 0; letter-spacing: 2px; transition: all 0.3s ease;">
-                            02:00
+                        <!-- 타임라인 프로그레스 바 -->
+                        <div style="width: 100%; max-width: 500px; height: 6px; background: rgba(255, 255, 255, 0.08); border-radius: 6px; margin: 0 auto 16px auto; overflow: hidden; position: relative; z-index: 2;">
+                            <div id="timerPhaseProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #00f2fe, #4facfe); border-radius: 6px; transition: width 0.2s linear;"></div>
+                        </div>
+
+                        <!-- 2. 중앙 메인 서큘러 다이얼 HUD & 4각 서브 다이얼 영역 -->
+                        <div style="position: relative; width: 100%; max-width: 340px; height: 320px; margin: 0 auto; display: flex; align-items: center; justify-content: center; z-index: 2;">
+
+                            <!-- [서브 다이얼 1: 좌상단 라운드] -->
+                            <div style="position: absolute; top: 0; left: 4px; display: flex; flex-direction: column; align-items: center;">
+                                <div style="width: 52px; height: 52px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.1); background: rgba(6, 18, 30, 0.85); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+                                    <svg style="position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg);">
+                                        <circle cx="26" cy="26" r="22" stroke="#00f2fe" stroke-width="2.5" fill="transparent" stroke-dasharray="138" stroke-dashoffset="70" stroke-linecap="round" class="hud-glow-cyan" />
+                                    </svg>
+                                    <span id="hudSubRoundVal" class="font-hud" style="font-size: 0.82rem; font-weight: 800; color: #00f2fe;">01</span>
+                                </div>
+                                <span class="font-tech" style="font-size: 0.68rem; font-weight: 700; color: #94a3b8; margin-top: 3px; letter-spacing: 0.5px;">ROUND</span>
+                            </div>
+
+                            <!-- [서브 다이얼 2: 우상단 목표 시간 (Hold Target)] -->
+                            <div style="position: absolute; top: 0; right: 4px; display: flex; flex-direction: column; align-items: center;">
+                                <div style="width: 52px; height: 52px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.1); background: rgba(6, 18, 30, 0.85); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+                                    <svg style="position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg);">
+                                        <circle cx="26" cy="26" r="22" stroke="#00f2fe" stroke-width="2.5" fill="transparent" stroke-dasharray="138" stroke-dashoffset="95" stroke-linecap="round" class="hud-glow-cyan" />
+                                    </svg>
+                                    <span id="hudSubTargetVal" class="font-hud" style="font-size: 0.76rem; font-weight: 800; color: #00f2fe;">01:00</span>
+                                </div>
+                                <span class="font-tech" style="font-size: 0.68rem; font-weight: 700; color: #94a3b8; margin-top: 3px; letter-spacing: 0.5px;">TARGET</span>
+                            </div>
+
+                            <!-- [서브 다이얼 3: 좌하단 준비 호흡 (Rest Time)] -->
+                            <div style="position: absolute; bottom: 0; left: 4px; display: flex; flex-direction: column; align-items: center;">
+                                <div style="width: 52px; height: 52px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.1); background: rgba(6, 18, 30, 0.85); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+                                    <svg style="position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg);">
+                                        <circle cx="26" cy="26" r="22" stroke="#38ef7d" stroke-width="2.5" fill="transparent" stroke-dasharray="138" stroke-dashoffset="40" stroke-linecap="round" class="hud-glow-rest" />
+                                    </svg>
+                                    <span id="hudSubRestVal" class="font-hud" style="font-size: 0.76rem; font-weight: 800; color: #38ef7d;">02:00</span>
+                                </div>
+                                <span class="font-tech" style="font-size: 0.68rem; font-weight: 700; color: #94a3b8; margin-top: 3px; letter-spacing: 0.5px;">REST</span>
+                            </div>
+
+                            <!-- [서브 다이얼 4: 우하단 개인 최고 기록 (PB)] -->
+                            <div style="position: absolute; bottom: 0; right: 4px; display: flex; flex-direction: column; align-items: center;">
+                                <div style="width: 52px; height: 52px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.1); background: rgba(6, 18, 30, 0.85); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+                                    <svg style="position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg);">
+                                        <circle cx="26" cy="26" r="22" stroke="#ffd700" stroke-width="2.5" fill="transparent" stroke-dasharray="138" stroke-dashoffset="85" stroke-linecap="round" style="filter: drop-shadow(0 0 10px rgba(255,215,0,0.7));" />
+                                    </svg>
+                                    <span id="hudSubPBVal" class="font-hud" style="font-size: 0.76rem; font-weight: 800; color: #ffd700;">02:30</span>
+                                </div>
+                                <span class="font-tech" style="font-size: 0.68rem; font-weight: 700; color: #94a3b8; margin-top: 3px; letter-spacing: 0.5px;">PB MAX</span>
+                            </div>
+
+                            <!-- 외곽 컴퍼스/타코미터 틱 마크 링 (Outer Compass Marks) -->
+                            <svg viewBox="0 0 300 300" style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0.6;">
+                                <g stroke="rgba(0, 242, 254, 0.5)" stroke-width="1.5">
+                                    <line x1="150" y1="12" x2="150" y2="24" stroke="#00f2fe" stroke-width="2.5" />
+                                    <line x1="150" y1="276" x2="150" y2="288" stroke="#00f2fe" stroke-width="2.5" />
+                                    <line x1="12" y1="150" x2="24" y2="150" stroke="#00f2fe" stroke-width="2.5" />
+                                    <line x1="276" y1="150" x2="288" y2="150" stroke="#00f2fe" stroke-width="2.5" />
+                                </g>
+                                <circle cx="150" cy="150" r="130" stroke="rgba(0, 242, 254, 0.22)" stroke-dasharray="2, 6" fill="none" stroke-width="1.5" />
+                                <circle cx="150" cy="150" r="122" stroke="rgba(255, 255, 255, 0.08)" fill="none" stroke-width="1" />
+                            </svg>
+
+                            <!-- 9시 & 3시 인디케이터 삼각형 -->
+                            <div style="position: absolute; left: 8px; color: #00f2fe; font-size: 11px; pointer-events: none;">▶</div>
+                            <div style="position: absolute; right: 8px; color: #00f2fe; font-size: 11px; pointer-events: none;">◀</div>
+
+                            <!-- 메인 원형 프로그레스 네온 서클 (SVG Circular Gauge) -->
+                            <svg viewBox="0 0 300 300" style="width: 240px; height: 240px; transform: rotate(-90deg); pointer-events: none;">
+                                <circle cx="150" cy="150" r="95" stroke="rgba(0, 242, 254, 0.12)" stroke-width="7" fill="none" />
+                                <circle id="hudMainGaugeRing" cx="150" cy="150" r="95" 
+                                    stroke="#00f2fe" stroke-width="7" fill="none" 
+                                    stroke-dasharray="596.9" stroke-dashoffset="120" stroke-linecap="round"
+                                    class="hud-glow-cyan" style="transition: stroke-dashoffset 0.25s linear, stroke 0.3s ease;" />
+                            </svg>
+
+                            <!-- 중앙 텍스트 & 타이머 허브 (가장 강렬한 시인성) -->
+                            <div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; cursor: pointer;" onclick="AquaToolkitEngine.toggleTimerState()">
+                                <h1 id="hudPhaseLargeTitle" class="font-hud pulse-active hud-text-glow" style="font-size: clamp(1.5rem, 6vw, 1.85rem); font-weight: 900; color: #00f2fe; line-height: 1.15; margin: 0; letter-spacing: 1.5px; transition: all 0.3s ease;">
+                                    BREATHE<br>IN
+                                </h1>
+
+                                <div id="timerTimeDisplay" class="font-hud" style="font-size: clamp(1.8rem, 7vw, 2.3rem); font-weight: 900; color: #ffffff; text-shadow: 0 0 20px rgba(0, 242, 254, 0.8); line-height: 1.1; margin: 4px 0 2px 0; letter-spacing: 2px; transition: all 0.3s ease;">
+                                    02:00
+                                </div>
+
+                                <span id="hudStatePill" class="font-tech" style="font-size: 0.72rem; font-weight: 700; color: #00f2fe; background: rgba(0,242,254,0.15); border: 1px solid rgba(0,242,254,0.4); padding: 2px 10px; border-radius: 12px; letter-spacing: 0.5px;">
+                                    CLICK TO START
+                                </span>
+                            </div>
+
                         </div>
 
                         <!-- 안내 서브텍스트 -->
-                        <div id="timerSubMessage" style="color: #cbd5e1; font-size: 0.88rem; font-weight: 600; min-height: 22px; margin-bottom: 18px;">
+                        <div id="timerSubMessage" style="color: #cbd5e1; font-size: 0.86rem; font-weight: 600; min-height: 22px; margin: 12px auto 16px auto; max-width: 480px; line-height: 1.4;">
                             천천히 복식호흡을 하며 심박수를 낮추세요.
                         </div>
 
-                        <!-- 현재 단계 프로그레스 바 -->
-                        <div style="width: 100%; max-width: 480px; height: 10px; background: rgba(255, 255, 255, 0.1); border-radius: 10px; margin: 0 auto 24px auto; overflow: hidden;">
-                            <div id="timerPhaseProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #00f2fe, #4facfe); border-radius: 10px; transition: width 0.2s linear;"></div>
+                        <!-- 3. 하단 실시간 오디오 & 호흡 파형 & 메인 컨트롤러 -->
+                        <div style="background: rgba(0,0,0,0.35); border-radius: 20px; padding: 14px 16px; border: 1px solid rgba(255,255,255,0.06); max-width: 520px; margin: 0 auto;">
+                            
+                            <!-- 파형 & 중앙 대형 재생 버튼 덱 -->
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px;">
+                                <!-- 좌측: 호흡 사인파 곡선 -->
+                                <div style="flex: 1; max-width: 120px; display: flex; flex-direction: column; align-items: center;">
+                                    <canvas id="canvasSineWave" width="120" height="42" style="width: 100%; height: 38px;"></canvas>
+                                    <span class="font-tech" style="font-size: 0.68rem; color: #00f2fe; opacity: 0.8; letter-spacing: 0.5px;">BREATH WAVE</span>
+                                </div>
+
+                                <!-- 중앙: 대형 네온 재생/일시정지 원형 버튼 -->
+                                <div style="display: flex; justify-content: center; align-items: center; position: relative;">
+                                    <button type="button" id="btnTimerStart" onclick="AquaToolkitEngine.startTimer()" style="width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #00f2fe, #00c6ff); color: #070e17; font-size: 1.4rem; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 25px rgba(0, 242, 254, 0.7); transition: all 0.2s ease;">
+                                        <i class="fa-solid fa-play" style="margin-left: 3px;"></i>
+                                    </button>
+                                    <button type="button" id="btnTimerPause" onclick="AquaToolkitEngine.pauseTimer()" style="display: none; width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #ffb703, #fb8500); color: #070e17; font-size: 1.4rem; border: none; cursor: pointer; align-items: center; justify-content: center; box-shadow: 0 0 25px rgba(255, 183, 3, 0.7); transition: all 0.2s ease;">
+                                        <i class="fa-solid fa-pause"></i>
+                                    </button>
+                                </div>
+
+                                <!-- 우측: 주파수/보이스 이퀄라이저 바 -->
+                                <div style="flex: 1; max-width: 120px; display: flex; flex-direction: column; align-items: center;">
+                                    <canvas id="canvasEqBars" width="120" height="42" style="width: 100%; height: 38px;"></canvas>
+                                    <span class="font-tech" style="font-size: 0.68rem; color: #00f2fe; opacity: 0.8; letter-spacing: 0.5px;">VOICE / SOUND</span>
+                                </div>
+                            </div>
+
+                            <!-- 하단 보조 액션 버튼 바 -->
+                            <div style="display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                <button type="button" id="btnTimerSkip" onclick="AquaToolkitEngine.skipPhase()" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-weight: 700; font-size: 0.82rem; padding: 8px 14px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s ease;">
+                                    <i class="fa-solid fa-forward-step"></i> 다음 단계
+                                </button>
+                                <button type="button" id="btnContractionLap" onclick="AquaToolkitEngine.recordContraction()" style="background: rgba(251, 191, 36, 0.15); border: 1px solid rgba(251, 191, 36, 0.4); color: #fbbf24; font-weight: 800; font-size: 0.82rem; padding: 8px 14px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s ease;">
+                                    <i class="fa-solid fa-bolt"></i> <span id="btnContractionText">수축(Contraction) 탭</span>
+                                </button>
+                                <button type="button" id="btnTimerReset" onclick="AquaToolkitEngine.resetTimer()" style="background: rgba(255, 71, 87, 0.12); border: 1px solid #ff4757; color: #ff4757; font-weight: 700; font-size: 0.82rem; padding: 8px 14px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s ease;">
+                                    <i class="fa-solid fa-rotate-left"></i> 리셋
+                                </button>
+                            </div>
+
                         </div>
 
-                        <!-- 컨트롤 버튼 그룹 -->
-                        <div style="display: flex; justify-content: center; align-items: center; gap: 12px; flex-wrap: wrap;">
-                            <button type="button" id="btnTimerStart" onclick="AquaToolkitEngine.startTimer()" style="background: linear-gradient(135deg, #00f2fe, #00c6ff); color: #070e17; font-weight: 900; font-size: 1.15rem; padding: 14px 34px; border-radius: 14px; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 6px 20px rgba(0, 242, 254, 0.4); transition: all 0.2s ease;">
-                                <i class="fa-solid fa-play"></i> 훈련 시작
-                            </button>
-                            <button type="button" id="btnTimerPause" onclick="AquaToolkitEngine.pauseTimer()" style="display: none; background: rgba(255, 183, 3, 0.2); border: 1.5px solid #ffb703; color: #ffb703; font-weight: 900; font-size: 1.15rem; padding: 14px 28px; border-radius: 14px; cursor: pointer; align-items: center; gap: 8px;">
-                                <i class="fa-solid fa-pause"></i> 일시정지
-                            </button>
-                            <button type="button" id="btnTimerSkip" onclick="AquaToolkitEngine.skipPhase()" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-weight: 700; font-size: 0.95rem; padding: 14px 20px; border-radius: 14px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                                <i class="fa-solid fa-forward-step"></i> 다음 단계
-                            </button>
-                            <button type="button" id="btnTimerReset" onclick="AquaToolkitEngine.resetTimer()" style="background: rgba(255, 71, 87, 0.12); border: 1px solid #ff4757; color: #ff4757; font-weight: 700; font-size: 0.95rem; padding: 14px 20px; border-radius: 14px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                                <i class="fa-solid fa-rotate-left"></i> 리셋
-                            </button>
-                        </div>
                     </div>
 
                     <!-- 4. 8-Round 테이블 프리뷰 카드 그리드 -->
@@ -3640,8 +3774,8 @@
 
  
      <!-- App Configuration & Main Logic Script -->
-     <script src="config.js?v=V1636_SWIMMING_FOCUS_STROKE_AND_LAYOUT_FIX"></script>
-     <script src="app.js?v=V1636_SWIMMING_FOCUS_STROKE_AND_LAYOUT_FIX"></script>
+     <script src="config.js?v=V1637_FREEDIVING_HUD_DIVE_COMPUTER_UPGRADE"></script>
+     <script src="app.js?v=V1637_FREEDIVING_HUD_DIVE_COMPUTER_UPGRADE"></script>
      <!-- Toast Notification Container -->
     <div id="toastContainer" class="toast-container"></div>
 

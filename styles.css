@@ -2263,5 +2263,41 @@ button:active, .btn:active, .action-btn:active, .category-pill:active {
     pointer-events: auto !important;
 }
 
-
-
+/* ==========================================================================
+   🤿 AQUA TOOLKIT - FREEDIVING HUD DIVE COMPUTER STYLING
+   ========================================================================== */
+.font-hud {
+    font-family: 'Orbitron', 'Rajdhani', monospace, -apple-system, sans-serif;
+}
+.font-tech {
+    font-family: 'Rajdhani', -apple-system, sans-serif;
+}
+.hud-glow-cyan {
+    filter: drop-shadow(0 0 16px rgba(0, 242, 254, 0.75)) drop-shadow(0 0 32px rgba(0, 242, 254, 0.4));
+}
+.hud-text-glow {
+    text-shadow: 0 0 12px rgba(0, 242, 254, 0.85), 0 0 28px rgba(0, 242, 254, 0.45);
+}
+.hud-glow-rest {
+    filter: drop-shadow(0 0 16px rgba(56, 239, 125, 0.75)) drop-shadow(0 0 32px rgba(56, 239, 125, 0.4));
+}
+.hud-text-glow-rest {
+    text-shadow: 0 0 12px rgba(56, 239, 125, 0.85), 0 0 28px rgba(56, 239, 125, 0.45);
+}
+@keyframes pulse-ring {
+    0% { transform: scale(0.98); opacity: 0.88; }
+    50% { transform: scale(1.02); opacity: 1; filter: drop-shadow(0 0 22px rgba(0, 242, 254, 0.95)); }
+    100% { transform: scale(0.98); opacity: 0.88; }
+}
+.pulse-active {
+    animation: pulse-ring 2.4s ease-in-out infinite;
+}
+.ocean-hud-board {
+    background: radial-gradient(circle at 50% 25%, #0d2f47 0%, #061826 45%, #020912 90%);
+    border: 2px solid rgba(0, 242, 254, 0.4);
+    border-radius: 28px;
+    box-shadow: 0 16px 50px rgba(0, 0, 0, 0.6), 0 0 40px rgba(0, 242, 254, 0.18);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}

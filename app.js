@@ -22118,6 +22118,9 @@ const AquaToolkitEngine = {
     remainingSec: 120,
     timerInterval: null,
     isPaused: false,
+    contractionTime: null,
+    sineStep: 0,
+    waveformsInitialized: false,
 
     init() {
         this.loadStats();
@@ -22127,6 +22130,7 @@ const AquaToolkitEngine = {
         this.updateStatsDisplay();
         this.cacheEnVoice();
         this.initStreakCalendar();
+        this.initWaveforms();
         this.calcWeight();
         this.calcSwolf();
         this.initOpenWaterSpots();
@@ -22575,8 +22579,105 @@ const AquaToolkitEngine = {
         }
     },
 
+    initWaveforms() {
+        if (this.waveformsInitialized) return;
+        const sineCanvas = document.getElementById('canvasSineWave');
+        const eqCanvas = document.getElementById('canvasEqBars');
+        if (!sineCanvas || !eqCanvas) return;
+        
+        const sineCtx = sineCanvas.getContext('2d');
+        const eqCtx = eqCanvas.getContext('2d');
+        if (!sineCtx || !eqCtx) return;
+
+        this.waveformsInitialized = true;
+
+        const loop = () => {
+            // 1. 호흡 사인파 (Sine Waveform)
+            const sw = sineCanvas.width;
+            const sh = sineCanvas.height;
+            sineCtx.clearRect(0, 0, sw, sh);
+            sineCtx.lineWidth = 2;
+            const isHold = (this.currentPhase === 'HOLD');
+            sineCtx.strokeStyle = isHold ? '#00f2fe' : '#38ef7d';
+            sineCtx.shadowColor = isHold ? 'rgba(0, 242, 254, 0.8)' : 'rgba(56, 239, 125, 0.8)';
+            sineCtx.shadowBlur = 6;
+            sineCtx.beginPath();
+            const amp = (this.timerInterval !== null) ? 10 : 3;
+            const freq = 0.08;
+            for (let x = 0; x < sw; x++) {
+                const y = sh / 2 + Math.sin((x * freq) + this.sineStep) * amp;
+                if (x === 0) sineCtx.moveTo(x, y);
+                else sineCtx.lineTo(x, y);
+            }
+            sineCtx.stroke();
+            if (this.timerInterval !== null) this.sineStep += 0.06;
+
+            // 2. 오디오/보이스 이퀄라이저 바 (EQ Bars)
+            const ew = eqCanvas.width;
+            const eh = eqCanvas.height;
+            eqCtx.clearRect(0, 0, ew, eh);
+            const count = 12;
+            const bWidth = 4;
+            const bGap = 4;
+            const startX = (ew - (count * (bWidth + bGap))) / 2;
+            const isRunning = (this.timerInterval !== null);
+
+            for (let i = 0; i < count; i++) {
+                let h = isRunning ? Math.sin(Date.now() * 0.006 + i) * 12 + 14 : 4;
+                h = Math.max(3, Math.min(eh - 4, h));
+                const x = startX + i * (bWidth + bGap);
+                const y = (eh - h) / 2;
+
+                const grad = eqCtx.createLinearGradient(0, y, 0, y + h);
+                grad.addColorStop(0, '#00f2fe');
+                grad.addColorStop(1, '#0072ff');
+                eqCtx.fillStyle = grad;
+                eqCtx.shadowColor = 'rgba(0, 242, 254, 0.7)';
+                eqCtx.shadowBlur = 6;
+                eqCtx.fillRect(x, y, bWidth, h);
+            }
+
+            requestAnimationFrame(loop);
+        };
+        requestAnimationFrame(loop);
+    },
+
+    toggleTimerState() {
+        if (this.timerInterval !== null) {
+            this.pauseTimer();
+        } else {
+            this.startTimer();
+        }
+    },
+
+    recordContraction() {
+        if (this.currentPhase !== 'HOLD') {
+            if (typeof showToast === 'function') {
+                showToast('💡 수축 기록은 숨참기(HOLD) 단계에서만 측정할 수 있습니다.');
+            }
+            return;
+        }
+        this.initAudio();
+        this.playTone(987.77, 0.15, 'sine', 0.28);
+        const elapsedInHold = this.phaseTotalSec - this.remainingSec;
+        this.contractionTime = elapsedInHold;
+        const btnText = document.getElementById('btnContractionText');
+        if (btnText) {
+            btnText.textContent = `수축 감지: ${this.formatMMSS(elapsedInHold)}`;
+            setTimeout(() => {
+                const curBtn = document.getElementById('btnContractionText');
+                if (curBtn) curBtn.textContent = '수축(Contraction) 탭';
+            }, 3500);
+        }
+        this.speak('Contraction at ' + elapsedInHold + ' seconds');
+        if (typeof showToast === 'function') {
+            showToast(`⚡ 첫 수축 감지: ${this.formatMMSS(elapsedInHold)}에 기록되었습니다.`);
+        }
+    },
+
     startTimer() {
         this.initAudio();
+        this.initWaveforms();
 
         if (this.currentPhase === 'COMPLETED') {
             this.currentRoundIndex = 0;
@@ -22598,7 +22699,7 @@ const AquaToolkitEngine = {
         const btnStart = document.getElementById('btnTimerStart');
         const btnPause = document.getElementById('btnTimerPause');
         if (btnStart) btnStart.style.display = 'none';
-        if (btnPause) { btnPause.style.display = 'inline-flex'; btnPause.innerHTML = '<i class="fa-solid fa-pause"></i> 일시정지'; }
+        if (btnPause) { btnPause.style.display = 'inline-flex'; }
 
         this.updateTimerDisplay();
         this.renderTablePreview();
@@ -22618,12 +22719,12 @@ const AquaToolkitEngine = {
         const btnPause = document.getElementById('btnTimerPause');
         if (btnStart) {
             btnStart.style.display = 'inline-flex';
-            btnStart.innerHTML = '<i class="fa-solid fa-play"></i> 계속하기';
         }
         if (btnPause) btnPause.style.display = 'none';
 
         const subMsg = document.getElementById('timerSubMessage');
-        if (subMsg) subMsg.textContent = '⏸️ 훈련이 일시정지되었습니다. 준비가 되면 [계속하기]를 누르세요.';
+        if (subMsg) subMsg.textContent = '⏸️ 훈련이 일시정지되었습니다. 준비가 되면 [재생]을 누르세요.';
+        this.updateTimerDisplay();
     },
 
     skipPhase() {
@@ -22646,17 +22747,19 @@ const AquaToolkitEngine = {
         this.isPaused = false;
         this.currentRoundIndex = 0;
         this.currentPhase = 'REST';
+        this.contractionTime = null;
         const curPlan = this.plan[0] || { rest: 120, hold: 60 };
         this.phaseTotalSec = curPlan.rest;
         this.remainingSec = curPlan.rest;
 
         const btnStart = document.getElementById('btnTimerStart');
         const btnPause = document.getElementById('btnTimerPause');
+        const btnContractionText = document.getElementById('btnContractionText');
         if (btnStart) {
             btnStart.style.display = 'inline-flex';
-            btnStart.innerHTML = '<i class="fa-solid fa-play"></i> 훈련 시작';
         }
         if (btnPause) btnPause.style.display = 'none';
+        if (btnContractionText) btnContractionText.textContent = '수축(Contraction) 탭';
 
         this.updateTimerDisplay();
         this.renderTablePreview();
@@ -22772,6 +22875,9 @@ const AquaToolkitEngine = {
         const bar = document.getElementById('timerPhaseProgressBar');
         const btnStart = document.getElementById('btnTimerStart');
         const btnPause = document.getElementById('btnTimerPause');
+        const hudTitle = document.getElementById('hudPhaseLargeTitle');
+        const hudRing = document.getElementById('hudMainGaugeRing');
+        const hudStatePill = document.getElementById('hudStatePill');
 
         if (board) {
             board.style.borderColor = '#ffd700';
@@ -22782,6 +22888,21 @@ const AquaToolkitEngine = {
             badge.style.borderColor = '#ffd700';
             badge.style.color = '#ffd700';
             badge.innerHTML = '🎉 세션 완주 성공! (COMPLETED)';
+        }
+        if (hudTitle) {
+            hudTitle.innerHTML = 'DONE!';
+            hudTitle.style.color = '#ffd700';
+            hudTitle.className = 'font-hud';
+        }
+        if (hudRing) {
+            hudRing.setAttribute('stroke', '#ffd700');
+            hudRing.style.strokeDashoffset = '0';
+        }
+        if (hudStatePill) {
+            hudStatePill.textContent = 'SESSION COMPLETED';
+            hudStatePill.style.color = '#ffd700';
+            hudStatePill.style.borderColor = 'rgba(255, 215, 0, 0.4)';
+            hudStatePill.style.background = 'rgba(255, 215, 0, 0.15)';
         }
         if (timeDisp) {
             timeDisp.style.color = '#ffd700';
@@ -22797,7 +22918,7 @@ const AquaToolkitEngine = {
         }
         if (btnStart) {
             btnStart.style.display = 'inline-flex';
-            btnStart.innerHTML = '<i class="fa-solid fa-rotate-left"></i> 새 훈련 시작';
+            btnStart.innerHTML = '<i class="fa-solid fa-rotate-left"></i>';
         }
         if (btnPause) btnPause.style.display = 'none';
 
@@ -22815,6 +22936,18 @@ const AquaToolkitEngine = {
         const bar = document.getElementById('timerPhaseProgressBar');
         const board = document.getElementById('toolkitTimerBoard');
 
+        // New HUD elements
+        const hudTitle = document.getElementById('hudPhaseLargeTitle');
+        const hudRing = document.getElementById('hudMainGaugeRing');
+        const hudStatePill = document.getElementById('hudStatePill');
+        const hudRoundVal = document.getElementById('hudSubRoundVal');
+        const hudTargetVal = document.getElementById('hudSubTargetVal');
+        const hudRestVal = document.getElementById('hudSubRestVal');
+        const hudPBVal = document.getElementById('hudSubPBVal');
+        const hudModeBadge = document.getElementById('hudModeBadge');
+
+        const curPlan = this.plan[this.currentRoundIndex] || this.plan[0] || { rest: 120, hold: 60 };
+
         if (roundDisp) {
             roundDisp.textContent = `Round ${this.currentRoundIndex + 1} of ${this.plan.length}`;
         }
@@ -22822,15 +22955,32 @@ const AquaToolkitEngine = {
             timeDisp.textContent = this.formatMMSS(Math.max(0, this.remainingSec));
         }
 
+        // Sub-dials update
+        if (hudRoundVal) hudRoundVal.textContent = String(this.currentRoundIndex + 1).padStart(2, '0');
+        if (hudTargetVal) hudTargetVal.textContent = this.formatMMSS(curPlan.hold);
+        if (hudRestVal) hudRestVal.textContent = this.formatMMSS(curPlan.rest);
+        if (hudPBVal) hudPBVal.textContent = this.formatMMSS(this.personalBest || 150);
+        if (hudModeBadge) hudModeBadge.textContent = (this.tableMode === 'CO2') ? 'CO2 HOLD' : 'O2 PROGRESS';
+
         const pct = this.phaseTotalSec > 0 ? Math.min(100, Math.max(0, ((this.phaseTotalSec - this.remainingSec) / this.phaseTotalSec) * 100)) : 0;
         if (bar) {
             bar.style.width = pct + '%';
         }
 
+        // Calculate circular gauge offset (circumference: 596.9)
+        const totalGaugeCircumference = 596.9;
+        const progress = this.phaseTotalSec > 0 ? Math.max(0, Math.min(1, this.remainingSec / this.phaseTotalSec)) : 0;
+        const offset = totalGaugeCircumference * (1 - progress);
+        if (hudRing) {
+            hudRing.style.strokeDashoffset = offset;
+        }
+
+        const isRunning = (this.timerInterval !== null);
+
         if (this.currentPhase === 'REST') {
             if (board) {
-                board.style.borderColor = '#00f2fe';
-                board.style.boxShadow = '0 0 50px rgba(0, 242, 254, 0.25)';
+                board.style.borderColor = 'rgba(0, 242, 254, 0.4)';
+                board.style.boxShadow = '0 16px 50px rgba(0, 0, 0, 0.6), 0 0 40px rgba(0, 242, 254, 0.2)';
             }
             if (badge) {
                 badge.style.background = 'rgba(0, 242, 254, 0.2)';
@@ -22839,34 +22989,64 @@ const AquaToolkitEngine = {
                 badge.style.boxShadow = '0 0 16px rgba(0, 242, 254, 0.3)';
                 badge.innerHTML = '🫁 준비호흡 (BREATHE-UP)';
             }
+            if (hudTitle) {
+                hudTitle.innerHTML = 'BREATHE<br>IN';
+                hudTitle.style.color = '#38ef7d';
+                hudTitle.className = 'font-hud hud-text-glow-rest' + (isRunning ? ' pulse-active' : '');
+            }
+            if (hudRing) {
+                hudRing.setAttribute('stroke', '#38ef7d');
+                hudRing.className = 'hud-glow-rest';
+            }
+            if (hudStatePill) {
+                hudStatePill.textContent = isRunning ? 'BREATHE & RELAX' : (this.isPaused ? 'PAUSED - CLICK TO RESUME' : 'CLICK TO START');
+                hudStatePill.style.color = '#38ef7d';
+                hudStatePill.style.borderColor = 'rgba(56, 239, 125, 0.4)';
+                hudStatePill.style.background = 'rgba(56, 239, 125, 0.15)';
+            }
             if (timeDisp) {
-                timeDisp.style.color = '#00f2fe';
-                timeDisp.style.textShadow = '0 0 35px rgba(0, 242, 254, 0.6)';
+                timeDisp.style.color = '#ffffff';
+                timeDisp.style.textShadow = '0 0 20px rgba(56, 239, 125, 0.8)';
             }
             if (bar) {
-                bar.style.background = 'linear-gradient(90deg, #00f2fe, #4facfe)';
+                bar.style.background = 'linear-gradient(90deg, #38ef7d, #00f2fe)';
             }
             if (subMsg && !this.isPaused) {
                 subMsg.textContent = '천천히 복식호흡을 하며 심박수를 낮추세요.';
             }
         } else if (this.currentPhase === 'HOLD') {
             if (board) {
-                board.style.borderColor = '#ff5252';
-                board.style.boxShadow = '0 0 60px rgba(255, 82, 82, 0.35)';
+                board.style.borderColor = 'rgba(0, 242, 254, 0.7)';
+                board.style.boxShadow = '0 16px 50px rgba(0, 0, 0, 0.6), 0 0 50px rgba(0, 242, 254, 0.35)';
             }
             if (badge) {
-                badge.style.background = 'rgba(255, 82, 82, 0.25)';
-                badge.style.borderColor = '#ff5252';
-                badge.style.color = '#ff5252';
-                badge.style.boxShadow = '0 0 20px rgba(255, 82, 82, 0.5)';
+                badge.style.background = 'rgba(0, 242, 254, 0.25)';
+                badge.style.borderColor = '#00f2fe';
+                badge.style.color = '#00f2fe';
+                badge.style.boxShadow = '0 0 20px rgba(0, 242, 254, 0.5)';
                 badge.innerHTML = '🛑 숨참기 (HOLD BREATH)';
             }
+            if (hudTitle) {
+                hudTitle.innerHTML = 'HOLD<br>BREATH';
+                hudTitle.style.color = '#00f2fe';
+                hudTitle.className = 'font-hud hud-text-glow' + (isRunning ? ' pulse-active' : '');
+            }
+            if (hudRing) {
+                hudRing.setAttribute('stroke', '#00f2fe');
+                hudRing.className = 'hud-glow-cyan';
+            }
+            if (hudStatePill) {
+                hudStatePill.textContent = isRunning ? 'HOLD IN PROGRESS' : (this.isPaused ? 'PAUSED - CLICK TO RESUME' : 'READY');
+                hudStatePill.style.color = '#00f2fe';
+                hudStatePill.style.borderColor = 'rgba(0, 242, 254, 0.4)';
+                hudStatePill.style.background = 'rgba(0, 242, 254, 0.15)';
+            }
             if (timeDisp) {
-                timeDisp.style.color = '#ff5252';
-                timeDisp.style.textShadow = '0 0 40px rgba(255, 82, 82, 0.7)';
+                timeDisp.style.color = '#00f2fe';
+                timeDisp.style.textShadow = '0 0 35px rgba(0, 242, 254, 0.9)';
             }
             if (bar) {
-                bar.style.background = 'linear-gradient(90deg, #ff5252, #ff7675)';
+                bar.style.background = 'linear-gradient(90deg, #00f2fe, #4facfe)';
             }
             if (subMsg && !this.isPaused) {
                 subMsg.textContent = '몸의 긴장을 풀고 편안한 생각을 떠올리세요. 이산화탄소 상승을 온전히 받아들입니다.';

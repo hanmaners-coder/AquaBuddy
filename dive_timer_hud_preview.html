@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AquaBuddy - CO2/O2 Freedive HUD Timer Preview</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Orbitron:wght@600;800;900&family=Pretendard:wght@400;600;800&display=swap');
+
+    body {
+      font-family: 'Pretendard', -apple-system, sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      background-color: #030712;
+    }
+
+    .font-hud {
+      font-family: 'Orbitron', 'Rajdhani', monospace, sans-serif;
+    }
+
+    .font-tech {
+      font-family: 'Rajdhani', sans-serif;
+    }
+
+    /* 심해 배경 빛 & 네온 글로우 */
+    .hud-glow-cyan {
+      filter: drop-shadow(0 0 18px rgba(0, 242, 254, 0.75)) drop-shadow(0 0 35px rgba(0, 242, 254, 0.4));
+    }
+    .hud-text-glow {
+      text-shadow: 0 0 12px rgba(0, 242, 254, 0.8), 0 0 28px rgba(0, 242, 254, 0.4);
+    }
+    .hud-glow-rest {
+      filter: drop-shadow(0 0 18px rgba(56, 239, 125, 0.75)) drop-shadow(0 0 35px rgba(56, 239, 125, 0.4));
+    }
+    .hud-text-glow-rest {
+      text-shadow: 0 0 12px rgba(56, 239, 125, 0.8), 0 0 28px rgba(56, 239, 125, 0.4);
+    }
+
+    /* 펄스 애니메이션 */
+    @keyframes pulse-ring {
+      0% { transform: scale(0.98); opacity: 0.85; }
+      50% { transform: scale(1.02); opacity: 1; filter: drop-shadow(0 0 24px rgba(0, 242, 254, 0.9)); }
+      100% { transform: scale(0.98); opacity: 0.85; }
+    }
+    .pulse-active {
+      animation: pulse-ring 2.4s ease-in-out infinite;
+    }
+
+    /* 은은한 심해 배경 파티클 */
+    .ocean-bg {
+      background: radial-gradient(circle at 50% 25%, #0d2f47 0%, #061826 45%, #020912 90%);
+    }
+
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(0, 242, 254, 0.3);
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="text-slate-100 min-h-screen flex flex-col items-center justify-center p-2 sm:p-6 antialiased">
+
+  <!-- 컨트롤 바 (모바일 프레임 외곽 상단) -->
+  <div class="w-full max-w-[430px] mb-3 flex items-center justify-between px-2 text-xs text-slate-400">
+    <div class="flex items-center gap-2">
+      <span class="inline-block w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping"></span>
+      <span class="font-bold text-cyan-400 tracking-wider">HUD PROTOTYPE PREVIEW</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <button onclick="toggleVoice()" id="voiceToggleBtn" class="px-2.5 py-1 bg-cyan-950/80 hover:bg-cyan-900/80 rounded-full border border-cyan-400/50 text-cyan-300 flex items-center gap-1.5 transition">
+        <i class="fa-solid fa-headphones text-[11px]" id="voiceIcon"></i>
+        <span id="voiceText">영어 음성 켬</span>
+      </button>
+      <button onclick="resetPreviewTimer()" class="px-2.5 py-1 bg-slate-800/80 hover:bg-slate-700 rounded-full border border-slate-700 text-slate-300 flex items-center gap-1 transition">
+        <i class="fa-solid fa-rotate-left text-[11px]"></i> 리셋
+      </button>
+    </div>
+  </div>
+
+  <!-- 스마트폰 / 다이브 컴퓨터 기기 목업 프레임 -->
+  <div class="relative w-full max-w-[390px] h-[820px] rounded-[48px] p-3.5 bg-gradient-to-b from-slate-700 via-slate-900 to-black shadow-[0_25px_70px_rgba(0,0,0,0.8),0_0_40px_rgba(0,242,254,0.15)] border-[4px] border-slate-700/60 overflow-hidden flex flex-col">
+    
+    <!-- 내부 스크린 -->
+    <div class="relative w-full h-full rounded-[38px] ocean-bg overflow-hidden flex flex-col justify-between border border-cyan-950/80 shadow-inner">
+      
+      <!-- 배경 심해 수포 애니메이션 레이어 -->
+      <div class="absolute inset-0 pointer-events-none opacity-25 overflow-hidden">
+        <div class="absolute w-2 h-2 rounded-full bg-cyan-300 top-3/4 left-1/4 blur-[1px] animate-bounce" style="animation-duration: 4s;"></div>
+        <div class="absolute w-3 h-3 rounded-full bg-cyan-200 top-1/2 right-1/4 blur-[1px] animate-bounce" style="animation-duration: 6s;"></div>
+        <div class="absolute w-1.5 h-1.5 rounded-full bg-cyan-400 top-1/3 left-2/3 blur-[0.5px] animate-bounce" style="animation-duration: 5s;"></div>
+        <div class="absolute inset-0 bg-gradient-to-b from-cyan-500/5 via-transparent to-black/60"></div>
+      </div>
+
+      <!-- 1. 상단 상태바 & 노치 & 모드 탭 -->
+      <div class="relative z-10 pt-3 px-5">
+        <div class="flex items-center justify-between text-xs text-slate-400 font-tech font-bold tracking-wider mb-2">
+          <span>1:14</span>
+          <!-- 다이내믹 아일랜드 -->
+          <div class="w-24 h-5 bg-black rounded-full flex items-center justify-center gap-1.5 px-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+            <span class="text-[9px] text-cyan-300 font-hud tracking-tighter">VOICE ACTIVE</span>
+          </div>
+          <div class="flex items-center gap-1.5 text-[11px]">
+            <i class="fa-solid fa-wifi"></i>
+            <i class="fa-solid fa-battery-full text-cyan-400"></i>
+          </div>
+        </div>
+
+        <!-- 상단 헤더 컨트롤 -->
+        <div class="flex items-center justify-between mt-2">
+          <button onclick="cycleMode()" class="w-8 h-8 rounded-full bg-slate-900/60 border border-slate-700/60 flex items-center justify-center text-cyan-300 hover:border-cyan-400/50 transition" title="모드 전환">
+            <i class="fa-solid fa-sliders text-xs"></i>
+          </button>
+
+          <!-- 상단 탭: CO2 Table vs O2 Table -->
+          <div class="flex bg-slate-950/70 p-1 rounded-full border border-cyan-500/30 backdrop-blur-md shadow-lg">
+            <button id="tabCO2" onclick="setMode('CO2')" class="px-3.5 py-1 rounded-full text-xs font-hud font-bold tracking-wider transition-all bg-gradient-to-r from-cyan-400 to-teal-400 text-slate-950 shadow-md">
+              CO2 HOLD
+            </button>
+            <button id="tabO2" onclick="setMode('O2')" class="px-3.5 py-1 rounded-full text-xs font-hud font-bold tracking-wider transition-all text-slate-400 hover:text-cyan-300">
+              O2 PROGRESS
+            </button>
+          </div>
+
+          <button onclick="testVoiceVoice()" class="w-8 h-8 rounded-full bg-slate-900/60 border border-slate-700/60 flex items-center justify-center text-cyan-300 relative hover:border-cyan-400/50 transition" title="음성 샘플 테스트">
+            <i class="fa-solid fa-bullhorn text-xs"></i>
+          </button>
+        </div>
+
+        <!-- 슬라이더 타임라인 스크러버 & 엠비언트 인디케이터 -->
+        <div class="mt-3 flex items-center justify-between gap-3 px-1">
+          <i class="fa-regular fa-sun text-[11px] text-cyan-400/70"></i>
+          <div class="flex-1 relative flex items-center">
+            <div class="w-full h-1 bg-slate-800/90 rounded-full overflow-hidden">
+              <div id="timelineProgress" class="h-full bg-gradient-to-r from-teal-400 to-cyan-400 w-1/4 rounded-full transition-all duration-300"></div>
+            </div>
+            <div id="scrubberPin" class="absolute left-1/4 -translate-x-1/2 -top-1.5 flex flex-col items-center">
+              <span id="currentTotalTimer" class="text-[9px] font-hud text-cyan-300 -mt-3.5">00:35</span>
+              <div class="w-2.5 h-2.5 rounded-full bg-cyan-300 shadow-[0_0_8px_#00f2fe] border border-white"></div>
+            </div>
+          </div>
+          <i class="fa-solid fa-water text-[11px] text-cyan-400/70"></i>
+        </div>
+      </div>
+
+      <!-- 2. 중앙 메인 다이얼 HUD & 4각 서브 다이얼 영역 -->
+      <div class="relative z-10 flex-1 flex flex-col items-center justify-center my-1">
+        
+        <div class="relative w-[300px] h-[300px] flex items-center justify-center">
+
+          <!-- 1. 좌상단: 현재 라운드 (00:06) -->
+          <div class="absolute top-1 left-2 flex flex-col items-center">
+            <div class="relative w-12 h-12 rounded-full border-2 border-slate-800 flex items-center justify-center bg-slate-950/70 backdrop-blur-md shadow-lg">
+              <svg class="absolute inset-0 w-full h-full -rotate-90">
+                <circle cx="24" cy="24" r="21" stroke="#00f2fe" stroke-width="2.5" fill="transparent" stroke-dasharray="131" stroke-dashoffset="65" stroke-linecap="round" class="hud-glow-cyan" />
+              </svg>
+              <span id="subDialTL" class="font-hud font-bold text-xs text-cyan-300">00:06</span>
+            </div>
+            <span class="text-[9px] font-tech text-slate-400 font-bold mt-0.5 tracking-tighter">ROUND 1</span>
+          </div>
+
+          <!-- 2. 우상단: 목표 숨참기 (01:00 / Target) -->
+          <div class="absolute top-1 right-2 flex flex-col items-center">
+            <div class="relative w-12 h-12 rounded-full border-2 border-slate-800 flex items-center justify-center bg-slate-950/70 backdrop-blur-md shadow-lg">
+              <svg class="absolute inset-0 w-full h-full -rotate-90">
+                <circle cx="24" cy="24" r="21" stroke="#00f2fe" stroke-width="2.5" fill="transparent" stroke-dasharray="131" stroke-dashoffset="95" stroke-linecap="round" class="hud-glow-cyan" />
+              </svg>
+              <span id="subDialTR" class="font-hud font-bold text-xs text-cyan-300">01:00</span>
+            </div>
+            <span class="text-[9px] font-tech text-slate-400 font-bold mt-0.5 tracking-tighter">TARGET</span>
+          </div>
+
+          <!-- 3. 좌하단: 휴식/호흡 (00:39 / Rest) -->
+          <div class="absolute bottom-1 left-2 flex flex-col items-center">
+            <div class="relative w-12 h-12 rounded-full border-2 border-slate-800 flex items-center justify-center bg-slate-950/70 backdrop-blur-md shadow-lg">
+              <svg class="absolute inset-0 w-full h-full -rotate-90">
+                <circle cx="24" cy="24" r="21" stroke="#38ef7d" stroke-width="2.5" fill="transparent" stroke-dasharray="131" stroke-dashoffset="40" stroke-linecap="round" class="hud-glow-rest" />
+              </svg>
+              <span id="subDialBL" class="font-hud font-bold text-xs text-emerald-300">00:39</span>
+            </div>
+            <span class="text-[9px] font-tech text-slate-400 font-bold mt-0.5 tracking-tighter">BREATHE</span>
+          </div>
+
+          <!-- 4. 우하단: PB 최고기록 / 총 경과 (02:30) -->
+          <div class="absolute bottom-1 right-2 flex flex-col items-center">
+            <div class="relative w-12 h-12 rounded-full border-2 border-slate-800 flex items-center justify-center bg-slate-950/70 backdrop-blur-md shadow-lg">
+              <svg class="absolute inset-0 w-full h-full -rotate-90">
+                <circle cx="24" cy="24" r="21" stroke="#00f2fe" stroke-width="2.5" fill="transparent" stroke-dasharray="131" stroke-dashoffset="80" stroke-linecap="round" class="hud-glow-cyan" />
+              </svg>
+              <span id="subDialBR" class="font-hud font-bold text-xs text-cyan-300">02:30</span>
+            </div>
+            <span class="text-[9px] font-tech text-slate-400 font-bold mt-0.5 tracking-tighter">PB MAX</span>
+          </div>
+
+          <!-- 중앙 컴퍼스/타코미터 틱 마크 링 -->
+          <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <svg viewBox="0 0 300 300" class="w-[270px] h-[270px] opacity-60">
+              <g stroke="rgba(0, 242, 254, 0.45)" stroke-width="1.5">
+                <line x1="150" y1="12" x2="150" y2="24" stroke="#00f2fe" stroke-width="2.5" />
+                <line x1="150" y1="276" x2="150" y2="288" stroke="#00f2fe" stroke-width="2.5" />
+                <line x1="12" y1="150" x2="24" y2="150" stroke="#00f2fe" stroke-width="2.5" />
+                <line x1="276" y1="150" x2="288" y2="150" stroke="#00f2fe" stroke-width="2.5" />
+              </g>
+              <circle cx="150" cy="150" r="130" stroke="rgba(0, 242, 254, 0.2)" stroke-dasharray="2, 6" fill="none" stroke-width="1.5" />
+              <circle cx="150" cy="150" r="122" stroke="rgba(255, 255, 255, 0.08)" fill="none" stroke-width="1" />
+            </svg>
+            <div class="absolute left-3 text-cyan-400 text-[10px] animate-pulse">▶</div>
+            <div class="absolute right-3 text-cyan-400 text-[10px] animate-pulse">◀</div>
+          </div>
+
+          <!-- 메인 프로그레스 네온 서클 -->
+          <svg viewBox="0 0 300 300" class="w-[230px] h-[230px] -rotate-90 pointer-events-none">
+            <circle cx="150" cy="150" r="95" stroke="rgba(0, 242, 254, 0.12)" stroke-width="7" fill="none" />
+            <circle id="mainGaugeRing" cx="150" cy="150" r="95" 
+              stroke="#00f2fe" stroke-width="7" fill="none" 
+              stroke-dasharray="596.9" stroke-dashoffset="120" stroke-linecap="round"
+              class="hud-glow-cyan transition-all duration-300" />
+          </svg>
+
+          <!-- 중앙 텍스트 & 타이머 허브 -->
+          <div class="absolute inset-0 flex flex-col items-center justify-center text-center z-20 cursor-pointer" onclick="toggleTimer()">
+            <h1 id="hudPhaseTitle" class="font-hud font-black text-2xl sm:text-[26px] tracking-wider text-cyan-300 hud-text-glow leading-tight transition-all pulse-active">
+              HOLD<br>BREATH
+            </h1>
+
+            <div id="hudTimeDigits" class="font-hud font-bold text-base text-cyan-200/90 mt-1 tracking-widest">
+              00:45
+            </div>
+
+            <span id="hudRoundBadge" class="mt-1 px-2.5 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-400/40 text-[9px] font-tech font-bold text-cyan-300 tracking-wider">
+              ROUND 1 / 8
+            </span>
+          </div>
+
+        </div>
+
+        <!-- 단계 가이드 문구 -->
+        <p id="hudGuidanceText" class="text-xs text-cyan-200/80 font-medium tracking-wide mt-1 text-center px-6">
+          심박수를 낮추고 온몸의 긴장을 완전히 푸세요
+        </p>
+      </div>
+
+      <!-- 3. 하단 오디오 웨이브폼 & 메인 플레이어 & 컨트롤 바 -->
+      <div class="relative z-10 pb-5 px-4 bg-gradient-to-t from-black via-slate-950/90 to-transparent pt-2">
+        
+        <div class="flex items-center justify-between px-2 mb-3">
+          
+          <!-- 좌측: 호흡 사인파 -->
+          <div class="w-24 h-12 flex flex-col justify-center">
+            <canvas id="canvasSineWave" width="96" height="40" class="w-full h-9"></canvas>
+            <span class="text-[8px] font-tech text-cyan-400/70 tracking-tight text-center">BREATH CYCLE</span>
+          </div>
+
+          <!-- 중앙: 대형 네온 재생 / 일시정지 버튼 -->
+          <button id="btnMainPlayPause" onclick="toggleTimer()" class="relative group flex items-center justify-center">
+            <div class="absolute inset-0 rounded-full bg-cyan-400 blur-md opacity-60 group-hover:opacity-100 transition-opacity animate-pulse"></div>
+            <div class="relative w-16 h-16 rounded-full bg-gradient-to-tr from-cyan-400 via-teal-300 to-cyan-100 flex items-center justify-center text-slate-950 shadow-[0_0_25px_rgba(0,242,254,0.8)] transform active:scale-95 transition">
+              <i id="mainPlayIcon" class="fa-solid fa-pause text-xl text-slate-950"></i>
+            </div>
+          </button>
+
+          <!-- 우측: 주파수/심박 이퀄라이저 파형 -->
+          <div class="w-24 h-12 flex flex-col justify-center">
+            <canvas id="canvasEqBars" width="96" height="40" class="w-full h-9"></canvas>
+            <span class="text-[8px] font-tech text-cyan-400/70 tracking-tight text-center">VOICE / AUDIO</span>
+          </div>
+        </div>
+
+        <!-- 보조 액션 버튼 -->
+        <div class="flex items-center justify-center gap-3">
+          <button onclick="skipPhase()" class="px-3.5 py-1.5 rounded-xl bg-slate-900/80 border border-slate-700/80 hover:border-cyan-400/60 text-slate-300 hover:text-cyan-300 text-xs font-semibold flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-forward-step text-[10px]"></i>
+            <span>다음 단계</span>
+          </button>
+          
+          <button onclick="recordContraction()" class="px-3.5 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-300 hover:bg-amber-500/25 text-xs font-semibold flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-bolt text-[10px]"></i>
+            <span id="btnContractionText">수축(Contraction) 탭</span>
+          </button>
+        </div>
+
+        <!-- 하단 독 내비게이션 아이콘 -->
+        <div class="flex items-center justify-around mt-4 pt-2 border-t border-slate-800/80 text-slate-500 text-sm">
+          <button class="text-cyan-400 flex flex-col items-center"><i class="fa-solid fa-stopwatch"></i><span class="text-[8px] mt-0.5">타이머</span></button>
+          <button class="hover:text-slate-300 flex flex-col items-center"><i class="fa-solid fa-table-cells"></i><span class="text-[8px] mt-0.5">테이블</span></button>
+          <button class="hover:text-slate-300 flex flex-col items-center"><i class="fa-solid fa-chart-line"></i><span class="text-[8px] mt-0.5">통계</span></button>
+          <button class="hover:text-slate-300 flex flex-col items-center"><i class="fa-solid fa-gear"></i><span class="text-[8px] mt-0.5">설정</span></button>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 프로토타입 인터랙션 설명 안내 카드 -->
+  <div class="w-full max-w-[430px] mt-4 bg-slate-900/90 border border-slate-800 rounded-2xl p-4 text-xs text-slate-300">
+    <div class="flex items-center gap-2 mb-2 font-bold text-cyan-300 text-sm">
+      <i class="fa-solid fa-headphones"></i>
+      <span>🗣️ 영어 음성 코칭 실시간 탑재 안내</span>
+    </div>
+    <ul class="space-y-1.5 text-slate-400">
+      <li>• <strong>원어민 영어 음성 코칭:</strong> "Round 1", "Hold breath", "Take breath", "Five, Four, Three, Two, One" 실시간 음성 지원</li>
+      <li>• 상단의 <strong>[영어 음성 켬/끔]</strong> 버튼으로 언제든 음성 코칭을 토글할 수 있습니다.</li>
+      <li>• 우상단 확성기(📢) 아이콘을 누르면 언제든 테스트 음성을 들어보실 수 있습니다.</li>
+    </ul>
+  </div>
+
+  <script>
+    let isRunning = true;
+    let mode = 'CO2';
+    let phase = 'HOLD';
+    let round = 1;
+    const totalRounds = 8;
+    
+    let holdDuration = 60;
+    let restDuration = 120;
+    let currentRemaining = 45;
+    let currentTotalSec = 35;
+    let contractionTime = null;
+    let voiceEnabled = true;
+
+    // Web Speech API 영어 음성 엔진
+    let cachedVoice = null;
+    function getEnVoice() {
+      if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
+      try {
+        const voices = window.speechSynthesis.getVoices();
+        if (!voices || voices.length === 0) return null;
+        return voices.find(v => (v.lang === 'en-US' || v.lang.startsWith('en')) && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Siri')))
+            || voices.find(v => v.lang === 'en-US')
+            || voices.find(v => v.lang && v.lang.startsWith('en'));
+      } catch(e) { return null; }
+    }
+
+    function speakText(text) {
+      if (!voiceEnabled) return;
+      if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+      try {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'en-US';
+        u.rate = 1.12;
+        u.pitch = 1.0;
+        u.volume = 1.0;
+        const voice = cachedVoice || getEnVoice();
+        if (voice) u.voice = voice;
+        window.speechSynthesis.speak(u);
+      } catch(e) {}
+    }
+
+    // Web Audio Tone
+    let audioCtx = null;
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioClass) audioCtx = new AudioClass();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playTone(freq, duration, type = 'sine', gainVal = 0.2) {
+      initAudio();
+      if (!audioCtx) return;
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(gainVal, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function toggleVoice() {
+      voiceEnabled = !voiceEnabled;
+      const icon = document.getElementById('voiceIcon');
+      const text = document.getElementById('voiceText');
+      const btn = document.getElementById('voiceToggleBtn');
+      if (voiceEnabled) {
+        btn.className = 'px-2.5 py-1 bg-cyan-950/80 hover:bg-cyan-900/80 rounded-full border border-cyan-400/50 text-cyan-300 flex items-center gap-1.5 transition';
+        icon.className = 'fa-solid fa-headphones text-[11px]';
+        text.textContent = '영어 음성 켬';
+        speakText('Voice coaching on');
+      } else {
+        btn.className = 'px-2.5 py-1 bg-slate-800/80 hover:bg-slate-700 rounded-full border border-slate-700 text-slate-400 flex items-center gap-1.5 transition';
+        icon.className = 'fa-solid fa-headphones-simple text-[11px]';
+        text.textContent = '음성 끔';
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+      }
+    }
+
+    function testVoiceVoice() {
+      const phrases = [
+        'Round 1. Hold breath.',
+        'Take breath. Breathe in.',
+        'Five, four, three, two, one.',
+        'Training complete. Great job!'
+      ];
+      const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
+      speakText(randomPhrase);
+    }
+
+    function setMode(newMode) {
+      mode = newMode;
+      const tabCO2 = document.getElementById('tabCO2');
+      const tabO2 = document.getElementById('tabO2');
+      
+      if (mode === 'CO2') {
+        tabCO2.className = 'px-3.5 py-1 rounded-full text-xs font-hud font-bold tracking-wider transition-all bg-gradient-to-r from-cyan-400 to-teal-400 text-slate-950 shadow-md';
+        tabO2.className = 'px-3.5 py-1 rounded-full text-xs font-hud font-bold tracking-wider transition-all text-slate-400 hover:text-cyan-300';
+      } else {
+        tabO2.className = 'px-3.5 py-1 rounded-full text-xs font-hud font-bold tracking-wider transition-all bg-gradient-to-r from-indigo-400 to-cyan-400 text-slate-950 shadow-md';
+        tabCO2.className = 'px-3.5 py-1 rounded-full text-xs font-hud font-bold tracking-wider transition-all text-slate-400 hover:text-cyan-300';
+      }
+      playTone(660, 0.1, 'triangle', 0.15);
+      speakText(mode === 'CO2' ? 'CO2 table' : 'O2 progressive table');
+      resetPreviewTimer();
+    }
+
+    function cycleMode() {
+      setMode(mode === 'CO2' ? 'O2' : 'CO2');
+    }
+
+    function toggleTimer() {
+      initAudio();
+      isRunning = !isRunning;
+      const playIcon = document.getElementById('mainPlayIcon');
+      const phaseTitle = document.getElementById('hudPhaseTitle');
+
+      if (isRunning) {
+        playIcon.className = 'fa-solid fa-pause text-xl text-slate-950';
+        phaseTitle.classList.add('pulse-active');
+        playTone(523.25, 0.1, 'sine', 0.2);
+        speakText('Resume');
+      } else {
+        playIcon.className = 'fa-solid fa-play text-xl text-slate-950 ml-1';
+        phaseTitle.classList.remove('pulse-active');
+        playTone(440, 0.1, 'sine', 0.2);
+        speakText('Paused');
+      }
+    }
+
+    function skipPhase() {
+      initAudio();
+      if (phase === 'HOLD') {
+        phase = 'REST';
+        currentRemaining = restDuration;
+        playTone(784, 0.2, 'sine', 0.25);
+        speakText('Take breath');
+      } else {
+        phase = 'HOLD';
+        currentRemaining = holdDuration;
+        if (round < totalRounds) round++;
+        playTone(880, 0.2, 'triangle', 0.25);
+        speakText('Round ' + round + '. Hold breath');
+      }
+      updateUI();
+    }
+
+    function recordContraction() {
+      if (phase !== 'HOLD') return;
+      initAudio();
+      playTone(987.77, 0.15, 'sine', 0.3);
+      const elapsedInHold = holdDuration - currentRemaining;
+      contractionTime = elapsedInHold;
+      const btnText = document.getElementById('btnContractionText');
+      btnText.textContent = `수축 감지: ${formatMMSS(contractionTime)}`;
+      speakText('Contraction at ' + contractionTime + ' seconds');
+      setTimeout(() => {
+        btnText.textContent = '수축(Contraction) 탭';
+      }, 3000);
+    }
+
+    function playHoldTenSecWarning() {
+      playTone(587.33, 0.16, 'sine', 0.26);
+      setTimeout(() => playTone(880.00, 0.22, 'sine', 0.28), 130);
+    }
+
+    function switchPhase() {
+      if (phase === 'HOLD') {
+        phase = 'REST';
+        remaining = totalRest;
+        playTone(784, 0.2, 'sine', 0.25);
+        speakText('Take breath. Round ' + (round < 8 ? round + 1 : round));
+        if (round < 8) round++;
+        else finishSession();
+      } else {
+        phase = 'HOLD';
+        remaining = totalHold;
+        playTone(880, 0.2, 'triangle', 0.25);
+        speakText('Hold breath');
+      }
+      updateUI();
+    }
+
+    function finishSession() {
+      isRunning = false;
+      speakText('Take breath. Training complete. Great job!');
+      [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => setTimeout(() => playTone(f, 0.35, 'triangle', 0.25), i * 170));
+      document.getElementById('hudPhaseTitle').innerHTML = 'DONE!';
+      document.getElementById('hudPhaseTitle').className = 'font-hud font-black text-2xl text-amber-300 hud-text-glow leading-tight';
+      document.getElementById('mainGaugeRing').setAttribute('stroke', '#ffd700');
+    }
+
+    function resetPreviewTimer() {
+      isRunning = false;
+      phase = 'HOLD';
+      round = 1;
+      currentRemaining = 45;
+      currentTotalSec = 35;
+      const playIcon = document.getElementById('mainPlayIcon');
+      playIcon.className = 'fa-solid fa-play text-xl text-slate-950 ml-1';
+      document.getElementById('hudPhaseTitle').classList.remove('pulse-active');
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+      updateUI();
+    }
+
+    function formatMMSS(sec) {
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+
+    function updateUI() {
+      const title = document.getElementById('hudPhaseTitle');
+      const digits = document.getElementById('hudTimeDigits');
+      const roundBadge = document.getElementById('hudRoundBadge');
+      const guidance = document.getElementById('hudGuidanceText');
+      const ring = document.getElementById('mainGaugeRing');
+      const subTL = document.getElementById('subDialTL');
+      const subBL = document.getElementById('subDialBL');
+
+      digits.textContent = formatMMSS(currentRemaining);
+      roundBadge.textContent = `ROUND ${round} / ${totalRounds}`;
+      subTL.textContent = formatMMSS(round);
+      subBL.textContent = formatMMSS(phase === 'REST' ? currentRemaining : restDuration);
+
+      const totalGaugeCircumference = 596.9;
+      const totalSec = (phase === 'HOLD') ? holdDuration : restDuration;
+      const progress = Math.max(0, Math.min(1, currentRemaining / totalSec));
+      const offset = totalGaugeCircumference * (1 - progress);
+      ring.style.strokeDashoffset = offset;
+
+      if (phase === 'HOLD') {
+        title.innerHTML = 'HOLD<br>BREATH';
+        title.className = `font-hud font-black text-2xl sm:text-[26px] tracking-wider text-cyan-300 hud-text-glow leading-tight transition-all ${isRunning ? 'pulse-active' : ''}`;
+        ring.setAttribute('stroke', '#00f2fe');
+        ring.className = 'hud-glow-cyan transition-all duration-300';
+        guidance.textContent = '심박수를 낮추고 온몸의 긴장을 완전히 푸세요';
+      } else {
+        title.innerHTML = 'BREATHE<br>IN';
+        title.className = `font-hud font-black text-2xl sm:text-[26px] tracking-wider text-emerald-300 hud-text-glow-rest leading-tight transition-all ${isRunning ? 'pulse-active' : ''}`;
+        ring.setAttribute('stroke', '#38ef7d');
+        ring.className = 'hud-glow-rest transition-all duration-300';
+        guidance.textContent = '규칙적인 복식호흡으로 산소를 충분히 재충전하세요';
+      }
+
+      const totalText = document.getElementById('currentTotalTimer');
+      const timelineProgress = document.getElementById('timelineProgress');
+      const scrubberPin = document.getElementById('scrubberPin');
+      totalText.textContent = formatMMSS(currentTotalSec);
+      const pct = Math.min(100, (currentTotalSec / 600) * 100);
+      timelineProgress.style.width = pct + '%';
+      scrubberPin.style.left = pct + '%';
+    }
+
+    setInterval(() => {
+      if (!isRunning) return;
+      currentTotalSec++;
+      if (currentRemaining > 0) {
+        currentRemaining--;
+        // 원본과 100% 동일한 영어 음성 & 비프 규칙
+        if (phase === 'REST') {
+          // REST 준비호흡: 10초 전부터 10 ~ 1 카운트다운!
+          if (currentRemaining === 10) { speakText('Ten'); playTone(440, 0.12, 'sine', 0.18); }
+          else if (currentRemaining === 9) { speakText('Nine'); playTone(440, 0.12, 'sine', 0.18); }
+          else if (currentRemaining === 8) { speakText('Eight'); playTone(440, 0.12, 'sine', 0.18); }
+          else if (currentRemaining === 7) { speakText('Seven'); playTone(440, 0.12, 'sine', 0.18); }
+          else if (currentRemaining === 6) { speakText('Six'); playTone(440, 0.12, 'sine', 0.18); }
+          else if (currentRemaining === 5) { speakText('Five'); playTone(440, 0.12, 'sine', 0.18); }
+          else if (currentRemaining === 4) { speakText('Four'); playTone(440, 0.12, 'sine', 0.18); }
+          else if (currentRemaining === 3) { speakText('Three'); playTone(440, 0.12, 'sine', 0.18); }
+          else if (currentRemaining === 2) { speakText('Two'); playTone(440, 0.12, 'sine', 0.18); }
+          else if (currentRemaining === 1) { speakText('One'); playTone(440, 0.12, 'sine', 0.18); }
+        } else if (phase === 'HOLD') {
+          // HOLD 숨참기: 10초 남았을 때 2중 비프음 경고, 5초 전부터 5 ~ 1 카운트다운!
+          if (currentRemaining === 10) { playHoldTenSecWarning(); }
+          else if (currentRemaining === 5) { speakText('Five'); playTone(440, 0.12, 'sine', 0.18); }
+          else if (currentRemaining === 4) { speakText('Four'); playTone(440, 0.12, 'sine', 0.18); }
+          else if (currentRemaining === 3) { speakText('Three'); playTone(440, 0.12, 'sine', 0.18); }
+          else if (currentRemaining === 2) { speakText('Two'); playTone(440, 0.12, 'sine', 0.18); }
+          else if (currentRemaining === 1) { speakText('One'); playTone(440, 0.12, 'sine', 0.18); }
+        }
+      } else {
+        skipPhase();
+      }
+      updateUI();
+    }, 1000);
+
+    const sineCanvas = document.getElementById('canvasSineWave');
+    const sineCtx = sineCanvas ? sineCanvas.getContext('2d') : null;
+    let sineStep = 0;
+
+    function drawSineWave() {
+      if (!sineCtx) return;
+      const w = sineCanvas.width;
+      const h = sineCanvas.height;
+      sineCtx.clearRect(0, 0, w, h);
+
+      sineCtx.lineWidth = 2;
+      sineCtx.strokeStyle = phase === 'HOLD' ? '#00f2fe' : '#38ef7d';
+      sineCtx.shadowColor = phase === 'HOLD' ? 'rgba(0, 242, 254, 0.8)' : 'rgba(56, 239, 125, 0.8)';
+      sineCtx.shadowBlur = 8;
+
+      sineCtx.beginPath();
+      const amplitude = isRunning ? 10 : 3;
+      const frequency = 0.08;
+      
+      for (let x = 0; x < w; x++) {
+        const y = h / 2 + Math.sin((x * frequency) + sineStep) * amplitude;
+        if (x === 0) sineCtx.moveTo(x, y);
+        else sineCtx.lineTo(x, y);
+      }
+      sineCtx.stroke();
+      if (isRunning) sineStep += 0.05;
+      requestAnimationFrame(drawSineWave);
+    }
+    if (sineCtx) drawSineWave();
+
+    const eqCanvas = document.getElementById('canvasEqBars');
+    const eqCtx = eqCanvas ? eqCanvas.getContext('2d') : null;
+    const barCount = 14;
+
+    function drawEqBars() {
+      if (!eqCtx) return;
+      const w = eqCanvas.width;
+      const h = eqCanvas.height;
+      eqCtx.clearRect(0, 0, w, h);
+
+      const barWidth = 4;
+      const gap = 3;
+      const startX = (w - (barCount * (barWidth + gap))) / 2;
+
+      for (let i = 0; i < barCount; i++) {
+        let barHeight = isRunning ? Math.sin(Date.now() * 0.005 + i) * 12 + 14 : 4;
+        barHeight = Math.max(3, Math.min(h - 4, barHeight));
+
+        const x = startX + i * (barWidth + gap);
+        const y = (h - barHeight) / 2;
+
+        const grad = eqCtx.createLinearGradient(0, y, 0, y + barHeight);
+        grad.addColorStop(0, '#00f2fe');
+        grad.addColorStop(1, '#0072ff');
+
+        eqCtx.fillStyle = grad;
+        eqCtx.shadowColor = 'rgba(0, 242, 254, 0.7)';
+        eqCtx.shadowBlur = 6;
+        eqCtx.fillRect(x, y, barWidth, barHeight);
+      }
+      requestAnimationFrame(drawEqBars);
+    }
+    if (eqCtx) drawEqBars();
+
+    window.addEventListener('load', () => {
+      cachedVoice = getEnVoice();
+      if (speechSynthesis.onvoiceschanged !== undefined) {
+        speechSynthesis.onvoiceschanged = () => { cachedVoice = getEnVoice(); };
+      }
+    });
+
+    updateUI();
+  </script>
+</body>
+</html>
