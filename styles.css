@@ -2322,3 +2322,305 @@ button:active, .btn:active, .action-btn:active, .category-pill:active {
 #commVoicePrivacyPrivateBtn.active, #standaloneVoicePrivacyPrivateBtn.active {
     box-shadow: 0 0 14px rgba(255, 71, 87, 0.4);
 }
+
+/* ==========================================================================
+   💬 AQUABUDDY OFFICIAL KAKAOTALK OPEN CHAT (V1639)
+   ========================================================================== */
+
+/* 1. Header Navigation Kakao Button */
+.btn-kakao-nav {
+    background: linear-gradient(135deg, #FEE500 0%, #FADA0A 100%) !important;
+    color: #191919 !important;
+    border: 1px solid rgba(254, 229, 0, 0.4) !important;
+    font-weight: 800 !important;
+    font-size: 0.85rem !important;
+    padding: 8px 14px !important;
+    border-radius: 9999px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    cursor: pointer !important;
+    box-shadow: 0 2px 10px rgba(254, 229, 0, 0.28) !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    flex-shrink: 0 !important;
+}
+.btn-kakao-nav:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 18px rgba(254, 229, 0, 0.5) !important;
+    filter: brightness(1.05) !important;
+}
+.btn-kakao-nav:active {
+    transform: translateY(0) scale(0.96) !important;
+}
+
+/* 2. Main Welcome Banner */
+.kakao-welcome-banner {
+    position: relative;
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(254, 229, 0, 0.12) 0%, rgba(13, 27, 42, 0.95) 45%, rgba(15, 23, 42, 0.98) 100%);
+    border: 1.5px solid rgba(254, 229, 0, 0.45);
+    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.4), 0 0 24px rgba(254, 229, 0, 0.15);
+    padding: 20px 24px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+.kakao-welcome-banner::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 320px;
+    height: 320px;
+    background: radial-gradient(circle, rgba(254, 229, 0, 0.12) 0%, transparent 70%);
+    pointer-events: none;
+}
+.kakao-banner-inner {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.kakao-banner-badge-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.kakao-badge {
+    background: #FEE500;
+    color: #191919;
+    font-size: 0.76rem;
+    font-weight: 900;
+    padding: 4px 10px;
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    box-shadow: 0 2px 8px rgba(254, 229, 0, 0.35);
+}
+.kakao-sub-badge {
+    color: #38bdf8;
+    font-size: 0.78rem;
+    font-weight: 700;
+    background: rgba(56, 189, 248, 0.12);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    padding: 3px 9px;
+    border-radius: 12px;
+}
+.kakao-banner-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+}
+.kakao-dismiss-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    color: #94a3b8;
+    font-size: 0.74rem;
+    padding: 4px 10px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.kakao-dismiss-btn:hover {
+    background: rgba(255, 255, 255, 0.16);
+    color: #ffffff;
+}
+.kakao-close-x-btn {
+    background: none;
+    border: none;
+    color: #64748b;
+    font-size: 0.95rem;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+    transition: color 0.2s ease;
+}
+.kakao-close-x-btn:hover {
+    color: #f87171;
+}
+.kakao-banner-body {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+.kakao-banner-icon-box {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #FEE500, #FADA0A);
+    color: #191919;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    flex-shrink: 0;
+    box-shadow: 0 4px 16px rgba(254, 229, 0, 0.35);
+}
+.kakao-banner-text-content {
+    flex: 1;
+    min-width: 240px;
+}
+.kakao-banner-title {
+    margin: 0 0 6px 0;
+    font-size: 1.15rem;
+    color: #ffffff;
+    font-weight: 800;
+    letter-spacing: -0.4px;
+}
+.kakao-banner-title strong {
+    color: #FEE500;
+    font-weight: 900;
+}
+.kakao-banner-desc {
+    margin: 0;
+    font-size: 0.88rem;
+    color: #cbd5e1;
+    line-height: 1.55;
+}
+.kakao-banner-cta-wrap {
+    flex-shrink: 0;
+}
+.btn-kakao-cta {
+    background: linear-gradient(135deg, #FEE500 0%, #FADA0A 100%) !important;
+    color: #191919 !important;
+    border: none !important;
+    font-weight: 900 !important;
+    font-size: 0.95rem !important;
+    padding: 13px 22px !important;
+    border-radius: 14px !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    box-shadow: 0 6px 20px rgba(254, 229, 0, 0.35) !important;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+.btn-kakao-cta:hover {
+    transform: translateY(-2px) scale(1.02) !important;
+    box-shadow: 0 8px 26px rgba(254, 229, 0, 0.5) !important;
+    filter: brightness(1.05) !important;
+}
+.btn-kakao-cta:active {
+    transform: translateY(0) scale(0.97) !important;
+}
+
+/* 3. Floating Kakao Action Button (우측 하단) */
+.floating-kakao-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 28px;
+    z-index: 998;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.floating-kakao-icon-wrap {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #FEE500, #FADA0A);
+    color: #191919;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4), 0 0 20px rgba(254, 229, 0, 0.45);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: kakaoPulseRing 3s ease-in-out infinite;
+}
+@keyframes kakaoPulseRing {
+    0%, 100% { box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4), 0 0 16px rgba(254, 229, 0, 0.4); }
+    50% { box-shadow: 0 10px 32px rgba(0, 0, 0, 0.5), 0 0 28px rgba(254, 229, 0, 0.7); }
+}
+.floating-kakao-btn:hover .floating-kakao-icon-wrap {
+    transform: scale(1.1) rotate(-8deg);
+    box-shadow: 0 12px 36px rgba(254, 229, 0, 0.6);
+}
+.floating-kakao-tooltip {
+    background: rgba(15, 23, 42, 0.96);
+    border: 1px solid rgba(254, 229, 0, 0.4);
+    color: #ffffff;
+    font-size: 0.8rem;
+    padding: 8px 14px;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+    white-space: nowrap;
+    opacity: 0.95;
+    transform: translateX(0);
+    transition: all 0.2s ease;
+    pointer-events: none;
+}
+.floating-kakao-tooltip strong {
+    color: #FEE500;
+}
+
+/* 4. Footer Kakao Button */
+.btn-kakao-footer {
+    background: rgba(254, 229, 0, 0.15) !important;
+    border: 1px solid #FEE500 !important;
+    color: #FEE500 !important;
+    font-weight: 800 !important;
+    border-radius: 20px !important;
+    padding: 8px 18px !important;
+    transition: all 0.2s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+.btn-kakao-footer:hover {
+    background: #FEE500 !important;
+    color: #191919 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 14px rgba(254, 229, 0, 0.35) !important;
+}
+
+/* 5. Mobile Adjustments */
+@media (max-width: 768px) {
+    .btn-kakao-nav {
+        padding: 5px 10px !important;
+        font-size: 0.75rem !important;
+    }
+    .kakao-welcome-banner {
+        padding: 16px;
+        border-radius: 16px;
+    }
+    .kakao-banner-icon-box {
+        display: none;
+    }
+    .kakao-banner-title {
+        font-size: 1.02rem;
+    }
+    .kakao-banner-desc {
+        font-size: 0.82rem;
+    }
+    .btn-kakao-cta {
+        width: 100%;
+        justify-content: center;
+        padding: 11px 16px !important;
+        font-size: 0.88rem !important;
+    }
+    .floating-kakao-btn {
+        bottom: 84px;
+        right: 18px;
+    }
+    .floating-kakao-tooltip {
+        display: none;
+    }
+    .floating-kakao-icon-wrap {
+        width: 48px;
+        height: 48px;
+        font-size: 1.35rem;
+    }
+}

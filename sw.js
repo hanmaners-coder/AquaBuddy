@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1638-private-voice-room-password";
+const CACHE_NAME = "aquabuddy-cache-v1639-kakao-open-chat";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

@@ -8,6 +8,53 @@ var oceanKakaoMapObj = window.oceanKakaoMapObj;
 var oceanKakaoMarkerObj = window.oceanKakaoMarkerObj;
 var _customOverlayObj = window._customOverlayObj;
 
+// ==========================================================
+// 💬 아쿠아버디 공식 카카오톡 오픈채팅방(커뮤니티) 연동 모듈 (V1639)
+// ==========================================================
+window.AQUABUDDY_KAKAO_OPENCHAT_URL = 'https://open.kakao.com/o/p5ZTEHNi';
+
+window.openKakaoChat = function(source) {
+    const url = window.AQUABUDDY_KAKAO_OPENCHAT_URL || 'https://open.kakao.com/o/p5ZTEHNi';
+    try {
+        console.log(`[AquaBuddy Kakao] Opening open chat room from: ${source || 'direct'} -> ${url}`);
+        window.open(url, '_blank', 'noopener,noreferrer');
+    } catch (e) {
+        window.location.href = url;
+    }
+};
+
+window.closeKakaoWelcomeBanner = function(dontShowToday) {
+    const banner = document.getElementById('kakaoWelcomeBanner');
+    if (banner) {
+        banner.style.display = 'none';
+        banner.classList.add('hidden');
+    }
+    if (dontShowToday) {
+        try {
+            const expiresAt = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
+            localStorage.setItem('aquabuddy_kakao_banner_dismissed_until', String(expiresAt));
+        } catch (e) {}
+    }
+};
+
+window.initKakaoOpenChatUI = function() {
+    try {
+        const dismissedUntil = localStorage.getItem('aquabuddy_kakao_banner_dismissed_until');
+        if (dismissedUntil && Number(dismissedUntil) > Date.now()) {
+            const banner = document.getElementById('kakaoWelcomeBanner');
+            if (banner) {
+                banner.style.display = 'none';
+                banner.classList.add('hidden');
+            }
+        }
+    } catch (e) {}
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', window.initKakaoOpenChatUI);
+} else {
+    window.initKakaoOpenChatUI();
+}
 
 let currentDisplayLimit = 10;
 let currentFilteredPosts = [];
