@@ -43,13 +43,17 @@
 
             window.switchMainView = function(viewName) {
                 if (!viewName) viewName = "all";
-                if (viewName === "home" || viewName === "feed" || viewName === "buddy") viewName = "all";
+                if (viewName === "home" || viewName === "feed") viewName = "all";
+                if (viewName === "crew_under90") viewName = "under90";
 
                 window._activeMainView = viewName;
                 window._activeCategory = viewName;
                 if (typeof window.activeMainView !== 'undefined') window.activeMainView = viewName;
                 if (typeof window.activeCategory !== 'undefined') window.activeCategory = viewName;
                 if (typeof window.currentMainView !== 'undefined') window.currentMainView = viewName;
+
+                var feedSubViews = ["buddy", "freediving", "swimming", "openwater", "scuba", "mermaid", "instructor", "community", "market", "partnership", "my_activity", "activity_log"];
+                var isFeedSubView = feedSubViews.indexOf(viewName) !== -1;
 
                 // 1. 모든 네비게이션 버튼 & 탭 active 상태 동기화
                 document.querySelectorAll(".nav-item, .main-nav-btn, .nav-btn, .tab-btn, .category-tab-btn, .category-pill").forEach(function(btn) {
@@ -58,7 +62,10 @@
                     var viewData = btn.dataset ? btn.dataset.view : null;
                     var targetId = "navLink" + viewName.charAt(0).toUpperCase() + viewName.slice(1);
 
-                    if (btn.id === targetId || catData === viewName || viewData === viewName || onclickAttr.indexOf("'" + viewName + "'") !== -1) {
+                    var isBuddyNavHit = (btn.id === "navLinkBuddy" && isFeedSubView);
+                    var isSportTabHit = (catData === "buddy" && ["buddy", "freediving", "swimming", "openwater", "scuba", "mermaid"].indexOf(viewName) !== -1);
+
+                    if (btn.id === targetId || isBuddyNavHit || isSportTabHit || catData === viewName || viewData === viewName || onclickAttr.indexOf("'" + viewName + "'") !== -1) {
                         btn.classList.add("active");
                     } else if (onclickAttr.indexOf("switchMainView") !== -1 || onclickAttr.indexOf("filterByCategory") !== -1 || btn.classList.contains("nav-item") || btn.classList.contains("tab-btn") || btn.classList.contains("category-pill")) {
                         btn.classList.remove("active");
@@ -72,6 +79,7 @@
                 var tideSec = document.getElementById("tideViewSection");
                 var cctvSec = document.getElementById("cctvViewSection");
                 var toolkitSec = document.getElementById("toolkitViewSection");
+                var under90Sec = document.getElementById("under90ViewSection");
 
                 var categoryBar = document.getElementById("categoryFilterBar");
                 var subFilterBar = document.getElementById("instructorSubFilterBar");
@@ -82,6 +90,36 @@
                 var mainBannerSlider = document.getElementById("mainBannerSlider");
                 var kakaoWelcomeBanner = document.getElementById("kakaoWelcomeBanner");
                 var communityKakaoBanner = document.getElementById("communityKakaoBanner");
+
+                // 🏊‍♂️ 언더나인티(UNDER 90) 크루 전용관 뷰
+                if (viewName === "under90") {
+                    document.body.classList.add("category-view-active", "under90-view-active");
+                    document.body.classList.remove("tide-view-active", "category-view-tide", "toolkit-view-active");
+                    if (feedSec) { feedSec.style.display = "none"; feedSec.classList.add("hidden"); }
+                    if (tideSec) { tideSec.style.display = "none"; tideSec.classList.add("hidden"); }
+                    if (cctvSec) { cctvSec.style.display = "none"; cctvSec.classList.add("hidden"); }
+                    if (toolkitSec) { toolkitSec.style.display = "none"; toolkitSec.classList.add("hidden"); }
+                    if (under90Sec) { under90Sec.style.display = "block"; under90Sec.classList.remove("hidden"); }
+
+                    if (categoryBar) categoryBar.style.display = "none";
+                    if (subFilterBar) { subFilterBar.style.display = "none"; subFilterBar.classList.add("hidden"); }
+                    if (activitySubFilterBar) { activitySubFilterBar.style.display = "none"; activitySubFilterBar.classList.add("hidden"); }
+                    if (partnershipSubFilterBar) { partnershipSubFilterBar.style.display = "none"; partnershipSubFilterBar.classList.add("hidden"); }
+                    if (partnershipTeaserBanner) { partnershipTeaserBanner.style.display = "none"; partnershipTeaserBanner.classList.add("hidden"); }
+                    if (oceanWeatherSection) oceanWeatherSection.style.display = "none";
+                    if (mainBannerSlider) mainBannerSlider.style.display = "none";
+                    if (kakaoWelcomeBanner) kakaoWelcomeBanner.style.display = "none";
+                    if (communityKakaoBanner) communityKakaoBanner.style.display = "none";
+
+                    if (typeof window.Under90CrewEngine !== "undefined" && typeof window.Under90CrewEngine.init === "function") {
+                        window.Under90CrewEngine.init();
+                    }
+                    window.forceScrollToTop();
+                    return;
+                }
+
+                if (under90Sec) { under90Sec.style.display = "none"; under90Sec.classList.add("hidden"); }
+                document.body.classList.remove("under90-view-active");
 
                 // 🛠️ 아쿠아 툴킷 전용 뷰 (프리다이빙 CO2/O2 타이머, 계산기 허브)
                 if (viewName === "toolkit") {
@@ -179,7 +217,7 @@
                     }
                 } else {
                     document.body.classList.add("category-view-active");
-                    if (categoryBar) categoryBar.style.display = (viewName === "swimming" || viewName === "openwater" || viewName === "freediving" || viewName === "scuba") ? "flex" : "none";
+                    if (categoryBar) categoryBar.style.display = "flex";
                     if (oceanWeatherSection) oceanWeatherSection.style.display = "none";
                     if (mainBannerSlider) mainBannerSlider.style.display = "none";
                     if (kakaoWelcomeBanner) kakaoWelcomeBanner.style.display = "none";
@@ -289,7 +327,7 @@
      <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=7c316726691ea5e02f234a85f5a20bab&libraries=services,clusterer"></script>
      
      <!-- Custom CSS -->
-     <link rel="stylesheet" href="styles.css?v=V1639_KAKAO_OPEN_CHAT">
+     <link rel="stylesheet" href="styles.css?v=V1640_UNDER90">
      <!-- PWA Manifest and Meta Tags -->
      <link rel="manifest" href="manifest.json">
      <link rel="apple-touch-icon" href="icon-192.png">
@@ -727,26 +765,14 @@
                  <a href="#" class="nav-item active" id="navLinkHome" onclick="switchMainView('all'); return false;">
                      <i class="fa-solid fa-house"></i> 홈
                  </a>
-                 <a href="#" class="nav-item" id="navLinkFeed" onclick="switchMainView('freediving'); return false;">
-                     <i class="fa-solid fa-compass"></i> 버디 탐색
+                 <a href="#under90" class="nav-item nav-item-gold" id="navLinkUnder90" onclick="switchMainView('under90'); return false;" style="background: linear-gradient(135deg, rgba(0, 242, 254, 0.14), rgba(255, 183, 3, 0.16)); border: 1.5px solid rgba(255, 183, 3, 0.55); font-weight: 900;">
+                     <i class="fa-solid fa-person-swimming" style="color: #ffb703;"></i> 🏊‍♂️ 언더나인티 크루
                  </a>
-                 <a href="#" class="nav-item nav-item-gold" id="navLinkInstructor" onclick="switchMainView('instructor'); return false;">
-                     <i class="fa-solid fa-graduation-cap"></i> 강사 클래스
-                 </a>
-                 <a href="#" class="nav-item" id="navLinkCommunity" onclick="switchMainView('community'); return false;">
-                     <i class="fa-solid fa-comments"></i> 자유글 & 보이스룸
-                 </a>
-                 <a href="#" class="nav-item" id="navLinkMarket" onclick="switchMainView('market'); return false;">
-                     <i class="fa-solid fa-tags"></i> 중고장터
-                 </a>
-                 <a href="#" class="nav-item" id="navLinkPartnership" onclick="switchMainView('partnership'); return false;">
-                     <i class="fa-solid fa-handshake"></i> 투어 & 제휴
-                 </a>
-                 <a href="#" class="nav-item" id="navLinkActivity" onclick="if(!currentUser){if(typeof switchAuthTab==='function')switchAuthTab('login');const m=document.getElementById('authModal');if(m&&typeof openModal==='function')openModal(m);return false;} switchMainView('my_activity'); return false;">
-                     <i class="fa-solid fa-clipboard-list"></i> 내 활동기록
+                 <a href="#" class="nav-item" id="navLinkBuddy" onclick="switchMainView('buddy'); return false;">
+                     <i class="fa-solid fa-compass"></i> 버디 · 강사 · 장터
                  </a>
                  <a href="#" class="nav-item" id="navLinkTide" onclick="switchMainView('tide'); return false;">
-                     <i class="fa-solid fa-water"></i> 🌊 전국 해양 스팟
+                     <i class="fa-solid fa-water"></i> 🌊 전국 바다 · CCTV
                  </a>
                  <a href="#" class="nav-item" id="navLinkToolkit" onclick="switchMainView('toolkit'); return false;" style="background: rgba(0, 242, 254, 0.08); border: 1px solid rgba(0, 242, 254, 0.35); font-weight: 800;">
                      <i class="fa-solid fa-stopwatch-20" style="color: #00f2fe;"></i> 🛠️ 아쿠아 툴킷
@@ -800,32 +826,23 @@
                     <button class="tab-btn active" data-category="all" onclick="filterByCategory('all'); return false;">
                         <i class="fa-solid fa-house"></i> 전체 보기 (홈)
                     </button>
+                    <button class="tab-btn highlight-tab" data-category="buddy" onclick="filterByCategory('buddy'); return false;">
+                        <i class="fa-solid fa-compass"></i> 버디 탐색
+                    </button>
                     <button class="tab-btn instructor-tab" data-category="instructor" onclick="filterByCategory('instructor'); return false;">
-                        <i class="fa-solid fa-graduation-cap"></i> 강사 클래스 (체험/자격증)
-                    </button>
-                    <button class="tab-btn" data-category="swimming" onclick="filterByCategory('swimming'); return false;">
-                        <i class="fa-solid fa-person-swimming"></i> 실내 수영
-                    </button>
-                    <button class="tab-btn highlight-tab" data-category="openwater" onclick="filterByCategory('openwater'); return false;">
-                        <i class="fa-solid fa-water"></i> 바다 수영
-                    </button>
-                    <button class="tab-btn" data-category="freediving" onclick="filterByCategory('freediving'); return false;">
-                        <i class="fa-solid fa-person-swimming"></i> 프리다이빙
-                    </button>
-                    <button class="tab-btn" data-category="scuba" onclick="filterByCategory('scuba'); return false;">
-                        <i class="fa-solid fa-mask-snorkel"></i> 스쿠버다이빙
+                        <i class="fa-solid fa-graduation-cap"></i> 강사 클래스
                     </button>
                     <button class="tab-btn community-tab" data-category="community" onclick="filterByCategory('community'); return false;">
-                        <i class="fa-solid fa-comments"></i> 자유글 & 보이스룸
+                        <i class="fa-solid fa-comments"></i> 자유글 &amp; 보이스룸
                     </button>
                     <button class="tab-btn market-tab" data-category="market" onclick="filterByCategory('market'); return false;">
                         <i class="fa-solid fa-tags"></i> 중고장터
                     </button>
                     <button class="tab-btn partnership-tab" data-category="partnership" onclick="filterByCategory('partnership'); return false;">
-                        <i class="fa-solid fa-handshake"></i> 투어 & 제휴
+                        <i class="fa-solid fa-handshake"></i> 투어 &amp; 제휴
                     </button>
-                    <button class="tab-btn toolkit-tab" data-category="toolkit" onclick="switchMainView('toolkit'); return false;" style="background: rgba(0, 242, 254, 0.12); border: 1.5px solid #00f2fe; color: #00f2fe; font-weight: 800;">
-                        <i class="fa-solid fa-stopwatch-20"></i> 🛠️ 아쿠아 툴킷
+                    <button class="tab-btn" data-category="my_activity" onclick="if(!currentUser){if(typeof switchAuthTab==='function')switchAuthTab('login');const m=document.getElementById('authModal');if(m&&typeof openModal==='function')openModal(m);return false;} switchMainView('my_activity'); return false;">
+                        <i class="fa-solid fa-clipboard-list"></i> 내 활동기록
                     </button>
                 </div>
  
@@ -2416,6 +2433,230 @@
             </div>
         </div>
   
+
+        <!-- VIEW 5: Dedicated UNDER 90 (언더나인티) 부울경 바다수영 크루 전용관 (#under90ViewSection) -->
+        <div id="under90ViewSection" class="hidden" style="display: none; width: 100%; box-sizing: border-box; margin-bottom: 40px;">
+            <div class="under90-container">
+
+                <!-- 1. Open Showcase: Crew Hero Banner -->
+                <section class="under90-hero-card">
+                    <div class="under90-hero-top">
+                        <div class="under90-hero-badges">
+                            <span class="u90-pill-gold">⚡ SUB 90s / 100m</span>
+                            <span class="u90-pill-cyan">🌊 부울경 오픈워터 공식 크루</span>
+                            <span class="u90-pill-dim">20~60대 전 세대 바다수영 동호회</span>
+                        </div>
+                        <button type="button" class="u90-btn u90-btn-ghost" onclick="Under90CrewEngine.copyShareLink()">
+                            <i class="fa-solid fa-link"></i> 전용관 링크 복사 (#under90)
+                        </button>
+                    </div>
+
+                    <div class="under90-hero-body">
+                        <div>
+                            <h2 class="under90-hero-title">UNDER 90 <span class="u90-sub-title">언더나인티 바다수영 크루</span></h2>
+                            <p class="under90-hero-desc">
+                                <strong>자유형 100m 90초 이내</strong>의 열정에서 출발한 <strong>부울경(부산·울산·경남) 기반</strong> 바다수영 크루입니다.<br>
+                                해운대·광안리·진하·임랑·일광 실시간 수온과 파도를 확인하고, 내 페이스에 맞는 코스(2km~6km+)로 안전하게 함께 헤엄칩니다.
+                            </p>
+                        </div>
+                        <div class="under90-hero-ctas">
+                            <button type="button" class="u90-btn u90-btn-kakao" onclick="openKakaoChat('under90_hero')">
+                                <i class="fa-solid fa-comment-dots"></i> 💬 아쿠아버디 오픈채팅방 입장
+                            </button>
+                            <button type="button" class="u90-btn u90-btn-cyan" onclick="document.getElementById('under90MemberContainer')?.scrollIntoView({behavior:'smooth'});">
+                                <i class="fa-solid fa-calendar-check"></i> 이번 주 정모·코스 신청 바로가기
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. Open Showcase: Bu-Ul-Gyeong 5 Main Swim Spots Live Weather & CCTV -->
+                <section class="under90-section-block">
+                    <div class="under90-sec-header">
+                        <div>
+                            <h3 class="under90-sec-title">📡 부울경 5대 주력 바다수영 포인트 실시간 브리핑</h3>
+                            <p class="under90-sec-sub">출발 전 수온·파고·물때와 현장 CCTV를 클릭 한 번으로 바로 확인하세요 (무로그인 전체 공개)</p>
+                        </div>
+                    </div>
+                    <div id="under90SpotTabs" class="under90-spot-tabs"></div>
+                    <div id="under90SpotLivePanel"></div>
+                </section>
+
+                <!-- 3. Open Showcase: 4 Course Levels Overview -->
+                <section class="under90-section-block">
+                    <div class="under90-sec-header">
+                        <div>
+                            <h3 class="under90-sec-title">🏊‍♂️ 언더나인티 정모 4단계 코스 기준</h3>
+                            <p class="under90-sec-sub">정모 시 본인 컨디션과 페이스에 맞춰 코스를 선택하며, 모든 코스 안전부이 착용을 원칙으로 합니다.</p>
+                        </div>
+                    </div>
+                    <div class="under90-levels-grid">
+                        <div class="u90-level-overview-card" style="border-color: rgba(16, 185, 129, 0.45);">
+                            <div class="lv-head" style="color: #10b981;">🟢 초보자 코스</div>
+                            <div class="lv-dist">2 ~ 3 km</div>
+                            <p class="lv-desc">연안 안전 왕복 · 리딩 버디 동행 · 바다 적응 페이스</p>
+                        </div>
+                        <div class="u90-level-overview-card" style="border-color: rgba(0, 242, 254, 0.45);">
+                            <div class="lv-head" style="color: #00f2fe;">🔵 중급자 코스</div>
+                            <div class="lv-dist">3 ~ 4 km</div>
+                            <p class="lv-desc">안정적인 크루징 호흡 · 부표 왕복 및 사이트싱 훈련</p>
+                        </div>
+                        <div class="u90-level-overview-card" style="border-color: rgba(245, 158, 11, 0.45);">
+                            <div class="lv-head" style="color: #f59e0b;">🟠 상급자 코스</div>
+                            <div class="lv-dist">4 ~ 6 km</div>
+                            <p class="lv-desc">SUB 90 정예 페이스 · 장거리 오픈워터 팩 스위밍</p>
+                        </div>
+                        <div class="u90-level-overview-card" style="border-color: rgba(255, 82, 82, 0.45);">
+                            <div class="lv-head" style="color: #ff5252;">🔴 마스터 코스</div>
+                            <div class="lv-dist">6 km 이상</div>
+                            <p class="lv-desc">오픈워터 종단 및 대회 대비 하프·풀 디스턴스</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4. Member-Only Gate (Passcode 0090 or Login) & Lounge -->
+                <section class="under90-section-block" id="under90MemberContainer">
+                    <!-- Rendered dynamically by Under90CrewEngine.renderBoard() -->
+                </section>
+
+            </div>
+        </div>
+
+        <!-- Under90 Modal 1: Composer (Meetup / Notice / Board) -->
+        <div id="under90ComposerModal" class="modal-overlay hidden" style="display: none; z-index: 10060;">
+            <div class="modal-container glass-panel" style="max-width: 600px; width: 94%; max-height: 90vh; overflow-y: auto; padding: 24px; border: 1.5px solid rgba(0, 242, 254, 0.45);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px;">
+                    <h3 id="u90CompModalTitle" style="margin: 0; color: #fff; font-size: 1.15rem; font-weight: 900;">🏊‍♂️ 언더나인티 새 글 / 정모 등록</h3>
+                    <button type="button" onclick="Under90CrewEngine.closeComposer()" style="background: none; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer; line-height: 1;">&times;</button>
+                </div>
+
+                <form onsubmit="event.preventDefault(); Under90CrewEngine.saveComposerPost();" style="display: flex; flex-direction: column; gap: 12px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+                        <div>
+                            <label style="display:block;font-size:0.8rem;color:#00f2fe;font-weight:800;margin-bottom:5px;">글 유형 *</label>
+                            <select id="u90CompSubType" onchange="Under90CrewEngine.toggleComposerMeetupFields()" style="width:100%;padding:10px;border-radius:10px;background:#0f172a;border:1px solid rgba(255,255,255,0.2);color:#fff;">
+                                <option value="meetup">📅 정모 일정 · 코스신청</option>
+                                <option value="notice">📌 고정공지 · 안전수칙</option>
+                                <option value="board">💬 크루 게시판 · 장비나눔</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display:block;font-size:0.8rem;color:#00f2fe;font-weight:800;margin-bottom:5px;">활동 포인트</label>
+                            <select id="u90CompSpot" onchange="Under90CrewEngine.onComposerSpotChange(this.value)" style="width:100%;padding:10px;border-radius:10px;background:#0f172a;border:1px solid rgba(255,255,255,0.2);color:#fff;">
+                                <option value="haeundae">🏖️ 부산 해운대 해수욕장</option>
+                                <option value="gwangalli">🌉 부산 광안리 해수욕장</option>
+                                <option value="jinha">🏄 울산 진하 해수욕장</option>
+                                <option value="imlang">🌊 기장 임랑 해수욕장</option>
+                                <option value="ilgwang">⚓ 기장 일광 해수욕장</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
+                        <div>
+                            <label style="display:block;font-size:0.8rem;color:#cbd5e1;font-weight:700;margin-bottom:5px;">제목 *</label>
+                            <input type="text" id="u90CompTitle" placeholder="예: [일요정모] 해운대 아침 바다수영 (초급~마스터)" required style="width:100%;padding:10px;border-radius:10px;background:#0f172a;border:1px solid rgba(255,255,255,0.2);color:#fff;box-sizing:border-box;">
+                        </div>
+                        <div>
+                            <label style="display:block;font-size:0.8rem;color:#cbd5e1;font-weight:700;margin-bottom:5px;">작성자 이름 *</label>
+                            <input type="text" id="u90CompAuthor" placeholder="성함 또는 닉네임" required style="width:100%;padding:10px;border-radius:10px;background:#0f172a;border:1px solid rgba(255,255,255,0.2);color:#fff;box-sizing:border-box;">
+                        </div>
+                    </div>
+
+                    <div id="u90CompMeetupFields" style="display: flex; flex-direction: column; gap: 10px; background: rgba(0, 242, 254, 0.05); border: 1px dashed rgba(0, 242, 254, 0.35); border-radius: 12px; padding: 12px;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                            <div>
+                                <label style="display:block;font-size:0.78rem;color:#ffb703;font-weight:800;margin-bottom:4px;">🕒 모임 일시</label>
+                                <input type="text" id="u90CompEventTime" placeholder="예: 11월 17일(일) 07:00 입수 (06:40 집결)" style="width:100%;padding:9px;border-radius:8px;background:#0f172a;border:1px solid rgba(255,255,255,0.18);color:#fff;box-sizing:border-box;">
+                            </div>
+                            <div>
+                                <label style="display:block;font-size:0.78rem;color:#ffb703;font-weight:800;margin-bottom:4px;">📍 집결 장소</label>
+                                <input type="text" id="u90CompLocation" placeholder="예: 해운대 관광안내소 앞 백사장" style="width:100%;padding:9px;border-radius:8px;background:#0f172a;border:1px solid rgba(255,255,255,0.18);color:#fff;box-sizing:border-box;">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label style="display:block;font-size:0.78rem;color:#00f2fe;font-weight:800;margin-bottom:6px;">🏊‍♂️ 개설 코스 레벨 선택 (복수 선택)</label>
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                <label class="u90-check-pill"><input type="checkbox" name="u90CompLevel" value="beginner" checked> 🟢 초보자 (2~3km)</label>
+                                <label class="u90-check-pill"><input type="checkbox" name="u90CompLevel" value="intermediate" checked> 🔵 중급자 (3~4km)</label>
+                                <label class="u90-check-pill"><input type="checkbox" name="u90CompLevel" value="advanced" checked> 🟠 상급자 (4~6km)</label>
+                                <label class="u90-check-pill"><input type="checkbox" name="u90CompLevel" value="master" checked> 🔴 마스터 (6km+)</label>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                            <div>
+                                <label style="display:block;font-size:0.78rem;color:#fde68a;font-weight:800;margin-bottom:4px;">💰 참가 비용 안내</label>
+                                <input type="text" id="u90CompFee" placeholder="예: 입수 회비 10,000원 / 뒷풀이 1/N 별도" style="width:100%;padding:9px;border-radius:8px;background:#0f172a;border:1px solid rgba(255,255,255,0.18);color:#fff;box-sizing:border-box;">
+                            </div>
+                            <div>
+                                <label style="display:block;font-size:0.78rem;color:#fde68a;font-weight:800;margin-bottom:4px;">💳 회비 입금 계좌 (선택)</label>
+                                <input type="text" id="u90CompAccount" placeholder="예: 카카오뱅크 3333-00-000000 (홍길동)" style="width:100%;padding:9px;border-radius:8px;background:#0f172a;border:1px solid rgba(255,255,255,0.18);color:#fff;box-sizing:border-box;">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label style="display:block;font-size:0.78rem;color:#ffb703;font-weight:800;margin-bottom:4px;">🍺 뒷풀이 안내</label>
+                            <input type="text" id="u90CompAfterParty" placeholder="예: 입수 후 근처 돼지국밥 뒷풀이 (참석 여부 체크)" style="width:100%;padding:9px;border-radius:8px;background:#0f172a;border:1px solid rgba(255,255,255,0.18);color:#fff;box-sizing:border-box;">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label style="display:block;font-size:0.8rem;color:#cbd5e1;font-weight:700;margin-bottom:5px;">상세 내용 / 준비물 안내</label>
+                        <textarea id="u90CompDesc" rows="4" placeholder="슈트 두께 권장, 주차 팁, 안전 주의사항 등 상세 내용을 적어주세요." style="width:100%;padding:10px;border-radius:10px;background:#0f172a;border:1px solid rgba(255,255,255,0.2);color:#fff;resize:vertical;box-sizing:border-box;"></textarea>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px;">
+                        <button type="button" onclick="Under90CrewEngine.closeComposer()" class="u90-btn u90-btn-ghost">취소</button>
+                        <button type="submit" class="u90-btn u90-btn-gold"><i class="fa-solid fa-check"></i> 등록하기</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Under90 Modal 2: 1-Tap RSVP (Course + After-Party) -->
+        <div id="under90RsvpModal" class="modal-overlay hidden" style="display: none; z-index: 10065;">
+            <div class="modal-container glass-panel" style="max-width: 440px; width: 92%; padding: 22px; border: 1.5px solid rgba(255, 183, 3, 0.55);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                    <h3 style="margin: 0; color: #ffb703; font-size: 1.1rem; font-weight: 900;">🏊‍♂️ 정모 코스 · 뒷풀이 신청</h3>
+                    <button type="button" onclick="Under90CrewEngine.closeRsvpModal()" style="background: none; border: none; color: #94a3b8; font-size: 1.4rem; cursor: pointer;">&times;</button>
+                </div>
+                <p id="u90RsvpPostTitle" style="margin: 0 0 14px 0; color: #fff; font-weight: 800; font-size: 0.92rem; line-height: 1.4;"></p>
+
+                <form onsubmit="event.preventDefault(); Under90CrewEngine.saveRsvp();" style="display: flex; flex-direction: column; gap: 12px;">
+                    <div>
+                        <label style="display:block;font-size:0.8rem;color:#00f2fe;font-weight:800;margin-bottom:5px;">참석자 성함 / 닉네임 *</label>
+                        <input type="text" id="u90RsvpName" placeholder="예: 홍길동 (양산)" required style="width:100%;padding:10px;border-radius:10px;background:#0f172a;border:1px solid rgba(255,255,255,0.2);color:#fff;box-sizing:border-box;">
+                    </div>
+                    <div>
+                        <label style="display:block;font-size:0.8rem;color:#00f2fe;font-weight:800;margin-bottom:5px;">희망 수영 코스 레벨 *</label>
+                        <select id="u90RsvpLevel" style="width:100%;padding:10px;border-radius:10px;background:#0f172a;border:1px solid rgba(255,255,255,0.2);color:#fff;"></select>
+                    </div>
+                    <div>
+                        <label style="display:block;font-size:0.8rem;color:#ffb703;font-weight:800;margin-bottom:5px;">뒷풀이 참석 여부 *</label>
+                        <select id="u90RsvpAfterParty" style="width:100%;padding:10px;border-radius:10px;background:#0f172a;border:1px solid rgba(255,255,255,0.2);color:#fff;">
+                            <option value="both">🏊‍♂️+🍺 입수 + 뒷풀이 모두 참석</option>
+                            <option value="swim_only">🏊‍♂️ 입수만 참석 (뒷풀이 불참)</option>
+                            <option value="after_only">🍺 뒷풀이만 참석</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display:block;font-size:0.8rem;color:#cbd5e1;font-weight:700;margin-bottom:5px;">메모 (카풀/장비 등 선택)</label>
+                        <input type="text" id="u90RsvpNote" placeholder="예: 양산 물금 출발 카풀 2자리 있음 / 부이 보유" style="width:100%;padding:10px;border-radius:10px;background:#0f172a;border:1px solid rgba(255,255,255,0.2);color:#fff;box-sizing:border-box;">
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 6px; flex-wrap: wrap;">
+                        <button type="button" id="u90RsvpCancelBtn" onclick="Under90CrewEngine.cancelRsvp()" class="u90-btn" style="background: rgba(255, 71, 87, 0.16); border: 1px solid #ff4757; color: #ff6b81;">참석 취소</button>
+                        <div style="display: flex; gap: 8px; margin-left: auto;">
+                            <button type="button" onclick="Under90CrewEngine.closeRsvpModal()" class="u90-btn u90-btn-ghost">닫기</button>
+                            <button type="submit" class="u90-btn u90-btn-gold">신청 완료</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
       </main>
 
     <footer class="main-footer" style="background: rgba(10, 25, 47, 0.95); color: #94a3b8; padding: 45px 20px 60px; font-size: 0.88rem; border-top: 1px solid rgba(0, 242, 254, 0.2); margin-top: 50px; position: relative; z-index: 10;">
@@ -3974,7 +4215,8 @@
  
      <!-- App Configuration & Main Logic Script -->
      <script src="config.js?v=V1639_KAKAO_OPEN_CHAT"></script>
-     <script src="app.js?v=V1639_KAKAO_OPEN_CHAT"></script>
+     <script src="app.js?v=V1640_UNDER90"></script>
+     <script src="under90_crew.js?v=V1640_UNDER90"></script>
      <!-- Toast Notification Container -->
     <div id="toastContainer" class="toast-container"></div>
 

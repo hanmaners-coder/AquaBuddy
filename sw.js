@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1639-kakao-open-chat";
+const CACHE_NAME = "aquabuddy-cache-v1640-under90";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

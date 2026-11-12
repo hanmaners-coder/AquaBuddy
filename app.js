@@ -998,6 +998,7 @@ window.forceScrollToTop = forceScrollToTop;
 function switchMainView(viewName) {
     if (!viewName) viewName = "all";
     if (viewName === "home" || viewName === "feed") viewName = "all";
+    if (viewName === "crew_under90") viewName = "under90";
     
     // 메인 카테고리 전환 시 서브 필터 격리 보장
     if (viewName !== "buddy") {
@@ -1033,6 +1034,10 @@ function switchMainView(viewName) {
     const tideSec = document.getElementById("tideViewSection");
     const cctvSec = document.getElementById("cctvViewSection");
     const toolkitSec = document.getElementById("toolkitViewSection");
+    const under90Sec = document.getElementById("under90ViewSection");
+
+    const feedSubViews = ["buddy", "freediving", "swimming", "openwater", "scuba", "mermaid", "instructor", "community", "market", "partnership", "my_activity", "activity_log"];
+    const isFeedSubView = feedSubViews.includes(viewName);
 
     const categoryBar = document.getElementById("categoryFilterBar");
     const subFilterBar = document.getElementById("instructorSubFilterBar");
@@ -1049,8 +1054,13 @@ function switchMainView(viewName) {
         const viewData = link.dataset ? link.dataset.view : null;
         const targetId = "navLink" + viewName.charAt(0).toUpperCase() + viewName.slice(1);
 
+        const isBuddyNavHit = (link.id === "navLinkBuddy" && isFeedSubView);
+        const isSportTabHit = (catData === "buddy" && ["buddy", "freediving", "swimming", "openwater", "scuba", "mermaid"].includes(viewName));
+
         if (
             link.id === targetId ||
+            isBuddyNavHit ||
+            isSportTabHit ||
             catData === viewName ||
             viewData === viewName ||
             onclickAttr.includes(`'${viewName}'`)
@@ -1070,6 +1080,43 @@ function switchMainView(viewName) {
     if (typeof updateCreateButtonText === "function") {
         updateCreateButtonText(viewName);
     }
+
+    // 🏊‍♂️ 1.2 언더나인티(UNDER 90) 부울경 크루 전용관 뷰
+    if (viewName === "under90") {
+        document.body.classList.add("category-view-active", "under90-view-active");
+        document.body.classList.remove("tide-view-active", "category-view-tide", "toolkit-view-active");
+        if (feedSec) { feedSec.style.display = "none"; feedSec.classList.add("hidden"); }
+        if (tideSec) { tideSec.style.display = "none"; tideSec.classList.add("hidden"); }
+        if (cctvSec) { cctvSec.style.display = "none"; cctvSec.classList.add("hidden"); }
+        if (toolkitSec) { toolkitSec.style.display = "none"; toolkitSec.classList.add("hidden"); }
+        if (under90Sec) { under90Sec.style.display = "block"; under90Sec.classList.remove("hidden"); }
+
+        if (categoryBar) categoryBar.style.display = "none";
+        if (subFilterBar) { subFilterBar.style.display = "none"; subFilterBar.classList.add("hidden"); }
+        if (activitySubFilterBar) { activitySubFilterBar.style.display = "none"; activitySubFilterBar.classList.add("hidden"); }
+        const commSubBarEarly = document.getElementById("communitySubFilterBar");
+        if (commSubBarEarly) { commSubBarEarly.style.display = "none"; commSubBarEarly.classList.add("hidden"); }
+        if (partnershipSubFilterBar) { partnershipSubFilterBar.style.display = "none"; partnershipSubFilterBar.classList.add("hidden"); }
+        if (partnershipTeaserBanner) { partnershipTeaserBanner.style.display = "none"; partnershipTeaserBanner.classList.add("hidden"); }
+        if (oceanWeatherSection) oceanWeatherSection.style.display = "none";
+        if (mainBannerSlider) mainBannerSlider.style.display = "none";
+        const kakaoWB = document.getElementById("kakaoWelcomeBanner");
+        if (kakaoWB) kakaoWB.style.display = "none";
+        const commKB = document.getElementById("communityKakaoBanner");
+        if (commKB) commKB.style.display = "none";
+
+        if (typeof window.Under90CrewEngine !== "undefined" && typeof window.Under90CrewEngine.init === "function") {
+            window.Under90CrewEngine.init();
+        }
+        forceScrollToTop();
+        return;
+    }
+
+    if (under90Sec) {
+        under90Sec.style.display = "none";
+        under90Sec.classList.add("hidden");
+    }
+    document.body.classList.remove("under90-view-active");
 
     // 🛠️ 1.5 아쿠아 툴킷 전용 뷰 (프리다이빙 CO2/O2 타이머, 계산기 허브)
     if (viewName === "toolkit") {
@@ -1183,7 +1230,7 @@ function switchMainView(viewName) {
     } else {
         document.body.classList.add("category-view-active");
         if (homeCctvPanel) homeCctvPanel.style.display = "none";
-        if (categoryBar) categoryBar.style.display = (viewName === "swimming" || viewName === "openwater" || viewName === "freediving" || viewName === "scuba") ? "flex" : "none";
+        if (categoryBar) categoryBar.style.display = "flex";
         if (oceanWeatherSection) oceanWeatherSection.style.display = "none";
         if (mainBannerSlider) mainBannerSlider.style.display = "block";
 
@@ -7075,7 +7122,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         initGlobalRealtimeSubscriptions();
     }
     initEventListeners();
-    switchMainView('all');
+    const initialHash = (window.location.hash || '').toLowerCase();
+    const initialView = (initialHash === '#under90' || initialHash === '#crew_under90') ? 'under90' : 'all';
+    switchMainView(initialView);
+    window.addEventListener('hashchange', () => {
+        const h = (window.location.hash || '').toLowerCase();
+        if (h === '#under90' || h === '#crew_under90') {
+            switchMainView('under90');
+        }
+    });
     if (typeof OCEAN_WEATHER_DATA !== "undefined" && OCEAN_WEATHER_DATA.length > 0) {
         currentDashboardSpot = OCEAN_WEATHER_DATA[0];
         if (typeof renderUnifiedSpotDashboard === "function") {
@@ -7284,6 +7339,9 @@ function updateNavbarUserUI() {
 
         if (typeof syncUserNotifications === 'function') {
             syncUserNotifications();
+        }
+        if (window.Under90CrewEngine && typeof window.Under90CrewEngine.renderBoard === 'function') {
+            window.Under90CrewEngine.renderBoard();
         }
     } else {
         if (userNav) {
@@ -11420,6 +11478,9 @@ async function loadPosts() {
     if (typeof syncUserNotifications === 'function') {
         syncUserNotifications();
     }
+    if (window.Under90CrewEngine && typeof window.Under90CrewEngine.renderBoard === 'function') {
+        window.Under90CrewEngine.renderBoard();
+    }
 }
 
 function loadMyPosts() {
@@ -13061,6 +13122,9 @@ function filterAndRender(resetPagination = true) {
         }
 
         const cat = String(post.category || '').toLowerCase();
+        if (cat === "crew_under90" && activeCategory !== "crew_under90" && activeCategory !== "under90") {
+            return false;
+        }
 
         if (activeCategory === "activity_log" || activeCategory === "my_activity") {
             if (activeActivitySub === "my_posts") return typeof isMyPost === 'function' && isMyPost(post);
@@ -13087,7 +13151,7 @@ function filterAndRender(resetPagination = true) {
                 if (subCat !== activeInstructorSubFilter) return false;
             }
         } else if (activeCategory === "buddy") {
-            if (cat === "market" || cat === "community" || cat === "instructor") return false;
+            if (cat === "market" || cat === "community" || cat === "instructor" || cat === "partnership" || cat === "crew_under90") return false;
         } else if (activeCategory === "swimming") {
             if (cat !== "swimming" && cat !== "pool") return false;
         } else if (activeCategory === "openwater") {
@@ -13529,7 +13593,7 @@ function renderDashboardBlocks() {
 
     // 🛡️ 차단된 유저의 게시글은 대시보드 4개 블록에서도 100% 즉시 숨김
     const visiblePosts = (typeof posts !== 'undefined' && Array.isArray(posts))
-        ? posts.filter(p => typeof isAuthorBlockedByMe !== 'function' || !isAuthorBlockedByMe(p))
+        ? posts.filter(p => String(p.category || '').toLowerCase() !== 'crew_under90' && (typeof isAuthorBlockedByMe !== 'function' || !isAuthorBlockedByMe(p)))
         : [];
 
     const buddyPosts = visiblePosts.filter(p => ["freediving", "scuba", "swimming", "openwater"].includes(p.category)).slice(0, 4);
@@ -21862,6 +21926,9 @@ async function loadOceanWeatherCacheFromSupabase() {
                 });
             });
             console.log(`[Supabase Ocean Cache] ${data.length}개 DB 행 1:1 스마트 병합 완료`);
+            if (window.Under90CrewEngine && typeof window.Under90CrewEngine.renderSpotSpotlight === 'function') {
+                window.Under90CrewEngine.renderSpotSpotlight();
+            }
         }
     } catch(e) {
         console.warn('[Supabase Ocean Cache Error]', e);
