@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquabuddy-cache-v1640-under90";
+const CACHE_NAME = "aquabuddy-cache-v1641-under90-modal";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

@@ -719,6 +719,37 @@
         unlockWithCode(inp.value);
     }
 
+    function showOverlayModal(modal) {
+        if (!modal) return;
+        if (typeof window.openModal === 'function') {
+            window.openModal(modal);
+        }
+        modal.classList.remove('hidden', 'is-closing');
+        modal.style.setProperty('display', 'flex', 'important');
+        modal.style.setProperty('position', 'fixed', 'important');
+        modal.style.setProperty('top', '0px', 'important');
+        modal.style.setProperty('left', '0px', 'important');
+        modal.style.setProperty('width', '100vw', 'important');
+        modal.style.setProperty('height', '100vh', 'important');
+        modal.style.setProperty('justify-content', 'center', 'important');
+        modal.style.setProperty('align-items', 'center', 'important');
+        modal.style.setProperty('z-index', '999999', 'important');
+        modal.style.setProperty('opacity', '1', 'important');
+        modal.style.setProperty('pointer-events', 'auto', 'important');
+        modal.classList.add('is-open');
+    }
+
+    function hideOverlayModal(modal) {
+        if (!modal) return;
+        if (typeof window.closeModal === 'function') {
+            window.closeModal(modal);
+            return;
+        }
+        modal.classList.remove('is-open');
+        modal.classList.add('hidden');
+        modal.style.setProperty('display', 'none', 'important');
+    }
+
     // ------------------------------------------------------------------------
     // Composer Modal (Create / Edit Crew Meetup, Notice, or Board Post)
     // ------------------------------------------------------------------------
@@ -758,16 +789,12 @@
         });
 
         toggleComposerMeetupFields();
-        modal.classList.remove('hidden');
-        modal.style.display = 'flex';
+        showOverlayModal(modal);
     }
 
     function closeComposer() {
         const modal = document.getElementById('under90ComposerModal');
-        if (modal) {
-            modal.classList.add('hidden');
-            modal.style.display = 'none';
-        }
+        hideOverlayModal(modal);
         state.editingPostId = null;
     }
 
@@ -976,16 +1003,12 @@
         const cancelBtn = document.getElementById('u90RsvpCancelBtn');
         if (cancelBtn) cancelBtn.style.display = existing ? 'inline-flex' : 'none';
 
-        modal.classList.remove('hidden');
-        modal.style.display = 'flex';
+        showOverlayModal(modal);
     }
 
     function closeRsvpModal() {
         const modal = document.getElementById('under90RsvpModal');
-        if (modal) {
-            modal.classList.add('hidden');
-            modal.style.display = 'none';
-        }
+        hideOverlayModal(modal);
         state.rsvpPostId = null;
     }
 
